@@ -52,7 +52,7 @@
         <Device active="true" isBound="true" number="1" name="Simulator" driver="DrvSimulator" numAddress="0" strAddress="" pollOnCmd="false" timeout="0" delay="1000" time="00:00:00" period="00:00:00" cmdLine="" />
       </DevicePolling>
     </Line>
-    <Line active="true" isBound="false" number="2" name="RTAC Line">
+    <Line active="true" isBound="true" number="2" name="SCADA RTAC">
       <LineOptions>
         <ReqRetries>3</ReqRetries>
         <CycleDelay>0</CycleDelay>
@@ -73,7 +73,7 @@
         <Option name="TransMode" value="TCP" />
       </CustomOptions>
       <DevicePolling>
-        <Device active="true" isBound="false" number="2" name="RTAC" driver="DrvModbus" numAddress="1" strAddress="192.168.10.132" pollOnCmd="false" timeout="1000" delay="200" time="00:00:00" period="00:00:00" cmdLine="RTAC_Modbus.xml" />
+        <Device active="true" isBound="true" number="2" name="RTAC" driver="DrvModbus" numAddress="1" strAddress="192.168.10.132" pollOnCmd="false" timeout="1000" delay="200" time="00:00:00" period="00:00:00" cmdLine="RTAC_Modbus.xml" />
       </DevicePolling>
     </Line>
   </Lines>
