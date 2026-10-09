@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<DeviceTemplate>
+  <Options>
+    <ZeroAddr>true</ZeroAddr>
+    <DecAddr>true</DecAddr>
+    <DefByteOrder2></DefByteOrder2>
+    <DefByteOrder4></DefByteOrder4>
+    <DefByteOrder8></DefByteOrder8>
+  </Options>
+  <ElemGroups>
+    <ElemGroup active="true" dataBlock="HoldingRegisters" address="0" name="RTAC Holding Registers">
+      <Elem name="RTAC_HoldingReg1" tagCode="RTAC_HoldingReg1" type="ushort" />
+    </ElemGroup>
+  </ElemGroups>
+  <Cmds />
+</DeviceTemplate>
