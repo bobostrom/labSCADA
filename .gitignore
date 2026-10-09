@@ -1,0 +1,10 @@
+# Large distribution archives & packages
+*.zip
+*.deb
+*.tar.gz
+*.iso
+
+# Logs & temp files
+*.log
+/tmp/
+.DS_Store
