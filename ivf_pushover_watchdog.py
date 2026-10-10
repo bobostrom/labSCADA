@@ -3,6 +3,7 @@
 IVF Lab SCADA Watchdog & Pushover Alert Service
 Monitors Incubator Alarm (Channel 122) and Rapid SCADA polling health.
 Sends Priority 2 Emergency Alerts (bypassing silent mode with sirens) to Pushover for Teams.
+Automatically cancels repeating emergency alarms when the contact returns to Normal.
 """
 
 import time
@@ -31,7 +32,10 @@ logging.basicConfig(
 )
 
 def send_pushover(title, message, priority=0, sound="pushover", retry=60, expire=3600):
-    """Send notification to Pushover API."""
+    """
+    Send notification to Pushover API.
+    Returns (success_bool, receipt_id_or_none).
+    """
     url = "https://api.pushover.net/1/messages.json"
     data = {
         "token": PUSHOVER_TOKEN,
@@ -50,11 +54,27 @@ def send_pushover(title, message, priority=0, sound="pushover", retry=60, expire
     try:
         with urllib.request.urlopen(req, timeout=10) as response:
             res_body = response.read().decode("utf-8")
-            logging.info(f"Pushover sent: {title} -> {res_body}")
-            return True
+            res_json = json.loads(res_body)
+            receipt = res_json.get("receipt")
+            logging.info(f"Pushover sent: {title} (Receipt: {receipt})")
+            return True, receipt
     except Exception as e:
         logging.error(f"Failed to send Pushover notification: {e}")
-        return False
+        return False, None
+
+def cancel_pushover_receipt(receipt):
+    """Cancels a repeating Priority 2 emergency alert in Pushover."""
+    if not receipt:
+        return
+    url = f"https://api.pushover.net/1/receipts/cancel/{receipt}.json"
+    data = urllib.parse.urlencode({"token": PUSHOVER_TOKEN}).encode("utf-8")
+    req = urllib.request.Request(url, data=data, method="POST")
+    try:
+        with urllib.request.urlopen(req, timeout=10) as response:
+            res_body = response.read().decode("utf-8")
+            logging.info(f"Pushover emergency repeat canceled for receipt {receipt}: {res_body}")
+    except Exception as e:
+        logging.error(f"Failed to cancel Pushover receipt {receipt}: {e}")
 
 def parse_device_status():
     """
@@ -76,7 +96,6 @@ def parse_device_status():
         status = status_match.group(1) if status_match else "Unknown"
 
         # Check IncubatorAlarm_01 line
-        # e.g.: | 22 | IncubatorAlarm_01 | IncubatorAlarm_01 |   Off |     122 |
         alarm_match = re.search(r"IncubatorAlarm_01\s*\|\s*IncubatorAlarm_01\s*\|\s*(\w+)", content)
         alarm_state = alarm_match.group(1) if alarm_match else None
 
@@ -88,8 +107,8 @@ def parse_device_status():
 def main():
     logging.info("Starting IVF Lab Watchdog Service...")
     
-    # State tracking
     last_alarm_state = None
+    active_emergency_receipt = None
     scada_stale_alerted = False
 
     while True:
@@ -131,7 +150,7 @@ def main():
                     logging.warning(f"Incubator Alarm State changed: {last_alarm_state} -> {alarm_state}")
                     if alarm_state.lower() == "on":
                         # TRIPPED! Send Emergency siren alert
-                        send_pushover(
+                        success, receipt = send_pushover(
                             title="🚨 CRITICAL ALARM: Incubator 1",
                             message=f"Incubator 1 alarm contact TRIPPED at {now_str}! Check incubator chamber temperature, CO2, and power immediately.",
                             priority=2, # Emergency: overrides silent mode, repeats every 60s
@@ -139,8 +158,15 @@ def main():
                             retry=60,
                             expire=7200
                         )
+                        active_emergency_receipt = receipt
                     elif alarm_state.lower() == "off":
-                        # Normal again! Send resolution alert
+                        # Normal again! Automatically cancel repeating emergency alarm
+                        if active_emergency_receipt:
+                            logging.info(f"Canceling active emergency repeat: {active_emergency_receipt}")
+                            cancel_pushover_receipt(active_emergency_receipt)
+                            active_emergency_receipt = None
+
+                        # Send resolution alert
                         send_pushover(
                             title="✅ RESOLVED: Incubator 1 Normal",
                             message=f"Incubator 1 alarm contact returned to Normal state at {now_str}.",
