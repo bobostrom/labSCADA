@@ -1,0 +1,14 @@
+[Unit]
+Description=IVF Lab SCADA Pushover Watchdog Service
+After=network.target scadacomm6.service
+
+[Service]
+Type=simple
+User=bobostrom
+WorkingDirectory=/home/bobostrom/Projects/scada
+ExecStart=/usr/bin/python3 /home/bobostrom/Projects/scada/ivf_pushover_watchdog.py
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
