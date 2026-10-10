@@ -94,7 +94,7 @@ def get_live_data():
 
     return data
 
-def send_pushover_alert(title, message, priority=0, sound="pushover", retry=60, expire=3600):
+def send_pushover_alert(title, message, priority=0, sound="pushover", retry=60, expire=3600, tags="ivf_alarm"):
     url = "https://api.pushover.net/1/messages.json"
     post_data = {
         "token": PUSHOVER_TOKEN,
@@ -107,6 +107,8 @@ def send_pushover_alert(title, message, priority=0, sound="pushover", retry=60, 
     if priority == 2:
         post_data["retry"] = retry
         post_data["expire"] = expire
+        if tags:
+            post_data["tags"] = tags
 
     encoded = urllib.parse.urlencode(post_data).encode("utf-8")
     req = urllib.request.Request(url, data=encoded, method="POST")
@@ -131,6 +133,22 @@ def cancel_pushover(receipt):
     except Exception as e:
         print(f"Cancel error: {e}")
         return False
+
+def cancel_pushover_by_tag(tag="ivf_alarm"):
+    """Cancels repeating emergency priority alerts in Pushover by tag."""
+    url = f"https://api.pushover.net/1/receipts/cancel_by_tag/{tag}.json"
+    encoded = urllib.parse.urlencode({"token": PUSHOVER_TOKEN}).encode("utf-8")
+    req = urllib.request.Request(url, data=encoded, method="POST")
+    try:
+        with urllib.request.urlopen(req, timeout=8) as res:
+            res_body = res.read().decode("utf-8")
+            res_json = json.loads(res_body)
+            canceled_count = res_json.get("canceled", 0)
+            print(f"Pushover cancel_by_tag({tag}): status={res_json.get('status')}, canceled={canceled_count}")
+            return True, canceled_count
+    except Exception as e:
+        print(f"Cancel by tag error: {e}")
+        return False, 0
 
 # Embed rich, responsive HTML dashboard
 HTML_PAGE = """<!DOCTYPE html>
@@ -694,7 +712,15 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
             self.wfile.write(json.dumps({"success": success}).encode("utf-8"))
 
         elif self.path == "/api/ack":
-            # 1. Send Acknowledgment Notification to the team
+            # 1. Cancel active emergency sirens in Pushover by tag
+            success_tag, canceled_count = cancel_pushover_by_tag("ivf_alarm")
+
+            # 2. Also cancel receipt directly if one was tracked locally
+            if active_emergency_receipt:
+                cancel_pushover(active_emergency_receipt)
+                active_emergency_receipt = None
+
+            # 3. Send Acknowledgment Notification to the team
             send_pushover_alert(
                 title="🔕 ALARM ACKNOWLEDGED",
                 message=f"Active alarm was physically acknowledged via Web Dashboard at {now_str}. Siren silenced.",
@@ -702,15 +728,14 @@ class DashboardHandler(http.server.BaseHTTPRequestHandler):
                 sound="pushover"
             )
 
-            # 2. If an emergency receipt is active, cancel its repeats
-            if active_emergency_receipt:
-                cancel_pushover(active_emergency_receipt)
-                active_emergency_receipt = None
-
             self.send_response(200)
             self.send_header("Content-Type", "application/json")
             self.end_headers()
-            self.wfile.write(json.dumps({"success": True, "message": "Alarm silenced and acknowledged"}).encode("utf-8"))
+            self.wfile.write(json.dumps({
+                "success": True,
+                "message": "Alarm silenced and acknowledged",
+                "canceled_count": canceled_count
+            }).encode("utf-8"))
         else:
             self.send_response(404)
             self.end_headers()

@@ -48,6 +48,7 @@ def send_pushover(title, message, priority=0, sound="pushover", retry=60, expire
     if priority == 2:
         data["retry"] = retry
         data["expire"] = expire
+        data["tags"] = "ivf_alarm"
 
     encoded_data = urllib.parse.urlencode(data).encode("utf-8")
     req = urllib.request.Request(url, data=encoded_data, method="POST")
@@ -61,6 +62,20 @@ def send_pushover(title, message, priority=0, sound="pushover", retry=60, expire
     except Exception as e:
         logging.error(f"Failed to send Pushover notification: {e}")
         return False, None
+
+def cancel_pushover_by_tag(tag="ivf_alarm"):
+    """Cancels repeating emergency priority alerts in Pushover by tag."""
+    url = f"https://api.pushover.net/1/receipts/cancel_by_tag/{tag}.json"
+    data = urllib.parse.urlencode({"token": PUSHOVER_TOKEN}).encode("utf-8")
+    req = urllib.request.Request(url, data=data, method="POST")
+    try:
+        with urllib.request.urlopen(req, timeout=10) as response:
+            res_body = response.read().decode("utf-8")
+            logging.info(f"Pushover cancel_by_tag({tag}): {res_body}")
+            return True
+    except Exception as e:
+        logging.error(f"Failed to cancel Pushover tag {tag}: {e}")
+        return False
 
 def cancel_pushover_receipt(receipt):
     """Cancels a repeating Priority 2 emergency alert in Pushover."""
@@ -160,10 +175,8 @@ def main():
                         )
                         active_emergency_receipt = receipt
                     elif alarm_state.lower() == "off":
-                        # Normal again! Automatically cancel repeating emergency alarm
+                        # Send resolution alert (do not auto-cancel siren; requires human acknowledgment)
                         if active_emergency_receipt:
-                            logging.info(f"Canceling active emergency repeat: {active_emergency_receipt}")
-                            cancel_pushover_receipt(active_emergency_receipt)
                             active_emergency_receipt = None
 
                         # Send resolution alert
