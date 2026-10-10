@@ -475,7 +475,7 @@ HTML_PAGE = """<!DOCTYPE html>
 
       <div class="device-row">
         <div>
-          <div class="device-name">Main Cleanroom Door</div>
+          <div class="device-name">Main Lab Door</div>
           <div style="font-size: 0.8rem; color: var(--text-muted);">Modbus Discrete Input 10</div>
         </div>
         <div class="badge badge-closed" id="badgeDoor1">CLOSED</div>
@@ -483,7 +483,7 @@ HTML_PAGE = """<!DOCTYPE html>
 
       <div class="device-row">
         <div>
-          <div class="device-name">Cryo Storage Airlock Door</div>
+          <div class="device-name">Procedure Room Door</div>
           <div style="font-size: 0.8rem; color: var(--text-muted);">Modbus Discrete Input 11</div>
         </div>
         <div class="badge badge-closed" id="badgeDoor2">CLOSED</div>
