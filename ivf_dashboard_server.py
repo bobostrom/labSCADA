@@ -469,7 +469,7 @@ HTML_PAGE = """<!DOCTYPE html>
     <!-- Cleanroom Doors Card -->
     <div class="card">
       <div class="card-header">
-        <div class="card-title">🚪 Cleanroom Entry & Airlocks</div>
+        <div class="card-title">🚪 Lab Entry</div>
         <span style="font-size: 0.75rem; color: var(--text-muted);">Channels 121 - 122</span>
       </div>
 
