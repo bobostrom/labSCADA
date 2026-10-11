@@ -70,10 +70,11 @@ def get_live_data():
                     tag = cols[1]
                     val_str = cols[3]
 
-                    if tag.startswith("Temperature_"):
+                    if tag.startswith("Temperature_") or tag == "TC_Temperature" or tag.startswith("TC_"):
                         try:
-                            # Divide by 10 for true float reading
-                            raw_val = float(val_str)
+                            # Strip commas/spaces (e.g. ScadaComm logs '1,000' for raw >= 1000)
+                            clean_val = val_str.replace(",", "").replace(" ", "").replace("\xa0", "")
+                            raw_val = float(clean_val)
                             data["temperatures"][tag] = round(raw_val / 10.0, 1)
                         except:
                             data["temperatures"][tag] = val_str
@@ -512,7 +513,7 @@ HTML_PAGE = """<!DOCTYPE html>
     <div class="card">
       <div class="card-header">
         <div class="card-title">🌡️ Cryo / Zone 1 Temp</div>
-        <span style="font-size: 0.75rem; color: var(--text-muted);">Channel 101</span>
+        <span style="font-size: 0.75rem; color: var(--text-muted);">Channel 125</span>
       </div>
       <div>
         <div class="temp-readout">
@@ -523,7 +524,7 @@ HTML_PAGE = """<!DOCTYPE html>
           <div class="temp-bar-fill" id="tempBar1" style="width: 50%;"></div>
         </div>
       </div>
-      <div style="font-size: 0.8rem; color: var(--text-muted);">Holding Register 0 (RTAC scaled /10)</div>
+      <div style="font-size: 0.8rem; color: var(--text-muted);">Holding Register 10 (RTAC scaled /10)</div>
     </div>
 
     <!-- Temperature Zone 2 Card -->
@@ -652,9 +653,10 @@ HTML_PAGE = """<!DOCTYPE html>
         }
 
         // Update Temperatures
-        if (data.temperatures.Temperature_01 !== undefined) {
-          document.getElementById('temp1').innerText = data.temperatures.Temperature_01;
-          const pct = Math.min(Math.max((data.temperatures.Temperature_01 / 50) * 100, 5), 100);
+        const cryoTemp = data.temperatures.TC_Temperature !== undefined ? data.temperatures.TC_Temperature : data.temperatures.Temperature_01;
+        if (cryoTemp !== undefined) {
+          document.getElementById('temp1').innerText = cryoTemp;
+          const pct = Math.min(Math.max((cryoTemp / 50) * 100, 5), 100);
           document.getElementById('tempBar1').style.width = pct + '%';
         }
         if (data.temperatures.Temperature_02 !== undefined) {

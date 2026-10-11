@@ -19,6 +19,7 @@
       <Elem type="ushort" readOnly="false" isBitMask="false" tagCode="Temperature_08" name="Temperature_08" />
       <Elem type="ushort" readOnly="false" isBitMask="false" tagCode="Temperature_09" name="Temperature_09" />
       <Elem type="ushort" readOnly="false" isBitMask="false" tagCode="Temperature_10" name="Temperature_10" />
+      <Elem type="ushort" readOnly="false" isBitMask="false" tagCode="TC_Temperature" name="TC_Temperature" />
     </ElemGroup>
     <ElemGroup active="true" dataBlock="DiscreteInputs" address="0" name="Temperature Sensor Status">
       <Elem tagCode="SensorStatus_01" name="SensorStatus_01" />
