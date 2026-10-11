@@ -59,7 +59,7 @@
         <Option name="TransMode" value="TCP" />
       </CustomOptions>
       <DevicePolling>
-        <Device active="true" isBound="true" number="1" name="Modbus RTAC" driver="DrvModbus" numAddress="1" strAddress="192.168.10.132" pollOnCmd="false" timeout="1000" delay="200" time="00:00:00" period="00:00:00" cmdLine="DrvModbus_RTAC_Template.xml" />
+        <Device active="true" isBound="true" number="1" name="Modbus RTAC" driver="DrvModbus" numAddress="1" strAddress="labRTAC.labmon" pollOnCmd="false" timeout="1000" delay="200" time="00:00:00" period="00:00:00" cmdLine="DrvModbus_RTAC_Template.xml" />
       </DevicePolling>
     </Line>
   </Lines>
