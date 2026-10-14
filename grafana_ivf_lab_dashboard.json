@@ -259,7 +259,7 @@
       },
       "fieldConfig": {
         "defaults": {
-          "displayName": "Embryo Storage Tank",
+          "displayName": "Embryo Tank 1",
           "color": {
             "mode": "thresholds"
           },
@@ -739,7 +739,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Embryo Storage Tank"
+              "options": "Embryo Tank 1"
             },
             "properties": [
               {
