@@ -9,7 +9,7 @@
   </Options>
   <ElemGroups>
     <ElemGroup active="true" dataBlock="HoldingRegisters" address="0" name="Temperatures">
-      <Elem type="short" readOnly="false" isBitMask="false" tagCode="Room Temp" name="Room Temp" />
+      <Elem type="short" readOnly="false" isBitMask="false" tagCode="Lab Ambient" name="Lab Ambient" />
       <Elem type="short" readOnly="false" isBitMask="false" tagCode="Med Fridge" name="Med Fridge" />
       <Elem type="short" readOnly="false" isBitMask="false" tagCode="Med Freezer" name="Med Freezer" />
       <Elem type="short" readOnly="false" isBitMask="false" tagCode="Temperature_04" name="Temperature_04" />
