@@ -30,11 +30,18 @@ cp /opt/scada/ScadaServer/Config/ScadaServerConfig.xml "$CONFIG_DIR/ScadaServer/
 
 # 4. ScadaWeb
 echo "-> Backing up ScadaWeb configuration..."
-cp /opt/scada/ScadaWeb/config/ScadaWebConfig.xml "$CONFIG_DIR/ScadaWeb/"
+cp /opt/scada/ScadaWeb/config/*.xml "$CONFIG_DIR/ScadaWeb/"
 
 # 5. Views
 echo "-> Backing up Views..."
 cp -r /opt/scada/Views/* "$CONFIG_DIR/Views/"
+
+# 6. Global Instance Config (database connections / storage)
+if [ -f /opt/scada/Config/ScadaInstanceConfig.xml ]; then
+    echo "-> Backing up ScadaInstanceConfig..."
+    mkdir -p "$CONFIG_DIR/Config"
+    cp /opt/scada/Config/ScadaInstanceConfig.xml "$CONFIG_DIR/Config/"
+fi
 
 echo "=== Successfully updated $CONFIG_DIR ==="
 echo "Run 'git status' and 'git diff' to review changes, then commit when ready."

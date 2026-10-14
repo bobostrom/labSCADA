@@ -43,10 +43,10 @@ if [ -f "$CONFIG_DIR/ScadaServer/ScadaServerConfig.xml" ]; then
 fi
 
 # 4. ScadaWeb
-if [ -f "$CONFIG_DIR/ScadaWeb/ScadaWebConfig.xml" ]; then
+if [ -d "$CONFIG_DIR/ScadaWeb" ]; then
     echo "-> Deploying ScadaWeb..."
     sudo mkdir -p /opt/scada/ScadaWeb/config
-    sudo cp "$CONFIG_DIR/ScadaWeb/ScadaWebConfig.xml" /opt/scada/ScadaWeb/config/
+    sudo cp "$CONFIG_DIR/ScadaWeb/"*.xml /opt/scada/ScadaWeb/config/
 fi
 
 # 5. Views
@@ -54,6 +54,13 @@ if [ -d "$CONFIG_DIR/Views" ]; then
     echo "-> Deploying Views..."
     sudo mkdir -p /opt/scada/Views
     sudo cp -r "$CONFIG_DIR/Views/"* /opt/scada/Views/
+fi
+
+# 6. Global Instance Config (database connections / storage)
+if [ -f "$CONFIG_DIR/Config/ScadaInstanceConfig.xml" ]; then
+    echo "-> Deploying ScadaInstanceConfig..."
+    sudo mkdir -p /opt/scada/Config
+    sudo cp "$CONFIG_DIR/Config/ScadaInstanceConfig.xml" /opt/scada/Config/
 fi
 
 # Ensure user ownership for ease of use
