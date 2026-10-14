@@ -694,7 +694,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Incubator 01 Temp"
+              "options": "Room Temp"
             },
             "properties": [
               {
@@ -709,7 +709,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Incubator 02 Temp"
+              "options": "Med Fridge"
             },
             "properties": [
               {
@@ -724,7 +724,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Zone 03 Temp"
+              "options": "Med Freezer"
             },
             "properties": [
               {
@@ -739,7 +739,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "TC Cryo Temp"
+              "options": "Embryo Storage Tank"
             },
             "properties": [
               {
@@ -787,7 +787,7 @@
           "editorMode": "code",
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "SELECT time_stamp AS time, CASE cnl_num WHEN 101 THEN 'Incubator 01 Temp' WHEN 102 THEN 'Incubator 02 Temp' WHEN 103 THEN 'Zone 03 Temp' WHEN 125 THEN 'TC Cryo Temp' ELSE 'Channel ' || cnl_num END AS metric, val FROM mod_arc_postgre_sql.mincopy_historical WHERE $__timeFilter(time_stamp) AND cnl_num IN (101, 102, 103, 125) ORDER BY time_stamp ASC;",
+          "rawSql": "SELECT h.time_stamp AS time, c.name AS metric, h.val FROM mod_arc_postgre_sql.mincopy_historical h JOIN mod_arc_postgre_sql.channel_config c ON h.cnl_num = c.cnl_num WHERE $__timeFilter(h.time_stamp) AND h.cnl_num IN (101, 102, 103, 125) ORDER BY h.time_stamp ASC;",
           "refId": "A"
         }
       ],
@@ -885,7 +885,7 @@
           "editorMode": "code",
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "SELECT time_stamp AS time, CASE cnl_num WHEN 121 THEN 'Door 01 (Main)' WHEN 122 THEN 'Door 02 (Cryo)' END AS metric, val FROM mod_arc_postgre_sql.mincopy_historical WHERE $__timeFilter(time_stamp) AND cnl_num IN (121, 122) ORDER BY time_stamp ASC;",
+          "rawSql": "SELECT h.time_stamp AS time, c.name AS metric, h.val FROM mod_arc_postgre_sql.mincopy_historical h JOIN mod_arc_postgre_sql.channel_config c ON h.cnl_num = c.cnl_num WHERE $__timeFilter(h.time_stamp) AND h.cnl_num IN (121, 122) ORDER BY h.time_stamp ASC;",
           "refId": "A"
         }
       ],
