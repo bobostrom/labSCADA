@@ -123,3 +123,57 @@ nslookup labRTAC.labmon 192.168.88.1
 ping labRTAC.labmon
 ping api.pushover.net
 ```
+
+---
+
+## 7. Remote Management via WireGuard ("Back to Home")
+To allow secure remote engineering and SCADA administration without opening inbound ports on the corporate network, the MikroTik uses RouterOS v7's **Back to Home (BTH)** WireGuard service.
+
+### Architecture & IP Scheme
+*   **Remote Client WireGuard Subnet:** `192.168.216.0/24` (Assigned client address: `192.168.216.3/32`)
+*   **Target Lab Subnet (Split Tunnel):** `192.168.88.0/24` (Only lab traffic traverses the tunnel)
+*   **MikroTik BTH Cloud Endpoint:** `hg909tvhh33.vpn.mynetname.net:57712` (MikroTik Cloud DDNS / Relay)
+*   **Keepalive Interval:** `30` seconds (Maintains state across corporate NAT & cellular failover)
+
+### Inbound Masquerade Behavior (Why Remote Clients Appear as 192.168.88.1)
+RouterOS BTH applies a source NAT (`masquerade`) rule to packets routed from the WireGuard tunnel interface into the master `bridge`. As a result:
+*   Incoming connections from the remote PC (e.g., Rapid SCADA Administrator running at home) arrive at `labSCADA` stamped with the source IP `192.168.88.1` (the router's bridge gateway).
+*   This is expected behavior and confirms packets are being properly routed through the tunnel.
+
+### Client Configuration Template (`Bob-Remote-PC.conf`)
+```ini
+# Name = Bob-Remote-PC
+# CloudDDNS = hg909tvhh33.sn.mynetname.net
+[Interface]
+PrivateKey = <REDACTED_CLIENT_PRIVATE_KEY>
+ListenPort = 51820
+Address = 192.168.216.3/32, fc00:0:0:216::3/128
+
+[Peer]
+PublicKey = nAmsBHo/wi67L++Oqf1lK1bavNXNJ9+ciotHV3k6cHk=
+AllowedIPs = 192.168.88.0/24
+Endpoint = hg909tvhh33.vpn.mynetname.net:57712
+PersistentKeepalive = 30
+```
+
+---
+
+## 8. Router Configuration Backup & Export Procedures
+To safeguard against hardware failure or accidental misconfiguration, maintain two types of RouterOS backups:
+
+### Option A: Plaintext Script Export (`.rsc`) — Recommended for Git
+A `.rsc` file is human-readable, searchable, and can be version-controlled in this repository.
+In MikroTik Terminal (via WebFig, WinBox, or SSH):
+```routeros
+# Export full configuration hiding sensitive passwords/keys
+/export file=labmon_config_export show-sensitive=no
+```
+This produces `labmon_config_export.rsc` in RouterOS **Files**, which can be downloaded and stored under `notes/router_backups/`.
+
+### Option B: Full Binary Snapshot (`.backup`)
+A `.backup` file is an encrypted, exact snapshot of system state, users, and certificates:
+```routeros
+/system/backup/save name=labmon_system_backup encryption=aes-sha256 password="<YOUR_BACKUP_PASSWORD>"
+```
+This produces `labmon_system_backup.backup` in RouterOS **Files**.
+
