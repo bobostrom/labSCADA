@@ -1,0 +1,16 @@
+[Unit]
+Description=Grafana Cloud Private Data Connect (PDC) Agent
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/home/bobostrom/.local/bin/pdc \
+  -token "<YOUR_GRAFANA_PDC_TOKEN>" \
+  -cluster "prod-us-west-0" \
+  -gcloud-hosted-grafana-id "1872512"
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=default.target
