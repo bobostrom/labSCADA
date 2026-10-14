@@ -28,7 +28,7 @@
       },
       "fieldConfig": {
         "defaults": {
-          "displayName": "Room Temp",
+          "displayName": "${__series.name}",
           "color": {
             "mode": "thresholds"
           },
@@ -89,9 +89,9 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "format": "table",
+          "format": "time_series",
           "rawQuery": true,
-          "rawSql": "SELECT NOW() AS time, val AS value FROM mod_arc_postgre_sql.curcopy_current WHERE cnl_num = 101;",
+          "rawSql": "SELECT NOW() AS time, c.name AS metric, cur.val AS value FROM mod_arc_postgre_sql.curcopy_current cur JOIN mod_arc_postgre_sql.channel_config c ON cur.cnl_num = c.cnl_num WHERE cur.cnl_num = 101;",
           "refId": "A"
         }
       ],
@@ -105,7 +105,7 @@
       },
       "fieldConfig": {
         "defaults": {
-          "displayName": "Med Fridge",
+          "displayName": "${__series.name}",
           "color": {
             "mode": "thresholds"
           },
@@ -166,9 +166,9 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "format": "table",
+          "format": "time_series",
           "rawQuery": true,
-          "rawSql": "SELECT NOW() AS time, val AS value FROM mod_arc_postgre_sql.curcopy_current WHERE cnl_num = 102;",
+          "rawSql": "SELECT NOW() AS time, c.name AS metric, cur.val AS value FROM mod_arc_postgre_sql.curcopy_current cur JOIN mod_arc_postgre_sql.channel_config c ON cur.cnl_num = c.cnl_num WHERE cur.cnl_num = 102;",
           "refId": "A"
         }
       ],
@@ -182,7 +182,7 @@
       },
       "fieldConfig": {
         "defaults": {
-          "displayName": "Med Freezer",
+          "displayName": "${__series.name}",
           "color": {
             "mode": "thresholds"
           },
@@ -243,9 +243,9 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "format": "table",
+          "format": "time_series",
           "rawQuery": true,
-          "rawSql": "SELECT NOW() AS time, val AS value FROM mod_arc_postgre_sql.curcopy_current WHERE cnl_num = 103;",
+          "rawSql": "SELECT NOW() AS time, c.name AS metric, cur.val AS value FROM mod_arc_postgre_sql.curcopy_current cur JOIN mod_arc_postgre_sql.channel_config c ON cur.cnl_num = c.cnl_num WHERE cur.cnl_num = 103;",
           "refId": "A"
         }
       ],
@@ -259,7 +259,7 @@
       },
       "fieldConfig": {
         "defaults": {
-          "displayName": "Embryo Tank 1",
+          "displayName": "${__series.name}",
           "color": {
             "mode": "thresholds"
           },
@@ -316,9 +316,9 @@
             "uid": "$datasource"
           },
           "editorMode": "code",
-          "format": "table",
+          "format": "time_series",
           "rawQuery": true,
-          "rawSql": "SELECT NOW() AS time, val AS value FROM mod_arc_postgre_sql.curcopy_current WHERE cnl_num = 125;",
+          "rawSql": "SELECT NOW() AS time, c.name AS metric, cur.val AS value FROM mod_arc_postgre_sql.curcopy_current cur JOIN mod_arc_postgre_sql.channel_config c ON cur.cnl_num = c.cnl_num WHERE cur.cnl_num = 125;",
           "refId": "A"
         }
       ],
