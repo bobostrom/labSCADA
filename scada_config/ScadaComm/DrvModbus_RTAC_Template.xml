@@ -19,7 +19,7 @@
       <Elem type="short" readOnly="false" isBitMask="false" tagCode="Temperature_08" name="Temperature_08" />
       <Elem type="short" readOnly="false" isBitMask="false" tagCode="Temperature_09" name="Temperature_09" />
       <Elem type="short" readOnly="false" isBitMask="false" tagCode="Temperature_10" name="Temperature_10" />
-      <Elem type="short" readOnly="false" isBitMask="false" tagCode="Embryo Tank 1" name="Embryo Tank 1" />
+      <Elem type="short" readOnly="false" isBitMask="false" tagCode="Cryo Tank 1" name="Cryo Tank 1" />
     </ElemGroup>
     <ElemGroup active="true" dataBlock="DiscreteInputs" address="0" name="Temperature Sensor Status">
       <Elem tagCode="SensorStatus_01" name="SensorStatus_01" />

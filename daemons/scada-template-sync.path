@@ -1,0 +1,10 @@
+[Unit]
+Description=Watch Rapid SCADA Modbus template for changes
+After=network.target
+
+[Path]
+PathModified=/opt/scada/ScadaComm/Config/DrvModbus_RTAC_Template.xml
+Unit=scada-template-sync.service
+
+[Install]
+WantedBy=default.target

@@ -1,0 +1,10 @@
+[Unit]
+Description=Sync Rapid SCADA Modbus Template tags to PostgreSQL channel_config
+After=network.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/home/bobostrom/Projects/scada
+ExecStart=/usr/bin/python3 /home/bobostrom/Projects/scada/sync_template_to_db.py
+StandardOutput=journal
+StandardError=journal
