@@ -165,8 +165,8 @@ To safeguard against hardware failure or accidental misconfiguration, maintain t
 A `.rsc` file is human-readable, searchable, and can be version-controlled in this repository.
 In MikroTik Terminal (via WebFig, WinBox, or SSH):
 ```routeros
-# Export full configuration hiding sensitive passwords/keys
-/export file=labmon_config_export show-sensitive=no
+# Export full configuration (RouterOS v7 automatically hides sensitive passwords/keys by default)
+/export file=labmon_config_export
 ```
 This produces `labmon_config_export.rsc` in RouterOS **Files**, which can be downloaded and stored under `notes/router_backups/`.
 
