@@ -28,19 +28,32 @@
       },
       "fieldConfig": {
         "defaults": {
+          "displayName": "Room Temp",
           "color": {
             "mode": "thresholds"
           },
           "mappings": [],
-          "max": 50,
-          "min": 0,
+          "max": 27,
+          "min": 21,
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              { "color": "blue", "value": null },
-              { "color": "green", "value": 20 },
-              { "color": "orange", "value": 28 },
-              { "color": "red", "value": 38 }
+              {
+                "color": "blue",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 23
+              },
+              {
+                "color": "orange",
+                "value": 25
+              },
+              {
+                "color": "red",
+                "value": 27
+              }
             ]
           },
           "unit": "celsius"
@@ -59,8 +72,10 @@
         "minVizWidth": 75,
         "orientation": "auto",
         "reduceOptions": {
-          "calcs": ["lastNotNull"],
-          "fields": "/^value$/",
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
           "values": false
         },
         "showThresholdLabels": false,
@@ -80,7 +95,7 @@
           "refId": "A"
         }
       ],
-      "title": "Incubator 01 Temp",
+      "title": "",
       "type": "gauge"
     },
     {
@@ -90,19 +105,32 @@
       },
       "fieldConfig": {
         "defaults": {
+          "displayName": "Med Fridge",
           "color": {
             "mode": "thresholds"
           },
           "mappings": [],
-          "max": 50,
+          "max": 10,
           "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              { "color": "blue", "value": null },
-              { "color": "green", "value": 20 },
-              { "color": "orange", "value": 28 },
-              { "color": "red", "value": 38 }
+              {
+                "color": "blue",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 2
+              },
+              {
+                "color": "orange",
+                "value": 5
+              },
+              {
+                "color": "red",
+                "value": 8
+              }
             ]
           },
           "unit": "celsius"
@@ -121,8 +149,10 @@
         "minVizWidth": 75,
         "orientation": "auto",
         "reduceOptions": {
-          "calcs": ["lastNotNull"],
-          "fields": "/^value$/",
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
           "values": false
         },
         "showThresholdLabels": false,
@@ -142,7 +172,7 @@
           "refId": "A"
         }
       ],
-      "title": "Incubator 02 Temp",
+      "title": "",
       "type": "gauge"
     },
     {
@@ -152,19 +182,32 @@
       },
       "fieldConfig": {
         "defaults": {
+          "displayName": "Med Freezer",
           "color": {
             "mode": "thresholds"
           },
           "mappings": [],
-          "max": 50,
-          "min": 0,
+          "max": 0,
+          "min": -30,
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              { "color": "blue", "value": null },
-              { "color": "green", "value": 18 },
-              { "color": "orange", "value": 26 },
-              { "color": "red", "value": 30 }
+              {
+                "color": "blue",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": -25
+              },
+              {
+                "color": "orange",
+                "value": -18
+              },
+              {
+                "color": "red",
+                "value": -12
+              }
             ]
           },
           "unit": "celsius"
@@ -183,8 +226,10 @@
         "minVizWidth": 75,
         "orientation": "auto",
         "reduceOptions": {
-          "calcs": ["lastNotNull"],
-          "fields": "/^value$/",
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
           "values": false
         },
         "showThresholdLabels": false,
@@ -204,7 +249,7 @@
           "refId": "A"
         }
       ],
-      "title": "Lab Zone 03 Temp",
+      "title": "",
       "type": "gauge"
     },
     {
@@ -214,19 +259,28 @@
       },
       "fieldConfig": {
         "defaults": {
+          "displayName": "Embryo Storage Tank",
           "color": {
             "mode": "thresholds"
           },
           "mappings": [],
-          "max": 100,
+          "max": -100,
           "min": -200,
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              { "color": "blue", "value": null },
-              { "color": "green", "value": -150 },
-              { "color": "orange", "value": -100 },
-              { "color": "red", "value": 0 }
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": -160
+              },
+              {
+                "color": "red",
+                "value": -135
+              }
             ]
           },
           "unit": "celsius"
@@ -245,8 +299,10 @@
         "minVizWidth": 75,
         "orientation": "auto",
         "reduceOptions": {
-          "calcs": ["lastNotNull"],
-          "fields": "/^value$/",
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
           "values": false
         },
         "showThresholdLabels": false,
@@ -266,7 +322,7 @@
           "refId": "A"
         }
       ],
-      "title": "Cryo TC Probe",
+      "title": "",
       "type": "gauge"
     },
     {
@@ -294,8 +350,16 @@
           "mappings": [
             {
               "options": {
-                "0": { "color": "green", "index": 0, "text": "CLOSED" },
-                "1": { "color": "red", "index": 1, "text": "DOOR OPEN" }
+                "0": {
+                  "color": "green",
+                  "index": 0,
+                  "text": "CLOSED"
+                },
+                "1": {
+                  "color": "red",
+                  "index": 1,
+                  "text": "DOOR OPEN"
+                }
               },
               "type": "value"
             }
@@ -303,8 +367,14 @@
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              { "color": "green", "value": null },
-              { "color": "red", "value": 1 }
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
             ]
           }
         },
@@ -323,8 +393,10 @@
         "justifyMode": "auto",
         "orientation": "auto",
         "reduceOptions": {
-          "calcs": ["lastNotNull"],
-          "fields": "/^value$/",
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
           "values": false
         },
         "textMode": "auto"
@@ -359,8 +431,16 @@
           "mappings": [
             {
               "options": {
-                "0": { "color": "green", "index": 0, "text": "CLOSED" },
-                "1": { "color": "red", "index": 1, "text": "DOOR OPEN" }
+                "0": {
+                  "color": "green",
+                  "index": 0,
+                  "text": "CLOSED"
+                },
+                "1": {
+                  "color": "red",
+                  "index": 1,
+                  "text": "DOOR OPEN"
+                }
               },
               "type": "value"
             }
@@ -368,8 +448,14 @@
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              { "color": "green", "value": null },
-              { "color": "red", "value": 1 }
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
             ]
           }
         },
@@ -388,8 +474,10 @@
         "justifyMode": "auto",
         "orientation": "auto",
         "reduceOptions": {
-          "calcs": ["lastNotNull"],
-          "fields": "/^value$/",
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
           "values": false
         },
         "textMode": "auto"
@@ -424,8 +512,16 @@
           "mappings": [
             {
               "options": {
-                "0": { "color": "green", "index": 0, "text": "NORMAL" },
-                "1": { "color": "red", "index": 1, "text": "ALARM ACTIVE" }
+                "0": {
+                  "color": "green",
+                  "index": 0,
+                  "text": "NORMAL"
+                },
+                "1": {
+                  "color": "red",
+                  "index": 1,
+                  "text": "ALARM ACTIVE"
+                }
               },
               "type": "value"
             }
@@ -433,8 +529,14 @@
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              { "color": "green", "value": null },
-              { "color": "red", "value": 1 }
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
             ]
           }
         },
@@ -453,8 +555,10 @@
         "justifyMode": "auto",
         "orientation": "auto",
         "reduceOptions": {
-          "calcs": ["lastNotNull"],
-          "fields": "/^value$/",
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
           "values": false
         },
         "textMode": "auto"
@@ -489,8 +593,16 @@
           "mappings": [
             {
               "options": {
-                "0": { "color": "green", "index": 0, "text": "NORMAL" },
-                "1": { "color": "red", "index": 1, "text": "ALARM ACTIVE" }
+                "0": {
+                  "color": "green",
+                  "index": 0,
+                  "text": "NORMAL"
+                },
+                "1": {
+                  "color": "red",
+                  "index": 1,
+                  "text": "ALARM ACTIVE"
+                }
               },
               "type": "value"
             }
@@ -498,8 +610,14 @@
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              { "color": "green", "value": null },
-              { "color": "red", "value": 1 }
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
             ]
           }
         },
@@ -518,8 +636,10 @@
         "justifyMode": "auto",
         "orientation": "auto",
         "reduceOptions": {
-          "calcs": ["lastNotNull"],
-          "fields": "/^value$/",
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
           "values": false
         },
         "textMode": "auto"
@@ -572,20 +692,64 @@
         },
         "overrides": [
           {
-            "matcher": { "id": "byName", "options": "Incubator 01 Temp" },
-            "properties": [{ "id": "color", "value": { "fixedColor": "#73BF69", "mode": "fixed" } }]
+            "matcher": {
+              "id": "byName",
+              "options": "Incubator 01 Temp"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#73BF69",
+                  "mode": "fixed"
+                }
+              }
+            ]
           },
           {
-            "matcher": { "id": "byName", "options": "Incubator 02 Temp" },
-            "properties": [{ "id": "color", "value": { "fixedColor": "#5794F2", "mode": "fixed" } }]
+            "matcher": {
+              "id": "byName",
+              "options": "Incubator 02 Temp"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#5794F2",
+                  "mode": "fixed"
+                }
+              }
+            ]
           },
           {
-            "matcher": { "id": "byName", "options": "Zone 03 Temp" },
-            "properties": [{ "id": "color", "value": { "fixedColor": "#FADE2A", "mode": "fixed" } }]
+            "matcher": {
+              "id": "byName",
+              "options": "Zone 03 Temp"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#FADE2A",
+                  "mode": "fixed"
+                }
+              }
+            ]
           },
           {
-            "matcher": { "id": "byName", "options": "TC Cryo Temp" },
-            "properties": [{ "id": "color", "value": { "fixedColor": "#FF780A", "mode": "fixed" } }]
+            "matcher": {
+              "id": "byName",
+              "options": "TC Cryo Temp"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#FF780A",
+                  "mode": "fixed"
+                }
+              }
+            ]
           }
         ]
       },
@@ -598,7 +762,12 @@
       "id": 9,
       "options": {
         "legend": {
-          "calcs": ["lastNotNull", "min", "max", "mean"],
+          "calcs": [
+            "lastNotNull",
+            "min",
+            "max",
+            "mean"
+          ],
           "displayMode": "table",
           "placement": "bottom",
           "showLegend": true
@@ -654,8 +823,16 @@
           "mappings": [
             {
               "options": {
-                "0": { "color": "green", "index": 0, "text": "CLOSED" },
-                "1": { "color": "red", "index": 1, "text": "OPEN" }
+                "0": {
+                  "color": "green",
+                  "index": 0,
+                  "text": "CLOSED"
+                },
+                "1": {
+                  "color": "red",
+                  "index": 1,
+                  "text": "OPEN"
+                }
               },
               "type": "value"
             }
@@ -663,8 +840,14 @@
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              { "color": "green", "value": null },
-              { "color": "red", "value": 1 }
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
             ]
           }
         },
@@ -722,8 +905,16 @@
           "mappings": [
             {
               "options": {
-                "0": { "color": "red", "index": 0, "text": "FAULT / OFF" },
-                "1": { "color": "green", "index": 1, "text": "HEALTHY / ON" }
+                "0": {
+                  "color": "red",
+                  "index": 0,
+                  "text": "FAULT / OFF"
+                },
+                "1": {
+                  "color": "green",
+                  "index": 1,
+                  "text": "HEALTHY / ON"
+                }
               },
               "type": "value"
             }
@@ -731,8 +922,14 @@
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              { "color": "red", "value": null },
-              { "color": "green", "value": 1 }
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 1
+              }
             ]
           }
         },
@@ -751,8 +948,10 @@
         "justifyMode": "auto",
         "orientation": "horizontal",
         "reduceOptions": {
-          "calcs": ["lastNotNull"],
-          "fields": "/^value$/",
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
           "values": false
         },
         "textMode": "auto"
@@ -778,7 +977,12 @@
   "refresh": "30s",
   "schemaVersion": 38,
   "style": "dark",
-  "tags": ["scada", "ivf", "laboratory", "telemetry"],
+  "tags": [
+    "scada",
+    "ivf",
+    "laboratory",
+    "telemetry"
+  ],
   "templating": {
     "list": [
       {
@@ -813,8 +1017,8 @@
     ]
   },
   "timezone": "browser",
-  "title": "IVF Clinical Lab SCADA Telemetry",
+  "title": "Advanced Fertility of Alaska — IVF Lab Telemetry",
   "uid": "ivf-scada-main",
-  "version": 2,
+  "version": 3,
   "weekStart": ""
 }
