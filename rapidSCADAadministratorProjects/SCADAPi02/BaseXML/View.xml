@@ -1,0 +1,44 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ArrayOfView xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <View>
+    <ViewID>7</ViewID>
+    <Path>Tables\</Path>
+    <ViewTypeID xsi:nil="true" />
+    <Ord xsi:nil="true" />
+    <Hidden>false</Hidden>
+    <ObjNum xsi:nil="true" />
+  </View>
+  <View>
+    <ViewID>8</ViewID>
+    <Path>Tables\DoorsStatus.tbl</Path>
+    <ViewTypeID xsi:nil="true" />
+    <Ord xsi:nil="true" />
+    <Hidden>false</Hidden>
+    <ObjNum xsi:nil="true" />
+  </View>
+  <View>
+    <ViewID>9</ViewID>
+    <Path>Tables\IncubatorAlarms.tbl</Path>
+    <ViewTypeID xsi:nil="true" />
+    <Ord xsi:nil="true" />
+    <Hidden>false</Hidden>
+    <ObjNum xsi:nil="true" />
+  </View>
+  <View>
+    <ViewID>10</ViewID>
+    <Path>Tables\Temperatures.tbl</Path>
+    <ViewTypeID xsi:nil="true" />
+    <Ord xsi:nil="true" />
+    <Hidden>false</Hidden>
+    <ObjNum xsi:nil="true" />
+  </View>
+  <View>
+    <ViewID>11</ViewID>
+    <Args>http://192.168.10.131:8080/</Args>
+    <ViewTypeID>3</ViewTypeID>
+    <Title>IVF Clinic Dashboard</Title>
+    <Ord xsi:nil="true" />
+    <Hidden>false</Hidden>
+    <ObjNum>1</ObjNum>
+  </View>
+</ArrayOfView>
