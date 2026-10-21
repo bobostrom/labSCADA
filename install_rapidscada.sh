@@ -14,10 +14,10 @@ echo "=== [2/7] Updating System & Installing Prerequisites ==="
 sudo apt update && sudo apt upgrade -y
 sudo apt install -y curl wget unzip tar libssl-dev libicu-dev nginx
 
-echo "=== [3/7] Installing ASP.NET Core Runtime (.NET 8 ARM64) ==="
+echo "=== [3/7] Installing ASP.NET Core Runtime (.NET 10 ARM64) ==="
 curl -sSL https://dot.net/v1/dotnet-install.sh | sudo bash /dev/stdin \
     --runtime aspnetcore \
-    --channel 8.0 \
+    --channel 10.0 \
     --architecture arm64 \
     --install-dir /usr/share/dotnet
 
@@ -31,14 +31,14 @@ sudo chmod 755 /var/log/scada
 echo "=== [5/7] Deploying Rapid SCADA 6 Package ==="
 sudo mkdir -p /opt/scada
 
-# Check for local archive in current directory or /tmp
-PACKAGE_DEB=$(ls ./rapidscada_*.deb /tmp/rapidscada_*.deb 2>/dev/null | head -n 1 || true)
-PACKAGE_ZIP=$(ls ./rapidscada_*.zip /tmp/rapidscada_*.zip 2>/dev/null | head -n 1 || true)
+# Check for local archive in current directory, ~/rapidscada_install, or /tmp
+PACKAGE_DEB=$(ls ./rapidscada_*.deb ~/rapidscada_install/rapidscada_*.deb /tmp/rapidscada_*.deb 2>/dev/null | head -n 1 || true)
+PACKAGE_ZIP=$(ls ./rapidscada_*.zip ~/rapidscada_install/rapidscada_*.zip /tmp/rapidscada_*.zip 2>/dev/null | head -n 1 || true)
 
 if [ -z "$PACKAGE_DEB" ] && [ -z "$PACKAGE_ZIP" ] && [ ! -d "/opt/scada/ScadaServer" ]; then
-    echo "No package found locally. Downloading Rapid SCADA 6.4.7 for Linux (.NET 8)..."
-    wget -q --show-progress -O ./rapidscada_6.4.7_linux_en.zip https://rapidscada.org/download/rapidscada_6.4.7_linux_en.zip
-    PACKAGE_ZIP="./rapidscada_6.4.7_linux_en.zip"
+    echo "No package found locally. Downloading Rapid SCADA 6.5.0 for Linux (.NET 10)..."
+    wget -q --show-progress -O ./rapidscada_6.5.0_linux_en.zip https://rapidscada.org/download/rapidscada_6.5.0_linux_en.zip
+    PACKAGE_ZIP="./rapidscada_6.5.0_linux_en.zip"
 fi
 
 if [ -n "$PACKAGE_DEB" ]; then
