@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <ArrayOfCnl xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
   <Cnl>
     <CnlNum>101</CnlNum>
@@ -563,9 +563,9 @@
     <DeviceNum>1</DeviceNum>
     <TagNum xsi:nil="true" />
     <TagCode>TC_Temperature</TagCode>
-    <FormulaEnabled>true</FormulaEnabled>
-    <InFormula>Cnl / 10</InFormula>
-    <OutFormula>Cnl * 10</OutFormula>
+    <FormulaEnabled>false</FormulaEnabled>
+    <InFormula />
+    <OutFormula />
     <FormatID>3</FormatID>
     <OutFormatID xsi:nil="true" />
     <QuantityID>4</QuantityID>
