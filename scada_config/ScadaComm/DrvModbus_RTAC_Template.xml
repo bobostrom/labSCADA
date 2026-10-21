@@ -9,9 +9,9 @@
   </Options>
   <ElemGroups>
     <ElemGroup active="true" dataBlock="HoldingRegisters" address="0" name="Temperatures">
-      <Elem type="short" readOnly="false" isBitMask="false" tagCode="Lab Ambient" name="Lab Ambient" />
-      <Elem type="short" readOnly="false" isBitMask="false" tagCode="Med Fridge" name="Med Fridge" />
-      <Elem type="short" readOnly="false" isBitMask="false" tagCode="Med Freezer" name="Med Freezer" />
+      <Elem type="short" readOnly="false" isBitMask="false" tagCode="Temperature_01" name="Lab Ambient" />
+      <Elem type="short" readOnly="false" isBitMask="false" tagCode="Temperature_02" name="Med Fridge" />
+      <Elem type="short" readOnly="false" isBitMask="false" tagCode="Temperature_03" name="Med Freezer" />
       <Elem type="short" readOnly="false" isBitMask="false" tagCode="Temperature_04" name="Temperature_04" />
       <Elem type="short" readOnly="false" isBitMask="false" tagCode="Temperature_05" name="Temperature_05" />
       <Elem type="short" readOnly="false" isBitMask="false" tagCode="Temperature_06" name="Temperature_06" />
@@ -19,7 +19,7 @@
       <Elem type="short" readOnly="false" isBitMask="false" tagCode="Temperature_08" name="Temperature_08" />
       <Elem type="short" readOnly="false" isBitMask="false" tagCode="Temperature_09" name="Temperature_09" />
       <Elem type="short" readOnly="false" isBitMask="false" tagCode="Temperature_10" name="Temperature_10" />
-      <Elem type="short" readOnly="false" isBitMask="false" tagCode="Cryo Tank 1" name="Cryo Tank 1" />
+      <Elem type="short" readOnly="false" isBitMask="false" tagCode="TC_Temperature" name="Cryo Tank 1" />
     </ElemGroup>
     <ElemGroup active="true" dataBlock="DiscreteInputs" address="0" name="Temperature Sensor Status">
       <Elem tagCode="SensorStatus_01" name="SensorStatus_01" />
