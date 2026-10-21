@@ -12,3 +12,10 @@
 # Python bytecode
 __pycache__/
 *.pyc
+
+# CODESYS temporary, user options, & cache files
+*.opt
+*.~*
+*.precompilecache
+*.compilecache
+*.bak

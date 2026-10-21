@@ -80,11 +80,20 @@ To maintain version history:
 
 1. **OPC UA Server Setup in CODESYS:**
    - Add **Symbol Configuration** under the Application.
-   - Check `PLC_PRG.rLabAmbient`, `rMedFridge`, `rMedFreezer`, `rCryoTank01`, `bDoorFridgeOpen`, `bIncubator01Alm`, etc.
+   - Check the variables:
+     * `PLC_PRG.rLabAmbientTemp` (~25°C)
+     * `PLC_PRG.rMedFridgeTemp` (~3°C)
+     * `PLC_PRG.rMedFreezerTemp` (~ -20°C)
+     * `PLC_PRG.rCryoTankTemp` (~ -150°C)
+     * `PLC_PRG.bDoor01_MainDoor` (BOOL)
+     * `PLC_PRG.bDoor02_CryoLabDoor` (BOOL)
+     * `PLC_PRG.bIncubator01_Alarm` (BOOL)
+     * `PLC_PRG.bIncubator02_Alarm` (BOOL)
+     * `PLC_PRG.bLedOutput` (Heartbeat BOOL)
    - The embedded OPC UA server publishes these nodes on port `4840`.
 2. **Rapid SCADA Integration:**
    - Configure Rapid SCADA's `DrvOpcUa` to connect to `opc.tcp://codesyspi02.local:4840`.
-   - Map OPC UA tags directly to Rapid SCADA channels (101–125).
+   - Map OPC UA tags directly to Rapid SCADA channels.
 3. **WAGO 750-8212 (PFC200) Migration:**
    - When the WAGO hardware arrives, right-click **Device** in CODESYS and select **Update Device...** -> select **WAGO 750-8212**.
    - The application logic (`PLC_PRG.st`), OPC UA symbol configuration, and telemetry data structures will carry over directly with zero changes.
