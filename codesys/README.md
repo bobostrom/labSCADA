@@ -64,9 +64,70 @@ If you want the green onboard LED on `codesyspi02.local` to blink directly witho
    ```
 2. In CODESYS, you can add the library **SysProcess** and call `SysProcessExecuteCommand2` to write `1` or `0` to `/sys/class/leds/ACT/brightness` upon `bLedOutput` transitions.
 
+## 4. CODESYS Runtime Evaluation & Auto-Reset Service
+
+In unlicensed demo mode, the CODESYS Control for Raspberry Pi runtime stops itself after **2 hours (120 minutes)**. Restarting the runtime service resets the 2-hour evaluation window to zero.
+
+To keep the development/test environment continuously available without manual intervention or purchasing a standalone soft license (~$66), an automated systemd timer is installed directly on `codesyspi02.local`.
+
+### Architecture & Service Units on `codesyspi02.local`:
+1. **Service (`/etc/systemd/system/codesys-auto-restart.service`):**
+   ```ini
+   [Unit]
+   Description=Automated restart of CODESYS Control to refresh 2-hour demo license
+   After=network.target
+
+   [Service]
+   Type=oneshot
+   ExecStart=/usr/bin/logger -t codesys-auto-restart "Triggering scheduled CODESYS runtime restart to reset evaluation timer."
+   ExecStart=/bin/systemctl restart codesyscontrol
+   ```
+
+2. **Timer (`/etc/systemd/system/codesys-auto-restart.timer`):**
+   ```ini
+   [Unit]
+   Description=Timer to restart CODESYS Control every 110 minutes (before 2-hour timeout)
+
+   [Timer]
+   OnBootSec=110min
+   OnUnitActiveSec=110min
+   AccuracySec=1min
+
+   [Install]
+   WantedBy=timers.target
+   ```
+   *The timer triggers every **110 minutes** (1h 50m), leaving a 10-minute safety buffer before the hard 120-minute timeout.*
+
+### Management Commands:
+
+- **Check when the next auto-restart will occur:**
+  ```bash
+  systemctl list-timers | grep codesys
+  ```
+
+- **Check status of the auto-restart timer:**
+  ```bash
+  systemctl status codesys-auto-restart.timer
+  ```
+
+- **View restart logs in journalctl:**
+  ```bash
+  sudo journalctl -t codesys-auto-restart -n 20 --no-pager
+  ```
+
+- **Manually restart CODESYS runtime remotely from `SCADAPi02`:**
+  ```bash
+  ssh bobostrom@codesyspi02.local "sudo systemctl restart codesyscontrol"
+  ```
+
+- **Disable the auto-reset timer (e.g. after installing an official license or moving to WAGO):**
+  ```bash
+  sudo systemctl disable --now codesys-auto-restart.timer
+  ```
+
 ---
 
-## 4. Git Version Control Best Practices for CODESYS
+## 5. Git Version Control Best Practices for CODESYS
 
 Because CODESYS `.project` files are proprietary binary databases, Git cannot generate clean diffs on them.
 To maintain version history:
@@ -76,7 +137,7 @@ To maintain version history:
 
 ---
 
-## 5. Upcoming Transition Roadmap
+## 6. Upcoming Transition Roadmap
 
 1. **OPC UA Server Setup in CODESYS:**
    - Add **Symbol Configuration** under the Application.
