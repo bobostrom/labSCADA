@@ -633,7 +633,7 @@ def get_ln2_status():
             log_dt = None
             if ts:
                 try:
-                    clean_ts = ts.split(".")[0]
+                    clean_ts = ts[:19]
                     log_dt = datetime.strptime(clean_ts, "%Y-%m-%d %H:%M:%S")
                 except Exception:
                     pass
