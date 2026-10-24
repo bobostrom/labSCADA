@@ -170,8 +170,8 @@ For planned procedural access (e.g., morning dish loading, oocyte retrieval batc
 
 ---
 
-## 9. Related System Architecture Documents
+## 9. Related User Manual Sections
 
-* **Clinical Alarm Architecture & Regulatory Lifecycle:** [clinical_alarm_architecture.md](file:///home/bobostrom/Projects/labSCADA/notes/clinical_alarm_architecture.md) — Detailed regulatory rationale (CAP/CLIA), PLC debouncing algorithms, Pushover receipt architecture, PostgreSQL schema, and complete operational walkthroughs.
-* **Liquid Nitrogen Compliance & Dipstick Architecture:** [ln2_tank_manual_dipstick_and_compliance_architecture.md](file:///home/bobostrom/Projects/labSCADA/notes/ln2_tank_manual_dipstick_and_compliance_architecture.md) — Detailed dual cryo tank dipstick protocols, manual measurement validation, and report generation.
+* **Clinical Alarm Architecture & Regulatory Lifecycle:** [02_clinical_alarm_response_and_regulatory_lifecycle.md](file:///home/bobostrom/Projects/labSCADA/user_manual/02_clinical_alarm_response_and_regulatory_lifecycle.md) — Detailed regulatory rationale (CAP/CLIA), PLC debouncing algorithms, Pushover receipt architecture, PostgreSQL schema, and complete operational walkthroughs.
+* **Liquid Nitrogen Compliance & Dipstick Architecture:** [03_liquid_nitrogen_tank_dipstick_and_compliance.md](file:///home/bobostrom/Projects/labSCADA/user_manual/03_liquid_nitrogen_tank_dipstick_and_compliance.md) — Detailed dual cryo tank dipstick protocols, manual measurement validation, and report generation.
 * **Alert Engine & Kiosk Server Implementation:** [ivf_alert_engine.py](file:///home/bobostrom/Projects/labSCADA/ivf_alert_engine.py) — The Python service providing the web application and telemetry API on port 8080.

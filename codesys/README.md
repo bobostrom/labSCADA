@@ -11,7 +11,7 @@ codesys/
 ├── README.md               # Architecture, setup instructions, and troubleshooting
 ├── projects/               # CODESYS binary project archives (*.project, *.projectarchive)
 └── src/                    # Exported Structured Text (*.st) source files for Git version control
-    ├── FB_PickupDropout.st # Reusable digital pickup/dropout timer (SEL RTAC PU_DO equivalent)
+    ├── FB_PickupDropout.st # Reusable digital pickup/dropout timer (PU_DO)
     ├── FB_AnalogAlarm.st   # Reusable analog alarm with pickup/dropout hysteresis & delay
     └── PLC_PRG.st          # Main program (LED heartbeat, telemetry simulation, alarm instances)
 ```
@@ -53,20 +53,20 @@ The program in [`src/PLC_PRG.st`](file:///home/bobostrom/Projects/labSCADA/codes
 
 ---
 
-## 3. Clinical Alarms: SEL RTAC-Style Pickup/Dropout & Hysteresis
+## 3. Clinical Alarms: Industrial Pickup/Dropout & Hysteresis
 
-In SEL RTAC (AcSELerator RTAC) Structured Text, function blocks like `PU_DO` and protective relay threshold elements provide built-in **pickup timers** (time to trip), **dropout timers** (time to reset / anti-chatter), and **hysteresis deadbands**.
+In clinical IVF environments, function blocks must provide built-in **pickup timers** (time to trip), **dropout timers** (time to reset / anti-chatter), and **hysteresis deadbands** to eliminate nuisance alarms from door openings.
 
-Standard IEC 61131-3 library only provides primitive timers (`TON`, `TOF`) and basic `HYSTERESIS` without integrated timing filters. To give our CODESYS controller the exact same robust behavior as an SEL RTAC, we implemented two modular IEC 61131-3 Function Blocks in `codesys/src/`:
+Standard IEC 61131-3 library only provides primitive timers (`TON`, `TOF`) and basic `HYSTERESIS` without integrated timing filters. To give our CODESYS controller robust clinical alarm filtering, we implemented two modular IEC 61131-3 Function Blocks in `codesys/src/`:
 
-### A. `FB_PickupDropout` (SEL RTAC `PU_DO` Equivalent)
+### A. `FB_PickupDropout` (Digital Debounce Timer)
 - **File:** [`src/FB_PickupDropout.st`](file:///home/bobostrom/Projects/labSCADA/codesys/src/FB_PickupDropout.st)
 - **Behavior:**
   - When `IN` goes `TRUE`, it must remain continuously `TRUE` for `tPickupDelay` before `Q` asserts `TRUE`. Transient spikes or door fluttering shorter than `tPickupDelay` reset the timer and do not cause false trips.
   - Once `Q` is `TRUE`, `IN` must remain continuously `FALSE` for `tDropoutDelay` before `Q` resets to `FALSE`. Brief bounces during recovery reset the dropout timer, preventing alarm chatter.
 - **Used for:** Discrete contacts like `bDoor01_MainDoor` and `bDoor02_CryoLabDoor` (e.g. 3-minute sustained open delay).
 
-### B. `FB_AnalogAlarm` (SEL RTAC High/Low Threshold Element)
+### B. `FB_AnalogAlarm` (Analog Threshold Element)
 - **File:** [`src/FB_AnalogAlarm.st`](file:///home/bobostrom/Projects/labSCADA/codesys/src/FB_AnalogAlarm.st)
 - **Features:**
   - **High Alarm:** Trips at `rHighPickup`, resets at `rHighDropout` (or `rHighPickup - rHysteresis`).

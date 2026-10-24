@@ -70,7 +70,7 @@ To eliminate false emergency alerts while ensuring fail-safe detection of genuin
 
 ## 3. Two-Way Pushover Receipt Architecture
 
-Generic notification systems that use broadcast tags (e.g., `tags=ivf_alarm`) are dangerous in clinical environments because silencing one alarm can inadvertently silence an unrelated, active emergency elsewhere in the laboratory.
+In clinical laboratory environments, each emergency alarm is tracked independently through discrete API receipt tokens:
 
 The [ivf_alert_engine.py](file:///home/bobostrom/Projects/labSCADA/ivf_alert_engine.py) engine employs **discrete receipt tracking**:
 
@@ -295,9 +295,9 @@ ORDER BY d_time ASC;
 
 ---
 
-## 7. Related System Architecture Documents
+## 7. Related User Manual Sections & System Files
 
-* **Cleanroom Touchscreen Kiosk UX Specification:** [cleanroom_touchscreen_kiosk_design.md](file:///home/bobostrom/Projects/labSCADA/notes/cleanroom_touchscreen_kiosk_design.md) — Covers the physical touchscreen kiosk, 2-tab navigation (`/` and `/cryo`), 6-card dashboard layout, glove-friendly tap targets, and daily CAP verification banner.
-* **Liquid Nitrogen Compliance & Dipstick Architecture:** [ln2_tank_manual_dipstick_and_compliance_architecture.md](file:///home/bobostrom/Projects/labSCADA/notes/ln2_tank_manual_dipstick_and_compliance_architecture.md) — Covers dual cryo tank dipstick audit protocols, sawtooth evaporative modeling, and automated report generation.
+* **Cleanroom Touchscreen Kiosk Operations:** [01_cleanroom_touchscreen_kiosk_operations.md](file:///home/bobostrom/Projects/labSCADA/user_manual/01_cleanroom_touchscreen_kiosk_operations.md) — Covers the physical touchscreen kiosk, 2-tab navigation (`/` and `/cryo`), 6-card dashboard layout, glove-friendly tap targets, and daily CAP verification banner.
+* **Liquid Nitrogen Compliance & Dipstick Auditing:** [03_liquid_nitrogen_tank_dipstick_and_compliance.md](file:///home/bobostrom/Projects/labSCADA/user_manual/03_liquid_nitrogen_tank_dipstick_and_compliance.md) — Covers dual cryo tank dipstick audit protocols, sawtooth evaporative modeling, and automated report generation.
 * **Alert Engine Implementation:** [ivf_alert_engine.py](file:///home/bobostrom/Projects/labSCADA/ivf_alert_engine.py) — The Python service handling telemetry scanning, Pushover dispatch/cancellation, and web kiosk hosting on port 8080.
 * **PLC Source Code:** [codesys/src/PLC_PRG.st](file:///home/bobostrom/Projects/labSCADA/codesys/src/PLC_PRG.st) — CODESYS IEC 61131-3 logic managing `tPickupDelay` filters and discrete alarm bits.

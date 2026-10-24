@@ -1,6 +1,6 @@
 (* ==============================================================================
    FUNCTION BLOCK: FB_AnalogAlarm
-   DESCRIPTION: IEC 61131-3 Structured Text implementation of an SEL RTAC-style
+   DESCRIPTION: IEC 61131-3 Structured Text implementation of an industrial
                 analog alarm monitor with pickup/dropout hysteresis deadbands
                 and sustained excursion / reset timers.
 
@@ -83,7 +83,7 @@ ELSE
 END_IF;
 
 
-// 4. Pickup / Dropout timing filter (SEL RTAC PU_DO equivalent)
+// 4. Pickup / Dropout timing filter
 fbTimer(
     IN := (bHighCondition OR bLowCondition),
     tPickupDelay := tPickupDelay,

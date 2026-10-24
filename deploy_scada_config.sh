@@ -28,11 +28,6 @@ if [ -d "$CONFIG_DIR/ScadaComm" ]; then
     echo "-> Deploying ScadaComm..."
     sudo mkdir -p /opt/scada/ScadaComm/Config /opt/scada/Config /opt/scada/ScadaComm/Config/DrvModbus
     sudo cp "$CONFIG_DIR/ScadaComm/"*.xml /opt/scada/ScadaComm/Config/
-    # Mirror template files if present
-    if [ -f "$CONFIG_DIR/ScadaComm/RTAC_Modbus.xml" ]; then
-        sudo cp "$CONFIG_DIR/ScadaComm/RTAC_Modbus.xml" /opt/scada/Config/
-        sudo cp "$CONFIG_DIR/ScadaComm/RTAC_Modbus.xml" /opt/scada/ScadaComm/Config/DrvModbus/
-    fi
 fi
 
 # 3. ScadaServer

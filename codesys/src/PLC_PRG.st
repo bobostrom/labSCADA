@@ -30,7 +30,7 @@ VAR
     bIncubator01_Alarm      : BOOL := FALSE;    (* Incubator 01 Alarm Contact *)
     bIncubator02_Alarm      : BOOL := FALSE;    (* Incubator 02 Alarm Contact *)
 
-    (* --- Clinical Alarm Function Blocks (RTAC-Style Pickup / Dropout & Hysteresis) --- *)
+    (* --- Clinical Alarm Function Blocks (Pickup / Dropout & Hysteresis) --- *)
     fbFridgeAlarm           : FB_AnalogAlarm;
     fbFreezerAlarm          : FB_AnalogAlarm;
     fbCryo1Alarm            : FB_AnalogAlarm;
@@ -113,7 +113,7 @@ IF tonSimTick.Q AND bSimulateDynamics THEN
 END_IF;
 
 // ==============================================================================
-// 3. CLINICAL ALARM EVALUATION (RTAC-STYLE PICKUP / DROPOUT & HYSTERESIS)
+// 3. CLINICAL ALARM EVALUATION (PICKUP / DROPOUT & HYSTERESIS)
 // ==============================================================================
 
 // --- A. Medical Fridge Alarm (Normal: 2.0°C to 8.0°C, 2m pickup, 10s dropout) ---

@@ -433,7 +433,7 @@ def telemetry_scan_worker():
                         # Discrete alarm bit is LOW
                         resolve_alarm(cnl, analog_val)
 
-            # 2. Evaluate Analog Limit Fallbacks (If discrete tags not yet loaded in CODESYS)
+            # 2. Evaluate Analog Limit Fallbacks (If discrete alarm channels not present)
             # Med Fridge (Cnl 102)
             if 102 in readings and 111 not in readings:
                 f_temp = readings[102]

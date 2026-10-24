@@ -27,3 +27,10 @@ Once installed, access the web interface in your browser:
 
 - **URL:** `http://<server-ip>` or `https://<server-ip>`
 - **Default Login:** `admin` / `scada`
+
+---
+
+## Documentation & Manuals
+
+* **📖 [User Manual](user_manual/README.md):** Complete operational user manual for clinical staff, laboratory directors, and compliance inspectors.
+* **📝 [Engineering Notes](notes/README.md):** Internal network maps, router configuration, and PLC architecture notes.
