@@ -1146,6 +1146,186 @@
       ],
       "title": "Active Alarms & Regulatory Excursion History (Reverse Chronological)",
       "type": "table"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 35
+      },
+      "id": 300,
+      "title": "Liquid Nitrogen (LN2) Manual Dipstick Tracking & 3-Day Inspection Compliance",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "$datasource"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "#EAB839",
+                "value": 60
+              },
+              {
+                "color": "red",
+                "value": 72
+              }
+            ]
+          },
+          "unit": "h"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Level (cm)"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "cm"
+              },
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "cyan",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 7,
+        "x": 0,
+        "y": 36
+      },
+      "id": 301,
+      "links": [
+        {
+          "targetBlank": true,
+          "title": "Open Glove-Friendly LN2 Inspection Form",
+          "url": "http://scadapi02.local:8080/"
+        }
+      ],
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "pluginVersion": "10.0.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "$datasource"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT \n  level_cm AS \"Level (cm)\",\n  ROUND(EXTRACT(EPOCH FROM (NOW() - logged_at)) / 3600.0, 1) AS \"Hours Since Check\",\n  initials AS \"Inspected By\"\nFROM mod_arc_postgre_sql.ln2_tank_logs\nWHERE tank_id = 'Cryo Tank 1'\nORDER BY logged_at DESC\nLIMIT 1;",
+          "refId": "A"
+        }
+      ],
+      "title": "Cryo Tank 1: Current Dipstick & 3-Day Clock",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "$datasource"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 17,
+        "x": 7,
+        "y": 36
+      },
+      "id": 302,
+      "options": {
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": true,
+            "displayName": "Inspection Time"
+          }
+        ]
+      },
+      "pluginVersion": "10.0.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "$datasource"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT \n  logged_at AS \"Inspection Time\",\n  tank_id AS \"Tank\",\n  ROUND(level_cm, 1)::text || ' cm' AS \"Dipstick Level\",\n  CASE WHEN was_filled THEN '🔵 Yes (Filled)' ELSE '⚪ Check Only' END AS \"Filled?\",\n  frost_condition AS \"Seal Condition\",\n  initials AS \"Staff\",\n  COALESCE(notes, '-') AS \"Notes\"\nFROM mod_arc_postgre_sql.ln2_tank_logs\nORDER BY logged_at DESC\nLIMIT 20;",
+          "refId": "A"
+        }
+      ],
+      "title": "LN2 Dipstick Regulatory Inspection Log (CAP/CLIA Audit Trail)",
+      "type": "table"
     }
   ],
   "refresh": "30s",

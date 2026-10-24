@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <ArrayOfDevice xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
   <Device>
     <DeviceNum>1</DeviceNum>
@@ -6,7 +6,7 @@
     <Code />
     <DevTypeID>232</DevTypeID>
     <NumAddress>1</NumAddress>
-    <StrAddress>192.168.10.136</StrAddress>
+    <StrAddress>codesysPi02.local</StrAddress>
     <CommLineNum>1</CommLineNum>
     <Descr />
   </Device>

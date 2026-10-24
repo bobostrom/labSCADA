@@ -5,7 +5,7 @@
     <MaxCurDataAge>0</MaxCurDataAge>
     <UseArchivalStatus>false</UseArchivalStatus>
     <GenerateAckCmd>false</GenerateAckCmd>
-    <DisableFormulas>false</DisableFormulas>
+    <DisableFormulas>true</DisableFormulas>
     <EnableFormulasObjNums></EnableFormulasObjNums>
     <StopWait>10</StopWait>
     <MaxLogSize>1</MaxLogSize>

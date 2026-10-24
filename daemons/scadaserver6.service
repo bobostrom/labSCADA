@@ -1,5 +1,7 @@
 [Unit]
 Description=Rapid SCADA Server
+After=network.target postgresql.service
+Wants=postgresql.service
 
 [Service]
 Type=notify
