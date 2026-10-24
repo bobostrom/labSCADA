@@ -1,15 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
 <OpcDeviceConfig>
+  <ConnectionOptions>
+    <ServerUrl>opc.tcp://codesysPi02:4840</ServerUrl>
+    <SecurityMode>SignAndEncrypt</SecurityMode>
+    <SecurityPolicy>http://opcfoundation.org/UA/SecurityPolicy#Basic256Sha256</SecurityPolicy>
+    <AuthenticationMode>Username</AuthenticationMode>
+    <Username>scada</Username>
+    <Password>labMon@2026</Password>
+  </ConnectionOptions>
+  <SubscriptionOptions>
+    <PublishingInterval>1000</PublishingInterval>
+  </SubscriptionOptions>
   <Subscriptions>
-    <Subscription active="true" displayName="IVF_Telemetry" publishingInterval="1000">
-      <Item active="true" nodeID="ns=4;s=|var|WAGO 750-8212 PFC200 G2 2ETH RS.Application.PLC_PRG.rLabAmbientTemp" displayName="Lab Ambient Temp" tagCode="Temperature_01" dataType="System.Double" isArray="false" />
-      <Item active="true" nodeID="ns=4;s=|var|WAGO 750-8212 PFC200 G2 2ETH RS.Application.PLC_PRG.rMedFridgeTemp" displayName="Medical Fridge" tagCode="Temperature_02" dataType="System.Double" isArray="false" />
-      <Item active="true" nodeID="ns=4;s=|var|WAGO 750-8212 PFC200 G2 2ETH RS.Application.PLC_PRG.rMedFreezerTemp" displayName="Medical Freezer" tagCode="Temperature_03" dataType="System.Double" isArray="false" />
-      <Item active="true" nodeID="ns=4;s=|var|WAGO 750-8212 PFC200 G2 2ETH RS.Application.PLC_PRG.rCryoTankTemp" displayName="Cryo Tank 1" tagCode="TC_Temperature" dataType="System.Double" isArray="false" />
-      <Item active="true" nodeID="ns=4;s=|var|WAGO 750-8212 PFC200 G2 2ETH RS.Application.PLC_PRG.bDoor01_MainDoor" displayName="Main Door" tagCode="DoorOpen_01" dataType="System.Boolean" isArray="false" />
-      <Item active="true" nodeID="ns=4;s=|var|WAGO 750-8212 PFC200 G2 2ETH RS.Application.PLC_PRG.bDoor02_CryoLabDoor" displayName="Cryo/Lab Door" tagCode="DoorOpen_02" dataType="System.Boolean" isArray="false" />
-      <Item active="true" nodeID="ns=4;s=|var|WAGO 750-8212 PFC200 G2 2ETH RS.Application.PLC_PRG.bIncubator01_Alarm" displayName="Incubator 01 Alarm" tagCode="IncubatorAlarm_01" dataType="System.Boolean" isArray="false" />
-      <Item active="true" nodeID="ns=4;s=|var|WAGO 750-8212 PFC200 G2 2ETH RS.Application.PLC_PRG.bIncubator02_Alarm" displayName="Incubator 02 Alarm" tagCode="IncubatorAlarm_02" dataType="System.Boolean" isArray="false" />
+    <Subscription name="IVF_Telemetry" publishingInterval="1000">
+      <Item active="true" nodeID="ns=4;s=|var|CODESYS Control for Raspberry Pi 64 SL.Application.PLC_PRG.rLabAmbientTemp" displayName="Lab Ambient Temp" tagCode="Temperature_01" />
+      <Item active="true" nodeID="ns=4;s=|var|CODESYS Control for Raspberry Pi 64 SL.Application.PLC_PRG.rMedFridgeTemp" displayName="Medical Fridge" tagCode="Temperature_02" />
+      <Item active="true" nodeID="ns=4;s=|var|CODESYS Control for Raspberry Pi 64 SL.Application.PLC_PRG.rMedFreezerTemp" displayName="Medical Freezer" tagCode="Temperature_03" />
+      <Item active="true" nodeID="ns=4;s=|var|CODESYS Control for Raspberry Pi 64 SL.Application.PLC_PRG.rCryoTankTemp" displayName="Cryo Tank 1" tagCode="TC_Temperature" />
+      <Item active="true" nodeID="ns=4;s=|var|CODESYS Control for Raspberry Pi 64 SL.Application.PLC_PRG.bDoor01_MainDoor" displayName="Main Door" tagCode="DoorOpen_01" />
+      <Item active="true" nodeID="ns=4;s=|var|CODESYS Control for Raspberry Pi 64 SL.Application.PLC_PRG.bDoor02_CryoLabDoor" displayName="Cryo/Lab Door" tagCode="DoorOpen_02" />
+      <Item active="true" nodeID="ns=4;s=|var|CODESYS Control for Raspberry Pi 64 SL.Application.PLC_PRG.bIncubator01_Alarm" displayName="Incubator 01 Alarm" tagCode="IncubatorAlarm_01" />
+      <Item active="true" nodeID="ns=4;s=|var|CODESYS Control for Raspberry Pi 64 SL.Application.PLC_PRG.bIncubator02_Alarm" displayName="Incubator 02 Alarm" tagCode="IncubatorAlarm_02" />
     </Subscription>
   </Subscriptions>
   <Commands />

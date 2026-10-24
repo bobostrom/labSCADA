@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <ArrayOfView xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
   <View>
     <ViewID>7</ViewID>
@@ -34,7 +34,7 @@
   </View>
   <View>
     <ViewID>11</ViewID>
-    <Args>http://SCADAPi02:8080/</Args>
+    <Args>http://192.168.10.131:8080/</Args>
     <ViewTypeID>3</ViewTypeID>
     <Title>IVF Clinic Dashboard</Title>
     <Ord xsi:nil="true" />
