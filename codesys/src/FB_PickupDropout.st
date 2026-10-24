@@ -1,7 +1,7 @@
 (* ==============================================================================
    FUNCTION BLOCK: FB_PickupDropout
-   DESCRIPTION: IEC 61131-3 Structured Text implementation of an industrial
-                Pickup / Dropout timer (PU_DO).
+   DESCRIPTION: IEC 61131-3 Structured Text implementation of the SEL RTAC
+                Pickup / Dropout timer (equivalent to RTAC PU_DO).
 
                 - Pickup Delay (On-Delay / Timeout):
                   The input signal (IN) must remain continuously TRUE for
@@ -17,18 +17,18 @@
    ============================================================================== *)
 FUNCTION_BLOCK FB_PickupDropout
 VAR_INPUT
-    IN              : BOOL;             (* Input signal to evaluate *)
+	IN              : BOOL;             (* Input signal to evaluate *)
     tPickupDelay    : TIME := T#0S;     (* Time IN must be sustained TRUE before Q asserts *)
     tDropoutDelay   : TIME := T#0S;     (* Time IN must be sustained FALSE before Q deasserts *)
 END_VAR
 VAR_OUTPUT
-    Q               : BOOL := FALSE;    (* Filtered output state *)
+	Q               : BOOL := FALSE;    (* Filtered output state *)
     bPickup         : BOOL := FALSE;    (* Raw instantaneous input status (unfiltered) *)
     tElapsedPU      : TIME := T#0S;     (* Elapsed pickup timer *)
     tElapsedDO      : TIME := T#0S;     (* Elapsed dropout timer *)
 END_VAR
 VAR
-    tonPickup       : TON;
+	tonPickup       : TON;
     tonDropout      : TON;
 END_VAR
 
@@ -58,5 +58,9 @@ ELSE
         Q := FALSE;
     END_IF;
 END_IF;
+
+
+
+
 
 END_FUNCTION_BLOCK

@@ -1,6 +1,6 @@
 (* ==============================================================================
    FUNCTION BLOCK: FB_AnalogAlarm
-   DESCRIPTION: IEC 61131-3 Structured Text implementation of an industrial
+   DESCRIPTION: IEC 61131-3 Structured Text implementation of an SEL RTAC-style
                 analog alarm monitor with pickup/dropout hysteresis deadbands
                 and sustained excursion / reset timers.
 
@@ -14,7 +14,7 @@
    ============================================================================== *)
 FUNCTION_BLOCK FB_AnalogAlarm
 VAR_INPUT
-    rVal            : REAL;             (* Analog process value to monitor (e.g. Temperature) *)
+	rVal            : REAL;             (* Analog process value to monitor (e.g. Temperature) *)
     bEnableHigh     : BOOL := TRUE;     (* Enable High Alarm monitoring *)
     rHighPickup     : REAL := 0.0;      (* High trip pickup threshold *)
     rHighDropout    : REAL := 0.0;      (* High trip reset threshold (or leave 0.0 and use rHysteresis) *)
@@ -26,7 +26,7 @@ VAR_INPUT
     tDropoutDelay   : TIME := T#0S;     (* Time normal state must persist before alarm clears *)
 END_VAR
 VAR_OUTPUT
-    bAlarm          : BOOL := FALSE;    (* Filtered alarm output (Active Alarm) *)
+	bAlarm          : BOOL := FALSE;    (* Filtered alarm output (Active Alarm) *)
     bPickup         : BOOL := FALSE;    (* Instantaneous pickup status (pre-timer) *)
     bHighTrip       : BOOL := FALSE;    (* TRUE if High Alarm condition caused/maintains trip *)
     bLowTrip        : BOOL := FALSE;    (* TRUE if Low Alarm condition caused/maintains trip *)
@@ -34,12 +34,13 @@ VAR_OUTPUT
     tElapsedDO      : TIME := T#0S;     (* Current elapsed dropout timer *)
 END_VAR
 VAR
-    rEffHighDO      : REAL;
+	rEffHighDO      : REAL;
     rEffLowDO       : REAL;
     bHighCondition  : BOOL := FALSE;
     bLowCondition   : BOOL := FALSE;
     fbTimer         : FB_PickupDropout;
 END_VAR
+
 
 // 1. Calculate effective dropout thresholds
 IF rHighDropout <> 0.0 THEN
@@ -83,7 +84,7 @@ ELSE
 END_IF;
 
 
-// 4. Pickup / Dropout timing filter
+// 4. Pickup / Dropout timing filter (SEL RTAC PU_DO equivalent)
 fbTimer(
     IN := (bHighCondition OR bLowCondition),
     tPickupDelay := tPickupDelay,
