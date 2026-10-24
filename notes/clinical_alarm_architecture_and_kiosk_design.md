@@ -52,6 +52,11 @@ To prevent sirens from waking up on-call staff during routine laboratory hours, 
 * **Action:** Suppresses remote sirens for the selected chamber during the procedure window. Temperatures continue logging silently to PostgreSQL without interruption.
 * **Safety Lock:** Automatically expires and re-arms when the timer finishes, ensuring the chamber is never inadvertently left unprotected.
 
+### D. Audit Trail Boundaries: Suppression of Transient Dips
+* **Regulatory Design Decision:** Transient thermal dips that recover within the PLC pickup delay (e.g. routine door access < 2m on fridge, < 3m on freezer, < 30s on cryo tanks) are deliberately **suppressed from generating records in `mod_arc_postgre_sql.alarm_events`**.
+* **Clinical Rationale:** Avoids alarm fatigue, extraneous paperwork, and audit log bloat from expected daily sterile procedures.
+* **Audit Assurance:** Continuous 1-minute historical time-series data is retained in `mod_arc_postgre_sql.mincopy_historical` for 365 days, ensuring inspectors can always review raw temperature traces while keeping the clinical alarm log reserved for actionable emergencies.
+
 ---
 
 ## 3. Lab Kiosk UX & Glove-Friendly Touchscreen Workflow
