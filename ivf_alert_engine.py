@@ -975,10 +975,19 @@ def render_mobile_log_html(host, tank_param, readings):
     .form-group {{ margin-bottom: 16px; }}
     .form-label {{ font-size: 12px; font-weight: 700; color: #cbd5e1; text-transform: uppercase; margin-bottom: 8px; display: block; letter-spacing: 0.5px; }}
 
-    .stepper-row {{ display: flex; gap: 6px; align-items: center; }}
-    .btn-step {{ background: #1e293b; color: #fff; border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; font-size: 15px; font-weight: 800; padding: 12px 10px; min-width: 50px; cursor: pointer; }}
-    .btn-step:active {{ background: #334155; transform: scale(0.96); }}
-    .input-level {{ flex: 1; text-align: center; font-family: monospace; font-size: 26px; font-weight: 800; background: #090d16; border: 2px solid #00e5ff; color: #00e5ff; border-radius: 10px; padding: 8px; }}
+    /* Compact Vertical Stepper */
+    .stepper-vert-box {{ display: flex; flex-direction: column; align-items: center; gap: 8px; margin: 6px auto 12px; width: 170px; }}
+    .stepper-btn-row {{ display: flex; gap: 8px; width: 100%; }}
+    .btn-step-vert {{ flex: 1; background: #1e293b; color: #f0f4f8; border: 1px solid rgba(255,255,255,0.18); border-radius: 8px; font-size: 15px; font-weight: 800; padding: 10px 0; cursor: pointer; text-align: center; transition: all 0.1s; user-select: none; }}
+    .btn-step-vert.btn-plus {{ background: rgba(0,229,255,0.12); border-color: rgba(0,229,255,0.35); color: #00e5ff; }}
+    .btn-step-vert.btn-minus {{ background: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.3); color: #f87171; }}
+    .btn-step-vert:active {{ transform: scale(0.95); opacity: 0.8; }}
+    
+    .level-input-wrap {{ position: relative; width: 100%; display: flex; align-items: center; justify-content: center; }}
+    .input-level-compact {{ width: 100%; text-align: center; font-family: monospace; font-size: 30px; font-weight: 900; background: #090d16; border: 2px solid #00e5ff; color: #00e5ff; border-radius: 10px; padding: 8px 30px 8px 12px; outline: none; -moz-appearance: textfield; }}
+    .input-level-compact::-webkit-outer-spin-button,
+    .input-level-compact::-webkit-inner-spin-button {{ -webkit-appearance: none; margin: 0; }}
+    .level-cm-tag {{ position: absolute; right: 10px; color: #8899a6; font-size: 13px; font-weight: 800; pointer-events: none; }}
 
     .chips-row {{ display: flex; flex-wrap: wrap; gap: 6px; }}
     .chip {{ background: #1e293b; color: #94a3b8; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 8px 12px; font-size: 12.5px; font-weight: 700; cursor: pointer; user-select: none; }}
@@ -1032,15 +1041,25 @@ def render_mobile_log_html(host, tank_param, readings):
           </div>
         </div>
 
-        <!-- Dipstick Level Stepper -->
-        <div class="form-group">
+        <!-- Dipstick Level Stepper (Compact Vertical Layout for Mobile) -->
+        <div class="form-group" style="text-align: center;">
           <label class="form-label">Ruler Frost Line (Centimeters)</label>
-          <div class="stepper-row">
-            <button type="button" class="btn-step" onclick="adjustLevel(-1.0)">-1.0</button>
-            <button type="button" class="btn-step" onclick="adjustLevel(-0.5)">-0.5</button>
-            <input type="number" step="0.1" id="mobileLevel" class="input-level" value="{init_level}">
-            <button type="button" class="btn-step" onclick="adjustLevel(0.5)">+0.5</button>
-            <button type="button" class="btn-step" onclick="adjustLevel(1.0)">+1.0</button>
+          <div class="stepper-vert-box">
+            <!-- Increment Buttons Above -->
+            <div class="stepper-btn-row">
+              <button type="button" class="btn-step-vert btn-plus" onclick="adjustLevel(0.5)">+0.5</button>
+              <button type="button" class="btn-step-vert btn-plus" onclick="adjustLevel(1.0)">+1.0</button>
+            </div>
+            <!-- Center Compact Number Display -->
+            <div class="level-input-wrap">
+              <input type="number" step="0.1" id="mobileLevel" class="input-level-compact" value="{init_level}">
+              <span class="level-cm-tag">cm</span>
+            </div>
+            <!-- Decrement Buttons Below -->
+            <div class="stepper-btn-row">
+              <button type="button" class="btn-step-vert btn-minus" onclick="adjustLevel(-0.5)">-0.5</button>
+              <button type="button" class="btn-step-vert btn-minus" onclick="adjustLevel(-1.0)">-1.0</button>
+            </div>
           </div>
         </div>
 
