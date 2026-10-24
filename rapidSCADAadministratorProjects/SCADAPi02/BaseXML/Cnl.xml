@@ -12,7 +12,7 @@
     <DeviceNum>1</DeviceNum>
     <TagNum xsi:nil="true" />
     <TagCode>Temperature_01</TagCode>
-    <FormulaEnabled>false</FormulaEnabled>
+    <FormulaEnabled>true</FormulaEnabled>
     <InFormula>Cnl / 10.0</InFormula>
     <OutFormula>Cnl * 10</OutFormula>
     <FormatID>3</FormatID>
@@ -35,7 +35,7 @@
     <DeviceNum>1</DeviceNum>
     <TagNum xsi:nil="true" />
     <TagCode>Temperature_02</TagCode>
-    <FormulaEnabled>false</FormulaEnabled>
+    <FormulaEnabled>true</FormulaEnabled>
     <InFormula>Cnl / 10.0</InFormula>
     <OutFormula>Cnl * 10</OutFormula>
     <FormatID>3</FormatID>
@@ -57,7 +57,7 @@
     <DeviceNum>1</DeviceNum>
     <TagNum xsi:nil="true" />
     <TagCode>Temperature_03</TagCode>
-    <FormulaEnabled>false</FormulaEnabled>
+    <FormulaEnabled>true</FormulaEnabled>
     <InFormula>Cnl / 10.0</InFormula>
     <OutFormula>Cnl * 10</OutFormula>
     <FormatID>3</FormatID>
@@ -80,7 +80,7 @@
     <DeviceNum>1</DeviceNum>
     <TagNum xsi:nil="true" />
     <TagCode>Temperature_04</TagCode>
-    <FormulaEnabled>false</FormulaEnabled>
+    <FormulaEnabled>true</FormulaEnabled>
     <InFormula>Cnl / 10.0</InFormula>
     <OutFormula>Cnl * 10</OutFormula>
     <FormatID>3</FormatID>
@@ -103,7 +103,7 @@
     <DeviceNum>1</DeviceNum>
     <TagNum xsi:nil="true" />
     <TagCode>Temperature_05</TagCode>
-    <FormulaEnabled>false</FormulaEnabled>
+    <FormulaEnabled>true</FormulaEnabled>
     <InFormula>Cnl / 10.0</InFormula>
     <OutFormula>Cnl * 10</OutFormula>
     <FormatID>3</FormatID>
@@ -126,7 +126,7 @@
     <DeviceNum>1</DeviceNum>
     <TagNum xsi:nil="true" />
     <TagCode>Temperature_06</TagCode>
-    <FormulaEnabled>false</FormulaEnabled>
+    <FormulaEnabled>true</FormulaEnabled>
     <InFormula>Cnl / 10.0</InFormula>
     <OutFormula>Cnl * 10</OutFormula>
     <FormatID>3</FormatID>
@@ -149,7 +149,7 @@
     <DeviceNum>1</DeviceNum>
     <TagNum xsi:nil="true" />
     <TagCode>Temperature_07</TagCode>
-    <FormulaEnabled>false</FormulaEnabled>
+    <FormulaEnabled>true</FormulaEnabled>
     <InFormula>Cnl / 10.0</InFormula>
     <OutFormula>Cnl * 10</OutFormula>
     <FormatID>3</FormatID>
@@ -172,7 +172,7 @@
     <DeviceNum>1</DeviceNum>
     <TagNum xsi:nil="true" />
     <TagCode>Temperature_08</TagCode>
-    <FormulaEnabled>false</FormulaEnabled>
+    <FormulaEnabled>true</FormulaEnabled>
     <InFormula>Cnl / 10.0</InFormula>
     <OutFormula>Cnl * 10</OutFormula>
     <FormatID>3</FormatID>
@@ -195,7 +195,7 @@
     <DeviceNum>1</DeviceNum>
     <TagNum xsi:nil="true" />
     <TagCode>Temperature_09</TagCode>
-    <FormulaEnabled>false</FormulaEnabled>
+    <FormulaEnabled>true</FormulaEnabled>
     <InFormula>Cnl / 10.0</InFormula>
     <OutFormula>Cnl * 10</OutFormula>
     <FormatID>3</FormatID>
@@ -218,7 +218,7 @@
     <DeviceNum>1</DeviceNum>
     <TagNum xsi:nil="true" />
     <TagCode>Temperature_10</TagCode>
-    <FormulaEnabled>false</FormulaEnabled>
+    <FormulaEnabled>true</FormulaEnabled>
     <InFormula>Cnl / 10.0</InFormula>
     <OutFormula>Cnl * 10</OutFormula>
     <FormatID>3</FormatID>
@@ -563,9 +563,9 @@
     <DeviceNum>1</DeviceNum>
     <TagNum xsi:nil="true" />
     <TagCode>TC_Temperature</TagCode>
-    <FormulaEnabled>false</FormulaEnabled>
-    <InFormula />
-    <OutFormula />
+    <FormulaEnabled>true</FormulaEnabled>
+    <InFormula>Cnl / 10</InFormula>
+    <OutFormula>Cnl * 10</OutFormula>
     <FormatID>3</FormatID>
     <OutFormatID xsi:nil="true" />
     <QuantityID>4</QuantityID>
