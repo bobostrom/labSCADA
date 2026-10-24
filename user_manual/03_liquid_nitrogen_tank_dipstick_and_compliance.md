@@ -92,42 +92,51 @@ Technicians and embryologists work gloved in sterile attire and cannot manipulat
 ## 4. External Tank Monitoring & Mobile QR Code Workflow (For Non-Lab & Support Staff)
 
 ### Operational Context: Tanks Outside the Cleanroom Suite
-At *Advanced Fertility of Alaska*, the cryogenic storage dewars (**Cryo Tank 1: Embryos** and **Cryo Tank 2: Sperm**) are physically located in the secure cryogenic corridor **outside the main cleanroom laboratory**:
+At *Advanced Fertility of Alaska*, the cryogenic storage dewars (**Cryo Tank 1: Embryos** and **Cryo Tank 2: Sperm**) are physically located side-by-side in the secure cryogenic corridor **outside the main cleanroom laboratory**:
 * **Support Personnel Access:** Non-laboratory staff (clinical nurses, medical assistants, facilities technicians, on-call support) frequently perform or assist with the routine Monday / Wednesday / Friday level verifications.
 * **Gowning Barrier:** These staff members do not gown up into sterile cleanroom bunny suits to access the cleanroom touchscreen kiosk.
-* **Mobile Solution:** To ensure fast, zero-friction compliance without requiring staff to enter the cleanroom, each tank features a durable, laminated **QR Code Placard** posted directly adjacent to the tank lid.
+* **Single Unified Placard:** Because both dewars stand immediately next to each other, a single, durable laminated **Cryogenic Storage Station Placard** is posted at eye level between the two tanks. A single QR code provides instant access to both tanks.
 
 ```
                   ┌──────────────────────────────────────────────┐
-                  │ Staff walks up to Cryo Tank outside lab      │
+                  │ Staff walks up to Cryo Station outside lab   │
+                  │ (Cryo Tank 1: Embryos & Cryo Tank 2: Sperm)  │
                   └──────────────────────┬───────────────────────┘
                                          │
                                          ▼
                   ┌──────────────────────────────────────────────┐
                   │ 1. Put on cryo gloves and protective shield  │
-                  │ 2. Insert wooden yardstick (hold 5 seconds)  │
+                  │ 2. Insert measuring stick into Tank 1 (5s)   │
                   │ 3. Wave stick in air & read frost line (cm)  │
                   └──────────────────────┬───────────────────────┘
                                          │
                                          ▼
                   ┌──────────────────────────────────────────────┐
-                  │ 4. Scan Tank QR Code with Smartphone Camera  │
-                  │    • Tank 1: http://192.168.10.133:8080/log?tank=1
-                  │    • Tank 2: http://192.168.10.133:8080/log?tank=2
+                  │ 4. Scan Single Station QR Code with Phone    │
+                  │    • Destination URL: http://<host>/log      │
+                  │    • No app download or login required       │
                   └──────────────────────┬───────────────────────┘
                                          │
                                          ▼
                   ┌──────────────────────────────────────────────┐
-                  │ 5. Mobile Web Form Opens Automatically       │
-                  │    • Tap +/- buttons to set measured cm      │
-                  │    • Toggle "Topped Off" (Yes / No)          │
-                  │    • Tap initials or type name               │
-                  │    • Tap "Submit Dipstick Check"             │
+                  │ 5. Select Tank & Submit:                     │
+                  │    • Tap "Cryo Tank 1" or "Cryo Tank 2" tab  │
+                  │    • Use compact vertical stepper for level  │
+                  │    • Tap staff initials & tap "Submit"       │
                   └──────────────────────┬───────────────────────┘
                                          │
                                          ▼
                   ┌──────────────────────────────────────────────┐
-                  │ 6. Immediate System Sync:                    │
+                  │ 6. Log Adjacent Tank (30-Second Workflow):   │
+                  │    • Measure second tank with dipstick       │
+                  │    • Tap "Log Another Tank" on confirmation  │
+                  │    • Form auto-flips to the other tank       │
+                  │    • Enter level and submit                  │
+                  └──────────────────────┬───────────────────────┘
+                                         │
+                                         ▼
+                  ┌──────────────────────────────────────────────┐
+                  │ 7. Immediate System Sync:                    │
                   │    • Saved to PostgreSQL `ln2_tank_logs`     │
                   │    • Kiosk resets 3-day countdown timer      │
                   │    • Pushover alert dispatched to Directors  │
@@ -135,21 +144,24 @@ At *Advanced Fertility of Alaska*, the cryogenic storage dewars (**Cryo Tank 1: 
                   └──────────────────────────────────────────────┘
 ```
 
-### Mobile Web Form (`/log?tank=1` and `/log?tank=2`)
-Scanning the QR code opens a mobile-optimized card directly on any iOS or Android smartphone browser (no app download or login required on the clinic Wi-Fi network):
-* **Live Telemetry Comparison:** Displays the tank's real-time electronic vapor temperature (e.g. `-196.2°C`) and electronic depth sensor reading, allowing staff to perform an instant sanity check against their physical ruler reading.
-* **Thumb-Friendly Stepper:** Oversized buttons allow adjusting levels in $0.5\text{ cm}$ increments with one hand.
-* **Quick Initials / Staff Identifier:** Includes quick chips for clinical staff (`BO`, `SJ`, `AK`, `TL`, `Nurse`, `Facilities`) and a text box for custom names.
-* **Instant Confirmation:** Upon tapping **Submit**, the form validates the input, stores the record in PostgreSQL, and displays a green confirmation receipt with the next scheduled check deadline.
+### Mobile Web Form (`/log`)
+Scanning the station QR code opens a mobile-optimized card directly on any iOS or Android smartphone browser (no app download or login required on the clinic Wi-Fi network):
+* **Dual Tank Switcher:** Prominent tabs at the top allow selecting between **Cryo Tank 1 (Embryos)** and **Cryo Tank 2 (Sperm)** with a single touch.
+* **Live Telemetry Comparison:** Displays the active tank's real-time electronic vapor temperature (e.g. `-196.2°C`) and electronic depth sensor reading, allowing staff to perform an instant sanity check against their physical ruler reading.
+* **Compact Vertical Stepper:** A narrow, thumb-friendly vertical keypad optimized for one-handed operation on mobile screens (`+0.5` / `+1.0` buttons on top, centered high-contrast level display with `cm` badge, `-0.5` / `-1.0` buttons below).
+* **Quick Initials / Staff Identifier:** Includes quick chips for clinical staff (`BO`, `SJ`, `AK`, `TL`, `RN`, `Facilities`) and a text box for custom names.
+* **Instant Confirmation & Quick Sequential Reset:** Upon tapping **Submit**, the form validates the input, stores the record in PostgreSQL, and displays a green confirmation receipt. Tapping **"Log Another Tank"** automatically toggles the active tank so the adjacent tank can be inspected and recorded without rescanning.
 
-### Printing Laminated Tank Placards (`/print/qr`)
-To print placards for mounting next to the physical tanks:
-1. Open **`http://192.168.10.133:8080/print/qr`** in any web browser (or click **📱 Print Tank QR Placards** on the Kiosk Cryo Suite tab).
-2. The page renders two high-contrast placards formatted for standard 8.5" x 11" letter paper:
-   * **Placard 1:** Cryo Tank 1 (Embryos) with embedded vector QR code pointing to `/log?tank=1`.
-   * **Placard 2:** Cryo Tank 2 (Sperm) with embedded vector QR code pointing to `/log?tank=2`.
-3. Click the blue **`[ 🖨️ Print Laminated Placards ]`** button (or press `Ctrl + P`).
-4. Print in color, laminate the sheet (or place in heavy plastic sleeves to resist cold/frost condensation), and affix each placard at eye level on the wall or safety rail directly behind each corresponding tank.
+### Printing the Laminated Station Placard (`/print/qr`)
+To print the unified placard for mounting between the physical tanks:
+1. Open **`http://192.168.10.133:8080/print/qr`** in any web browser (or click **📱 Print Station QR Placard** on the Kiosk Cryo Suite tab).
+2. The page renders a single, high-contrast station placard formatted for standard 8.5" x 11" letter paper:
+   * **Dual Tank Badges:** Clear labeling for Cryo Tank 1 (Embryos) and Cryo Tank 2 (Sperm).
+   * **Unified Vector QR Code:** High-resolution SVG pointing directly to `http://<host>/log`.
+   * **Step-by-Step SOP:** 6-step clinical standard operating procedure including PPE, dipstick measurement, tank selection, and adjacent tank logging.
+   * **Regulatory Compliance Notice:** CAP / CLIA / JCAHO documentation disclaimer and critical 10.0 cm safety thresholds.
+3. Click the blue **`[ 🖨️ Print Laminated Station Placard ]`** button (or press `Ctrl + P`).
+4. Print in color, laminate the sheet to resist cryogenic condensation, and affix the placard at eye level on the wall or safety rail directly between the two tanks.
 
 ---
 
@@ -226,11 +238,11 @@ A background thread (`ln2_schedule_watcher`) in [ivf_alert_engine.py](file:///ho
 
 The HTTP server running on port `8080` provides dedicated web and REST endpoints:
 
-### 1. `GET /log?tank=1` and `GET /log?tank=2`
-Mobile-optimized web application for phone scanning at the cryogenic storage tanks. Displays live telemetry comparison, oversized touch stepper, nitrogen top-off toggle, staff initials chips, and visual neck seal checks.
+### 1. `GET /log` (optional `?tank=1` or `?tank=2`)
+Mobile-first web application for phone scanning at the cryogenic storage station. Features instant dual-tank switcher, live electronic telemetry comparison, compact vertical stepper, nitrogen top-off toggle, staff initials chips, and visual neck seal checks. Automatically prompts to log the second tank upon confirmation.
 
 ### 2. `GET /print/qr` (or `/qr`)
-Generates high-resolution printable 8.5" x 11" placard sheets containing vector SVG QR codes and step-by-step measurement standard operating procedures for both tanks.
+Generates a print-ready 8.5" x 11" laminated Cryogenic Storage Station Placard featuring a single unified vector SVG QR code, dual tank identifiers, and standard operating procedures. Dedicated vector SVG endpoints are available at `/qr/station.svg` (or `/qr.svg`).
 
 ### 3. `GET /api/ln2_status`
 Returns the latest inspection status and the 10 most recent logs in JSON format.

@@ -794,70 +794,92 @@ def ln2_schedule_watcher():
 # ==============================================================================
 # QR CODE PLACARD & MOBILE ENTRY GENERATORS
 # ==============================================================================
-def generate_qr_svg(url):
+def generate_qr_svg(url, box_size=8):
     """Generates an inline SVG QR code string for the given URL."""
     if not QR_ENABLED:
         return f'<svg width="180" height="180" viewBox="0 0 180 180" xmlns="http://www.w3.org/2000/svg"><rect width="180" height="180" fill="#f1f5f9"/><text x="15" y="95" fill="#475569" font-family="sans-serif" font-size="12">python3-qrcode required</text></svg>'
     factory = qrcode.image.svg.SvgPathImage
-    img = qrcode.make(url, image_factory=factory, box_size=8, border=2)
+    img = qrcode.make(url, image_factory=factory, box_size=box_size, border=2)
     raw = img.to_string()
     return raw.decode("utf-8") if isinstance(raw, bytes) else raw
 
 
 def render_print_placards_html(host):
-    """Generates a high-resolution, printable 8.5x11 placard sheet with vector QR codes for both cryo tanks."""
-    url_tank1 = f"http://{host}/log?tank=1"
-    url_tank2 = f"http://{host}/log?tank=2"
-    qr_svg_1 = generate_qr_svg(url_tank1)
-    qr_svg_2 = generate_qr_svg(url_tank2)
+    """Generates a high-resolution, printable 8.5x11 single station placard with a vector QR code for both cryo tanks."""
+    station_url = f"http://{host}/log"
+    qr_svg = generate_qr_svg(station_url, box_size=9)
 
     return f"""<!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Cryo Tank LN2 Monitoring Placards - Advanced Fertility of Alaska</title>
+  <title>Cryogenic Storage Station Placard - Advanced Fertility of Alaska</title>
   <style>
-    @page {{ size: letter portrait; margin: 0.4in; }}
+    @page {{ size: letter portrait; margin: 0.35in; }}
     * {{ box-sizing: border-box; }}
-    body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f8fafc; color: #0f172a; margin: 0; padding: 20px; }}
+    body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: #0b1120; color: #0f172a; margin: 0; padding: 20px; }}
     
-    .nav-bar {{ background: #0f172a; color: #fff; padding: 12px 20px; border-radius: 10px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }}
+    .nav-bar {{ background: #1e293b; color: #fff; padding: 12px 20px; border-radius: 10px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 12px rgba(0,0,0,0.3); max-width: 820px; margin-left: auto; margin-right: auto; }}
     .nav-links {{ display: flex; align-items: center; gap: 16px; font-size: 14px; }}
     .nav-links a {{ color: #38bdf8; text-decoration: none; font-weight: 700; }}
     .nav-links a:hover {{ text-decoration: underline; }}
-    .btn-print {{ background: #0284c7; color: #fff; font-size: 15px; font-weight: 800; padding: 10px 22px; border: none; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 8px; }}
+    .btn-print {{ background: #0284c7; color: #fff; font-size: 15px; font-weight: 800; padding: 10px 22px; border: none; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 8px; box-shadow: 0 2px 8px rgba(2,132,199,0.4); }}
     .btn-print:hover {{ background: #0369a1; }}
 
-    .placards-container {{ display: flex; flex-direction: column; gap: 28px; max-width: 820px; margin: 0 auto; }}
-    .placard {{ background: #fff; border: 3px solid #0284c7; border-radius: 14px; padding: 22px 26px; box-shadow: 0 4px 16px rgba(0,0,0,0.06); display: flex; gap: 26px; align-items: center; }}
-    .placard.tank2 {{ border-color: #2563eb; }}
+    .placards-container {{ max-width: 820px; margin: 0 auto; }}
     
-    .qr-column {{ flex: 0 0 200px; text-align: center; }}
-    .qr-wrapper {{ width: 190px; height: 190px; margin: 0 auto; display: flex; align-items: center; justify-content: center; }}
-    .qr-wrapper svg {{ width: 100%; height: 100%; }}
-    .qr-label {{ font-size: 11px; font-weight: 700; color: #64748b; margin-top: 6px; text-transform: uppercase; letter-spacing: 0.5px; }}
-
-    .info-column {{ flex: 1; }}
-    .clinic-tag {{ font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; color: #0284c7; margin-bottom: 2px; }}
-    .placard.tank2 .clinic-tag {{ color: #2563eb; }}
-    .tank-heading {{ font-size: 24px; font-weight: 900; margin: 0 0 4px; color: #0f172a; }}
-    .tank-desc {{ font-size: 13.5px; font-weight: 600; color: #475569; margin: 0 0 14px; }}
+    /* Single Station Laminated Placard */
+    .station-placard {{ background: #ffffff; border: 4px solid #0284c7; border-radius: 18px; padding: 28px 32px; box-shadow: 0 12px 36px rgba(0,0,0,0.25); }}
     
-    .instruction-box {{ background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 8px; padding: 12px 14px; margin-bottom: 12px; }}
-    .placard.tank2 .instruction-box {{ background: #eff6ff; border-color: #bfdbfe; }}
-    .instruction-title {{ font-size: 12px; font-weight: 800; text-transform: uppercase; color: #0369a1; margin-bottom: 6px; letter-spacing: 0.5px; }}
-    .placard.tank2 .instruction-title {{ color: #1d4ed8; }}
-    .steps-list {{ margin: 0; padding-left: 18px; font-size: 13px; line-height: 1.5; color: #1e293b; }}
-    .steps-list li {{ margin-bottom: 4px; }}
-    .steps-list li:last-child {{ margin-bottom: 0; }}
+    .station-header {{ text-align: center; border-bottom: 2px solid #e2e8f0; padding-bottom: 18px; margin-bottom: 20px; }}
+    .clinic-badge {{ display: inline-block; font-size: 11.5px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; color: #0284c7; background: #f0f9ff; border: 1px solid #bae6fd; padding: 4px 14px; border-radius: 20px; margin-bottom: 8px; }}
+    .station-title {{ font-size: 30px; font-weight: 900; margin: 0 0 6px; color: #0f172a; letter-spacing: -0.5px; }}
+    .station-subtitle {{ font-size: 14px; font-weight: 600; color: #475569; margin: 0; }}
 
-    .direct-url {{ font-family: monospace; font-size: 11.5px; color: #475569; background: #f1f5f9; padding: 6px 10px; border-radius: 6px; border: 1px dashed #cbd5e1; display: inline-block; }}
+    /* Dual Tank Identification Badges */
+    .tanks-row {{ display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 22px; }}
+    .tank-badge-card {{ border: 2px solid #0284c7; background: #f8fafc; border-radius: 12px; padding: 12px 16px; display: flex; align-items: center; gap: 14px; }}
+    .tank-badge-card.tank2 {{ border-color: #2563eb; background: #f8faff; }}
+    .tank-icon {{ font-size: 28px; line-height: 1; }}
+    .tank-badge-info {{ flex: 1; }}
+    .tank-badge-tag {{ font-size: 10.5px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.8px; color: #0284c7; }}
+    .tank-badge-card.tank2 .tank-badge-tag {{ color: #2563eb; }}
+    .tank-badge-name {{ font-size: 17px; font-weight: 900; color: #0f172a; margin: 2px 0 1px; }}
+    .tank-badge-desc {{ font-size: 11.5px; color: #64748b; font-weight: 600; }}
+
+    /* Main Content: QR Code + SOP Instructions */
+    .main-grid {{ display: flex; gap: 24px; align-items: stretch; margin-bottom: 20px; }}
+    
+    .qr-card {{ flex: 0 0 250px; background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 14px; padding: 18px 14px; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; }}
+    .qr-frame {{ width: 200px; height: 200px; background: #fff; padding: 8px; border-radius: 10px; border: 1px solid #cbd5e1; box-shadow: 0 2px 8px rgba(0,0,0,0.06); display: flex; align-items: center; justify-content: center; }}
+    .qr-frame svg {{ width: 100%; height: 100%; }}
+    .qr-action-title {{ font-size: 13px; font-weight: 900; color: #0f172a; margin: 10px 0 2px; text-transform: uppercase; letter-spacing: 0.5px; }}
+    .qr-action-desc {{ font-size: 11px; font-weight: 600; color: #64748b; margin-bottom: 8px; }}
+    .direct-url {{ font-family: monospace; font-size: 11px; font-weight: 700; color: #0369a1; background: #e0f2fe; padding: 4px 8px; border-radius: 6px; border: 1px dashed #7dd3fc; word-break: break-all; }}
+
+    .sop-card {{ flex: 1; background: #f0f9ff; border: 2px solid #bae6fd; border-radius: 14px; padding: 18px 20px; display: flex; flex-direction: column; justify-content: space-between; }}
+    .sop-header-bar {{ display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid #bae6fd; padding-bottom: 8px; }}
+    .sop-title {{ font-size: 13px; font-weight: 900; text-transform: uppercase; color: #0369a1; letter-spacing: 0.8px; margin: 0; }}
+    .sop-schedule-pill {{ font-size: 11px; font-weight: 800; background: #0284c7; color: #fff; padding: 3px 10px; border-radius: 12px; text-transform: uppercase; letter-spacing: 0.5px; }}
+    
+    .sop-steps {{ margin: 0; padding-left: 20px; font-size: 12.8px; line-height: 1.55; color: #1e293b; }}
+    .sop-steps li {{ margin-bottom: 7px; }}
+    .sop-steps li:last-child {{ margin-bottom: 0; }}
+    .sop-steps strong {{ color: #0f172a; font-weight: 800; }}
+    .step-highlight {{ background: #e0f2fe; padding: 1px 6px; border-radius: 4px; font-weight: 700; color: #0369a1; }}
+
+    /* Regulatory Footer */
+    .regulatory-bar {{ background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px 14px; display: flex; justify-content: space-between; align-items: center; font-size: 11.5px; color: #475569; }}
+    .reg-item {{ display: flex; align-items: center; gap: 6px; font-weight: 600; }}
+    .reg-item strong {{ color: #0f172a; }}
+    .reg-warning {{ color: #dc2626; font-weight: 800; }}
 
     @media print {{
-      body {{ background: #fff; padding: 0; }}
+      body {{ background: #fff !important; padding: 0 !important; color: #000 !important; }}
       .nav-bar {{ display: none !important; }}
-      .placard {{ box-shadow: none; border-width: 3px !important; page-break-inside: avoid; margin-bottom: 16px; padding: 16px 20px; }}
-      .placards-container {{ gap: 16px; }}
+      .placards-container {{ max-width: 100% !important; }}
+      .station-placard {{ border-width: 4px !important; box-shadow: none !important; padding: 22px 24px !important; border-radius: 12px !important; page-break-inside: avoid; }}
+      .qr-frame {{ box-shadow: none !important; border-color: #94a3b8 !important; }}
     }}
   </style>
 </head>
@@ -866,61 +888,81 @@ def render_print_placards_html(host):
     <div class="nav-links">
       <a href="/cryo">← Back to SCADA Cryo Suite</a>
       <span style="opacity:0.4;">|</span>
-      <span>Target Server: <strong style="color:#38bdf8;">http://{host}/</strong></span>
+      <span>Station URL: <strong style="color:#38bdf8;">{station_url}</strong></span>
     </div>
-    <button class="btn-print" onclick="window.print()">🖨️ Print Laminated Placards</button>
+    <button class="btn-print" onclick="window.print()">🖨️ Print Laminated Station Placard</button>
   </div>
 
   <div class="placards-container">
-    <!-- Placard: Cryo Tank 1 (Embryos) -->
-    <div class="placard">
-      <div class="qr-column">
-        <div class="qr-wrapper">
-          {qr_svg_1}
-        </div>
-        <div class="qr-label">Point Phone Camera at Code</div>
+    <div class="station-placard">
+      <!-- Station Header -->
+      <div class="station-header">
+        <div class="clinic-badge">Advanced Fertility of Alaska • Cryopreservation Facility</div>
+        <h1 class="station-title">❄️ CRYOGENIC STORAGE STATION</h1>
+        <div class="station-subtitle">Liquid Nitrogen Specimen Storage (Dual MVE SC 47/11-V Dewars) • External Cleanroom Corridor</div>
       </div>
-      <div class="info-column">
-        <div class="clinic-tag">Advanced Fertility of Alaska • Cryogenic Storage</div>
-        <h1 class="tank-heading">❄️ CRYO TANK 1: EMBRYO STORAGE</h1>
-        <div class="tank-desc">Primary Embryology Specimen Tank (MVE SC 47/11-V)</div>
-        <div class="instruction-box">
-          <div class="instruction-title">Manual Inspection Standard Operating Procedure:</div>
-          <ol class="steps-list">
-            <li><strong>PPE:</strong> Put on insulated cryogenic gloves and protective face shield.</li>
-            <li><strong>Insert Ruler:</strong> Lower clean measuring stick straight down until resting squarely on bottom. Hold 5s.</li>
-            <li><strong>Read Frost:</strong> Pull ruler out, wave in air 3s, and read the frost line in <strong>centimeters (cm)</strong>.</li>
-            <li><strong>Scan QR:</strong> Open your smartphone camera, point at the code on left, and tap the link.</li>
-            <li><strong>Submit:</strong> Enter level and your initials. (Saves to compliance audit log immediately).</li>
-          </ol>
-        </div>
-        <div class="direct-url">Direct Link: <strong>{url_tank1}</strong></div>
-      </div>
-    </div>
 
-    <!-- Placard: Cryo Tank 2 (Sperm) -->
-    <div class="placard tank2">
-      <div class="qr-column">
-        <div class="qr-wrapper">
-          {qr_svg_2}
+      <!-- Adjacent Tanks Identification -->
+      <div class="tanks-row">
+        <div class="tank-badge-card">
+          <div class="tank-icon">🥚</div>
+          <div class="tank-badge-info">
+            <div class="tank-badge-tag">Specimen Vessel 1</div>
+            <div class="tank-badge-name">CRYO TANK 1 (EMBRYOS)</div>
+            <div class="tank-badge-desc">Primary Embryology Specimen Storage</div>
+          </div>
         </div>
-        <div class="qr-label">Point Phone Camera at Code</div>
+
+        <div class="tank-badge-card tank2">
+          <div class="tank-icon">🧬</div>
+          <div class="tank-badge-info">
+            <div class="tank-badge-tag">Specimen Vessel 2</div>
+            <div class="tank-badge-name">CRYO TANK 2 (SPERM)</div>
+            <div class="tank-badge-desc">Primary Andrology Specimen Storage</div>
+          </div>
+        </div>
       </div>
-      <div class="info-column">
-        <div class="clinic-tag" style="color:#2563eb;">Advanced Fertility of Alaska • Cryogenic Storage</div>
-        <h1 class="tank-heading">❄️ CRYO TANK 2: SPERM STORAGE</h1>
-        <div class="tank-desc">Primary Andrology Specimen Tank (MVE SC 47/11-V)</div>
-        <div class="instruction-box">
-          <div class="instruction-title">Manual Inspection Standard Operating Procedure:</div>
-          <ol class="steps-list">
+
+      <!-- Main Action & SOP -->
+      <div class="main-grid">
+        <!-- Single Unified QR Code -->
+        <div class="qr-card">
+          <div class="qr-frame">
+            {qr_svg}
+          </div>
+          <div class="qr-action-title">📱 Scan to Log Levels</div>
+          <div class="qr-action-desc">Point phone camera here • No app or login needed</div>
+          <div class="direct-url">{station_url}</div>
+        </div>
+
+        <!-- Standard Operating Procedure -->
+        <div class="sop-card">
+          <div class="sop-header-bar">
+            <h3 class="sop-title">Manual Dipstick Standard Operating Procedure</h3>
+            <span class="sop-schedule-pill">Mon / Wed / Fri by 5:00 PM</span>
+          </div>
+          <ol class="sop-steps">
             <li><strong>PPE:</strong> Put on insulated cryogenic gloves and protective face shield.</li>
-            <li><strong>Insert Ruler:</strong> Lower clean measuring stick straight down until resting squarely on bottom. Hold 5s.</li>
-            <li><strong>Read Frost:</strong> Pull ruler out, wave in air 3s, and read the frost line in <strong>centimeters (cm)</strong>.</li>
-            <li><strong>Scan QR:</strong> Open your smartphone camera, point at the code on left, and tap the link.</li>
-            <li><strong>Submit:</strong> Enter level and your initials. (Saves to compliance audit log immediately).</li>
+            <li><strong>Measure Level:</strong> Lower measuring ruler straight into tank until resting flat on the bottom plate. Hold <span class="step-highlight">5 seconds</span>.</li>
+            <li><strong>Read Frost:</strong> Withdraw ruler, wave in air 3 seconds, and immediately read the frost line in <span class="step-highlight">centimeters (cm)</span>.</li>
+            <li><strong>Scan QR:</strong> Open your smartphone camera and point at the code on the left.</li>
+            <li><strong>Select Tank & Submit:</strong> Tap <strong>Cryo Tank 1</strong> or <strong>Cryo Tank 2</strong> at the top of your phone screen. Enter the measured cm and your initials, then tap <strong>Submit</strong>.</li>
+            <li><strong>Log Adjacent Tank:</strong> On the confirmation screen, tap <span class="step-highlight">"Log Another Tank"</span> to immediately record the second tank without re-scanning.</li>
           </ol>
         </div>
-        <div class="direct-url">Direct Link: <strong>{url_tank2}</strong></div>
+      </div>
+
+      <!-- Regulatory & Safety Notice -->
+      <div class="regulatory-bar">
+        <div class="reg-item">
+          <span>🛡️</span>
+          <span><strong>CAP / CLIA Compliance:</strong> All entries are logged directly into the digital clinical audit trail.</span>
+        </div>
+        <div class="reg-item">
+          <span>⚠️</span>
+          <span class="reg-warning">Critical Minimum: 10.0 cm</span>
+          <span style="color:#64748b;">(Refill required if level drops below 12.0 cm)</span>
+        </div>
       </div>
     </div>
   </div>
@@ -1409,10 +1451,14 @@ class ClinicalAlertHandler(http.server.BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(html.encode("utf-8"))
 
-        elif parsed.path in ["/qr/tank1.svg", "/qr/tank2.svg"]:
-            tank_num = "2" if "2" in parsed.path else "1"
+        elif parsed.path in ["/qr/station.svg", "/qr.svg", "/qr/tank1.svg", "/qr/tank2.svg"]:
+            tank_num = "2" if "tank2" in parsed.path else ("1" if "tank1" in parsed.path else None)
             host = self.headers.get("Host", "192.168.10.133:8080")
-            svg_data = generate_qr_svg(f"http://{host}/log?tank={tank_num}")
+            if tank_num:
+                target_url = f"http://{host}/log?tank={tank_num}"
+            else:
+                target_url = f"http://{host}/log"
+            svg_data = generate_qr_svg(target_url, box_size=8)
             self.send_response(200)
             self.send_header("Content-Type", "image/svg+xml; charset=utf-8")
             self.send_header("Access-Control-Allow-Origin", "*")
@@ -1736,7 +1782,7 @@ class ClinicalAlertHandler(http.server.BaseHTTPRequestHandler):
                     <p class="subpage-desc">Dual Tank Manual Dipstick Tracking, Boil-off Dynamics & Regulatory Audit Trail (CAP / CLIA / JCAHO)</p>
                   </div>
                   <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
-                    <a href="/print/qr" target="_blank" class="btn-report" style="border-color:#38bdf8; color:#38bdf8;">📱 Print Tank QR Placards</a>
+                    <a href="/print/qr" target="_blank" class="btn-report" style="border-color:#38bdf8; color:#38bdf8;">📱 Print Station QR Placard</a>
                     <a href="/report/ln2?tank=1" target="_blank" class="btn-report">📊 Print Tank 1 Report</a>
                     <a href="/report/ln2?tank=2" target="_blank" class="btn-report">📊 Print Tank 2 Report</a>
                     <button class="btn" style="background:#00e5ff; color:#090d16; font-size:14px; font-weight:800; padding:10px 18px; border-radius:8px; box-shadow:0 4px 14px rgba(0,229,255,0.3);" onclick="openLn2Modal()">🧊 Log Dipstick Check</button>

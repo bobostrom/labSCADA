@@ -156,9 +156,9 @@ Tapping the **`❄️ Cryo Suite`** tab transitions to the cryogenic compliance 
    * Writes the audit record to `mod_arc_postgre_sql.ln2_tank_logs`.
 4. **1-Click Compliance Report Export:**
    * Buttons to generate and print standalone HTML/PDF compliance reports for **Cryo Tank 1** (`/report/ln2?tank=1`) and **Cryo Tank 2** (`/report/ln2?tank=2`).
-5. **Printable Mobile QR Code Placards (`/print/qr`):**
-   * Staff tap **`[ 📱 Print Tank QR Placards ]`** in the subpage header to generate print-ready laminated placards for the tanks outside the lab.
-   * Enables non-lab staff, facilities, and clinical nurses to scan the QR code with their smartphone and submit measurements without gowning into the cleanroom suite.
+5. **Printable Mobile QR Code Station Placard (`/print/qr`):**
+   * Staff tap **`[ 📱 Print Station QR Placard ]`** in the subpage header to generate a print-ready laminated station placard for the external cryo tanks.
+   * Enables non-lab staff, facilities, and clinical nurses to scan the single QR code with their smartphone, select the tank (Tank 1 or Tank 2), and submit measurements without gowning into the cleanroom suite.
 
 ---
 
