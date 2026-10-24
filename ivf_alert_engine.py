@@ -238,7 +238,7 @@ def trigger_alarm(cnl_num, equipment_name, alarm_type, excursion_val, priority=N
         priority = cfg.get("priority", 2)
 
     val_str = f"{excursion_val:.1f}°C" if excursion_val is not None else "TRIPPED"
-    if cnl_num == 199 and excursion_val is not None:
+    if cnl_num in (198, 199) and excursion_val is not None:
         val_str = f"{excursion_val:.1f}h since check"
 
     if priority == 2:
@@ -330,7 +330,7 @@ def resolve_alarm(cnl_num, final_val=None):
     db_execute(sql)
 
     # Send Priority 0 "RESOLVED" notification with chime
-    val_disp = f"({final_val:.1f} cm)" if (cnl_num == 199 and final_val is not None) else (f"({final_val:.1f}°C)" if final_val is not None else "")
+    val_disp = f"({final_val:.1f} cm)" if (cnl_num in (198, 199) and final_val is not None) else (f"({final_val:.1f}°C)" if final_val is not None else "")
     send_pushover_alert(
         title=f"🟢 RESOLVED: {equip} Normal",
         message=f"{equip} has returned to safe operational range {val_disp}. Duration: {duration_str}.",
@@ -424,12 +424,14 @@ def telemetry_scan_worker():
             for cnl, equip, alarm_type in discrete_evals:
                 if cnl in readings:
                     val = readings[cnl]
+                    linked = CHANNELS.get(cnl, {}).get("linked_analog")
+                    analog_val = readings.get(linked) if linked else None
                     if val > 0:
                         # Discrete alarm bit is HIGH
-                        trigger_alarm(cnl, equip, alarm_type, None)
+                        trigger_alarm(cnl, equip, alarm_type, analog_val)
                     else:
                         # Discrete alarm bit is LOW
-                        resolve_alarm(cnl, None)
+                        resolve_alarm(cnl, analog_val)
 
             # 2. Evaluate Analog Limit Fallbacks (If discrete tags not yet loaded in CODESYS)
             # Med Fridge (Cnl 102)
