@@ -1002,7 +1002,7 @@
       },
       "id": 201,
       "options": {
-        "content": "<div style=\"display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; text-align:center; padding:16px;\">\n  <h3 style=\"color:#00e5ff; margin-bottom:12px; font-size:16px;\">Daily Alarm Pathway QA</h3>\n  <p style=\"color:#8899a6; font-size:13px; margin-bottom:18px;\">Triggers verified Priority 0 test notification to all on-call staff and writes permanent timestamp to CAP/CLIA audit log.</p>\n  <a href=\"http://scadapi02.local:8080/api/test\" target=\"_blank\" style=\"background:#2979ff; color:white; text-decoration:none; padding:14px 24px; border-radius:8px; font-weight:700; font-size:15px; box-shadow:0 4px 14px rgba(41,121,255,0.4); display:inline-block;\">🔔 Run Daily Alarm Test</a>\n  <div style=\"margin-top:16px; font-size:12px; color:#00e676;\">Kiosk & Cloud Verified</div>\n</div>",
+        "content": "<div style=\"display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; text-align:center; padding:16px;\">\n  <h3 style=\"color:#00e5ff; margin-bottom:12px; font-size:16px;\">Daily Alarm Pathway QA</h3>\n  <p style=\"color:#8899a6; font-size:13px; margin-bottom:18px;\">Triggers verified Priority 0 test notification to all on-call staff and writes permanent timestamp to CAP/CLIA audit log.</p>\n  <a href=\"http://scadapi02:8080/api/test\" target=\"_blank\" style=\"background:#2979ff; color:white; text-decoration:none; padding:14px 24px; border-radius:8px; font-weight:700; font-size:15px; box-shadow:0 4px 14px rgba(41,121,255,0.4); display:inline-block;\">🔔 Run Daily Alarm Test</a>\n  <div style=\"margin-top:16px; font-size:12px; color:#00e676;\">Kiosk & Cloud Verified</div>\n</div>",
         "mode": "html"
       },
       "title": "Daily Alarm Verification",
@@ -1097,7 +1097,7 @@
                 "value": [
                   {
                     "title": "✋ Silence / Acknowledge",
-                    "url": "http://scadapi02.local:8080/api/ack?id=${__data.fields.Action}",
+                    "url": "http://scadapi02:8080/api/ack?id=${__data.fields.Action}",
                     "targetBlank": true
                   }
                 ]
@@ -1222,7 +1222,7 @@
         {
           "targetBlank": true,
           "title": "Open Glove-Friendly LN2 Inspection Form",
-          "url": "http://scadapi02.local:8080/"
+          "url": "http://scadapi02:8080/"
         }
       ],
       "options": {

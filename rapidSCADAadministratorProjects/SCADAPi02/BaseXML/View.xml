@@ -34,7 +34,7 @@
   </View>
   <View>
     <ViewID>11</ViewID>
-    <Args>http://SCADAPi02.local:8080/</Args>
+    <Args>http://SCADAPi02:8080/</Args>
     <ViewTypeID>3</ViewTypeID>
     <Title>IVF Clinic Dashboard</Title>
     <Ord xsi:nil="true" />

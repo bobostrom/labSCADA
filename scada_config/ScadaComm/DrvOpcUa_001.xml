@@ -2,19 +2,14 @@
 <OpcDeviceConfig>
   <Subscriptions>
     <Subscription active="true" displayName="IVF_Telemetry" publishingInterval="1000">
-      <Item active="true" nodeID="ns=4;s=|var|CODESYS Control for Raspberry Pi 64 SL.Application.PLC_PRG.rLabAmbientTemp" displayName="Lab Ambient Temp" tagCode="Temperature_01" dataType="System.Double" isArray="false" />
-      <Item active="true" nodeID="ns=4;s=|var|CODESYS Control for Raspberry Pi 64 SL.Application.PLC_PRG.rMedFridgeTemp" displayName="Medical Fridge" tagCode="Temperature_02" dataType="System.Double" isArray="false" />
-      <Item active="true" nodeID="ns=4;s=|var|CODESYS Control for Raspberry Pi 64 SL.Application.PLC_PRG.rMedFreezerTemp" displayName="Medical Freezer" tagCode="Temperature_03" dataType="System.Double" isArray="false" />
-      <Item active="true" nodeID="ns=4;s=|var|CODESYS Control for Raspberry Pi 64 SL.Application.PLC_PRG.rCryoTankTemp" displayName="Cryo Tank 1" tagCode="TC_Temperature" dataType="System.Double" isArray="false" />
-      <Item active="true" nodeID="ns=4;s=|var|CODESYS Control for Raspberry Pi 64 SL.Application.PLC_PRG.bDoor01_MainDoor" displayName="Main Door" tagCode="DoorOpen_01" dataType="System.Boolean" isArray="false" />
-      <Item active="true" nodeID="ns=4;s=|var|CODESYS Control for Raspberry Pi 64 SL.Application.PLC_PRG.bDoor02_CryoLabDoor" displayName="Cryo/Lab Door" tagCode="DoorOpen_02" dataType="System.Boolean" isArray="false" />
-      <Item active="true" nodeID="ns=4;s=|var|CODESYS Control for Raspberry Pi 64 SL.Application.PLC_PRG.bIncubator01_Alarm" displayName="Incubator 01 Alarm" tagCode="IncubatorAlarm_01" dataType="System.Boolean" isArray="false" />
-      <Item active="true" nodeID="ns=4;s=|var|CODESYS Control for Raspberry Pi 64 SL.Application.PLC_PRG.bIncubator02_Alarm" displayName="Incubator 02 Alarm" tagCode="IncubatorAlarm_02" dataType="System.Boolean" isArray="false" />
-      <Item active="true" nodeID="ns=4;s=|var|CODESYS Control for Raspberry Pi 64 SL.Application.PLC_PRG.bMedFridgeAlarm" displayName="Medical Fridge Alarm" tagCode="MedFridgeAlarm" dataType="System.Boolean" isArray="false" />
-      <Item active="true" nodeID="ns=4;s=|var|CODESYS Control for Raspberry Pi 64 SL.Application.PLC_PRG.bMedFreezerAlarm" displayName="Medical Freezer Alarm" tagCode="MedFreezerAlarm" dataType="System.Boolean" isArray="false" />
-      <Item active="true" nodeID="ns=4;s=|var|CODESYS Control for Raspberry Pi 64 SL.Application.PLC_PRG.bCryoTankAlarm" displayName="Cryo Tank Alarm" tagCode="CryoTankAlarm" dataType="System.Boolean" isArray="false" />
-      <Item active="true" nodeID="ns=4;s=|var|CODESYS Control for Raspberry Pi 64 SL.Application.PLC_PRG.bDoor01_Alarm" displayName="Main Door Ajar Alarm" tagCode="DoorAlarm_01" dataType="System.Boolean" isArray="false" />
-      <Item active="true" nodeID="ns=4;s=|var|CODESYS Control for Raspberry Pi 64 SL.Application.PLC_PRG.bDoor02_Alarm" displayName="Cryo Door Ajar Alarm" tagCode="DoorAlarm_02" dataType="System.Boolean" isArray="false" />
+      <Item active="true" nodeID="ns=4;s=|var|WAGO 750-8212 PFC200 G2 2ETH RS.Application.PLC_PRG.rLabAmbientTemp" displayName="Lab Ambient Temp" tagCode="Temperature_01" dataType="System.Double" isArray="false" />
+      <Item active="true" nodeID="ns=4;s=|var|WAGO 750-8212 PFC200 G2 2ETH RS.Application.PLC_PRG.rMedFridgeTemp" displayName="Medical Fridge" tagCode="Temperature_02" dataType="System.Double" isArray="false" />
+      <Item active="true" nodeID="ns=4;s=|var|WAGO 750-8212 PFC200 G2 2ETH RS.Application.PLC_PRG.rMedFreezerTemp" displayName="Medical Freezer" tagCode="Temperature_03" dataType="System.Double" isArray="false" />
+      <Item active="true" nodeID="ns=4;s=|var|WAGO 750-8212 PFC200 G2 2ETH RS.Application.PLC_PRG.rCryoTankTemp" displayName="Cryo Tank 1" tagCode="TC_Temperature" dataType="System.Double" isArray="false" />
+      <Item active="true" nodeID="ns=4;s=|var|WAGO 750-8212 PFC200 G2 2ETH RS.Application.PLC_PRG.bDoor01_MainDoor" displayName="Main Door" tagCode="DoorOpen_01" dataType="System.Boolean" isArray="false" />
+      <Item active="true" nodeID="ns=4;s=|var|WAGO 750-8212 PFC200 G2 2ETH RS.Application.PLC_PRG.bDoor02_CryoLabDoor" displayName="Cryo/Lab Door" tagCode="DoorOpen_02" dataType="System.Boolean" isArray="false" />
+      <Item active="true" nodeID="ns=4;s=|var|WAGO 750-8212 PFC200 G2 2ETH RS.Application.PLC_PRG.bIncubator01_Alarm" displayName="Incubator 01 Alarm" tagCode="IncubatorAlarm_01" dataType="System.Boolean" isArray="false" />
+      <Item active="true" nodeID="ns=4;s=|var|WAGO 750-8212 PFC200 G2 2ETH RS.Application.PLC_PRG.bIncubator02_Alarm" displayName="Incubator 02 Alarm" tagCode="IncubatorAlarm_02" dataType="System.Boolean" isArray="false" />
     </Subscription>
   </Subscriptions>
   <Commands />

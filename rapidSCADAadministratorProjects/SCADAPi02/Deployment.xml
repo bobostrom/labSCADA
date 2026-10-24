@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <DeploymentConfig>
   <DeploymentProfile>
     <InstanceID>1</InstanceID>
@@ -8,7 +8,7 @@
     <AgentEnabled>true</AgentEnabled>
     <DbEnabled>false</DbEnabled>
     <AgentConnectionOptions>
-      <Host>SCADAPi02.local</Host>
+      <Host>SCADAPi02</Host>
       <Port>10002</Port>
       <Username>ScadaAdmin</Username>
       <Password>B9D0F030265751578B00E9801C69320C</Password>

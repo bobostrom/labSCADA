@@ -6,7 +6,7 @@
     <Code />
     <DevTypeID>232</DevTypeID>
     <NumAddress>1</NumAddress>
-    <StrAddress>codesysPi02.local</StrAddress>
+    <StrAddress>codesysPi02</StrAddress>
     <CommLineNum>1</CommLineNum>
     <Descr />
   </Device>
