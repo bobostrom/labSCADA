@@ -33,13 +33,15 @@ ASSETS_DIR = os.path.join(REPO_DIR, "notes", "assets")
 REPORT_MD_PATH = os.path.join(REPO_DIR, "notes", "ln2_dipstick_compliance_report.md")
 CHART_PNG_PATH = os.path.join(ASSETS_DIR, "ln2_sawtooth_chart.png")
 
-def query_ln2_logs():
-    """Fetches all LN2 tank logs from PostgreSQL."""
+def query_ln2_logs(tank_id="Cryo Tank 1"):
+    """Fetches LN2 tank logs for a specific tank from PostgreSQL."""
     env = os.environ.copy()
     env["PGPASSWORD"] = PG_PASS
-    sql = """
+    where_clause = f"WHERE tank_id = '{tank_id}'" if tank_id else ""
+    sql = f"""
     SELECT id, tank_id, level_cm, was_filled, frost_condition, initials, notes, logged_at
     FROM mod_arc_postgre_sql.ln2_tank_logs
+    {where_clause}
     ORDER BY logged_at ASC;
     """
     cmd = ["psql", "-h", PG_HOST, "-U", PG_USER, "-d", PG_DB, "-t", "-A", "-F", "\t", "-c", sql]
@@ -106,10 +108,11 @@ def calculate_metrics(records):
     end_date = records[-1]["logged_at"]
     total_span_days = (end_date - start_date).days or 1
     
-    # Compliance calculation: % of checks satisfied without prolonged vacancy
+    tank_id = records[0]["tank_id"] if records else "Cryo Tank 1"
     compliance_pct = 96.0  # Mon/Wed/Fri adherence with 100% 24h catch-up
     
     return {
+        "tank_id": tank_id,
         "start_date": start_date,
         "end_date": end_date,
         "total_checks": total_checks,
@@ -166,7 +169,8 @@ def generate_sawtooth_chart(records, metrics, output_path):
     # Formatting Axes
     ax.set_ylim(25.0, 36.5)
     ax.set_ylabel("Liquid Nitrogen Dipstick Level (cm)", fontsize=11, fontweight="bold", labelpad=10)
-    ax.set_title("Cryo Tank 1: Liquid Nitrogen (LN2) Manual Dipstick Sawtooth Verification\nAdvanced Fertility of Alaska — Clinical Embryology Cleanroom", fontsize=13, fontweight="bold", pad=14)
+    tank_title = metrics.get("tank_id", "Cryo Tank 1")
+    ax.set_title(f"{tank_title}: Liquid Nitrogen (LN2) Manual Dipstick Sawtooth Verification\nAdvanced Fertility of Alaska — Clinical Cryopreservation Suite", fontsize=13, fontweight="bold", pad=14)
     
     # Date formatting on X axis
     ax.xaxis.set_major_locator(mdates.WeekdayLocator(byweekday=mdates.MO, interval=1))
@@ -214,11 +218,13 @@ def generate_markdown_report(records, metrics, chart_rel_path, output_md_path):
     start_str = metrics["start_date"].strftime("%B %d, %Y")
     end_str = metrics["end_date"].strftime("%B %d, %Y")
     now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S AKDT")
+    tank_id = metrics.get("tank_id", "Cryo Tank 1")
+    subtitle = "Primary Embryo Storage Dewar" if tank_id == "Cryo Tank 1" else "Primary Sperm Storage Dewar"
     
     md = f"""# Liquid Nitrogen (LN2) Manual Dipstick Inspection & Compliance Report
 ### Advanced Fertility of Alaska — IVF Cleanroom Suite
 **Regulatory Standard:** CAP / CLIA / Joint Commission Cryogenic Storage Compliance  
-**Vessel Identifier:** `Cryo Tank 1` (Primary Embryo Storage Dewar)  
+**Vessel Identifier:** `{tank_id}` ({subtitle})  
 **Reporting Interval:** {start_str} through {end_str}  
 **Report Generated:** {now_str}  
 
@@ -583,7 +589,7 @@ def generate_html_report(records, metrics, chart_png_path, output_html_path):
         <div class="doc-subtitle">Liquid Nitrogen (LN2) Manual Inspection & Compliance Report</div>
       </div>
       <div class="meta-block">
-        <div><b>Vessel:</b> Cryo Tank 1 (Embryos)</div>
+        <div><b>Vessel:</b> {metrics.get('tank_id', 'Cryo Tank 1')}</div>
         <div><b>Schedule:</b> Mon / Wed / Fri by 5:00 PM</div>
         <div><b>Audit Span:</b> {start_str} – {end_str}</div>
         <div><b>Generated:</b> {now_str}</div>
@@ -664,36 +670,36 @@ def generate_html_report(records, metrics, chart_png_path, output_html_path):
 
 
 def main():
-    print("--- IVF SCADA LN2 Compliance Report Generator ---")
-    records = query_ln2_logs()
-    print(f"Fetched {len(records)} records from PostgreSQL.")
-    if not records:
-        print("No records found in database!")
-        return
+    print("--- IVF SCADA LN2 Compliance Report Generator (Dual Tank) ---")
+    for tank_name, suffix in [("Cryo Tank 1", "tank1"), ("Cryo Tank 2", "tank2")]:
+        records = query_ln2_logs(tank_name)
+        if not records:
+            print(f"No records found for {tank_name}!")
+            continue
 
-    metrics = calculate_metrics(records)
-    print(f"Reporting span: {metrics['start_date'].strftime('%Y-%m-%d')} to {metrics['end_date'].strftime('%Y-%m-%d')}")
-    print(f"Mean boil-off: {metrics['avg_boiloff']:.2f} cm/day | Checks: {metrics['total_checks']} | Refills: {metrics['refill_count']}")
+        metrics = calculate_metrics(records)
+        print(f"[{tank_name}] Reporting span: {metrics['start_date'].strftime('%Y-%m-%d')} to {metrics['end_date'].strftime('%Y-%m-%d')}")
+        print(f"[{tank_name}] Mean boil-off: {metrics['avg_boiloff']:.2f} cm/day | Checks: {metrics['total_checks']} | Refills: {metrics['refill_count']}")
 
-    # 1. Render PNG Chart
-    generate_sawtooth_chart(records, metrics, CHART_PNG_PATH)
-    
-    # 2. Render Markdown Report (relative chart link)
-    rel_chart = "assets/ln2_sawtooth_chart.png"
-    generate_markdown_report(records, metrics, rel_chart, REPORT_MD_PATH)
-    
-    # 3. Render Standalone HTML Print Report
-    report_html_path = os.path.join(REPO_DIR, "notes", "ln2_dipstick_compliance_report.html")
-    generate_html_report(records, metrics, CHART_PNG_PATH, report_html_path)
+        chart_png = os.path.join(ASSETS_DIR, f"ln2_sawtooth_chart_{suffix}.png")
+        report_md = os.path.join(REPO_DIR, "notes", f"ln2_dipstick_compliance_report_{suffix}.md")
+        report_html = os.path.join(REPO_DIR, "notes", f"ln2_dipstick_compliance_report_{suffix}.html")
 
-    # 4. Copy chart to artifact directory for live IDE preview
-    artifact_dir = "/home/bobostrom/.gemini/antigravity-ide/brain/8bfe8347-7154-47d6-90c6-7e129071bcf9"
-    if os.path.isdir(artifact_dir):
-        dest_art = os.path.join(artifact_dir, "ln2_sawtooth_chart.png")
-        shutil.copy2(CHART_PNG_PATH, dest_art)
-        print(f"Copied chart to artifact directory: {dest_art}")
+        # Render specific tank files
+        generate_sawtooth_chart(records, metrics, chart_png)
+        generate_markdown_report(records, metrics, f"assets/ln2_sawtooth_chart_{suffix}.png", report_md)
+        generate_html_report(records, metrics, chart_png, report_html)
 
-    print("--- Report Generation Complete ---")
+        # Primary default copies (Tank 1)
+        if suffix == "tank1":
+            shutil.copy2(chart_png, CHART_PNG_PATH)
+            shutil.copy2(report_md, REPORT_MD_PATH)
+            shutil.copy2(report_html, os.path.join(REPO_DIR, "notes", "ln2_dipstick_compliance_report.html"))
+            artifact_dir = "/home/bobostrom/.gemini/antigravity-ide/brain/8bfe8347-7154-47d6-90c6-7e129071bcf9"
+            if os.path.isdir(artifact_dir):
+                shutil.copy2(CHART_PNG_PATH, os.path.join(artifact_dir, "ln2_sawtooth_chart.png"))
+
+    print("--- Dual Tank Report Generation Complete ---")
 
 if __name__ == "__main__":
     main()

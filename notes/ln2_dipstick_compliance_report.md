@@ -3,7 +3,7 @@
 **Regulatory Standard:** CAP / CLIA / Joint Commission Cryogenic Storage Compliance  
 **Vessel Identifier:** `Cryo Tank 1` (Primary Embryo Storage Dewar)  
 **Reporting Interval:** September 01, 2026 through October 23, 2026  
-**Report Generated:** 2026-10-24 11:31:29 AKDT  
+**Report Generated:** 2026-10-24 12:19:05 AKDT  
 
 ---
 
@@ -28,7 +28,7 @@
 
 The chart below verifies liquid nitrogen volume stability across the monitoring period. Spikes indicate nitrogen top-off transfers; downslopes represent natural, constant daily boil-off rates:
 
-![Liquid Nitrogen Dipstick Sawtooth Curve](assets/ln2_sawtooth_chart.png)
+![Liquid Nitrogen Dipstick Sawtooth Curve](assets/ln2_sawtooth_chart_tank1.png)
 
 * **Green Zone (28.0 – 35.0 cm):** Standard operating capacity.
 * **Amber Zone (27.0 – 28.0 cm):** Refill action threshold.

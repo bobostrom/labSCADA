@@ -44,17 +44,18 @@ CHANNELS = {
     101: {"name": "Lab Ambient", "type": "ambient", "low": 20.0, "high": 27.0, "priority": 1},
     102: {"name": "Medical Fridge", "type": "fridge", "low": 2.0, "high": 8.0, "priority": 2},
     103: {"name": "Medical Freezer", "type": "freezer", "high": -15.0, "priority": 2},
-    121: {"name": "Main Cleanroom Door", "type": "door", "priority": 2},
-    122: {"name": "Cryo Lab Door", "type": "door", "priority": 2},
-    123: {"name": "Incubator 01", "type": "incubator", "priority": 2},
-    124: {"name": "Incubator 02", "type": "incubator", "priority": 2},
+    104: {"name": "Cryo Tank 2", "type": "cryo", "high": -135.0, "priority": 2},
     125: {"name": "Cryo Tank 1", "type": "cryo", "high": -135.0, "priority": 2},
     # Discrete alarm channels from CODESYS
-    126: {"name": "Medical Fridge", "type": "discrete_alarm", "linked_analog": 102, "priority": 2},
-    127: {"name": "Medical Freezer", "type": "discrete_alarm", "linked_analog": 103, "priority": 2},
-    128: {"name": "Cryo Tank 1", "type": "discrete_alarm", "linked_analog": 125, "priority": 2},
-    129: {"name": "Main Cleanroom Door", "type": "door_alarm", "linked_contact": 121, "priority": 2},
-    130: {"name": "Cryo Lab Door", "type": "door_alarm", "linked_contact": 122, "priority": 2},
+    111: {"name": "Medical Fridge", "type": "discrete_alarm", "linked_analog": 102, "priority": 2},
+    112: {"name": "Medical Freezer", "type": "discrete_alarm", "linked_analog": 103, "priority": 2},
+    113: {"name": "Cryo Tank 1", "type": "discrete_alarm", "linked_analog": 125, "priority": 2},
+    114: {"name": "Cryo Tank 2", "type": "discrete_alarm", "linked_analog": 104, "priority": 2},
+    121: {"name": "Main Cleanroom Door", "type": "door_alarm", "priority": 2},
+    122: {"name": "Cryo Lab Door", "type": "door_alarm", "priority": 2},
+    123: {"name": "Incubator 01", "type": "incubator", "priority": 2},
+    124: {"name": "Incubator 02", "type": "incubator", "priority": 2},
+    198: {"name": "Cryo Tank 2", "type": "ln2_inspection", "schedule": "Mon, Wed, Fri by 5:00 PM", "priority": 1},
     199: {"name": "Cryo Tank 1", "type": "ln2_inspection", "schedule": "Mon, Wed, Fri by 5:00 PM", "priority": 1},
 }
 
@@ -408,15 +409,16 @@ def telemetry_scan_worker():
             readings = get_current_channel_values()
             now = time.time()
 
-            # 1. Evaluate Discrete Alarm Bits from CODESYS (Channels 123, 124, 126-130)
+            # 1. Evaluate Discrete Alarm Bits from CODESYS (Channels 111-114, 121-124)
             discrete_evals = [
+                (111, "Medical Fridge", "Temperature Excursion"),
+                (112, "Medical Freezer", "Temperature Excursion"),
+                (113, "Cryo Tank 1", "Liquid Nitrogen Excursion"),
+                (114, "Cryo Tank 2", "Liquid Nitrogen Excursion"),
+                (121, "Main Cleanroom Door", "Door Held Open > 3m"),
+                (122, "Cryo Lab Door", "Door Held Open > 3m"),
                 (123, "Incubator 01", "Chamber Alarm Contact"),
                 (124, "Incubator 02", "Chamber Alarm Contact"),
-                (126, "Medical Fridge", "Temperature Excursion"),
-                (127, "Medical Freezer", "Temperature Excursion"),
-                (128, "Cryo Tank 1", "Liquid Nitrogen Excursion"),
-                (129, "Main Cleanroom Door", "Door Held Open > 3m"),
-                (130, "Cryo Lab Door", "Door Held Open > 3m"),
             ]
 
             for cnl, equip, alarm_type in discrete_evals:
@@ -431,7 +433,7 @@ def telemetry_scan_worker():
 
             # 2. Evaluate Analog Limit Fallbacks (If discrete tags not yet loaded in CODESYS)
             # Med Fridge (Cnl 102)
-            if 102 in readings and 126 not in readings:
+            if 102 in readings and 111 not in readings:
                 f_temp = readings[102]
                 if f_temp > 8.0 or f_temp < 2.0:
                     trigger_alarm(102, "Medical Fridge", "Temperature Excursion", f_temp)
@@ -439,7 +441,7 @@ def telemetry_scan_worker():
                     resolve_alarm(102, f_temp)
 
             # Med Freezer (Cnl 103)
-            if 103 in readings and 127 not in readings:
+            if 103 in readings and 112 not in readings:
                 fz_temp = readings[103]
                 if fz_temp > -15.0:
                     trigger_alarm(103, "Medical Freezer", "Temperature Excursion", fz_temp)
@@ -447,12 +449,20 @@ def telemetry_scan_worker():
                     resolve_alarm(103, fz_temp)
 
             # Cryo Tank 1 (Cnl 125)
-            if 125 in readings and 128 not in readings:
+            if 125 in readings and 113 not in readings:
                 c_temp = readings[125]
                 if c_temp > -135.0:
                     trigger_alarm(125, "Cryo Tank 1", "Liquid Nitrogen Excursion", c_temp)
                 elif c_temp <= -140.0:
                     resolve_alarm(125, c_temp)
+
+            # Cryo Tank 2 (Cnl 104)
+            if 104 in readings and 114 not in readings:
+                c2_temp = readings[104]
+                if c2_temp > -135.0:
+                    trigger_alarm(104, "Cryo Tank 2", "Liquid Nitrogen Excursion", c2_temp)
+                elif c2_temp <= -140.0:
+                    resolve_alarm(104, c2_temp)
 
         except Exception as e:
             print(f"Scan loop error: {e}")
@@ -656,6 +666,25 @@ def get_ln2_status():
                 "next_check": sched["next_check"]
             }
 
+    # Ensure both tanks have baseline representation
+    for expected_tank in ["Cryo Tank 1", "Cryo Tank 2"]:
+        if expected_tank not in tanks:
+            sched_def = evaluate_ln2_schedule(now, None)
+            tanks[expected_tank] = {
+                "tank_id": expected_tank,
+                "level_cm": 0.0,
+                "was_filled": False,
+                "frost_condition": "Good",
+                "initials": "--",
+                "notes": "No logs recorded yet",
+                "logged_at": None,
+                "hours_since": 0.0,
+                "status": sched_def["status"],
+                "badge": sched_def["badge"],
+                "detail": sched_def["detail"],
+                "next_check": sched_def["next_check"]
+            }
+
     # Also fetch recent 10 history rows
     sql_hist = """
     SELECT id, tank_id, level_cm, was_filled, frost_condition, initials, notes, logged_at
@@ -697,10 +726,11 @@ def record_ln2_log(tank_id, level_cm, was_filled, frost_condition, initials, not
     rows = db_query(sql)
     log_id = int(rows[0][0]) if rows and rows[0] else 0
 
-    # If this tank was in active OVERDUE alarm (cnl 199), resolve it immediately!
+    # Resolve overdue alarm for this specific tank (199 for Tank 1, 198 for Tank 2)
+    alarm_cnl = 199 if safe_tank == "Cryo Tank 1" else 198
     with state_lock:
-        if 199 in active_alarms:
-            resolve_alarm(199, final_val=level_cm)
+        if alarm_cnl in active_alarms:
+            resolve_alarm(alarm_cnl, final_val=level_cm)
 
     # Determine next due date for notification
     status_info = get_ln2_status()
@@ -725,28 +755,28 @@ def ln2_schedule_watcher():
         try:
             status_data = get_ln2_status()
             tanks = status_data.get("tanks", {})
-
-            tank = tanks.get("Cryo Tank 1")
-            if tank:
-                status = tank.get("status")
-                detail = tank.get("detail", "LN2 Manual Check Overdue")
-                if status == "OVERDUE":
-                    # Overdue! Trigger Priority 1 Compliance Warning (one-shot, rings once, 8am sweep)
-                    with state_lock:
-                        already_active = 199 in active_alarms
-                    if not already_active:
-                        print(f"[{datetime.now().strftime('%T')}] LN2 INSPECTION OVERDUE: Cryo Tank 1 ({detail})")
-                        trigger_alarm(
-                            cnl_num=199,
-                            equipment_name="Cryo Tank 1",
-                            alarm_type=detail,
-                            excursion_val=round(tank.get("hours_since", 0.0), 1),
-                            priority=1
-                        )
-                else:
-                    with state_lock:
-                        if 199 in active_alarms:
-                            resolve_alarm(199, final_val=tank["level_cm"])
+            tank_cnls = [("Cryo Tank 1", 199), ("Cryo Tank 2", 198)]
+            for tank_name, cnl_num in tank_cnls:
+                tank = tanks.get(tank_name)
+                if tank:
+                    status = tank.get("status")
+                    detail = tank.get("detail", f"{tank_name} Manual Check Overdue")
+                    if status == "OVERDUE":
+                        with state_lock:
+                            already_active = cnl_num in active_alarms
+                        if not already_active:
+                            print(f"[{datetime.now().strftime('%T')}] LN2 INSPECTION OVERDUE: {tank_name} ({detail})")
+                            trigger_alarm(
+                                cnl_num=cnl_num,
+                                equipment_name=tank_name,
+                                alarm_type=detail,
+                                excursion_val=round(tank.get("hours_since", 0.0), 1),
+                                priority=1
+                            )
+                    else:
+                        with state_lock:
+                            if cnl_num in active_alarms:
+                                resolve_alarm(cnl_num, final_val=tank["level_cm"])
         except Exception as e:
             print(f"LN2 schedule watcher error: {e}")
         time.sleep(60.0)
@@ -827,15 +857,20 @@ class ClinicalAlertHandler(http.server.BaseHTTPRequestHandler):
             self.wfile.write(json.dumps(data).encode("utf-8"))
 
         elif parsed.path in ["/report/ln2", "/reports/ln2"]:
-            # Check if regenerate requested or file does not exist
-            report_html_path = os.path.join(REPO_DIR, "notes", "ln2_dipstick_compliance_report.html")
             params = urllib.parse.parse_qs(parsed.query)
+            tank_param = params.get("tank", ["1"])[0]
             force_regen = params.get("regenerate", ["0"])[0] == "1"
+            suffix = "tank2" if "2" in str(tank_param) else "tank1"
+            report_html_path = os.path.join(REPO_DIR, "notes", f"ln2_dipstick_compliance_report_{suffix}.html")
+            if not os.path.exists(report_html_path):
+                report_html_path = os.path.join(REPO_DIR, "notes", "ln2_dipstick_compliance_report.html")
+
             if force_regen or not os.path.exists(report_html_path):
                 try:
                     subprocess.run(["python3", os.path.join(REPO_DIR, "scripts", "generate_ln2_report.py")], check=True)
                 except Exception as e:
                     print(f"Error generating report: {e}")
+
             if os.path.exists(report_html_path):
                 with open(report_html_path, "rb") as f:
                     content = f.read()
@@ -850,7 +885,12 @@ class ClinicalAlertHandler(http.server.BaseHTTPRequestHandler):
                 self.wfile.write(b"Report not found.")
 
         elif parsed.path == "/report/ln2/md":
-            report_md_path = os.path.join(REPO_DIR, "notes", "ln2_dipstick_compliance_report.md")
+            params = urllib.parse.parse_qs(parsed.query)
+            tank_param = params.get("tank", ["1"])[0]
+            suffix = "tank2" if "2" in str(tank_param) else "tank1"
+            report_md_path = os.path.join(REPO_DIR, "notes", f"ln2_dipstick_compliance_report_{suffix}.md")
+            if not os.path.exists(report_md_path):
+                report_md_path = os.path.join(REPO_DIR, "notes", "ln2_dipstick_compliance_report.md")
             if os.path.exists(report_md_path):
                 with open(report_md_path, "rb") as f:
                     content = f.read()
@@ -865,7 +905,12 @@ class ClinicalAlertHandler(http.server.BaseHTTPRequestHandler):
                 self.wfile.write(b"Markdown report not found.")
 
         elif parsed.path in ["/report/ln2/chart", "/notes/assets/ln2_sawtooth_chart.png"]:
-            chart_path = os.path.join(REPO_DIR, "notes", "assets", "ln2_sawtooth_chart.png")
+            params = urllib.parse.parse_qs(parsed.query)
+            tank_param = params.get("tank", ["1"])[0]
+            suffix = "tank2" if "2" in str(tank_param) else "tank1"
+            chart_path = os.path.join(REPO_DIR, "notes", "assets", f"ln2_sawtooth_chart_{suffix}.png")
+            if not os.path.exists(chart_path):
+                chart_path = os.path.join(REPO_DIR, "notes", "assets", "ln2_sawtooth_chart.png")
             if os.path.exists(chart_path):
                 with open(chart_path, "rb") as f:
                     content = f.read()
@@ -970,24 +1015,44 @@ class ClinicalAlertHandler(http.server.BaseHTTPRequestHandler):
                   </div>
                 </div>
 
-                <div class="card" id="card-cryo">
-                  <div class="card-title">Cryo Tank 1 (LN2 Vapor)</div>
-                  <div class="card-val"><span id="val-cryo">--</span><span class="card-unit">°C</span></div>
+                <div class="card" id="card-cryo1">
+                  <div class="card-title">Cryo Tank 1 (Embryos)</div>
+                  <div class="card-val"><span id="val-cryo1">--</span><span class="card-unit">°C</span></div>
                   <div class="card-sub">
                     <span>Critical: &lt; -135.0°C</span>
-                    <span id="badge-cryo" class="status-badge status-normal">NORMAL</span>
+                    <span id="badge-cryo1" class="status-badge status-normal">NORMAL</span>
                   </div>
                 </div>
 
-                <div class="card" id="card-ln2" style="border-left: 3px solid #00e5ff;">
-                  <div class="card-title">Cryo Tank 1 (Manual LN2)</div>
-                  <div class="card-val"><span id="val-ln2-level">--</span><span class="card-unit">cm</span></div>
+                <div class="card" id="card-ln2-1" style="border-left: 3px solid #00e5ff;">
+                  <div class="card-title">Cryo Tank 1 (Dipstick)</div>
+                  <div class="card-val"><span id="val-ln2-level-1">--</span><span class="card-unit">cm</span></div>
                   <div class="card-sub">
-                    <span id="sub-ln2-check">Schedule: Mon/Wed/Fri</span>
-                    <span id="badge-ln2" class="status-badge status-normal">ON SCHEDULE</span>
+                    <span id="sub-ln2-check-1">Mon/Wed/Fri</span>
+                    <span id="badge-ln2-1" class="status-badge status-normal">ON SCHEDULE</span>
                   </div>
-                  <div id="ln2-next-due" style="font-size:11px; color:#8899a6; margin-top:6px;">Next: Mon, Wed, Fri by 5:00 PM</div>
-                  <button class="btn" style="margin-top:10px; width:100%; background:#00b0ff; font-weight:700; padding:10px;" onclick="openLn2Modal()">🧊 Log Dipstick Check</button>
+                  <div id="ln2-next-due-1" style="font-size:11px; color:#8899a6; margin-top:6px;">Next: Mon/Wed/Fri by 5:00 PM</div>
+                  <button class="btn" style="margin-top:10px; width:100%; background:#00b0ff; font-weight:700; padding:10px;" onclick="openLn2ModalFor('Cryo Tank 1')">🧊 Log Tank 1 Check</button>
+                </div>
+
+                <div class="card" id="card-cryo2">
+                  <div class="card-title">Cryo Tank 2 (Sperm)</div>
+                  <div class="card-val"><span id="val-cryo2">--</span><span class="card-unit">°C</span></div>
+                  <div class="card-sub">
+                    <span>Critical: &lt; -135.0°C</span>
+                    <span id="badge-cryo2" class="status-badge status-normal">NORMAL</span>
+                  </div>
+                </div>
+
+                <div class="card" id="card-ln2-2" style="border-left: 3px solid #00e5ff;">
+                  <div class="card-title">Cryo Tank 2 (Dipstick)</div>
+                  <div class="card-val"><span id="val-ln2-level-2">--</span><span class="card-unit">cm</span></div>
+                  <div class="card-sub">
+                    <span id="sub-ln2-check-2">Mon/Wed/Fri</span>
+                    <span id="badge-ln2-2" class="status-badge status-normal">ON SCHEDULE</span>
+                  </div>
+                  <div id="ln2-next-due-2" style="font-size:11px; color:#8899a6; margin-top:6px;">Next: Mon/Wed/Fri by 5:00 PM</div>
+                  <button class="btn" style="margin-top:10px; width:100%; background:#00b0ff; font-weight:700; padding:10px;" onclick="openLn2ModalFor('Cryo Tank 2')">🧊 Log Tank 2 Check</button>
                 </div>
 
                 <div class="card" id="card-ambient">
@@ -1039,9 +1104,10 @@ class ClinicalAlertHandler(http.server.BaseHTTPRequestHandler):
                     <h3 style="margin-bottom:4px;">Liquid Nitrogen Manual Dipstick Audit Trail (3-Day Cycle)</h3>
                     <p style="color:#8899a6; font-size:13px;">CAP/CLIA digital compliance log for manual tank levels in cm, fill tracking, and staff initials.</p>
                   </div>
-                  <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
-                    <a href="/report/ln2" target="_blank" class="btn" style="text-decoration:none; display:inline-block; background:#00897b; font-weight:700; padding:12px 18px; border-radius:8px; font-size:14px; color:#ffffff; box-shadow:0 4px 14px rgba(0,137,123,0.3);">📊 Print Compliance Report (PDF)</a>
-                    <button class="btn" style="background:#00e5ff; color:#090d16; font-size:15px; font-weight:700; padding:12px 24px; border-radius:8px; box-shadow:0 4px 14px rgba(0,229,255,0.3);" onclick="openLn2Modal()">🧊 Log Dipstick Check</button>
+                  <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                    <a href="/report/ln2?tank=1" target="_blank" class="btn" style="text-decoration:none; display:inline-block; background:#00897b; font-weight:700; padding:12px 14px; border-radius:8px; font-size:13px; color:#ffffff; box-shadow:0 4px 14px rgba(0,137,123,0.3);">📊 Print Tank 1 Report</a>
+                    <a href="/report/ln2?tank=2" target="_blank" class="btn" style="text-decoration:none; display:inline-block; background:#00897b; font-weight:700; padding:12px 14px; border-radius:8px; font-size:13px; color:#ffffff; box-shadow:0 4px 14px rgba(0,137,123,0.3);">📊 Print Tank 2 Report</a>
+                    <button class="btn" style="background:#00e5ff; color:#090d16; font-size:15px; font-weight:700; padding:12px 20px; border-radius:8px; box-shadow:0 4px 14px rgba(0,229,255,0.3);" onclick="openLn2Modal()">🧊 Log Dipstick Check</button>
                   </div>
                 </div>
                 <div id="ln2HistoryTable" style="margin-top:14px;">Loading inspection logs...</div>
@@ -1163,17 +1229,30 @@ class ClinicalAlertHandler(http.server.BaseHTTPRequestHandler):
                           b.className = 'status-badge status-normal';
                         }}
                       }}
-                      // Cryo
+                      // Cryo Tank 1 (Ch 125)
                       if (r[125] !== undefined) {{
-                        const cr = r[125];
-                        document.getElementById('val-cryo').innerText = cr.toFixed(1);
-                        const b = document.getElementById('badge-cryo');
-                        if (cr > -135.0) {{
-                          b.innerText = 'CRITICAL';
-                          b.className = 'status-badge status-alert';
+                        const cr1 = r[125];
+                        document.getElementById('val-cryo1').innerText = cr1.toFixed(1);
+                        const b1 = document.getElementById('badge-cryo1');
+                        if (cr1 > -135.0) {{
+                          b1.innerText = 'CRITICAL';
+                          b1.className = 'status-badge status-alert';
                         }} else {{
-                          b.innerText = 'NORMAL';
-                          b.className = 'status-badge status-normal';
+                          b1.innerText = 'NORMAL';
+                          b1.className = 'status-badge status-normal';
+                        }}
+                      }}
+                      // Cryo Tank 2 (Ch 104)
+                      if (r[104] !== undefined) {{
+                        const cr2 = r[104];
+                        document.getElementById('val-cryo2').innerText = cr2.toFixed(1);
+                        const b2 = document.getElementById('badge-cryo2');
+                        if (cr2 > -135.0) {{
+                          b2.innerText = 'CRITICAL';
+                          b2.className = 'status-badge status-alert';
+                        }} else {{
+                          b2.innerText = 'NORMAL';
+                          b2.className = 'status-badge status-normal';
                         }}
                       }}
                       // Door 01
@@ -1245,7 +1324,7 @@ class ClinicalAlertHandler(http.server.BaseHTTPRequestHandler):
                         }} else {{
                           statusHtml = '<span style="color:#00e676;">🟢 Resolved</span>';
                         }}
-                        const valDisp = r.excursion_val !== null ? (r.cnl_num === 199 ? r.excursion_val + 'h overdue' : r.excursion_val + '°C') : '-';
+                        const valDisp = r.excursion_val !== null ? ([198, 199].includes(r.cnl_num) ? r.excursion_val + 'h overdue' : r.excursion_val + '°C') : '-';
                         const timeDisp = r.triggered_at ? r.triggered_at.split('.')[0] : '-';
                         h += `<tr><td>${{timeDisp}}</td><td><b>${{r.equipment_name}}</b></td><td>${{r.alarm_type}}</td><td>${{valDisp}}</td><td>${{statusHtml}}</td><td>${{actHtml}}</td></tr>`;
                       }});
@@ -1262,6 +1341,11 @@ class ClinicalAlertHandler(http.server.BaseHTTPRequestHandler):
                 function openLn2Modal() {{
                   document.getElementById('ln2Modal').style.display = 'flex';
                   document.getElementById('modalSubmitMsg').innerText = '';
+                }}
+
+                function openLn2ModalFor(tank) {{
+                  selectTank(tank);
+                  openLn2Modal();
                 }}
 
                 function closeLn2Modal() {{
@@ -1354,29 +1438,56 @@ class ClinicalAlertHandler(http.server.BaseHTTPRequestHandler):
                     .then(r => r.json())
                     .then(data => {{
                       const tanks = data.tanks || {{}};
-                      const t = tanks['Cryo Tank 1'];
-                      if (t) {{
-                        document.getElementById('val-ln2-level').innerText = t.level_cm.toFixed(1);
-                        const b = document.getElementById('badge-ln2');
-                        const sub = document.getElementById('sub-ln2-check');
-                        const nextDue = document.getElementById('ln2-next-due');
-                        const card = document.getElementById('card-ln2');
-
-                        b.innerText = t.badge || 'ON SCHEDULE';
-                        sub.innerText = `${{t.hours_since.toFixed(1)}}h ago (${{t.initials}})`;
-                        if (nextDue) {{
-                          nextDue.innerText = t.detail || `Next: ${{t.next_check}}`;
+                      
+                      // Update Cryo Tank 1
+                      const t1 = tanks['Cryo Tank 1'];
+                      if (t1) {{
+                        const el1 = document.getElementById('val-ln2-level-1');
+                        if (el1) el1.innerText = t1.level_cm.toFixed(1);
+                        const b1 = document.getElementById('badge-ln2-1');
+                        const sub1 = document.getElementById('sub-ln2-check-1');
+                        const nextDue1 = document.getElementById('ln2-next-due-1');
+                        const card1 = document.getElementById('card-ln2-1');
+                        if (b1) b1.innerText = t1.badge || 'ON SCHEDULE';
+                        if (sub1) sub1.innerText = `${{t1.hours_since.toFixed(1)}}h ago (${{t1.initials}})`;
+                        if (nextDue1) nextDue1.innerText = t1.detail || `Next: ${{t1.next_check}}`;
+                        if (card1 && b1) {{
+                          if (t1.status === 'OVERDUE') {{
+                            b1.className = 'status-badge status-alert';
+                            card1.style.borderLeft = '3px solid #ff1744';
+                          }} else if (t1.status === 'DUE') {{
+                            b1.className = 'status-badge status-warn';
+                            card1.style.borderLeft = '3px solid #ffab00';
+                          }} else {{
+                            b1.className = 'status-badge status-normal';
+                            card1.style.borderLeft = '3px solid #00e5ff';
+                          }}
                         }}
+                      }}
 
-                        if (t.status === 'OVERDUE') {{
-                          b.className = 'status-badge status-alert';
-                          if (card) card.style.borderLeft = '3px solid #ff1744';
-                        }} else if (t.status === 'DUE') {{
-                          b.className = 'status-badge status-warn';
-                          if (card) card.style.borderLeft = '3px solid #ffab00';
-                        }} else {{
-                          b.className = 'status-badge status-normal';
-                          if (card) card.style.borderLeft = '3px solid #00e5ff';
+                      // Update Cryo Tank 2
+                      const t2 = tanks['Cryo Tank 2'];
+                      if (t2) {{
+                        const el2 = document.getElementById('val-ln2-level-2');
+                        if (el2) el2.innerText = t2.level_cm.toFixed(1);
+                        const b2 = document.getElementById('badge-ln2-2');
+                        const sub2 = document.getElementById('sub-ln2-check-2');
+                        const nextDue2 = document.getElementById('ln2-next-due-2');
+                        const card2 = document.getElementById('card-ln2-2');
+                        if (b2) b2.innerText = t2.badge || 'ON SCHEDULE';
+                        if (sub2) sub2.innerText = `${{t2.hours_since.toFixed(1)}}h ago (${{t2.initials}})`;
+                        if (nextDue2) nextDue2.innerText = t2.detail || `Next: ${{t2.next_check}}`;
+                        if (card2 && b2) {{
+                          if (t2.status === 'OVERDUE') {{
+                            b2.className = 'status-badge status-alert';
+                            card2.style.borderLeft = '3px solid #ff1744';
+                          }} else if (t2.status === 'DUE') {{
+                            b2.className = 'status-badge status-warn';
+                            card2.style.borderLeft = '3px solid #ffab00';
+                          }} else {{
+                            b2.className = 'status-badge status-normal';
+                            card2.style.borderLeft = '3px solid #00e5ff';
+                          }}
                         }}
                       }}
 

@@ -7,16 +7,14 @@
 PROGRAM PLC_PRG
 VAR
     (* --- Heartbeat & LED Blinker --- *)
-    tonBlinkTimer           : TON;
-    bLedOutput              : BOOL := FALSE;    (* Toggles ON/OFF every 500ms (1 Hz) *)
-    tBlinkInterval          : TIME := T#500MS;  (* 500ms ON / 500ms OFF *)
-    udiCycleCount           : UDINT := 0;
+    fbLedU1                 : FbAppLED_SetBlink;
 
     (* --- Analog Telemetry: Temperatures --- *)
     rLabAmbientTemp         : REAL := 25.0;     (* Target ~25.0 °C *)
     rMedFridgeTemp          : REAL := 3.0;      (* Target ~3.0 °C (Normal: 2.0°C to 8.0°C) *)
     rMedFreezerTemp         : REAL := -20.0;    (* Target ~ -20.0 °C (Normal: < -15.0°C) *)
-    rCryoTankTemp           : REAL := -150.0;   (* Target ~ -150.0 °C (Normal: < -135.0°C) *)
+    rCryoTank1Temp          : REAL := -150.0;   (* Target ~ -150.0 °C (Normal: < -135.0°C) *)
+    rCryoTank2Temp          : REAL := -150.0;   (* Target ~ -150.0 °C (Normal: < -135.0°C) *)
 
     (* --- Discrete Telemetry: Door Contacts & Physical State --- *)
     bDoor01_MainDoor        : BOOL := FALSE;    (* FALSE = Closed, TRUE = Open *)
@@ -25,7 +23,8 @@ VAR
     (* --- Discrete Clinical Alarm Outputs (Published over OPC UA) --- *)
     bMedFridgeAlarm         : BOOL := FALSE;    (* TRUE when Fridge > 8.0°C or < 2.0°C for > 2m *)
     bMedFreezerAlarm        : BOOL := FALSE;    (* TRUE when Freezer > -15.0°C for > 3m *)
-    bCryoTankAlarm          : BOOL := FALSE;    (* TRUE when Cryo Tank > -135.0°C for > 30s *)
+    bCryoTank1Alarm         : BOOL := FALSE;    (* TRUE when Cryo Tank 1 > -135.0°C for > 30s *)
+    bCryoTank2Alarm         : BOOL := FALSE;    (* TRUE when Cryo Tank 2 > -135.0°C for > 30s *)
     bDoor01_Alarm           : BOOL := FALSE;    (* TRUE when Main Door held open > 3m *)
     bDoor02_Alarm           : BOOL := FALSE;    (* TRUE when Cryo Door held open > 3m *)
     bIncubator01_Alarm      : BOOL := FALSE;    (* Incubator 01 Alarm Contact *)
@@ -34,10 +33,10 @@ VAR
     (* --- Clinical Alarm Function Blocks (RTAC-Style Pickup / Dropout & Hysteresis) --- *)
     fbFridgeAlarm           : FB_AnalogAlarm;
     fbFreezerAlarm          : FB_AnalogAlarm;
-    fbCryoAlarm             : FB_AnalogAlarm;
+    fbCryo1Alarm            : FB_AnalogAlarm;
+    fbCryo2Alarm            : FB_AnalogAlarm;
     fbDoor01Alarm           : FB_PickupDropout;
     fbDoor02Alarm           : FB_PickupDropout;
-
 
     (* --- Simulation & Fault Injection Controls --- *)
     tonSimTick              : TON;
@@ -47,7 +46,8 @@ VAR
     (* Toggle these bits in CODESYS online monitoring to test alarms instantly *)
     bForceFridgeExcursion   : BOOL := FALSE;    (* Forces fridge to 9.5°C *)
     bForceFreezerExcursion  : BOOL := FALSE;    (* Forces freezer to -12.0°C *)
-    bForceCryoExcursion     : BOOL := FALSE;    (* Forces cryo tank to -125.0°C *)
+    bForceCryo1Excursion    : BOOL := FALSE;    (* Forces cryo tank 1 to -125.0°C *)
+    bForceCryo2Excursion    : BOOL := FALSE;    (* Forces cryo tank 2 to -125.0°C *)
     bForceDoor01Ajar        : BOOL := FALSE;    (* Forces Main Door open *)
     bForceDoor02Ajar        : BOOL := FALSE;    (* Forces Cryo Door open *)
     bForceIncubator01Alarm  : BOOL := FALSE;    (* Forces Incubator 01 alarm contact *)
@@ -57,13 +57,7 @@ END_VAR
 // ==============================================================================
 // 1. SYSTEM HEARTBEAT BLINKER
 // ==============================================================================
-tonBlinkTimer(IN := NOT tonBlinkTimer.Q, PT := tBlinkInterval);
-
-IF tonBlinkTimer.Q THEN
-    bLedOutput := NOT bLedOutput;
-    udiCycleCount := udiCycleCount + 1;
-END_IF;
-
+fbLedU1(xEnable := TRUE, eLedID := 1, tTime1 := T#1S, tTime2 := T#500MS, eLedColor1 := Green, eLedColor2 := Yellow);
 
 // ==============================================================================
 // 2. IVF LAB TELEMETRY SIMULATION & FAULT INJECTION
@@ -90,11 +84,18 @@ IF tonSimTick.Q AND bSimulateDynamics THEN
         rMedFreezerTemp := -20.0 + 0.6 * SIN(TO_REAL(iSimStep) * 0.06);
     END_IF;
 
-    // Cryo Tank: vapor phase LN2 thermal dynamics around -150.0 °C
-    IF bForceCryoExcursion THEN
-        rCryoTankTemp := -125.0;  // Danger zone above -135.0°C
+    // Cryo Tank 1: vapor phase LN2 thermal dynamics around -150.0 °C
+    IF bForceCryo1Excursion THEN
+        rCryoTank1Temp := -125.0;  // Danger zone above -135.0°C
     ELSE
-        rCryoTankTemp := -150.0 + 0.8 * COS(TO_REAL(iSimStep) * 0.03);
+        rCryoTank1Temp := -150.0 + 0.8 * COS(TO_REAL(iSimStep) * 0.03);
+    END_IF;
+
+    // Cryo Tank 2: vapor phase LN2 thermal dynamics around -150.0 °C
+    IF bForceCryo2Excursion THEN
+        rCryoTank2Temp := -125.0;  // Danger zone above -135.0°C
+    ELSE
+        rCryoTank2Temp := -150.0 + 0.8 * COS(TO_REAL(iSimStep) * 0.03);
     END_IF;
 
     // Doors Simulation / Overrides
@@ -110,7 +111,6 @@ IF tonSimTick.Q AND bSimulateDynamics THEN
     bIncubator01_Alarm := bForceIncubator01Alarm;
     bIncubator02_Alarm := bForceIncubator02Alarm;
 END_IF;
-
 
 // ==============================================================================
 // 3. CLINICAL ALARM EVALUATION (RTAC-STYLE PICKUP / DROPOUT & HYSTERESIS)
@@ -130,7 +130,6 @@ fbFridgeAlarm(
 );
 bMedFridgeAlarm := fbFridgeAlarm.bAlarm;
 
-
 // --- B. Medical Freezer Alarm (Normal: < -15.0°C, 3m pickup, 10s dropout) ---
 fbFreezerAlarm(
     rVal          := rMedFreezerTemp,
@@ -143,10 +142,9 @@ fbFreezerAlarm(
 );
 bMedFreezerAlarm := fbFreezerAlarm.bAlarm;
 
-
-// --- C. Cryogenic LN2 Tank Alarm (Normal: < -135.0°C, 30s pickup, 10s dropout) ---
-fbCryoAlarm(
-    rVal          := rCryoTankTemp,
+// --- C. Cryogenic LN2 Tank 1 Alarm (Normal: < -135.0°C, 30s pickup, 10s dropout) ---
+fbCryo1Alarm(
+    rVal          := rCryoTank1Temp,
     bEnableHigh   := TRUE,
     rHighPickup   := -135.0,
     rHighDropout  := -140.0,   // 5.0°C hysteresis
@@ -154,8 +152,19 @@ fbCryoAlarm(
     tPickupDelay  := T#30S,    // Rapid critical LN2 warning
     tDropoutDelay := T#10S     // Clean LN2 fill required to reset
 );
-bCryoTankAlarm := fbCryoAlarm.bAlarm;
+bCryoTank1Alarm := fbCryo1Alarm.bAlarm;
 
+// --- Cryogenic LN2 Tank 2 Alarm (Normal: < -135.0°C, 30s pickup, 10s dropout) ---
+fbCryo2Alarm(
+    rVal          := rCryoTank2Temp,
+    bEnableHigh   := TRUE,
+    rHighPickup   := -135.0,
+    rHighDropout  := -140.0,   // 5.0°C hysteresis
+    bEnableLow    := FALSE,
+    tPickupDelay  := T#30S,    // Rapid critical LN2 warning
+    tDropoutDelay := T#10S     // Clean LN2 fill required to reset
+);
+bCryoTank2Alarm := fbCryo2Alarm.bAlarm;
 
 // --- D. Cleanroom Doors Ajar Alarms (> 3 minutes open) ---
 fbDoor01Alarm(
