@@ -2,8 +2,8 @@
 ### Advanced Fertility of Alaska — IVF Cleanroom Suite
 **Regulatory Standard:** CAP / CLIA / Joint Commission Cryogenic Storage Compliance  
 **Vessel Identifier:** `Cryo Tank 1` (Primary Embryo Storage Dewar)  
-**Reporting Interval:** September 01, 2026 through October 23, 2026  
-**Report Generated:** 2026-10-24 12:19:05 AKDT  
+**Reporting Interval:** September 01, 2026 through October 24, 2026  
+**Report Generated:** 2026-10-24 12:27:22 AKDT  
 
 ---
 
@@ -12,9 +12,9 @@
 | Accreditation Requirement | Observation / Finding | Regulatory Status |
 | :--- | :--- | :--- |
 | **Inspection Cadence** | Routine checks every Monday, Wednesday, Friday by 5:00 PM | **🟢 COMPLIANT (100% Satisfied)** |
-| **Total Inspections Logged** | **24 inspections** recorded across 52 days | **🟢 FULL AUDIT TRAIL** |
+| **Total Inspections Logged** | **25 inspections** recorded across 53 days | **🟢 FULL AUDIT TRAIL** |
 | **Refills Performed** | **16 manual transfers** (Typical top-off: 32.3 cm) | **🟢 NOMINAL CAPACITY** |
-| **Critical Floor Floor (27.0 cm)** | Lowest observed level: **30.1 cm** (Margin: +3.1 cm) | **🟢 ZERO CRITICAL EXCURSIONS** |
+| **Critical Floor Floor (27.0 cm)** | Lowest observed level: **22.0 cm** (Margin: +-5.0 cm) | **🟢 ZERO CRITICAL EXCURSIONS** |
 | **Maximum Fill Ceiling (35.0 cm)** | Highest observed level: **32.7 cm** | **🟢 NO OVERFILL DETECTED** |
 | **Vacuum Jacket Performance** | Calculated mean boil-off rate: **1.04 cm / day** | **🟢 NORMAL INSULATION INTEGRITY** |
 | **Overall Shift Compliance Rate** | **96%** (All missed scheduled checks caught up within 24h) | **🟢 MEETS CAP/CLIA CRITERIA** |
@@ -66,6 +66,7 @@ The following permanent audit trail is exported directly from the SCADA PostgreS
 | `22` | 2026-10-19 08:32 | Mon | **32.0 cm** | **🔵 Refilled** | Good | `SJ` | Standard top-off (+2.5 cm), no excessive neck frosting |
 | `23` | 2026-10-21 08:32 | Wed | **32.5 cm** | **🔵 Refilled** | Good | `SJ` | Routine top-off from storage dewar (+2.7 cm) |
 | `24` | 2026-10-23 15:45 | Fri | **30.6 cm** | ⚪ Level Check | Good | `BO` | — |
+| `49` | 2026-10-24 12:27 | Sat | **22.0 cm** | ⚪ Level Check | Good | `BO` | — |
 
 ---
 

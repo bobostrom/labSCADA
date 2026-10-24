@@ -802,11 +802,22 @@ class ClinicalAlertHandler(http.server.BaseHTTPRequestHandler):
             readings = get_current_channel_values()
             with state_lock:
                 alarms_copy = [dict(v) for v in active_alarms.values()]
+
+            # Last Daily QA Test Status
+            qa_rows = db_query("SELECT triggered_at, acknowledged_by FROM mod_arc_postgre_sql.alarm_events WHERE equipment_name = 'QA System' ORDER BY triggered_at DESC LIMIT 1;")
+            last_qa = None
+            if qa_rows and qa_rows[0]:
+                last_qa = {
+                    "triggered_at": str(qa_rows[0][0]),
+                    "by": str(qa_rows[0][1])
+                }
+
             data = {
                 "server_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                 "active_alarm_count": len(alarms_copy),
                 "active_alarms": alarms_copy,
-                "readings": readings
+                "readings": readings,
+                "last_qa": last_qa
             }
             self.send_response(200)
             self.send_header("Content-Type", "application/json")
@@ -936,40 +947,86 @@ class ClinicalAlertHandler(http.server.BaseHTTPRequestHandler):
             <head>
               <meta charset="utf-8">
               <meta name="viewport" content="width=device-width, initial-scale=1">
-              <title>IVF Lab Clinical Dashboard & Alert Controller</title>
+              <title>IVF Lab Clinical Operations & SCADA Alert Controller</title>
               <style>
-                body {{ background:#090d16; color:#f0f4f8; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding:24px; }}
-                header {{ display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; border-bottom:1px solid rgba(255,255,255,0.08); padding-bottom:16px; }}
-                h1 {{ color:#00e5ff; font-size:1.6rem; font-weight:700; margin:0; }}
-                .subtitle {{ color:#8899a6; font-size:0.9rem; margin-top:4px; }}
-                .badge-live {{ background:rgba(0,230,118,0.15); color:#00e676; border:1px solid #00e676; padding:4px 12px; border-radius:100px; font-size:13px; font-weight:600; display:flex; align-items:center; gap:8px; }}
+                * {{ box-sizing:border-box; }}
+                body {{ background:#090d16; color:#f0f4f8; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding:20px 24px 40px; margin:0; }}
+                
+                /* Top Header & Navigation */
+                header {{ display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px; margin-bottom:20px; border-bottom:1px solid rgba(255,255,255,0.08); padding-bottom:16px; }}
+                .brand-title {{ color:#00e5ff; font-size:1.55rem; font-weight:800; margin:0; letter-spacing:-0.3px; }}
+                .brand-sub {{ color:#8899a6; font-size:0.85rem; margin-top:3px; }}
+                
+                .nav-tabs {{ display:inline-flex; background:#101726; padding:4px; border-radius:10px; border:1px solid rgba(255,255,255,0.1); gap:4px; }}
+                .nav-tab {{ background:transparent; color:#94a3b8; border:none; padding:10px 20px; border-radius:8px; font-size:14px; font-weight:700; cursor:pointer; transition:all 0.15s; }}
+                .nav-tab:hover {{ color:#f8fafc; }}
+                .nav-tab.active {{ background:#00e5ff; color:#090d16; box-shadow:0 2px 12px rgba(0,229,255,0.35); }}
+                
+                .header-meta {{ display:flex; align-items:center; gap:14px; }}
+                .badge-live {{ background:rgba(0,230,118,0.12); color:#00e676; border:1px solid rgba(0,230,118,0.4); padding:6px 14px; border-radius:100px; font-size:12px; font-weight:700; display:flex; align-items:center; gap:8px; }}
                 .pulse-dot {{ width:8px; height:8px; background:#00e676; border-radius:50%; box-shadow:0 0 8px #00e676; animation:pulse 1.5s infinite; }}
                 @keyframes pulse {{ 0% {{ opacity:0.4; }} 50% {{ opacity:1; }} 100% {{ opacity:0.4; }} }}
+                .clock-display {{ font-family:monospace; font-size:13px; color:#8899a6; font-weight:600; }}
 
-                /* Telemetry Grid */
-                .grid {{ display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:16px; margin-bottom:24px; }}
-                .card {{ background:rgba(18,25,41,0.85); border:1px solid rgba(255,255,255,0.08); border-radius:12px; padding:18px; position:relative; overflow:hidden; }}
-                .card-title {{ color:#8899a6; font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:8px; }}
-                .card-val {{ font-size:2.2rem; font-weight:700; font-family:monospace; color:#f0f4f8; }}
-                .card-unit {{ font-size:1.1rem; color:#8899a6; margin-left:4px; }}
-                .card-sub {{ font-size:12px; color:#8899a6; margin-top:8px; display:flex; justify-content:space-between; }}
-                .status-badge {{ font-size:12px; font-weight:700; padding:2px 8px; border-radius:4px; }}
-                .status-normal {{ background:rgba(0,230,118,0.15); color:#00e676; }}
-                .status-warn {{ background:rgba(255,171,0,0.15); color:#ffab00; }}
-                .status-alert {{ background:rgba(255,23,68,0.25); color:#ff1744; font-weight:800; }}
+                /* Daily QA Banner (Top of Main Page) */
+                .qa-banner {{ background:linear-gradient(135deg, rgba(16,23,38,0.95), rgba(18,28,45,0.85)); border:1px solid rgba(0,230,118,0.3); border-left:5px solid #00e676; border-radius:12px; padding:16px 20px; margin-bottom:20px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px; box-shadow:0 4px 20px rgba(0,0,0,0.35); }}
+                .qa-title {{ font-size:1.05rem; font-weight:700; color:#f0f4f8; margin:0 0 4px; display:flex; align-items:center; gap:10px; }}
+                .qa-desc {{ font-size:13px; color:#94a3b8; margin:0; }}
+                .btn-test {{ background:#00e676; color:#090d16; font-size:14px; font-weight:800; padding:10px 22px; border-radius:8px; cursor:pointer; border:none; box-shadow:0 4px 14px rgba(0,230,118,0.3); transition:all 0.15s; }}
+                .btn-test:hover {{ background:#00c853; transform:translateY(-1px); }}
 
-                /* Control & History Rows */
+                /* Telemetry Grid (Main Page) */
+                .grid-telemetry {{ display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:16px; margin-bottom:24px; }}
+                .card {{ background:rgba(18,25,41,0.85); border:1px solid rgba(255,255,255,0.08); border-radius:12px; padding:18px; position:relative; overflow:hidden; transition:transform 0.15s; }}
+                .card-title {{ color:#8899a6; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px; }}
+                .card-val {{ font-size:2.2rem; font-weight:800; font-family:monospace; color:#f0f4f8; line-height:1.1; }}
+                .card-unit {{ font-size:1.05rem; color:#8899a6; margin-left:3px; }}
+                .card-sub {{ font-size:12px; color:#8899a6; margin-top:8px; display:flex; justify-content:space-between; align-items:center; }}
+                
+                .status-badge {{ font-size:11px; font-weight:800; padding:3px 8px; border-radius:4px; text-transform:uppercase; letter-spacing:0.4px; }}
+                .status-normal {{ background:rgba(0,230,118,0.15); color:#00e676; border:1px solid rgba(0,230,118,0.3); }}
+                .status-warn {{ background:rgba(255,171,0,0.15); color:#ffab00; border:1px solid rgba(255,171,0,0.3); }}
+                .status-alert {{ background:rgba(255,23,68,0.22); color:#ff1744; border:1px solid rgba(255,23,68,0.4); font-weight:800; animation:pulse-alert 1.5s infinite; }}
+                @keyframes pulse-alert {{ 0% {{ opacity:0.8; }} 50% {{ opacity:1; box-shadow:0 0 10px rgba(255,23,68,0.5); }} 100% {{ opacity:0.8; }} }}
+
+                /* Integrated Dipstick Sub-Panel in Cryo Cards */
+                .dipstick-subpanel {{ background:rgba(9,13,22,0.75); border:1px solid rgba(0,229,255,0.25); border-radius:10px; padding:12px; margin-top:14px; }}
+                .dip-header {{ display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }}
+                .dip-level-row {{ display:flex; justify-content:space-between; align-items:baseline; margin-bottom:4px; }}
+                .dip-level {{ font-size:1.4rem; font-weight:800; font-family:monospace; color:#00e5ff; }}
+                .dip-actions {{ display:flex; gap:8px; margin-top:10px; }}
+                .btn-mini {{ background:#00b0ff; color:#090d16; border:none; padding:6px 12px; border-radius:6px; font-size:12px; font-weight:700; cursor:pointer; flex:1; text-align:center; }}
+                .btn-mini:hover {{ background:#0091ea; }}
+                .btn-mini-subtle {{ background:transparent; color:#00e5ff; border:1px solid rgba(0,229,255,0.3); padding:6px 10px; border-radius:6px; font-size:12px; font-weight:600; cursor:pointer; text-decoration:none; }}
+                .btn-mini-subtle:hover {{ background:rgba(0,229,255,0.1); }}
+
+                /* Sub-Page Layout */
+                .subpage-header {{ display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px; margin-bottom:20px; }}
+                .subpage-title {{ color:#00e5ff; font-size:1.45rem; font-weight:800; margin:0 0 4px; }}
+                .subpage-desc {{ color:#8899a6; font-size:0.9rem; margin:0; }}
+                .btn-report {{ text-decoration:none; display:inline-flex; align-items:center; gap:6px; background:#00897b; font-weight:700; padding:10px 16px; border-radius:8px; font-size:13px; color:#ffffff; box-shadow:0 4px 14px rgba(0,137,123,0.3); }}
+                .btn-report:hover {{ background:#00796b; }}
+                
+                /* Large Cryo Detail Cards */
+                .cryo-detail-grid {{ display:grid; grid-template-columns:repeat(auto-fit, minmax(320px, 1fr)); gap:18px; margin-bottom:24px; }}
+                .cryo-card-lg {{ background:rgba(18,25,41,0.85); border:1px solid rgba(255,255,255,0.08); border-radius:14px; padding:22px; position:relative; }}
+                .metrics-row {{ display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; background:rgba(9,13,22,0.6); padding:12px; border-radius:10px; margin:14px 0; border:1px solid rgba(255,255,255,0.05); }}
+                .metric-label {{ font-size:11px; color:#8899a6; text-transform:uppercase; font-weight:600; margin-bottom:4px; }}
+                .metric-val {{ font-size:1.15rem; font-weight:800; font-family:monospace; color:#f0f4f8; }}
+
+                /* Chart Showcase */
+                .chart-container {{ background:rgba(9,13,22,0.9); border:1px solid rgba(255,255,255,0.1); border-radius:12px; padding:16px; margin-top:14px; text-align:center; }}
+                .chart-img {{ width:100%; max-height:420px; object-fit:contain; border-radius:8px; }}
+
+                /* Section Cards & Tables */
                 .section-card {{ background:rgba(18,25,41,0.85); border:1px solid rgba(255,255,255,0.08); border-radius:12px; padding:20px; margin-bottom:20px; }}
+                table {{ width:100%; border-collapse:collapse; margin-top:12px; }}
+                th, td {{ padding:10px 14px; text-align:left; border-bottom:1px solid rgba(255,255,255,0.06); font-size:13.5px; }}
+                th {{ color:#8899a6; text-transform:uppercase; font-size:11.5px; letter-spacing:0.5px; }}
                 .btn {{ background:#2979ff; color:white; border:none; padding:8px 16px; border-radius:6px; cursor:pointer; font-weight:600; }}
                 .btn:hover {{ background:#1e6cd9; }}
-                .btn-test {{ background:#00e676; color:#090d16; font-size:15px; font-weight:700; padding:12px 24px; border-radius:8px; cursor:pointer; border:none; box-shadow:0 4px 14px rgba(0,230,118,0.3); }}
-                .btn-test:hover {{ background:#00c853; }}
-                
-                table {{ width:100%; border-collapse:collapse; margin-top:12px; }}
-                th, td {{ padding:10px 14px; text-align:left; border-bottom:1px solid rgba(255,255,255,0.06); font-size:14px; }}
-                th {{ color:#8899a6; text-transform:uppercase; font-size:12px; }}
 
-                /* LN2 Modal & Glove-Friendly Touch Elements */
+                /* LN2 Modal & Glove-Friendly Stepper */
                 .modal-overlay {{ position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(4,8,18,0.88); backdrop-filter:blur(6px); display:flex; justify-content:center; align-items:center; z-index:9999; }}
                 .modal-box {{ background:#101726; border:1px solid rgba(0,229,255,0.35); border-radius:16px; padding:24px; max-width:540px; width:92%; box-shadow:0 16px 40px rgba(0,0,0,0.7); max-height:90vh; overflow-y:auto; }}
                 .form-group {{ margin-bottom:16px; }}
@@ -989,133 +1046,305 @@ class ClinicalAlertHandler(http.server.BaseHTTPRequestHandler):
               </style>
             </head>
             <body>
+              <!-- Top Global Header -->
               <header>
                 <div>
-                  <h1>IVF Laboratory Cleanroom Telemetry</h1>
-                  <div class="subtitle">Advanced Fertility of Alaska — Clinical SCADA Monitor</div>
+                  <h1 class="brand-title">IVF Cleanroom Operations & SCADA Alert Controller</h1>
+                  <div class="brand-sub">Advanced Fertility of Alaska — Clinical Embryology & Cryopreservation</div>
                 </div>
-                <div class="badge-live"><div class="pulse-dot"></div> Live Telemetry Active</div>
+
+                <!-- Navigation Tabs -->
+                <div class="nav-tabs">
+                  <button class="nav-tab active" id="tab-live" onclick="switchTab('live')">🌡️ Live Operations</button>
+                  <button class="nav-tab" id="tab-cryo" onclick="switchTab('cryo')">🧊 Cryo Tank Audit</button>
+                </div>
+
+                <div class="header-meta">
+                  <div class="clock-display" id="liveClock">--:--:-- AKDT</div>
+                  <div class="badge-live"><div class="pulse-dot"></div> Telemetry Live</div>
+                </div>
               </header>
 
-              <!-- Live Environmental Cards -->
-              <div class="grid">
-                <div class="card" id="card-fridge">
-                  <div class="card-title">Medical Fridge</div>
-                  <div class="card-val"><span id="val-fridge">--</span><span class="card-unit">°C</span></div>
-                  <div class="card-sub">
-                    <span>Range: 2.0°C – 8.0°C</span>
-                    <span id="badge-fridge" class="status-badge status-normal">NORMAL</span>
-                  </div>
-                </div>
-
-                <div class="card" id="card-freezer">
-                  <div class="card-title">Medical Freezer</div>
-                  <div class="card-val"><span id="val-freezer">--</span><span class="card-unit">°C</span></div>
-                  <div class="card-sub">
-                    <span>Limit: &lt; -15.0°C</span>
-                    <span id="badge-freezer" class="status-badge status-normal">NORMAL</span>
-                  </div>
-                </div>
-
-                <div class="card" id="card-cryo1">
-                  <div class="card-title">Cryo Tank 1 (Embryos)</div>
-                  <div class="card-val"><span id="val-cryo1">--</span><span class="card-unit">°C</span></div>
-                  <div class="card-sub">
-                    <span>Critical: &lt; -135.0°C</span>
-                    <span id="badge-cryo1" class="status-badge status-normal">NORMAL</span>
-                  </div>
-                </div>
-
-                <div class="card" id="card-ln2-1" style="border-left: 3px solid #00e5ff;">
-                  <div class="card-title">Cryo Tank 1 (Dipstick)</div>
-                  <div class="card-val"><span id="val-ln2-level-1">--</span><span class="card-unit">cm</span></div>
-                  <div class="card-sub">
-                    <span id="sub-ln2-check-1">Mon/Wed/Fri</span>
-                    <span id="badge-ln2-1" class="status-badge status-normal">ON SCHEDULE</span>
-                  </div>
-                  <div id="ln2-next-due-1" style="font-size:11px; color:#8899a6; margin-top:6px;">Next: Mon/Wed/Fri by 5:00 PM</div>
-                  <button class="btn" style="margin-top:10px; width:100%; background:#00b0ff; font-weight:700; padding:10px;" onclick="openLn2ModalFor('Cryo Tank 1')">🧊 Log Tank 1 Check</button>
-                </div>
-
-                <div class="card" id="card-cryo2">
-                  <div class="card-title">Cryo Tank 2 (Sperm)</div>
-                  <div class="card-val"><span id="val-cryo2">--</span><span class="card-unit">°C</span></div>
-                  <div class="card-sub">
-                    <span>Critical: &lt; -135.0°C</span>
-                    <span id="badge-cryo2" class="status-badge status-normal">NORMAL</span>
-                  </div>
-                </div>
-
-                <div class="card" id="card-ln2-2" style="border-left: 3px solid #00e5ff;">
-                  <div class="card-title">Cryo Tank 2 (Dipstick)</div>
-                  <div class="card-val"><span id="val-ln2-level-2">--</span><span class="card-unit">cm</span></div>
-                  <div class="card-sub">
-                    <span id="sub-ln2-check-2">Mon/Wed/Fri</span>
-                    <span id="badge-ln2-2" class="status-badge status-normal">ON SCHEDULE</span>
-                  </div>
-                  <div id="ln2-next-due-2" style="font-size:11px; color:#8899a6; margin-top:6px;">Next: Mon/Wed/Fri by 5:00 PM</div>
-                  <button class="btn" style="margin-top:10px; width:100%; background:#00b0ff; font-weight:700; padding:10px;" onclick="openLn2ModalFor('Cryo Tank 2')">🧊 Log Tank 2 Check</button>
-                </div>
-
-                <div class="card" id="card-ambient">
-                  <div class="card-title">Cleanroom Ambient</div>
-                  <div class="card-val"><span id="val-ambient">--</span><span class="card-unit">°C</span></div>
-                  <div class="card-sub">
-                    <span>Target: ~25.0°C</span>
-                    <span id="badge-ambient" class="status-badge status-normal">COMFORT</span>
-                  </div>
-                </div>
-
-                <div class="card" id="card-door1">
-                  <div class="card-title">Main Cleanroom Door</div>
-                  <div class="card-val" id="val-door1" style="font-size:1.6rem; margin-top:6px;">CLOSED</div>
-                  <div class="card-sub">
-                    <span>Limit: &lt; 3m open</span>
-                    <span id="badge-door1" class="status-badge status-normal">SECURE</span>
-                  </div>
-                </div>
-
-                <div class="card" id="card-incubators">
-                  <div class="card-title">Chamber Incubators</div>
-                  <div class="card-val" id="val-incubators" style="font-size:1.6rem; margin-top:6px;">NORMAL</div>
-                  <div class="card-sub">
-                    <span>Incubator 01 & 02</span>
-                    <span id="badge-incubators" class="status-badge status-normal">ALL CLEAR</span>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Daily QA Test Controller -->
-              <div class="section-card">
-                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
+              <!-- ============================================================== -->
+              <!-- PAGE 1: REAL-TIME CLINICAL OPERATIONS                          -->
+              <!-- ============================================================== -->
+              <div id="view-live">
+                <!-- 1. Top Section: Daily Alarm Verification (CAP/CLIA) -->
+                <div class="qa-banner">
                   <div>
-                    <h3 style="margin-bottom:4px;">Daily Alarm Verification (CAP/CLIA)</h3>
-                    <p style="color:#8899a6; font-size:13px;">Dispatches verified Priority 0 test notification to team and writes regulatory timestamp.</p>
+                    <div class="qa-title">
+                      <span>Daily Alarm Pathway Verification (CAP / CLIA)</span>
+                      <span id="qaBadge" class="status-badge status-normal" style="font-size:11px;">PENDING</span>
+                    </div>
+                    <p class="qa-desc" id="qaStatusText">
+                      Dispatches verified Priority 0 pathway test to on-call embryology team and logs regulatory timestamp in PostgreSQL.
+                    </p>
                   </div>
                   <div>
                     <button class="btn-test" onclick="runDailyTest()">🔔 Run Daily Alarm Pathway Test</button>
                   </div>
                 </div>
-                <div id="testStatus" style="margin-top:12px; font-size:13px; color:#00e676; font-weight:600;"></div>
-              </div>
+                <div id="testStatus" style="margin:-12px 0 16px; font-size:13px; font-weight:600; padding:0 8px;"></div>
 
-              <!-- Liquid Nitrogen Manual Dipstick Audit Trail -->
-              <div class="section-card">
-                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
-                  <div>
-                    <h3 style="margin-bottom:4px;">Liquid Nitrogen Manual Dipstick Audit Trail (3-Day Cycle)</h3>
-                    <p style="color:#8899a6; font-size:13px;">CAP/CLIA digital compliance log for manual tank levels in cm, fill tracking, and staff initials.</p>
+                <!-- 2. Middle Section: Live Real-Time Telemetry Grid -->
+                <div class="grid-telemetry">
+                  <!-- Cryo Tank 1 (Embryos) -->
+                  <div class="card" id="card-cryo1" style="border-top:3px solid #00e5ff;">
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                      <div>
+                        <div class="card-title">Cryo Tank 1 (Embryos)</div>
+                        <div class="card-val"><span id="val-cryo1">--</span><span class="card-unit">°C</span></div>
+                      </div>
+                      <span id="badge-cryo1" class="status-badge status-normal">NORMAL</span>
+                    </div>
+                    <div class="card-sub">
+                      <span>Vapor Limit: &lt; -135.0°C</span>
+                      <span style="font-size:11px; color:#8899a6;">Pt100 Analog</span>
+                    </div>
+
+                    <!-- Integrated Dipstick Sub-Panel -->
+                    <div class="dipstick-subpanel" id="dip-subpanel-1">
+                      <div class="dip-header">
+                        <span style="font-size:11.5px; font-weight:700; color:#00e5ff; text-transform:uppercase;">Manual Dipstick</span>
+                        <span id="badge-ln2-1" class="status-badge status-normal">ON SCHEDULE</span>
+                      </div>
+                      <div class="dip-level-row">
+                        <div><span class="dip-level" id="val-ln2-level-1">--</span><span style="color:#8899a6; font-size:12px;"> cm</span></div>
+                        <span id="sub-ln2-check-1" style="font-size:12px; color:#8899a6;">--</span>
+                      </div>
+                      <div id="ln2-next-due-1" style="font-size:11px; color:#8899a6; margin-top:2px;">Next: Mon/Wed/Fri by 5:00 PM</div>
+                      <div class="dip-actions">
+                        <button class="btn-mini" onclick="openLn2ModalFor('Cryo Tank 1')">🧊 Log Check</button>
+                        <button class="btn-mini-subtle" onclick="switchTab('cryo')">Audit Trail →</button>
+                      </div>
+                    </div>
                   </div>
-                  <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-                    <a href="/report/ln2?tank=1" target="_blank" class="btn" style="text-decoration:none; display:inline-block; background:#00897b; font-weight:700; padding:12px 14px; border-radius:8px; font-size:13px; color:#ffffff; box-shadow:0 4px 14px rgba(0,137,123,0.3);">📊 Print Tank 1 Report</a>
-                    <a href="/report/ln2?tank=2" target="_blank" class="btn" style="text-decoration:none; display:inline-block; background:#00897b; font-weight:700; padding:12px 14px; border-radius:8px; font-size:13px; color:#ffffff; box-shadow:0 4px 14px rgba(0,137,123,0.3);">📊 Print Tank 2 Report</a>
-                    <button class="btn" style="background:#00e5ff; color:#090d16; font-size:15px; font-weight:700; padding:12px 20px; border-radius:8px; box-shadow:0 4px 14px rgba(0,229,255,0.3);" onclick="openLn2Modal()">🧊 Log Dipstick Check</button>
+
+                  <!-- Cryo Tank 2 (Sperm) -->
+                  <div class="card" id="card-cryo2" style="border-top:3px solid #00b0ff;">
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                      <div>
+                        <div class="card-title">Cryo Tank 2 (Sperm)</div>
+                        <div class="card-val"><span id="val-cryo2">--</span><span class="card-unit">°C</span></div>
+                      </div>
+                      <span id="badge-cryo2" class="status-badge status-normal">NORMAL</span>
+                    </div>
+                    <div class="card-sub">
+                      <span>Vapor Limit: &lt; -135.0°C</span>
+                      <span style="font-size:11px; color:#8899a6;">Pt100 Analog</span>
+                    </div>
+
+                    <!-- Integrated Dipstick Sub-Panel -->
+                    <div class="dipstick-subpanel" id="dip-subpanel-2">
+                      <div class="dip-header">
+                        <span style="font-size:11.5px; font-weight:700; color:#00b0ff; text-transform:uppercase;">Manual Dipstick</span>
+                        <span id="badge-ln2-2" class="status-badge status-normal">ON SCHEDULE</span>
+                      </div>
+                      <div class="dip-level-row">
+                        <div><span class="dip-level" id="val-ln2-level-2">--</span><span style="color:#8899a6; font-size:12px;"> cm</span></div>
+                        <span id="sub-ln2-check-2" style="font-size:12px; color:#8899a6;">--</span>
+                      </div>
+                      <div id="ln2-next-due-2" style="font-size:11px; color:#8899a6; margin-top:2px;">Next: Mon/Wed/Fri by 5:00 PM</div>
+                      <div class="dip-actions">
+                        <button class="btn-mini" onclick="openLn2ModalFor('Cryo Tank 2')">🧊 Log Check</button>
+                        <button class="btn-mini-subtle" onclick="switchTab('cryo')">Audit Trail →</button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Medical Fridge -->
+                  <div class="card" id="card-fridge">
+                    <div class="card-title">Medical Refrigerator</div>
+                    <div class="card-val"><span id="val-fridge">--</span><span class="card-unit">°C</span></div>
+                    <div class="card-sub">
+                      <span>Target: 2.0°C – 8.0°C</span>
+                      <span id="badge-fridge" class="status-badge status-normal">NORMAL</span>
+                    </div>
+                  </div>
+
+                  <!-- Medical Freezer -->
+                  <div class="card" id="card-freezer">
+                    <div class="card-title">Medical Freezer</div>
+                    <div class="card-val"><span id="val-freezer">--</span><span class="card-unit">°C</span></div>
+                    <div class="card-sub">
+                      <span>Limit: &lt; -15.0°C</span>
+                      <span id="badge-freezer" class="status-badge status-normal">NORMAL</span>
+                    </div>
+                  </div>
+
+                  <!-- Cleanroom Ambient -->
+                  <div class="card" id="card-ambient">
+                    <div class="card-title">Cleanroom Ambient</div>
+                    <div class="card-val"><span id="val-ambient">--</span><span class="card-unit">°C</span></div>
+                    <div class="card-sub">
+                      <span>Comfort Target: ~25.0°C</span>
+                      <span id="badge-ambient" class="status-badge status-normal">COMFORT</span>
+                    </div>
+                  </div>
+
+                  <!-- Main Cleanroom Door -->
+                  <div class="card" id="card-door1">
+                    <div class="card-title">Main Cleanroom Door</div>
+                    <div class="card-val" id="val-door1" style="font-size:1.6rem; margin-top:6px;">CLOSED</div>
+                    <div class="card-sub">
+                      <span>Limit: &lt; 3m open</span>
+                      <span id="badge-door1" class="status-badge status-normal">SECURE</span>
+                    </div>
+                  </div>
+
+                  <!-- Cryo Lab Door -->
+                  <div class="card" id="card-door2">
+                    <div class="card-title">Cryo Lab Door</div>
+                    <div class="card-val" id="val-door2" style="font-size:1.6rem; margin-top:6px;">CLOSED</div>
+                    <div class="card-sub">
+                      <span>Limit: &lt; 3m open</span>
+                      <span id="badge-door2" class="status-badge status-normal">SECURE</span>
+                    </div>
+                  </div>
+
+                  <!-- Chamber Incubators -->
+                  <div class="card" id="card-incubators">
+                    <div class="card-title">Chamber Incubators</div>
+                    <div class="card-val" id="val-incubators" style="font-size:1.6rem; margin-top:6px;">NORMAL</div>
+                    <div class="card-sub">
+                      <span>Incubator 01 & 02</span>
+                      <span id="badge-incubators" class="status-badge status-normal">ALL CLEAR</span>
+                    </div>
                   </div>
                 </div>
-                <div id="ln2HistoryTable" style="margin-top:14px;">Loading inspection logs...</div>
+
+                <!-- 3. Bottom Section: Active Alarms & Clinical Audit Trail -->
+                <div class="section-card">
+                  <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:8px;">
+                    <div>
+                      <h3 style="margin:0; font-size:1.15rem; color:#f0f4f8;">Active Alarms & Clinical Audit Trail</h3>
+                      <p style="color:#8899a6; font-size:13px; margin:3px 0 0;">Reverse chronological history. Tap Acknowledge to silence repeating sirens.</p>
+                    </div>
+                  </div>
+                  <div id="alarmsTable">Loading alarms...</div>
+                </div>
               </div>
 
-              <!-- LN2 Inspection Modal -->
+              <!-- ============================================================== -->
+              <!-- PAGE 2: CRYO TANK AUDIT & DIPSTICK SUITE                       -->
+              <!-- ============================================================== -->
+              <div id="view-cryo" style="display:none;">
+                <!-- Sub-Page Header -->
+                <div class="subpage-header">
+                  <div>
+                    <h2 class="subpage-title">Liquid Nitrogen (LN2) Cryopreservation Suite</h2>
+                    <p class="subpage-desc">Dual Tank Manual Dipstick Tracking, Boil-off Dynamics & Regulatory Audit Trail (CAP / CLIA / JCAHO)</p>
+                  </div>
+                  <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                    <a href="/report/ln2?tank=1" target="_blank" class="btn-report">📊 Print Tank 1 Report</a>
+                    <a href="/report/ln2?tank=2" target="_blank" class="btn-report">📊 Print Tank 2 Report</a>
+                    <button class="btn" style="background:#00e5ff; color:#090d16; font-size:14px; font-weight:800; padding:10px 18px; border-radius:8px; box-shadow:0 4px 14px rgba(0,229,255,0.3);" onclick="openLn2Modal()">🧊 Log Dipstick Check</button>
+                  </div>
+                </div>
+
+                <!-- Detailed Cryo Level Overview Cards -->
+                <div class="cryo-detail-grid">
+                  <!-- Tank 1 Detail -->
+                  <div class="cryo-card-lg" style="border-top:4px solid #00e5ff;">
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                      <div>
+                        <div style="font-size:13px; font-weight:700; color:#00e5ff; text-transform:uppercase;">Cryo Tank 1 (Embryos)</div>
+                        <div style="font-size:2.4rem; font-weight:800; font-family:monospace; color:#f0f4f8; margin-top:4px;">
+                          <span id="detail-ln2-level-1">--</span><span style="font-size:1.2rem; color:#8899a6;"> cm</span>
+                        </div>
+                      </div>
+                      <span id="detail-badge-ln2-1" class="status-badge status-normal">ON SCHEDULE</span>
+                    </div>
+
+                    <div class="metrics-row">
+                      <div>
+                        <div class="metric-label">Vapor Temp</div>
+                        <div class="metric-val" style="color:#00e5ff;"><span id="detail-cryo1-temp">--</span>°C</div>
+                      </div>
+                      <div>
+                        <div class="metric-label">Boil-off Rate</div>
+                        <div class="metric-val">~1.0 <span style="font-size:11px; color:#8899a6;">cm/d</span></div>
+                      </div>
+                      <div>
+                        <div class="metric-label">Last Refill</div>
+                        <div class="metric-val" style="font-size:0.95rem;" id="detail-refill-1">Oct 21</div>
+                      </div>
+                    </div>
+
+                    <div style="font-size:12.5px; color:#8899a6; line-height:1.6;">
+                      <div><b>Last Check:</b> <span id="detail-last-check-1">--</span></div>
+                      <div><b>Schedule:</b> <span id="detail-next-check-1">Mon / Wed / Fri by 5:00 PM</span></div>
+                    </div>
+                    <button class="btn" style="width:100%; background:#00b0ff; font-weight:800; margin-top:14px; padding:12px; border-radius:8px;" onclick="openLn2ModalFor('Cryo Tank 1')">🧊 Log Tank 1 Check</button>
+                  </div>
+
+                  <!-- Tank 2 Detail -->
+                  <div class="cryo-card-lg" style="border-top:4px solid #00b0ff;">
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                      <div>
+                        <div style="font-size:13px; font-weight:700; color:#00b0ff; text-transform:uppercase;">Cryo Tank 2 (Sperm)</div>
+                        <div style="font-size:2.4rem; font-weight:800; font-family:monospace; color:#f0f4f8; margin-top:4px;">
+                          <span id="detail-ln2-level-2">--</span><span style="font-size:1.2rem; color:#8899a6;"> cm</span>
+                        </div>
+                      </div>
+                      <span id="detail-badge-ln2-2" class="status-badge status-normal">ON SCHEDULE</span>
+                    </div>
+
+                    <div class="metrics-row">
+                      <div>
+                        <div class="metric-label">Vapor Temp</div>
+                        <div class="metric-val" style="color:#00b0ff;"><span id="detail-cryo2-temp">--</span>°C</div>
+                      </div>
+                      <div>
+                        <div class="metric-label">Boil-off Rate</div>
+                        <div class="metric-val">~1.0 <span style="font-size:11px; color:#8899a6;">cm/d</span></div>
+                      </div>
+                      <div>
+                        <div class="metric-label">Last Refill</div>
+                        <div class="metric-val" style="font-size:0.95rem;" id="detail-refill-2">Oct 23</div>
+                      </div>
+                    </div>
+
+                    <div style="font-size:12.5px; color:#8899a6; line-height:1.6;">
+                      <div><b>Last Check:</b> <span id="detail-last-check-2">--</span></div>
+                      <div><b>Schedule:</b> <span id="detail-next-check-2">Mon / Wed / Fri by 5:00 PM</span></div>
+                    </div>
+                    <button class="btn" style="width:100%; background:#00b0ff; font-weight:800; margin-top:14px; padding:12px; border-radius:8px;" onclick="openLn2ModalFor('Cryo Tank 2')">🧊 Log Tank 2 Check</button>
+                  </div>
+                </div>
+
+                <!-- Sawtooth Curves Showcase -->
+                <div class="section-card">
+                  <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:12px;">
+                    <div>
+                      <h3 style="margin:0; font-size:1.15rem; color:#f0f4f8;">60-Day Liquid Nitrogen Level & Refill Sawtooth Curves</h3>
+                      <p style="color:#8899a6; font-size:13px; margin:3px 0 0;">Visual confirmation of continuous boil-off rate and refill volume adherence.</p>
+                    </div>
+                    <div class="chips-row">
+                      <div class="chip active" id="chip-chart-1" onclick="switchSawtooth(1)">Tank 1 (Embryos) Curve</div>
+                      <div class="chip" id="chip-chart-2" onclick="switchSawtooth(2)">Tank 2 (Sperm) Curve</div>
+                    </div>
+                  </div>
+                  <div class="chart-container">
+                    <img id="sawtoothImg" src="/report/ln2/chart?tank=1" alt="LN2 Sawtooth Chart" class="chart-img">
+                  </div>
+                </div>
+
+                <!-- Full Liquid Nitrogen Audit Trail Table -->
+                <div class="section-card">
+                  <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:10px;">
+                    <div>
+                      <h3 style="margin:0; font-size:1.15rem; color:#f0f4f8;">Liquid Nitrogen Manual Dipstick Audit Trail</h3>
+                      <p style="color:#8899a6; font-size:13px; margin:3px 0 0;">Complete regulatory history for level verification, manual refills, and seal inspections.</p>
+                    </div>
+                  </div>
+                  <div id="ln2HistoryTable">Loading inspection logs...</div>
+                </div>
+              </div>
+
+              <!-- ============================================================== -->
+              <!-- GLOVE-FRIENDLY LN2 INSPECTION MODAL                            -->
+              <!-- ============================================================== -->
               <div id="ln2Modal" class="modal-overlay" style="display:none;">
                 <div class="modal-box">
                   <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px;">
@@ -1139,7 +1368,7 @@ class ClinicalAlertHandler(http.server.BaseHTTPRequestHandler):
                     <div class="stepper-row">
                       <button type="button" class="btn-stepper" onclick="adjustLn2(-1.0)">- 1.0</button>
                       <button type="button" class="btn-stepper" onclick="adjustLn2(-0.5)">- 0.5</button>
-                      <input type="number" step="0.1" id="ln2LevelInput" class="input-level" value="22.0">
+                      <input type="number" step="0.1" id="ln2LevelInput" class="input-level" value="30.0">
                       <button type="button" class="btn-stepper" onclick="adjustLn2(0.5)">+ 0.5</button>
                       <button type="button" class="btn-stepper" onclick="adjustLn2(1.0)">+ 1.0</button>
                     </div>
@@ -1187,25 +1416,75 @@ class ClinicalAlertHandler(http.server.BaseHTTPRequestHandler):
                 </div>
               </div>
 
-              <!-- Live Alarms Table -->
-              <div class="section-card">
-                <h3 style="margin-bottom:4px;">Active Alarms & Clinical Audit Trail</h3>
-                <p style="color:#8899a6; font-size:13px; margin-bottom:12px;">Reverse chronological history. Tap Acknowledge to silence repeating sirens.</p>
-                <div id="alarmsTable">Loading alarms...</div>
-              </div>
-
+              <!-- ============================================================== -->
+              <!-- SCRIPTS                                                        -->
+              <!-- ============================================================== -->
               <script>
+                // Navigation / Tabs Controller
+                function switchTab(tab, updateUrl = true) {{
+                  const isLive = (tab === 'live');
+                  document.getElementById('view-live').style.display = isLive ? 'block' : 'none';
+                  document.getElementById('view-cryo').style.display = isLive ? 'none' : 'block';
+                  document.getElementById('tab-live').className = isLive ? 'nav-tab active' : 'nav-tab';
+                  document.getElementById('tab-cryo').className = isLive ? 'nav-tab' : 'nav-tab active';
+                  
+                  if (updateUrl) {{
+                    const targetPath = isLive ? '/' : '/cryo';
+                    if (window.location.pathname !== targetPath) {{
+                      window.history.pushState({{ tab }}, '', targetPath);
+                    }}
+                  }}
+                }}
+
+                window.addEventListener('popstate', (e) => {{
+                  const tab = (e.state && e.state.tab) || (window.location.pathname.startsWith('/cryo') ? 'cryo' : 'live');
+                  switchTab(tab, false);
+                }});
+
+                function switchSawtooth(tankNum) {{
+                  document.getElementById('sawtoothImg').src = '/report/ln2/chart?tank=' + tankNum + '&t=' + Date.now();
+                  document.getElementById('chip-chart-1').className = (tankNum === 1) ? 'chip active' : 'chip';
+                  document.getElementById('chip-chart-2').className = (tankNum === 2) ? 'chip active' : 'chip';
+                }}
+
+                // Telemetry & Alarm Updates
                 function updateTelemetry() {{
                   fetch('/api/status')
                     .then(r => r.json())
                     .then(data => {{
                       const r = data.readings || {{}};
                       
-                      // Ambient
+                      // Clock
+                      if (data.server_time) {{
+                        const timeOnly = data.server_time.split(' ')[1] || '';
+                        document.getElementById('liveClock').innerText = timeOnly + ' AKDT';
+                      }}
+
+                      // Daily QA Verification Status
+                      const qa = data.last_qa;
+                      const qaBadge = document.getElementById('qaBadge');
+                      const qaText = document.getElementById('qaStatusText');
+                      if (qa && qa.triggered_at) {{
+                        const todayDateStr = (data.server_time || '').split(' ')[0];
+                        const qaDateStr = qa.triggered_at.split(' ')[0];
+                        const qaTimeStr = (qa.triggered_at.split(' ')[1] || '').split('.')[0];
+                        if (todayDateStr && qaDateStr === todayDateStr) {{
+                          qaBadge.innerText = 'VERIFIED TODAY';
+                          qaBadge.className = 'status-badge status-normal';
+                          qaText.innerText = `✅ Verified Today at ${{qaTimeStr}} by ${{qa.by || 'Lab Kiosk'}} (Priority 0 pathway operational).`;
+                        }} else {{
+                          qaBadge.innerText = 'PENDING TODAY';
+                          qaBadge.className = 'status-badge status-warn';
+                          qaText.innerText = `⚠️ Daily pathway test pending for today. Last run on ${{qaDateStr}} at ${{qaTimeStr}}.`;
+                        }}
+                      }}
+
+                      // Ambient (101)
                       if (r[101] !== undefined) {{
                         document.getElementById('val-ambient').innerText = r[101].toFixed(1);
                       }}
-                      // Fridge
+
+                      // Fridge (102)
                       if (r[102] !== undefined) {{
                         const f = r[102];
                         document.getElementById('val-fridge').innerText = f.toFixed(1);
@@ -1218,7 +1497,8 @@ class ClinicalAlertHandler(http.server.BaseHTTPRequestHandler):
                           b.className = 'status-badge status-normal';
                         }}
                       }}
-                      // Freezer
+
+                      // Freezer (103)
                       if (r[103] !== undefined) {{
                         const fz = r[103];
                         document.getElementById('val-freezer').innerText = fz.toFixed(1);
@@ -1231,10 +1511,14 @@ class ClinicalAlertHandler(http.server.BaseHTTPRequestHandler):
                           b.className = 'status-badge status-normal';
                         }}
                       }}
-                      // Cryo Tank 1 (Ch 125)
+
+                      // Cryo Tank 1 (125)
                       if (r[125] !== undefined) {{
                         const cr1 = r[125];
                         document.getElementById('val-cryo1').innerText = cr1.toFixed(1);
+                        const detailC1 = document.getElementById('detail-cryo1-temp');
+                        if (detailC1) detailC1.innerText = cr1.toFixed(1);
+
                         const b1 = document.getElementById('badge-cryo1');
                         if (cr1 > -135.0) {{
                           b1.innerText = 'CRITICAL';
@@ -1244,10 +1528,14 @@ class ClinicalAlertHandler(http.server.BaseHTTPRequestHandler):
                           b1.className = 'status-badge status-normal';
                         }}
                       }}
-                      // Cryo Tank 2 (Ch 104)
+
+                      // Cryo Tank 2 (104)
                       if (r[104] !== undefined) {{
                         const cr2 = r[104];
                         document.getElementById('val-cryo2').innerText = cr2.toFixed(1);
+                        const detailC2 = document.getElementById('detail-cryo2-temp');
+                        if (detailC2) detailC2.innerText = cr2.toFixed(1);
+
                         const b2 = document.getElementById('badge-cryo2');
                         if (cr2 > -135.0) {{
                           b2.innerText = 'CRITICAL';
@@ -1257,16 +1545,28 @@ class ClinicalAlertHandler(http.server.BaseHTTPRequestHandler):
                           b2.className = 'status-badge status-normal';
                         }}
                       }}
-                      // Door 01
+
+                      // Main Cleanroom Door (121)
                       if (r[121] !== undefined) {{
-                        const d = r[121] > 0;
-                        document.getElementById('val-door1').innerText = d ? 'OPEN' : 'CLOSED';
-                        document.getElementById('val-door1').style.color = d ? '#ffab00' : '#f0f4f8';
-                        const b = document.getElementById('badge-door1');
-                        b.innerText = d ? 'AJAR' : 'SECURE';
-                        b.className = d ? 'status-badge status-warn' : 'status-badge status-normal';
+                        const d1 = r[121] > 0;
+                        document.getElementById('val-door1').innerText = d1 ? 'OPEN' : 'CLOSED';
+                        document.getElementById('val-door1').style.color = d1 ? '#ffab00' : '#f0f4f8';
+                        const b1 = document.getElementById('badge-door1');
+                        b1.innerText = d1 ? 'AJAR' : 'SECURE';
+                        b1.className = d1 ? 'status-badge status-warn' : 'status-badge status-normal';
                       }}
-                      // Incubators
+
+                      // Cryo Lab Door (122)
+                      if (r[122] !== undefined) {{
+                        const d2 = r[122] > 0;
+                        document.getElementById('val-door2').innerText = d2 ? 'OPEN' : 'CLOSED';
+                        document.getElementById('val-door2').style.color = d2 ? '#ffab00' : '#f0f4f8';
+                        const b2 = document.getElementById('badge-door2');
+                        b2.innerText = d2 ? 'AJAR' : 'SECURE';
+                        b2.className = d2 ? 'status-badge status-warn' : 'status-badge status-normal';
+                      }}
+
+                      // Incubators (123 & 124)
                       const inc1 = r[123] || 0;
                       const inc2 = r[124] || 0;
                       const incAlarm = (inc1 > 0 || inc2 > 0);
@@ -1281,15 +1581,21 @@ class ClinicalAlertHandler(http.server.BaseHTTPRequestHandler):
 
                 function runDailyTest() {{
                   const st = document.getElementById('testStatus');
+                  st.style.color = '#00e5ff';
                   st.innerText = '⏳ Dispatching test alert to Pushover...';
                   fetch('/api/test', {{ method: 'POST' }})
                     .then(r => r.json())
                     .then(d => {{
+                      st.style.color = '#00e676';
                       st.innerText = '✅ Daily Alarm Test dispatched to team at ' + d.timestamp + ' (Pushover Priority 0)';
+                      updateTelemetry();
                       loadAlarms();
                       setTimeout(() => {{ st.innerText = ''; }}, 6000);
                     }})
-                    .catch(e => {{ st.innerText = '❌ Failed to send test alert'; }});
+                    .catch(e => {{
+                      st.style.color = '#ff1744';
+                      st.innerText = '❌ Failed to send test alert';
+                    }});
                 }}
 
                 function ackAlarm(id) {{
@@ -1362,7 +1668,7 @@ class ClinicalAlertHandler(http.server.BaseHTTPRequestHandler):
 
                 function adjustLn2(delta) {{
                   const inp = document.getElementById('ln2LevelInput');
-                  let val = parseFloat(inp.value) || 20.0;
+                  let val = parseFloat(inp.value) || 30.0;
                   val = Math.max(0, Math.round((val + delta) * 10) / 10);
                   inp.value = val.toFixed(1);
                 }}
@@ -1441,76 +1747,99 @@ class ClinicalAlertHandler(http.server.BaseHTTPRequestHandler):
                     .then(data => {{
                       const tanks = data.tanks || {{}};
                       
-                      // Update Cryo Tank 1
+                      // 1. Update Cryo Tank 1
                       const t1 = tanks['Cryo Tank 1'];
                       if (t1) {{
+                        const lvl1 = t1.level_cm.toFixed(1);
+                        const hrs1 = `${{t1.hours_since.toFixed(1)}}h ago (${{t1.initials}})`;
+                        const due1 = t1.detail || `Next: ${{t1.next_check}}`;
+                        const badgeTxt1 = t1.badge || 'ON SCHEDULE';
+
+                        // Main Card Elements
                         const el1 = document.getElementById('val-ln2-level-1');
-                        if (el1) el1.innerText = t1.level_cm.toFixed(1);
+                        if (el1) el1.innerText = lvl1;
                         const b1 = document.getElementById('badge-ln2-1');
+                        if (b1) b1.innerText = badgeTxt1;
                         const sub1 = document.getElementById('sub-ln2-check-1');
+                        if (sub1) sub1.innerText = hrs1;
                         const nextDue1 = document.getElementById('ln2-next-due-1');
-                        const card1 = document.getElementById('card-ln2-1');
-                        if (b1) b1.innerText = t1.badge || 'ON SCHEDULE';
-                        if (sub1) sub1.innerText = `${{t1.hours_since.toFixed(1)}}h ago (${{t1.initials}})`;
-                        if (nextDue1) nextDue1.innerText = t1.detail || `Next: ${{t1.next_check}}`;
-                        if (card1 && b1) {{
-                          if (t1.status === 'OVERDUE') {{
-                            b1.className = 'status-badge status-alert';
-                            card1.style.borderLeft = '3px solid #ff1744';
-                          }} else if (t1.status === 'DUE') {{
-                            b1.className = 'status-badge status-warn';
-                            card1.style.borderLeft = '3px solid #ffab00';
-                          }} else {{
-                            b1.className = 'status-badge status-normal';
-                            card1.style.borderLeft = '3px solid #00e5ff';
-                          }}
-                        }}
+                        if (nextDue1) nextDue1.innerText = due1;
+
+                        // Subpage Detail Elements
+                        const dEl1 = document.getElementById('detail-ln2-level-1');
+                        if (dEl1) dEl1.innerText = lvl1;
+                        const dB1 = document.getElementById('detail-badge-ln2-1');
+                        if (dB1) dB1.innerText = badgeTxt1;
+                        const dCheck1 = document.getElementById('detail-last-check-1');
+                        if (dCheck1) dCheck1.innerText = `${{t1.level_cm.toFixed(1)}} cm (${{hrs1}})`;
+                        const dNext1 = document.getElementById('detail-next-check-1');
+                        if (dNext1) dNext1.innerText = t1.next_check;
+
+                        const badgeClass1 = (t1.status === 'OVERDUE') ? 'status-badge status-alert' :
+                                           ((t1.status === 'DUE') ? 'status-badge status-warn' : 'status-badge status-normal');
+                        if (b1) b1.className = badgeClass1;
+                        if (dB1) dB1.className = badgeClass1;
                       }}
 
-                      // Update Cryo Tank 2
+                      // 2. Update Cryo Tank 2
                       const t2 = tanks['Cryo Tank 2'];
                       if (t2) {{
+                        const lvl2 = t2.level_cm.toFixed(1);
+                        const hrs2 = `${{t2.hours_since.toFixed(1)}}h ago (${{t2.initials}})`;
+                        const due2 = t2.detail || `Next: ${{t2.next_check}}`;
+                        const badgeTxt2 = t2.badge || 'ON SCHEDULE';
+
+                        // Main Card Elements
                         const el2 = document.getElementById('val-ln2-level-2');
-                        if (el2) el2.innerText = t2.level_cm.toFixed(1);
+                        if (el2) el2.innerText = lvl2;
                         const b2 = document.getElementById('badge-ln2-2');
+                        if (b2) b2.innerText = badgeTxt2;
                         const sub2 = document.getElementById('sub-ln2-check-2');
+                        if (sub2) sub2.innerText = hrs2;
                         const nextDue2 = document.getElementById('ln2-next-due-2');
-                        const card2 = document.getElementById('card-ln2-2');
-                        if (b2) b2.innerText = t2.badge || 'ON SCHEDULE';
-                        if (sub2) sub2.innerText = `${{t2.hours_since.toFixed(1)}}h ago (${{t2.initials}})`;
-                        if (nextDue2) nextDue2.innerText = t2.detail || `Next: ${{t2.next_check}}`;
-                        if (card2 && b2) {{
-                          if (t2.status === 'OVERDUE') {{
-                            b2.className = 'status-badge status-alert';
-                            card2.style.borderLeft = '3px solid #ff1744';
-                          }} else if (t2.status === 'DUE') {{
-                            b2.className = 'status-badge status-warn';
-                            card2.style.borderLeft = '3px solid #ffab00';
-                          }} else {{
-                            b2.className = 'status-badge status-normal';
-                            card2.style.borderLeft = '3px solid #00e5ff';
-                          }}
-                        }}
+                        if (nextDue2) nextDue2.innerText = due2;
+
+                        // Subpage Detail Elements
+                        const dEl2 = document.getElementById('detail-ln2-level-2');
+                        if (dEl2) dEl2.innerText = lvl2;
+                        const dB2 = document.getElementById('detail-badge-ln2-2');
+                        if (dB2) dB2.innerText = badgeTxt2;
+                        const dCheck2 = document.getElementById('detail-last-check-2');
+                        if (dCheck2) dCheck2.innerText = `${{t2.level_cm.toFixed(1)}} cm (${{hrs2}})`;
+                        const dNext2 = document.getElementById('detail-next-check-2');
+                        if (dNext2) dNext2.innerText = t2.next_check;
+
+                        const badgeClass2 = (t2.status === 'OVERDUE') ? 'status-badge status-alert' :
+                                           ((t2.status === 'DUE') ? 'status-badge status-warn' : 'status-badge status-normal');
+                        if (b2) b2.className = badgeClass2;
+                        if (dB2) dB2.className = badgeClass2;
                       }}
 
-                      // Render History Table
+                      // 3. Render History Table
                       const hist = data.history || [];
-                      if (hist.length === 0) {{
-                        document.getElementById('ln2HistoryTable').innerHTML = '<p style="color:#8899a6; padding:8px 0;">No inspection logs recorded.</p>';
-                        return;
+                      const tableContainer = document.getElementById('ln2HistoryTable');
+                      if (tableContainer) {{
+                        if (hist.length === 0) {{
+                          tableContainer.innerHTML = '<p style="color:#8899a6; padding:8px 0;">No inspection logs recorded.</p>';
+                          return;
+                        }}
+                        let th = '<table><thead><tr><th>Logged Time</th><th>Tank</th><th>Level (cm)</th><th>Filled?</th><th>Neck Seal</th><th>Initials</th><th>Notes</th></tr></thead><tbody>';
+                        hist.forEach(row => {{
+                          const timeStr = row.logged_at ? row.logged_at.split('.')[0] : '-';
+                          const fillBadge = row.was_filled ? '<span style="color:#00e676; font-weight:700;">🔵 Yes (Filled)</span>' : '<span style="color:#8899a6;">Check Only</span>';
+                          const sealColor = (row.frost_condition === 'Good') ? '#00e676' : '#ffab00';
+                          th += `<tr><td>${{timeStr}}</td><td><b>${{row.tank_id}}</b></td><td style="color:#00e5ff; font-family:monospace; font-weight:700; font-size:15px;">${{row.level_cm.toFixed(1)}} cm</td><td>${{fillBadge}}</td><td><span style="color:${{sealColor}};">${{row.frost_condition}}</span></td><td><b>${{row.initials}}</b></td><td style="color:#8899a6;">${{row.notes || '-'}}</td></tr>`;
+                        }});
+                        th += '</tbody></table>';
+                        tableContainer.innerHTML = th;
                       }}
-                      let th = '<table><thead><tr><th>Logged Time</th><th>Tank</th><th>Level (cm)</th><th>Filled?</th><th>Neck Seal</th><th>Initials</th><th>Notes</th></tr></thead><tbody>';
-                      hist.forEach(row => {{
-                        const timeStr = row.logged_at ? row.logged_at.split('.')[0] : '-';
-                        const fillBadge = row.was_filled ? '<span style="color:#00e676; font-weight:700;">🔵 Yes (Filled)</span>' : '<span style="color:#8899a6;">Check Only</span>';
-                        const sealColor = (row.frost_condition === 'Good') ? '#00e676' : '#ffab00';
-                        th += `<tr><td>${{timeStr}}</td><td><b>${{row.tank_id}}</b></td><td style="color:#00e5ff; font-family:monospace; font-weight:700; font-size:15px;">${{row.level_cm.toFixed(1)}} cm</td><td>${{fillBadge}}</td><td><span style="color:${{sealColor}};">${{row.frost_condition}}</span></td><td><b>${{row.initials}}</b></td><td style="color:#8899a6;">${{row.notes || '-'}}</td></tr>`;
-                      }});
-                      th += '</tbody></table>';
-                      document.getElementById('ln2HistoryTable').innerHTML = th;
                     }})
                     .catch(e => console.error('LN2 fetch error:', e));
                 }}
+
+                // Initialization
+                const initialTab = (window.location.pathname.startsWith('/cryo') || window.location.hash === '#cryo') ? 'cryo' : 'live';
+                switchTab(initialTab, false);
 
                 setInterval(updateTelemetry, 1500);
                 setInterval(loadAlarms, 3000);
