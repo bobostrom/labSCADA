@@ -36,29 +36,31 @@ PUSHOVER_PING_URL = "https://api.pushover.net/1/monitors/mm5z3n2shg9hjn2785oyu64
 
 ESCALATION_TIMEOUT_SECONDS = 1800  # 30 minutes
 
-# Monitored equipment definitions
+# Monitored equipment definitions with explicit alarm priorities:
+# Priority 2: Critical Specimen Life-Safety (Repeating siren, 30m escalation)
+# Priority 1: Operational & Compliance Warnings (One-shot notice, 8:00 AM morning sweep, no siren)
 CHANNELS = {
-    101: {"name": "Lab Ambient", "type": "ambient", "low": 20.0, "high": 27.0},
-    102: {"name": "Medical Fridge", "type": "fridge", "low": 2.0, "high": 8.0},
-    103: {"name": "Medical Freezer", "type": "freezer", "high": -15.0},
-    121: {"name": "Main Cleanroom Door", "type": "door"},
-    122: {"name": "Cryo Lab Door", "type": "door"},
-    123: {"name": "Incubator 01", "type": "incubator"},
-    124: {"name": "Incubator 02", "type": "incubator"},
-    125: {"name": "Cryo Tank 1", "type": "cryo", "high": -135.0},
-    # New discrete alarm channels from CODESYS
-    126: {"name": "Medical Fridge", "type": "discrete_alarm", "linked_analog": 102},
-    127: {"name": "Medical Freezer", "type": "discrete_alarm", "linked_analog": 103},
-    128: {"name": "Cryo Tank 1", "type": "discrete_alarm", "linked_analog": 125},
-    129: {"name": "Main Cleanroom Door", "type": "door_alarm", "linked_contact": 121},
-    130: {"name": "Cryo Lab Door", "type": "door_alarm", "linked_contact": 122},
-    199: {"name": "Cryo Tank 1", "type": "ln2_inspection", "schedule": "Mon, Wed, Fri by 5:00 PM"},
+    101: {"name": "Lab Ambient", "type": "ambient", "low": 20.0, "high": 27.0, "priority": 1},
+    102: {"name": "Medical Fridge", "type": "fridge", "low": 2.0, "high": 8.0, "priority": 2},
+    103: {"name": "Medical Freezer", "type": "freezer", "high": -15.0, "priority": 2},
+    121: {"name": "Main Cleanroom Door", "type": "door", "priority": 2},
+    122: {"name": "Cryo Lab Door", "type": "door", "priority": 2},
+    123: {"name": "Incubator 01", "type": "incubator", "priority": 2},
+    124: {"name": "Incubator 02", "type": "incubator", "priority": 2},
+    125: {"name": "Cryo Tank 1", "type": "cryo", "high": -135.0, "priority": 2},
+    # Discrete alarm channels from CODESYS
+    126: {"name": "Medical Fridge", "type": "discrete_alarm", "linked_analog": 102, "priority": 2},
+    127: {"name": "Medical Freezer", "type": "discrete_alarm", "linked_analog": 103, "priority": 2},
+    128: {"name": "Cryo Tank 1", "type": "discrete_alarm", "linked_analog": 125, "priority": 2},
+    129: {"name": "Main Cleanroom Door", "type": "door_alarm", "linked_contact": 121, "priority": 2},
+    130: {"name": "Cryo Lab Door", "type": "door_alarm", "linked_contact": 122, "priority": 2},
+    199: {"name": "Cryo Tank 1", "type": "ln2_inspection", "schedule": "Mon, Wed, Fri by 5:00 PM", "priority": 1},
 }
 
 # In-memory tracking of active alarm state machine
-# Key: channel number -> dict of active alarm details
 active_alarms = {}
 state_lock = threading.Lock()
+last_morning_sweep_date = ""
 
 
 # ==============================================================================
@@ -222,26 +224,45 @@ def get_pushover_user_name(user_key, device=None):
 # ==============================================================================
 # ALARM LIFECYCLE CONTROLLER
 # ==============================================================================
-def trigger_alarm(cnl_num, equipment_name, alarm_type, excursion_val):
-    """Fires a new emergency alarm, captures receipt, and logs to PostgreSQL."""
+def trigger_alarm(cnl_num, equipment_name, alarm_type, excursion_val, priority=None):
+    """Fires an alarm according to priority tier (P2 Emergency Siren or P1 Compliance Notice)."""
     with state_lock:
         if cnl_num in active_alarms:
-            # Alarm already active; prevent duplicate sirens
+            # Alarm already active; prevent duplicate sirens/alerts
             return active_alarms[cnl_num]["db_id"]
 
-    val_str = f"{excursion_val:.1f}°C" if excursion_val is not None else "TRIPPED"
-    title = f"🔴 CRITICAL ALARM: {equipment_name}"
-    message = f"{equipment_name} {alarm_type}! Reading: {val_str}. Immediate intervention required."
+    if priority is None:
+        cfg = CHANNELS.get(cnl_num, {})
+        priority = cfg.get("priority", 2)
 
-    print(f"[{datetime.now().strftime('%T')}] FIRING SIREN: {title} ({val_str})")
-    success, receipt = send_pushover_alert(
-        title=title,
-        message=message,
-        priority=2,
-        sound="siren",
-        retry=60,
-        expire=7200
-    )
+    val_str = f"{excursion_val:.1f}°C" if excursion_val is not None else "TRIPPED"
+    if cnl_num == 199 and excursion_val is not None:
+        val_str = f"{excursion_val:.1f}h since check"
+
+    if priority == 2:
+        title = f"🔴 CRITICAL ALARM: {equipment_name}"
+        message = f"{equipment_name} {alarm_type}! Reading: {val_str}. Immediate intervention required."
+        sound = "siren"
+        print(f"[{datetime.now().strftime('%T')}] FIRING EMERGENCY SIREN (Priority 2): {title} ({val_str})")
+        success, receipt = send_pushover_alert(
+            title=title,
+            message=message,
+            priority=2,
+            sound=sound,
+            retry=60,
+            expire=7200
+        )
+    else:  # Priority 1: High-priority warning (single alert, no repeating siren)
+        title = f"⚠️ COMPLIANCE WARNING: {equipment_name}"
+        message = f"{equipment_name}: {alarm_type}. Please attend to this during cleanroom operations."
+        sound = "intermission"
+        print(f"[{datetime.now().strftime('%T')}] DISPATCHING WARNING (Priority 1): {title}")
+        success, receipt = send_pushover_alert(
+            title=title,
+            message=message,
+            priority=1,
+            sound=sound
+        )
 
     # Insert record into PostgreSQL alarm_events table
     safe_equip = equipment_name.replace("'", "''")
@@ -251,9 +272,9 @@ def trigger_alarm(cnl_num, equipment_name, alarm_type, excursion_val):
 
     sql = f"""
     INSERT INTO mod_arc_postgre_sql.alarm_events 
-        (cnl_num, equipment_name, alarm_type, excursion_val, triggered_at, pushover_receipt, is_acknowledged, is_resolved)
+        (cnl_num, equipment_name, alarm_type, excursion_val, triggered_at, pushover_receipt, is_acknowledged, is_resolved, priority)
     VALUES 
-        ({cnl_num}, '{safe_equip}', '{safe_type}', {safe_val}, NOW(), {safe_receipt}, FALSE, FALSE)
+        ({cnl_num}, '{safe_equip}', '{safe_type}', {safe_val}, NOW(), {safe_receipt}, FALSE, FALSE, {priority})
     RETURNING id;
     """
     rows = db_query(sql)
@@ -262,9 +283,11 @@ def trigger_alarm(cnl_num, equipment_name, alarm_type, excursion_val):
     with state_lock:
         active_alarms[cnl_num] = {
             "db_id": db_id,
+            "cnl_num": cnl_num,
             "equipment_name": equipment_name,
             "alarm_type": alarm_type,
             "excursion_val": excursion_val,
+            "priority": priority,
             "triggered_at": time.time(),
             "pushover_receipt": receipt,
             "is_acknowledged": False,
@@ -461,13 +484,14 @@ def phone_sync_and_escalation_worker():
                     print(f"[{datetime.now().strftime('%T')}] Phone Ack Detected for {equip}: {acked_by} (token: {raw_user})")
                     acknowledge_alarm(db_id, acknowledged_by=acked_by, user_token=raw_user)
 
-            # 2. Escalation Watcher (30-Minute Safety Net)
-            # If an alarm was acknowledged, but the chamber is STILL not resolved after 30 minutes:
+            # 2. Escalation Watcher (30-Minute Safety Net for Priority 2 Alarms Only)
+            # If a Critical Priority 2 alarm was acknowledged, but the chamber is STILL not resolved after 30 minutes:
             sql_esc = f"""
             SELECT id, equipment_name, excursion_val, acknowledged_by, EXTRACT(EPOCH FROM (NOW() - acknowledged_at))
             FROM mod_arc_postgre_sql.alarm_events 
             WHERE is_acknowledged = TRUE 
               AND is_resolved = FALSE 
+              AND priority = 2
               AND acknowledged_at < NOW() - INTERVAL '30 minutes';
             """
             esc_rows = db_query(sql_esc)
@@ -478,9 +502,9 @@ def phone_sync_and_escalation_worker():
                     acked_user = r[3]
                     # Check if already escalated
                     for cnl, alarm in active_alarms.items():
-                        if alarm["db_id"] == db_id and not alarm["escalated"]:
+                        if alarm["db_id"] == db_id and not alarm["escalated"] and alarm.get("priority", 2) == 2:
                             alarm["escalated"] = True
-                            print(f"[{datetime.now().strftime('%T')}] FIRING ESCALATION: {equip} still unrecovered after 30m!")
+                            print(f"[{datetime.now().strftime('%T')}] FIRING ESCALATION (P2): {equip} still unrecovered after 30m!")
                             send_pushover_alert(
                                 title=f"🚨 ESCALATION: {equip} Still Unrecovered!",
                                 message=f"{equip} remains out of range 30 min after acknowledgment by {acked_user}. Immediate director intervention required.",
@@ -489,6 +513,24 @@ def phone_sync_and_escalation_worker():
                                 retry=60,
                                 expire=7200
                             )
+
+            # 3. 8:00 AM Morning Shift Sweep (Daily check for active Priority 1 Compliance Warnings)
+            global last_morning_sweep_date
+            now_dt = datetime.now()
+            today_str = now_dt.strftime("%Y-%m-%d")
+            if now_dt.hour == 8 and last_morning_sweep_date != today_str:
+                with state_lock:
+                    p1_active = [a for a in active_alarms.values() if a.get("priority") == 1]
+                if p1_active:
+                    equip_names = ", ".join(sorted(list(set(a["equipment_name"] for a in p1_active))))
+                    print(f"[{datetime.now().strftime('%T')}] 🌅 DISPATCHING 8:00 AM MORNING SWEEP for: {equip_names}")
+                    send_pushover_alert(
+                        title="🌅 MORNING ROUNDS: Pending Compliance Items",
+                        message=f"Morning shift sweep detected pending item(s) for: {equip_names}. Please complete inspections at cleanroom kiosk.",
+                        priority=1,
+                        sound="intermission"
+                    )
+                last_morning_sweep_date = today_str
 
         except Exception as e:
             print(f"Escalation worker error: {e}")
@@ -688,7 +730,7 @@ def ln2_schedule_watcher():
                 status = tank.get("status")
                 detail = tank.get("detail", "LN2 Manual Check Overdue")
                 if status == "OVERDUE":
-                    # Overdue! Trigger Priority 2 Emergency Alarm with Receipt Tracking
+                    # Overdue! Trigger Priority 1 Compliance Warning (one-shot, rings once, 8am sweep)
                     with state_lock:
                         already_active = 199 in active_alarms
                     if not already_active:
@@ -697,7 +739,8 @@ def ln2_schedule_watcher():
                             cnl_num=199,
                             equipment_name="Cryo Tank 1",
                             alarm_type=detail,
-                            excursion_val=round(tank.get("hours_since", 0.0), 1)
+                            excursion_val=round(tank.get("hours_since", 0.0), 1),
+                            priority=1
                         )
                 else:
                     with state_lock:
@@ -742,7 +785,7 @@ class ClinicalAlertHandler(http.server.BaseHTTPRequestHandler):
             sql = """
             SELECT id, cnl_num, equipment_name, alarm_type, excursion_val, 
                    triggered_at, is_acknowledged, acknowledged_by, acknowledged_by_token, acknowledged_at, 
-                   is_resolved, resolved_at, duration_seconds 
+                   is_resolved, resolved_at, duration_seconds, priority 
             FROM mod_arc_postgre_sql.alarm_events 
             ORDER BY triggered_at DESC 
             LIMIT 15;
@@ -751,6 +794,7 @@ class ClinicalAlertHandler(http.server.BaseHTTPRequestHandler):
             results = []
             for r in rows:
                 if len(r) >= 13:
+                    p = int(r[13]) if len(r) >= 14 and r[13] and r[13] != "NULL" else 2
                     results.append({
                         "id": int(r[0]),
                         "cnl_num": int(r[1]),
@@ -764,7 +808,8 @@ class ClinicalAlertHandler(http.server.BaseHTTPRequestHandler):
                         "acknowledged_at": r[9] if r[9] != "NULL" else None,
                         "is_resolved": r[10] == "t",
                         "resolved_at": r[11] if r[11] != "NULL" else None,
-                        "duration_seconds": int(r[12]) if r[12] and r[12] != "NULL" else None
+                        "duration_seconds": int(r[12]) if r[12] and r[12] != "NULL" else None,
+                        "priority": p
                     })
             self.send_response(200)
             self.send_header("Content-Type", "application/json")
@@ -1132,8 +1177,13 @@ class ClinicalAlertHandler(http.server.BaseHTTPRequestHandler):
                         let statusHtml = '';
                         let actHtml = '-';
                         if (!r.is_acknowledged && !r.is_resolved) {{
-                          statusHtml = '<span style="color:#ff1744; font-weight:700;">🔴 ACTIVE (SIREN)</span>';
-                          actHtml = `<button class="btn" onclick="ackAlarm(${{r.id}})">✋ Acknowledge</button>`;
+                          if (r.priority === 1) {{
+                            statusHtml = '<span style="color:#ffab00; font-weight:700;">⚠️ ACTIVE (WARNING)</span>';
+                            actHtml = `<button class="btn" style="background:#ffab00; color:#0f172a; font-weight:700;" onclick="ackAlarm(${{r.id}})">✋ Acknowledge</button>`;
+                          }} else {{
+                            statusHtml = '<span style="color:#ff1744; font-weight:700;">🔴 ACTIVE (SIREN)</span>';
+                            actHtml = `<button class="btn" onclick="ackAlarm(${{r.id}})">✋ Acknowledge</button>`;
+                          }}
                         }} else if (r.is_acknowledged && !r.is_resolved) {{
                           const tok = r.acknowledged_by_token ? ` title="Immutable Token: ${{r.acknowledged_by_token}}"` : '';
                           statusHtml = `<span style="color:#ffab00; font-weight:600;"${{tok}}>🟡 Attending (${{r.acknowledged_by || 'Staff'}})</span>`;

@@ -143,26 +143,25 @@ ORDER BY logged_at DESC;
 A background thread (`ln2_schedule_watcher`) in [ivf_alert_engine.py](file:///home/bobostrom/Projects/labSCADA/ivf_alert_engine.py) evaluates compliance against the clinical **Monday, Wednesday, Friday by 5:00 PM** cleanroom schedule every 60 seconds.
 
 ```text
- ┌───────────────────────┬───────────────────────────────────────────┬────────────────────────────────────────┐
- │ Day of Week           │ Time / Condition                          │ Kiosk Display / Pushover Escalation    │
- ├───────────────────────┼───────────────────────────────────────────┼────────────────────────────────────────┤
- │ Mon, Wed, or Fri      │ Midnight to 5:00 PM (Unchecked)           │ 🟡 DUE TODAY: Dipstick check due 5pm   │
- │ Mon, Wed, or Fri      │ Logged by staff                           │ 🟢 COMPLETED: Today's check logged     │
- │ Mon, Wed, or Fri      │ After 5:00 PM without log                 │ 🔴 OVERDUE: Priority 2 Emergency Siren │
- │ Tue, Thu, Sat, or Sun │ Previous required check was satisfied     │ 🟢 ON SCHEDULE: Next check: [Day] 5pm  │
- │ Tue, Thu, Sat, or Sun │ Previous required check was missed        │ 🔴 OVERDUE: Previous check missed      │
- └───────────────────────┴───────────────────────────────────────────┴────────────────────────────────────────┘
+ ┌───────────────────────┬───────────────────────────────────────────┬────────────────────────────────────────────┐
+ │ Day of Week           │ Time / Condition                          │ Kiosk Display / Pushover Escalation        │
+ ├───────────────────────┼───────────────────────────────────────────┼────────────────────────────────────────────┤
+ │ Mon, Wed, or Fri      │ Midnight to 5:00 PM (Unchecked)           │ 🟡 DUE TODAY: Dipstick check due 5pm       │
+ │ Mon, Wed, or Fri      │ Logged by staff                           │ 🟢 COMPLETED: Today's check logged         │
+ │ Mon, Wed, or Fri      │ After 5:00 PM without log                 │ ⚠️ OVERDUE: Priority 1 Warning (Rings Once)│
+ │ Tue, Thu, Sat, or Sun │ Previous required check was satisfied     │ 🟢 ON SCHEDULE: Next check: [Day] 5pm      │
+ │ Tue, Thu, Sat, or Sun │ Previous required check was missed        │ ⚠️ OVERDUE: 8:00 AM Morning Rounds Reminder│
+ └───────────────────────┴───────────────────────────────────────────┴────────────────────────────────────────────┘
 ```
 
-### Escalation States
+### 4-Tier Clinical Alarm Taxonomy & Escalation States
 
-| State | Condition | Cleanroom Kiosk UI (:8080) | Pushover Alerting |
+| Priority Level | Classification | Trigger Scenarios | Mobile & Kiosk Behavior |
 | :--- | :--- | :--- | :--- |
-| **🟢 On Schedule** | Off-days (Tue, Thu, Sat, Sun) with last check completed. | Card badge `ON SCHEDULE` with hours elapsed and next check target. | Silent. |
-| **🟢 Completed** | Check recorded for today. | Card badge `COMPLETED` with initials and recorded level. | Silent. |
-| **🟡 Due Warning** | Scheduled day (Mon, Wed, Fri) before 5:00 PM without check. | Card badge `DUE TODAY` with amber border and due prompt. | Informational notice on shift start. |
-| **🔴 OVERDUE** | Scheduled day past 5:00 PM or off-day following missed check. | Card badge `OVERDUE` with red border and overdue notice. | **Priority 2 Repeating Siren** (retries every 60s for 2 hours) with discrete receipt tracking. |
-| **🟢 Auto-Reset** | Log submitted at any time. | Instantly returns to Green (`ON SCHEDULE` / `COMPLETED`). | Silences emergency siren, cancels Pushover receipt, and sends broadcast with next due target. |
+| **`Priority 2` (Emergency)** | Critical Specimen Excursion | Chamber temp excursion (Fridge > 8°C, Freezer > -15°C, Cryo Tank > -135°C), Door open > 3m. | **Continuous repeating siren** (retries every 60s for 2h until phone lock-screen ack). Escalate after 30 min if chamber remains out of range. |
+| **`Priority 1` (High)** | Operational & Compliance Warning | Mon/Wed/Fri LN2 dipstick check unlogged by 5:00 PM; Cleanroom ambient drift. | **Single distinct warning chime** (`intermission`). Rings once, bypasses quiet hours, **no repeating siren**. Re-alerted via **8:00 AM Morning Shift Sweep** if unlogged. |
+| **`Priority 0` (Normal)** | Shift Hand-offs & Resolutions | Dipstick check logged, alarm resolved (`🟢 RESOLVED`), daily 9:00 AM QA pathway test. | Single pleasant chime (`magic`). Respects device quiet hours. |
+| **`Priority -1` (Low/Silent)** | Diagnostic Telemetry & Audits | Background watchdog pings, backup completions. | Silent badge update in Pushover app; no vibration or screen wake. |
 
 ---
 
