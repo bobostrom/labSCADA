@@ -87,16 +87,73 @@ Technicians and embryologists work gloved in sterile attire and cannot manipulat
 ╚═════════════════════════════════════════════════════════════════════════╝
 ```
 
-### QR Code Tank Tagging
-Each tank can feature an encrypted or direct local URL sticker:
-```text
-http://scadapi02.local:8080/?action=dipstick&tank=Cryo%20Tank%201
+---
+
+## 4. External Tank Monitoring & Mobile QR Code Workflow (For Non-Lab & Support Staff)
+
+### Operational Context: Tanks Outside the Cleanroom Suite
+At *Advanced Fertility of Alaska*, the cryogenic storage dewars (**Cryo Tank 1: Embryos** and **Cryo Tank 2: Sperm**) are physically located in the secure cryogenic corridor **outside the main cleanroom laboratory**:
+* **Support Personnel Access:** Non-laboratory staff (clinical nurses, medical assistants, facilities technicians, on-call support) frequently perform or assist with the routine Monday / Wednesday / Friday level verifications.
+* **Gowning Barrier:** These staff members do not gown up into sterile cleanroom bunny suits to access the cleanroom touchscreen kiosk.
+* **Mobile Solution:** To ensure fast, zero-friction compliance without requiring staff to enter the cleanroom, each tank features a durable, laminated **QR Code Placard** posted directly adjacent to the tank lid.
+
 ```
-Scanning this QR code with an iPad or mobile phone launches the form with **Cryo Tank 1** pre-selected, allowing instant logging without room-to-room transit.
+                  ┌──────────────────────────────────────────────┐
+                  │ Staff walks up to Cryo Tank outside lab      │
+                  └──────────────────────┬───────────────────────┘
+                                         │
+                                         ▼
+                  ┌──────────────────────────────────────────────┐
+                  │ 1. Put on cryo gloves and protective shield  │
+                  │ 2. Insert wooden yardstick (hold 5 seconds)  │
+                  │ 3. Wave stick in air & read frost line (cm)  │
+                  └──────────────────────┬───────────────────────┘
+                                         │
+                                         ▼
+                  ┌──────────────────────────────────────────────┐
+                  │ 4. Scan Tank QR Code with Smartphone Camera  │
+                  │    • Tank 1: http://192.168.10.133:8080/log?tank=1
+                  │    • Tank 2: http://192.168.10.133:8080/log?tank=2
+                  └──────────────────────┬───────────────────────┘
+                                         │
+                                         ▼
+                  ┌──────────────────────────────────────────────┐
+                  │ 5. Mobile Web Form Opens Automatically       │
+                  │    • Tap +/- buttons to set measured cm      │
+                  │    • Toggle "Topped Off" (Yes / No)          │
+                  │    • Tap initials or type name               │
+                  │    • Tap "Submit Dipstick Check"             │
+                  └──────────────────────┬───────────────────────┘
+                                         │
+                                         ▼
+                  ┌──────────────────────────────────────────────┐
+                  │ 6. Immediate System Sync:                    │
+                  │    • Saved to PostgreSQL `ln2_tank_logs`     │
+                  │    • Kiosk resets 3-day countdown timer      │
+                  │    • Pushover alert dispatched to Directors  │
+                  │    • Overdue schedule alarm auto-cleared     │
+                  └──────────────────────────────────────────────┘
+```
+
+### Mobile Web Form (`/log?tank=1` and `/log?tank=2`)
+Scanning the QR code opens a mobile-optimized card directly on any iOS or Android smartphone browser (no app download or login required on the clinic Wi-Fi network):
+* **Live Telemetry Comparison:** Displays the tank's real-time electronic vapor temperature (e.g. `-196.2°C`) and electronic depth sensor reading, allowing staff to perform an instant sanity check against their physical ruler reading.
+* **Thumb-Friendly Stepper:** Oversized buttons allow adjusting levels in $0.5\text{ cm}$ increments with one hand.
+* **Quick Initials / Staff Identifier:** Includes quick chips for clinical staff (`BO`, `SJ`, `AK`, `TL`, `Nurse`, `Facilities`) and a text box for custom names.
+* **Instant Confirmation:** Upon tapping **Submit**, the form validates the input, stores the record in PostgreSQL, and displays a green confirmation receipt with the next scheduled check deadline.
+
+### Printing Laminated Tank Placards (`/print/qr`)
+To print placards for mounting next to the physical tanks:
+1. Open **`http://192.168.10.133:8080/print/qr`** in any web browser (or click **📱 Print Tank QR Placards** on the Kiosk Cryo Suite tab).
+2. The page renders two high-contrast placards formatted for standard 8.5" x 11" letter paper:
+   * **Placard 1:** Cryo Tank 1 (Embryos) with embedded vector QR code pointing to `/log?tank=1`.
+   * **Placard 2:** Cryo Tank 2 (Sperm) with embedded vector QR code pointing to `/log?tank=2`.
+3. Click the blue **`[ 🖨️ Print Laminated Placards ]`** button (or press `Ctrl + P`).
+4. Print in color, laminate the sheet (or place in heavy plastic sleeves to resist cold/frost condensation), and affix each placard at eye level on the wall or safety rail directly behind each corresponding tank.
 
 ---
 
-## 4. PostgreSQL Audit Trail Schema
+## 5. PostgreSQL Audit Trail Schema
 
 All records are written to table `mod_arc_postgre_sql.ln2_tank_logs` in the `rapid_scada` database:
 
@@ -138,7 +195,7 @@ ORDER BY logged_at DESC;
 
 ---
 
-## 5. The Mon / Wed / Fri 5:00 PM Escalation Lifecycle
+## 6. The Mon / Wed / Fri 5:00 PM Escalation Lifecycle
 
 A background thread (`ln2_schedule_watcher`) in [ivf_alert_engine.py](file:///home/bobostrom/Projects/labSCADA/ivf_alert_engine.py) evaluates compliance against the clinical **Monday, Wednesday, Friday by 5:00 PM** cleanroom schedule every 60 seconds.
 
@@ -165,39 +222,21 @@ A background thread (`ln2_schedule_watcher`) in [ivf_alert_engine.py](file:///ho
 
 ---
 
-## 6. REST API Endpoints
+## 7. Web & REST API Endpoints
 
-The HTTP server running on port `8080` provides dedicated REST endpoints:
+The HTTP server running on port `8080` provides dedicated web and REST endpoints:
 
-### 1. `GET /api/ln2_status`
-Returns the latest inspection status and the 10 most recent logs.
-* **Request:** `GET http://127.0.0.1:8080/api/ln2_status`
-* **Response:**
-```json
-{
-  "tanks": {
-    "Cryo Tank 1": {
-      "tank_id": "Cryo Tank 1",
-      "level_cm": 20.5,
-      "was_filled": true,
-      "frost_condition": "Good",
-      "initials": "BO",
-      "notes": "",
-      "logged_at": "2026-10-23 19:41:01.967513-08",
-      "hours_since": 15.1,
-      "status": "NORMAL",
-      "badge": "ON SCHEDULE",
-      "detail": "🟢 ON SCHEDULE: Next check: Monday (Oct 26) by 5:00 PM",
-      "next_check": "Monday (Oct 26) by 5:00 PM"
-    }
-  },
-  "history": [ ... ]
-}
-```
+### 1. `GET /log?tank=1` and `GET /log?tank=2`
+Mobile-optimized web application for phone scanning at the cryogenic storage tanks. Displays live telemetry comparison, oversized touch stepper, nitrogen top-off toggle, staff initials chips, and visual neck seal checks.
 
-### 2. `POST /api/ln2_log`
+### 2. `GET /print/qr` (or `/qr`)
+Generates high-resolution printable 8.5" x 11" placard sheets containing vector SVG QR codes and step-by-step measurement standard operating procedures for both tanks.
+
+### 3. `GET /api/ln2_status`
+Returns the latest inspection status and the 10 most recent logs in JSON format.
+
+### 4. `POST /api/ln2_log`
 Accepts a new dipstick measurement, resets the 72-hour timer, and cancels active overdue alarms.
-* **Request:** `POST http://127.0.0.1:8080/api/ln2_log`
 * **Headers:** `Content-Type: application/json`
 * **Body:**
 ```json
@@ -210,18 +249,10 @@ Accepts a new dipstick measurement, resets the 72-hour timer, and cancels active
   "notes": "Routine 3-day level check"
 }
 ```
-* **Response:**
-```json
-{
-  "success": true,
-  "log_id": 2,
-  "message": "Recorded 21.5 cm for Cryo Tank 1 by BO."
-}
-```
 
 ---
 
-## 7. Grafana Telemetry & Boil-Off Visualization
+## 8. Grafana Telemetry & Boil-Off Visualization
 
 In [grafana_ivf_lab_dashboard.json](file:///home/bobostrom/Projects/labSCADA/grafana_ivf_lab_dashboard.json) (Port `3000`), a dedicated section provides continuous visual compliance:
 
@@ -231,7 +262,6 @@ In [grafana_ivf_lab_dashboard.json](file:///home/bobostrom/Projects/labSCADA/gra
   * **Green:** `< 60 hours`
   * **Amber:** `60 – 71.9 hours`
   * **Red:** `≥ 72 hours`
-* Includes a direct clickable link to `http://scadapi02.local:8080/` to launch the entry modal.
 
 ### 2. Table Panel: `LN2 Dipstick Regulatory Inspection Log (CAP/CLIA Audit Trail)`
 * Queries `mod_arc_postgre_sql.ln2_tank_logs` with formatted timestamps, dipstick levels in cm, fill status icons, staff initials, and visual neck seal checks.
@@ -243,7 +273,7 @@ Because levels are logged digitally every 3 days, natural LN2 evaporation produc
 
 ---
 
-## 8. Diagnostic & Management Commands
+## 9. Diagnostic & Management Commands
 
 ### Check Alert Engine & Scheduler Status
 ```bash
@@ -263,7 +293,7 @@ PGPASSWORD=postgres psql -h localhost -U postgres -d rapid_scada -c \
 
 ---
 
-## 9. Related User Manual Sections
+## 10. Related User Manual Sections
 
 * **Cleanroom Touchscreen Kiosk Operations:** [01_cleanroom_touchscreen_kiosk_operations.md](file:///home/bobostrom/Projects/labSCADA/user_manual/01_cleanroom_touchscreen_kiosk_operations.md) — Covers the physical touchscreen kiosk, 2-tab navigation (`/` and `/cryo`), 6-card dashboard layout, glove-friendly tap targets, and daily CAP verification banner.
 * **Clinical Alarm Architecture & Regulatory Lifecycle:** [02_clinical_alarm_response_and_regulatory_lifecycle.md](file:///home/bobostrom/Projects/labSCADA/user_manual/02_clinical_alarm_response_and_regulatory_lifecycle.md) — Detailed regulatory rationale (CAP/CLIA), PLC debouncing algorithms, Pushover receipt architecture, PostgreSQL schema, and complete operational walkthroughs.

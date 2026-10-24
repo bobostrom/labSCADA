@@ -8,6 +8,10 @@ Welcome to the **IVF Cleanroom SCADA & Environmental Monitoring System User Manu
 
 * **Cleanroom Touchscreen Kiosk:** `http://192.168.10.133:8080/`
 * **Cryo Tank Audit Suite:** `http://192.168.10.133:8080/cryo`
+* **Printable Tank QR Placards (For External Tanks):** `http://192.168.10.133:8080/print/qr`
+* **Mobile LN2 Dipstick Entry (Smartphone QR Destinations):**
+  * Cryo Tank 1 (Embryos): `http://192.168.10.133:8080/log?tank=1`
+  * Cryo Tank 2 (Sperm): `http://192.168.10.133:8080/log?tank=2`
 * **Daily CAP Verification:** Accessible directly via the top banner on the Live Operations view.
 * **1-Click LN2 Compliance Reports:**
   * Cryo Tank 1 (Embryos): `http://192.168.10.133:8080/report/ln2?tank=1`

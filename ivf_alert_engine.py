@@ -24,6 +24,13 @@ import urllib.parse
 import urllib.request
 from datetime import datetime, timedelta
 
+try:
+    import qrcode
+    import qrcode.image.svg
+    QR_ENABLED = True
+except ImportError:
+    QR_ENABLED = False
+
 PORT = 8080
 REPO_DIR = os.path.dirname(os.path.abspath(__file__))
 PG_USER = "postgres"
@@ -785,6 +792,437 @@ def ln2_schedule_watcher():
 
 
 # ==============================================================================
+# QR CODE PLACARD & MOBILE ENTRY GENERATORS
+# ==============================================================================
+def generate_qr_svg(url):
+    """Generates an inline SVG QR code string for the given URL."""
+    if not QR_ENABLED:
+        return f'<svg width="180" height="180" viewBox="0 0 180 180" xmlns="http://www.w3.org/2000/svg"><rect width="180" height="180" fill="#f1f5f9"/><text x="15" y="95" fill="#475569" font-family="sans-serif" font-size="12">python3-qrcode required</text></svg>'
+    factory = qrcode.image.svg.SvgPathImage
+    img = qrcode.make(url, image_factory=factory, box_size=8, border=2)
+    raw = img.to_string()
+    return raw.decode("utf-8") if isinstance(raw, bytes) else raw
+
+
+def render_print_placards_html(host):
+    """Generates a high-resolution, printable 8.5x11 placard sheet with vector QR codes for both cryo tanks."""
+    url_tank1 = f"http://{host}/log?tank=1"
+    url_tank2 = f"http://{host}/log?tank=2"
+    qr_svg_1 = generate_qr_svg(url_tank1)
+    qr_svg_2 = generate_qr_svg(url_tank2)
+
+    return f"""<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Cryo Tank LN2 Monitoring Placards - Advanced Fertility of Alaska</title>
+  <style>
+    @page {{ size: letter portrait; margin: 0.4in; }}
+    * {{ box-sizing: border-box; }}
+    body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f8fafc; color: #0f172a; margin: 0; padding: 20px; }}
+    
+    .nav-bar {{ background: #0f172a; color: #fff; padding: 12px 20px; border-radius: 10px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }}
+    .nav-links {{ display: flex; align-items: center; gap: 16px; font-size: 14px; }}
+    .nav-links a {{ color: #38bdf8; text-decoration: none; font-weight: 700; }}
+    .nav-links a:hover {{ text-decoration: underline; }}
+    .btn-print {{ background: #0284c7; color: #fff; font-size: 15px; font-weight: 800; padding: 10px 22px; border: none; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 8px; }}
+    .btn-print:hover {{ background: #0369a1; }}
+
+    .placards-container {{ display: flex; flex-direction: column; gap: 28px; max-width: 820px; margin: 0 auto; }}
+    .placard {{ background: #fff; border: 3px solid #0284c7; border-radius: 14px; padding: 22px 26px; box-shadow: 0 4px 16px rgba(0,0,0,0.06); display: flex; gap: 26px; align-items: center; }}
+    .placard.tank2 {{ border-color: #2563eb; }}
+    
+    .qr-column {{ flex: 0 0 200px; text-align: center; }}
+    .qr-wrapper {{ width: 190px; height: 190px; margin: 0 auto; display: flex; align-items: center; justify-content: center; }}
+    .qr-wrapper svg {{ width: 100%; height: 100%; }}
+    .qr-label {{ font-size: 11px; font-weight: 700; color: #64748b; margin-top: 6px; text-transform: uppercase; letter-spacing: 0.5px; }}
+
+    .info-column {{ flex: 1; }}
+    .clinic-tag {{ font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; color: #0284c7; margin-bottom: 2px; }}
+    .placard.tank2 .clinic-tag {{ color: #2563eb; }}
+    .tank-heading {{ font-size: 24px; font-weight: 900; margin: 0 0 4px; color: #0f172a; }}
+    .tank-desc {{ font-size: 13.5px; font-weight: 600; color: #475569; margin: 0 0 14px; }}
+    
+    .instruction-box {{ background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 8px; padding: 12px 14px; margin-bottom: 12px; }}
+    .placard.tank2 .instruction-box {{ background: #eff6ff; border-color: #bfdbfe; }}
+    .instruction-title {{ font-size: 12px; font-weight: 800; text-transform: uppercase; color: #0369a1; margin-bottom: 6px; letter-spacing: 0.5px; }}
+    .placard.tank2 .instruction-title {{ color: #1d4ed8; }}
+    .steps-list {{ margin: 0; padding-left: 18px; font-size: 13px; line-height: 1.5; color: #1e293b; }}
+    .steps-list li {{ margin-bottom: 4px; }}
+    .steps-list li:last-child {{ margin-bottom: 0; }}
+
+    .direct-url {{ font-family: monospace; font-size: 11.5px; color: #475569; background: #f1f5f9; padding: 6px 10px; border-radius: 6px; border: 1px dashed #cbd5e1; display: inline-block; }}
+
+    @media print {{
+      body {{ background: #fff; padding: 0; }}
+      .nav-bar {{ display: none !important; }}
+      .placard {{ box-shadow: none; border-width: 3px !important; page-break-inside: avoid; margin-bottom: 16px; padding: 16px 20px; }}
+      .placards-container {{ gap: 16px; }}
+    }}
+  </style>
+</head>
+<body>
+  <div class="nav-bar">
+    <div class="nav-links">
+      <a href="/cryo">← Back to SCADA Cryo Suite</a>
+      <span style="opacity:0.4;">|</span>
+      <span>Target Server: <strong style="color:#38bdf8;">http://{host}/</strong></span>
+    </div>
+    <button class="btn-print" onclick="window.print()">🖨️ Print Laminated Placards</button>
+  </div>
+
+  <div class="placards-container">
+    <!-- Placard: Cryo Tank 1 (Embryos) -->
+    <div class="placard">
+      <div class="qr-column">
+        <div class="qr-wrapper">
+          {qr_svg_1}
+        </div>
+        <div class="qr-label">Point Phone Camera at Code</div>
+      </div>
+      <div class="info-column">
+        <div class="clinic-tag">Advanced Fertility of Alaska • Cryogenic Storage</div>
+        <h1 class="tank-heading">❄️ CRYO TANK 1: EMBRYO STORAGE</h1>
+        <div class="tank-desc">Primary Embryology Specimen Tank (MVE SC 47/11-V)</div>
+        <div class="instruction-box">
+          <div class="instruction-title">Manual Inspection Standard Operating Procedure:</div>
+          <ol class="steps-list">
+            <li><strong>PPE:</strong> Put on insulated cryogenic gloves and protective face shield.</li>
+            <li><strong>Insert Ruler:</strong> Lower clean measuring stick straight down until resting squarely on bottom. Hold 5s.</li>
+            <li><strong>Read Frost:</strong> Pull ruler out, wave in air 3s, and read the frost line in <strong>centimeters (cm)</strong>.</li>
+            <li><strong>Scan QR:</strong> Open your smartphone camera, point at the code on left, and tap the link.</li>
+            <li><strong>Submit:</strong> Enter level and your initials. (Saves to compliance audit log immediately).</li>
+          </ol>
+        </div>
+        <div class="direct-url">Direct Link: <strong>{url_tank1}</strong></div>
+      </div>
+    </div>
+
+    <!-- Placard: Cryo Tank 2 (Sperm) -->
+    <div class="placard tank2">
+      <div class="qr-column">
+        <div class="qr-wrapper">
+          {qr_svg_2}
+        </div>
+        <div class="qr-label">Point Phone Camera at Code</div>
+      </div>
+      <div class="info-column">
+        <div class="clinic-tag" style="color:#2563eb;">Advanced Fertility of Alaska • Cryogenic Storage</div>
+        <h1 class="tank-heading">❄️ CRYO TANK 2: SPERM STORAGE</h1>
+        <div class="tank-desc">Primary Andrology Specimen Tank (MVE SC 47/11-V)</div>
+        <div class="instruction-box">
+          <div class="instruction-title">Manual Inspection Standard Operating Procedure:</div>
+          <ol class="steps-list">
+            <li><strong>PPE:</strong> Put on insulated cryogenic gloves and protective face shield.</li>
+            <li><strong>Insert Ruler:</strong> Lower clean measuring stick straight down until resting squarely on bottom. Hold 5s.</li>
+            <li><strong>Read Frost:</strong> Pull ruler out, wave in air 3s, and read the frost line in <strong>centimeters (cm)</strong>.</li>
+            <li><strong>Scan QR:</strong> Open your smartphone camera, point at the code on left, and tap the link.</li>
+            <li><strong>Submit:</strong> Enter level and your initials. (Saves to compliance audit log immediately).</li>
+          </ol>
+        </div>
+        <div class="direct-url">Direct Link: <strong>{url_tank2}</strong></div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>"""
+
+
+def render_mobile_log_html(host, tank_param, readings):
+    """Renders a responsive, mobile-first dipstick entry interface for staff scanning QR codes with their phone."""
+    is_tank2 = "2" in str(tank_param)
+    default_tank = "Cryo Tank 2" if is_tank2 else "Cryo Tank 1"
+    
+    # Electronic live telemetry readings for selected tank
+    t1_temp = readings.get(125, readings.get(113, -196.2))
+    t1_level = readings.get(199, 14.5)
+    t2_temp = readings.get(104, readings.get(114, -196.0))
+    t2_level = readings.get(198, 16.8)
+
+    init_level = f"{t2_level:.1f}" if is_tank2 else f"{t1_level:.1f}"
+    
+    return f"""<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+  <title>Cryo Tank LN2 Mobile Entry</title>
+  <style>
+    * {{ box-sizing: border-box; }}
+    body {{ background: #090d16; color: #f0f4f8; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 14px; min-height: 100vh; }}
+    .app-container {{ max-width: 480px; margin: 0 auto; }}
+
+    .card {{ background: #101726; border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 18px 20px; box-shadow: 0 8px 32px rgba(0,0,0,0.5); }}
+    
+    .brand-bar {{ text-align: center; margin-bottom: 16px; }}
+    .brand-logo {{ font-size: 11px; font-weight: 800; color: #00e5ff; text-transform: uppercase; letter-spacing: 1px; }}
+    .brand-title {{ font-size: 20px; font-weight: 900; margin: 3px 0 2px; color: #fff; }}
+    .brand-sub {{ font-size: 12px; color: #8899a6; }}
+
+    /* Tank Switcher Tabs */
+    .tank-tabs {{ display: flex; gap: 6px; background: #090d16; padding: 4px; border-radius: 10px; margin-bottom: 16px; border: 1px solid rgba(255,255,255,0.08); }}
+    .tank-tab {{ flex: 1; text-align: center; padding: 10px 8px; font-size: 13px; font-weight: 700; border-radius: 8px; cursor: pointer; transition: all 0.15s; color: #94a3b8; user-select: none; }}
+    .tank-tab.active-t1 {{ background: #00e5ff; color: #090d16; font-weight: 800; box-shadow: 0 2px 10px rgba(0,229,255,0.35); }}
+    .tank-tab.active-t2 {{ background: #00b0ff; color: #090d16; font-weight: 800; box-shadow: 0 2px 10px rgba(0,176,255,0.35); }}
+
+    /* Live Telemetry Banner */
+    .telemetry-strip {{ background: rgba(0,229,255,0.06); border: 1px solid rgba(0,229,255,0.2); border-radius: 10px; padding: 10px 14px; margin-bottom: 18px; display: flex; justify-content: space-around; text-align: center; }}
+    .telem-item {{ flex: 1; }}
+    .telem-val {{ font-family: monospace; font-size: 17px; font-weight: 800; color: #fff; }}
+    .telem-lbl {{ font-size: 10.5px; color: #8899a6; text-transform: uppercase; margin-top: 2px; letter-spacing: 0.5px; }}
+
+    /* Form Elements */
+    .form-group {{ margin-bottom: 16px; }}
+    .form-label {{ font-size: 12px; font-weight: 700; color: #cbd5e1; text-transform: uppercase; margin-bottom: 8px; display: block; letter-spacing: 0.5px; }}
+
+    .stepper-row {{ display: flex; gap: 6px; align-items: center; }}
+    .btn-step {{ background: #1e293b; color: #fff; border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; font-size: 15px; font-weight: 800; padding: 12px 10px; min-width: 50px; cursor: pointer; }}
+    .btn-step:active {{ background: #334155; transform: scale(0.96); }}
+    .input-level {{ flex: 1; text-align: center; font-family: monospace; font-size: 26px; font-weight: 800; background: #090d16; border: 2px solid #00e5ff; color: #00e5ff; border-radius: 10px; padding: 8px; }}
+
+    .chips-row {{ display: flex; flex-wrap: wrap; gap: 6px; }}
+    .chip {{ background: #1e293b; color: #94a3b8; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 8px 12px; font-size: 12.5px; font-weight: 700; cursor: pointer; user-select: none; }}
+    .chip.active {{ background: #00e5ff; color: #090d16; font-weight: 800; border-color: #00e5ff; }}
+    
+    .chip-fill {{ flex: 1; text-align: center; padding: 10px 8px; }}
+    .chip-fill.active {{ background: #10b981; color: #090d16; font-weight: 800; border-color: #10b981; }}
+    .chip-fill.active-yes {{ background: #00b0ff; color: #090d16; font-weight: 800; border-color: #00b0ff; }}
+
+    .text-input {{ width: 100%; background: #090d16; border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; padding: 11px 12px; color: #fff; font-size: 14px; outline: none; }}
+    .text-input:focus {{ border-color: #00e5ff; }}
+
+    .btn-submit {{ width: 100%; background: #10b981; color: #090d16; border: none; border-radius: 12px; font-size: 16px; font-weight: 800; padding: 15px; cursor: pointer; box-shadow: 0 4px 18px rgba(16,185,129,0.35); margin-top: 6px; }}
+    .btn-submit:active {{ transform: scale(0.98); }}
+
+    /* Confirmation Card */
+    .success-card {{ display: none; text-align: center; padding: 24px 10px; }}
+    .success-icon {{ font-size: 50px; margin-bottom: 12px; }}
+    .success-title {{ font-size: 22px; font-weight: 900; color: #10b981; margin: 0 0 6px; }}
+    .success-desc {{ font-size: 14px; color: #cbd5e1; margin: 0 0 18px; line-height: 1.5; }}
+    .summary-box {{ background: #090d16; border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 14px; text-align: left; margin-bottom: 20px; font-size: 13px; line-height: 1.6; color: #94a3b8; }}
+    .summary-box strong {{ color: #f0f4f8; }}
+    .btn-reset {{ width: 100%; background: #00e5ff; color: #090d16; border: none; border-radius: 10px; font-size: 15px; font-weight: 800; padding: 13px; cursor: pointer; }}
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <div class="card">
+      <div class="brand-bar">
+        <div class="brand-logo">Advanced Fertility of Alaska</div>
+        <h1 class="brand-title">🧊 Cryo Tank LN2 Log</h1>
+        <div class="brand-sub">Mobile Manual Dipstick Entry (Mon / Wed / Fri Schedule)</div>
+      </div>
+
+      <div id="formSection">
+        <!-- Tank Switcher -->
+        <div class="tank-tabs">
+          <div class="tank-tab {'active-t1' if not is_tank2 else ''}" id="tab-tank1" onclick="setTank('Cryo Tank 1')">Cryo Tank 1 (Embryos)</div>
+          <div class="tank-tab {'active-t2' if is_tank2 else ''}" id="tab-tank2" onclick="setTank('Cryo Tank 2')">Cryo Tank 2 (Sperm)</div>
+        </div>
+
+        <!-- Real-Time Telemetry Strip -->
+        <div class="telemetry-strip" id="telemStrip">
+          <div class="telem-item">
+            <div class="telem-val" id="dispTemp">{t2_temp if is_tank2 else t1_temp:.1f} °C</div>
+            <div class="telem-lbl">Vapor Temp</div>
+          </div>
+          <div class="telem-item">
+            <div class="telem-val" id="dispSensor">{t2_level if is_tank2 else t1_level:.1f} cm</div>
+            <div class="telem-lbl">Sensor Depth</div>
+          </div>
+        </div>
+
+        <!-- Dipstick Level Stepper -->
+        <div class="form-group">
+          <label class="form-label">Ruler Frost Line (Centimeters)</label>
+          <div class="stepper-row">
+            <button type="button" class="btn-step" onclick="adjustLevel(-1.0)">-1.0</button>
+            <button type="button" class="btn-step" onclick="adjustLevel(-0.5)">-0.5</button>
+            <input type="number" step="0.1" id="mobileLevel" class="input-level" value="{init_level}">
+            <button type="button" class="btn-step" onclick="adjustLevel(0.5)">+0.5</button>
+            <button type="button" class="btn-step" onclick="adjustLevel(1.0)">+1.0</button>
+          </div>
+        </div>
+
+        <!-- Nitrogen Added Toggle -->
+        <div class="form-group">
+          <label class="form-label">Nitrogen Added / Topped Off?</label>
+          <div class="chips-row">
+            <div class="chip chip-fill active" id="chip-fill-no" onclick="setFill(false)">🔘 No (Check Only)</div>
+            <div class="chip chip-fill" id="chip-fill-yes" onclick="setFill(true)">🔵 Yes (Filled to Full)</div>
+          </div>
+        </div>
+
+        <!-- Inspector Initials -->
+        <div class="form-group">
+          <label class="form-label">Staff / Inspector Initials or Name</label>
+          <div class="chips-row" style="margin-bottom:8px;">
+            <div class="chip" onclick="setInit('BO')">BO</div>
+            <div class="chip" onclick="setInit('SJ')">SJ</div>
+            <div class="chip" onclick="setInit('AK')">AK</div>
+            <div class="chip" onclick="setInit('TL')">TL</div>
+            <div class="chip" onclick="setInit('RN')">RN</div>
+            <div class="chip" onclick="setInit('Facilities')">Facilities</div>
+          </div>
+          <input type="text" id="mobileInitials" class="text-input" placeholder="Type initials or name (e.g. BO, Sarah)" maxlength="24">
+        </div>
+
+        <!-- Neck Seal Inspection -->
+        <div class="form-group">
+          <label class="form-label">Visual Seal / Frost Condition</label>
+          <div class="chips-row">
+            <div class="chip active" id="chip-seal-good" onclick="setSeal('Good')">🟢 Normal / Good</div>
+            <div class="chip" id="chip-seal-frost" onclick="setSeal('Neck Frost')">🟡 Neck Frost</div>
+            <div class="chip" id="chip-seal-concern" onclick="setSeal('Vacuum Concern')">🔴 Vacuum Concern</div>
+          </div>
+        </div>
+
+        <!-- Optional Notes -->
+        <div class="form-group">
+          <label class="form-label">Notes (Optional)</label>
+          <input type="text" id="mobileNotes" class="text-input" placeholder="Optional notes (e.g. topped off, frost checked)">
+        </div>
+
+        <div id="submitErr" style="color:#ef4444; font-size:13px; font-weight:700; margin-bottom:10px; display:none;"></div>
+
+        <button type="button" class="btn-submit" id="btnSubmit" onclick="submitMobileLog()">✅ Submit Dipstick Check</button>
+      </div>
+
+      <!-- Success Confirmation View -->
+      <div id="successSection" class="success-card">
+        <div class="success-icon">✅</div>
+        <h2 class="success-title">Check Recorded!</h2>
+        <p class="success-desc">Measurement successfully saved to the clinical audit trail.</p>
+        <div class="summary-box" id="summaryBox"></div>
+        <button type="button" class="btn-reset" onclick="resetForm()">Log Another Tank</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let activeTank = "{default_tank}";
+    let wasFilled = false;
+    let frostSeal = "Good";
+
+    const tankData = {{
+      "Cryo Tank 1": {{ temp: "{t1_temp:.1f} °C", sensor: "{t1_level:.1f} cm", defaultVal: "{t1_level:.1f}" }},
+      "Cryo Tank 2": {{ temp: "{t2_temp:.1f} °C", sensor: "{t2_level:.1f} cm", defaultVal: "{t2_level:.1f}" }}
+    }};
+
+    function setTank(tank) {{
+      activeTank = tank;
+      const isT1 = (tank === "Cryo Tank 1");
+      document.getElementById("tab-tank1").className = isT1 ? "tank-tab active-t1" : "tank-tab";
+      document.getElementById("tab-tank2").className = isT1 ? "tank-tab" : "tank-tab active-t2";
+      
+      const d = tankData[tank] || {{}};
+      document.getElementById("dispTemp").innerText = d.temp || "--";
+      document.getElementById("dispSensor").innerText = d.sensor || "--";
+      document.getElementById("mobileLevel").value = d.defaultVal || "15.0";
+    }}
+
+    function adjustLevel(delta) {{
+      const inp = document.getElementById("mobileLevel");
+      let val = parseFloat(inp.value) || 15.0;
+      val = Math.round((val + delta) * 10) / 10;
+      if (val < 0) val = 0;
+      inp.value = val.toFixed(1);
+    }}
+
+    function setFill(filled) {{
+      wasFilled = filled;
+      document.getElementById("chip-fill-no").className = !filled ? "chip chip-fill active" : "chip chip-fill";
+      document.getElementById("chip-fill-yes").className = filled ? "chip chip-fill active-yes" : "chip chip-fill";
+    }}
+
+    function setInit(initials) {{
+      document.getElementById("mobileInitials").value = initials;
+    }}
+
+    function setSeal(condition) {{
+      frostSeal = condition;
+      document.getElementById("chip-seal-good").className = (condition === 'Good') ? "chip active" : "chip";
+      document.getElementById("chip-seal-frost").className = (condition === 'Neck Frost') ? "chip active" : "chip";
+      document.getElementById("chip-seal-concern").className = (condition === 'Vacuum Concern') ? "chip active" : "chip";
+    }}
+
+    function submitMobileLog() {{
+      const errDiv = document.getElementById("submitErr");
+      errDiv.style.display = "none";
+
+      const levelVal = parseFloat(document.getElementById("mobileLevel").value);
+      const initVal = document.getElementById("mobileInitials").value.trim().toUpperCase();
+      const notesVal = document.getElementById("mobileNotes").value.trim();
+
+      if (isNaN(levelVal) || levelVal <= 0) {{
+        errDiv.innerText = "Please enter a valid measurement in centimeters.";
+        errDiv.style.display = "block";
+        return;
+      }}
+      if (!initVal) {{
+        errDiv.innerText = "Please select or type your initials/name.";
+        errDiv.style.display = "block";
+        return;
+      }}
+
+      const btn = document.getElementById("btnSubmit");
+      btn.disabled = true;
+      btn.innerText = "Submitting...";
+
+      fetch("/api/ln2_log", {{
+        method: "POST",
+        headers: {{ "Content-Type": "application/json" }},
+        body: JSON.stringify({{
+          tank_id: activeTank,
+          level_cm: levelVal,
+          was_filled: wasFilled,
+          frost_condition: frostSeal,
+          initials: initVal,
+          notes: notesVal
+        }})
+      }})
+      .then(res => res.json())
+      .then(data => {{
+        btn.disabled = false;
+        btn.innerText = "✅ Submit Dipstick Check";
+        if (data.success) {{
+          document.getElementById("formSection").style.display = "none";
+          document.getElementById("successSection").style.display = "block";
+          document.getElementById("summaryBox").innerHTML = `
+            <div><strong>Tank:</strong> ${{activeTank}}</div>
+            <div><strong>Dipstick Level:</strong> ${{levelVal.toFixed(1)}} cm</div>
+            <div><strong>Topped Off:</strong> ${{wasFilled ? 'Yes (Filled to Full)' : 'No (Level Check Only)'}}</div>
+            <div><strong>Seal Condition:</strong> ${{frostSeal}}</div>
+            <div><strong>Recorded By:</strong> ${{initVal}}</div>
+            <div><strong>Pushover Alert:</strong> Dispatched to Lab Directors</div>
+            <div><strong>Next Check Due:</strong> ${{data.next_due || 'Next Mon/Wed/Fri by 5:00 PM'}}</div>
+          `;
+        }} else {{
+          errDiv.innerText = data.error || "Submission error. Please try again.";
+          errDiv.style.display = "block";
+        }}
+      }})
+      .catch(err => {{
+        btn.disabled = false;
+        btn.innerText = "✅ Submit Dipstick Check";
+        errDiv.innerText = "Network error: " + err;
+        errDiv.style.display = "block";
+      }});
+    }}
+
+    function resetForm() {{
+      document.getElementById("formSection").style.display = "block";
+      document.getElementById("successSection").style.display = "none";
+      // Auto-toggle to the other tank for quick sequential checks
+      const nextTank = (activeTank === "Cryo Tank 1") ? "Cryo Tank 2" : "Cryo Tank 1";
+      setTank(nextTank);
+    }}
+  </script>
+</body>
+</html>"""
+
+
+# ==============================================================================
 # HTTP REST API & WEB CONTROLLER
 # ==============================================================================
 class ClinicalAlertHandler(http.server.BaseHTTPRequestHandler):
@@ -931,11 +1369,36 @@ class ClinicalAlertHandler(http.server.BaseHTTPRequestHandler):
                 self.send_header("Content-Type", "image/png")
                 self.send_header("Access-Control-Allow-Origin", "*")
                 self.end_headers()
-                self.wfile.write(content)
-            else:
-                self.send_response(404)
-                self.end_headers()
-                self.wfile.write(b"Chart not found.")
+        elif parsed.path in ["/print/qr", "/qr"]:
+            host = self.headers.get("Host", "192.168.10.133:8080")
+            html = render_print_placards_html(host)
+            self.send_response(200)
+            self.send_header("Content-Type", "text/html; charset=utf-8")
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.end_headers()
+            self.wfile.write(html.encode("utf-8"))
+
+        elif parsed.path in ["/log", "/ln2_log"]:
+            params = urllib.parse.parse_qs(parsed.query)
+            tank_param = params.get("tank", ["1"])[0]
+            host = self.headers.get("Host", "192.168.10.133:8080")
+            readings = get_current_channel_values()
+            html = render_mobile_log_html(host, tank_param, readings)
+            self.send_response(200)
+            self.send_header("Content-Type", "text/html; charset=utf-8")
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.end_headers()
+            self.wfile.write(html.encode("utf-8"))
+
+        elif parsed.path in ["/qr/tank1.svg", "/qr/tank2.svg"]:
+            tank_num = "2" if "2" in parsed.path else "1"
+            host = self.headers.get("Host", "192.168.10.133:8080")
+            svg_data = generate_qr_svg(f"http://{host}/log?tank={tank_num}")
+            self.send_response(200)
+            self.send_header("Content-Type", "image/svg+xml; charset=utf-8")
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.end_headers()
+            self.wfile.write(svg_data.encode("utf-8"))
 
         else:
             # Rich web view with live telemetry cards, QA button, and alarm table
@@ -1254,6 +1717,7 @@ class ClinicalAlertHandler(http.server.BaseHTTPRequestHandler):
                     <p class="subpage-desc">Dual Tank Manual Dipstick Tracking, Boil-off Dynamics & Regulatory Audit Trail (CAP / CLIA / JCAHO)</p>
                   </div>
                   <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                    <a href="/print/qr" target="_blank" class="btn-report" style="border-color:#38bdf8; color:#38bdf8;">📱 Print Tank QR Placards</a>
                     <a href="/report/ln2?tank=1" target="_blank" class="btn-report">📊 Print Tank 1 Report</a>
                     <a href="/report/ln2?tank=2" target="_blank" class="btn-report">📊 Print Tank 2 Report</a>
                     <button class="btn" style="background:#00e5ff; color:#090d16; font-size:14px; font-weight:800; padding:10px 18px; border-radius:8px; box-shadow:0 4px 14px rgba(0,229,255,0.3);" onclick="openLn2Modal()">🧊 Log Dipstick Check</button>
