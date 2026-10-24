@@ -1,0 +1,14 @@
+[Unit]
+Description=IVF Lab Clinical Alert & Escalation Engine
+After=network.target scadacomm6.service postgresql.service
+
+[Service]
+Type=simple
+User=bobostrom
+WorkingDirectory=/home/bobostrom/Projects/labSCADA
+ExecStart=/usr/bin/python3 /home/bobostrom/Projects/labSCADA/ivf_alert_engine.py
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

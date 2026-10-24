@@ -1,48 +1,62 @@
 (* ==============================================================================
    PROGRAM: PLC_PRG
    DESCRIPTION: Main execution program for CODESYS Controller.
-                Configured with IVF Laboratory telemetry points:
-                1. System Heartbeat Blinker (500ms toggle for GPIO / verification)
-                2. Lab Ambient Temperature (~25°C)
-                3. Medical Fridge Temperature (~3°C)
-                4. Medical Freezer Temperature (~ -20°C)
-                5. Cryo Tank Temperature (~ -150°C)
-                6. Door 01: Main Door (BOOL)
-                7. Door 02: Cryo/Lab Door (BOOL)
-                8. Incubator 01 Alarm (BOOL)
-                9. Incubator 02 Alarm (BOOL)
+                Configured with IVF Laboratory telemetry points, alarm evaluation,
+                hysteresis, draft/on-delay timers, and simulation fault injections.
    ============================================================================== *)
 PROGRAM PLC_PRG
 VAR
     (* --- Heartbeat & LED Blinker --- *)
-    tonBlinkTimer       : TON;
-    bLedOutput          : BOOL := FALSE;    (* Toggles ON/OFF every 500ms (1 Hz) *)
-    tBlinkInterval      : TIME := T#500MS;  (* 500ms ON / 500ms OFF *)
-    udiCycleCount       : UDINT := 0;
+    tonBlinkTimer           : TON;
+    bLedOutput              : BOOL := FALSE;    (* Toggles ON/OFF every 500ms (1 Hz) *)
+    tBlinkInterval          : TIME := T#500MS;  (* 500ms ON / 500ms OFF *)
+    udiCycleCount           : UDINT := 0;
 
     (* --- Analog Telemetry: Temperatures --- *)
-    rLabAmbientTemp     : REAL := 25.0;     (* Target ~25.0 °C *)
-    rMedFridgeTemp      : REAL := 3.0;      (* Target ~3.0 °C *)
-    rMedFreezerTemp     : REAL := -20.0;    (* Target ~ -20.0 °C *)
-    rCryoTankTemp       : REAL := -150.0;   (* Target ~ -150.0 °C *)
+    rLabAmbientTemp         : REAL := 25.0;     (* Target ~25.0 °C *)
+    rMedFridgeTemp          : REAL := 3.0;      (* Target ~3.0 °C (Normal: 2.0°C to 8.0°C) *)
+    rMedFreezerTemp         : REAL := -20.0;    (* Target ~ -20.0 °C (Normal: < -15.0°C) *)
+    rCryoTankTemp           : REAL := -150.0;   (* Target ~ -150.0 °C (Normal: < -135.0°C) *)
 
-    (* --- Discrete Telemetry: Doors & Alarms --- *)
-    bDoor01_MainDoor    : BOOL := FALSE;    (* Door 01 (Main Door): FALSE = Closed, TRUE = Open *)
-    bDoor02_CryoLabDoor : BOOL := FALSE;    (* Door 02 (Cryo/Lab Door): FALSE = Closed, TRUE = Open *)
-    bIncubator01_Alarm  : BOOL := FALSE;    (* Incubator 01 Alarm: FALSE = Normal, TRUE = Alarm *)
-    bIncubator02_Alarm  : BOOL := FALSE;    (* Incubator 02 Alarm: FALSE = Normal, TRUE = Alarm *)
+    (* --- Discrete Telemetry: Door Contacts & Physical State --- *)
+    bDoor01_MainDoor        : BOOL := FALSE;    (* FALSE = Closed, TRUE = Open *)
+    bDoor02_CryoLabDoor     : BOOL := FALSE;    (* FALSE = Closed, TRUE = Open *)
 
-    (* --- Simulation Controls --- *)
-    tonSimTick          : TON;
-    iSimStep            : INT := 0;
-    bSimulateDynamics   : BOOL := TRUE;     (* Set to FALSE to hold exact static setpoints *)
+    (* --- Discrete Clinical Alarm Outputs (Published over OPC UA) --- *)
+    bMedFridgeAlarm         : BOOL := FALSE;    (* TRUE when Fridge > 8.0°C or < 2.0°C for > 2m *)
+    bMedFreezerAlarm        : BOOL := FALSE;    (* TRUE when Freezer > -15.0°C for > 3m *)
+    bCryoTankAlarm          : BOOL := FALSE;    (* TRUE when Cryo Tank > -135.0°C for > 30s *)
+    bDoor01_Alarm           : BOOL := FALSE;    (* TRUE when Main Door held open > 3m *)
+    bDoor02_Alarm           : BOOL := FALSE;    (* TRUE when Cryo Door held open > 3m *)
+    bIncubator01_Alarm      : BOOL := FALSE;    (* Incubator 01 Alarm Contact *)
+    bIncubator02_Alarm      : BOOL := FALSE;    (* Incubator 02 Alarm Contact *)
+
+    (* --- Clinical Alarm Function Blocks (RTAC-Style Pickup / Dropout & Hysteresis) --- *)
+    fbFridgeAlarm           : FB_AnalogAlarm;
+    fbFreezerAlarm          : FB_AnalogAlarm;
+    fbCryoAlarm             : FB_AnalogAlarm;
+    fbDoor01Alarm           : FB_PickupDropout;
+    fbDoor02Alarm           : FB_PickupDropout;
+
+
+    (* --- Simulation & Fault Injection Controls --- *)
+    tonSimTick              : TON;
+    iSimStep                : INT := 0;
+    bSimulateDynamics       : BOOL := TRUE;     (* Set to FALSE to hold static values *)
+
+    (* Toggle these bits in CODESYS online monitoring to test alarms instantly *)
+    bForceFridgeExcursion   : BOOL := FALSE;    (* Forces fridge to 9.5°C *)
+    bForceFreezerExcursion  : BOOL := FALSE;    (* Forces freezer to -12.0°C *)
+    bForceCryoExcursion     : BOOL := FALSE;    (* Forces cryo tank to -125.0°C *)
+    bForceDoor01Ajar        : BOOL := FALSE;    (* Forces Main Door open *)
+    bForceDoor02Ajar        : BOOL := FALSE;    (* Forces Cryo Door open *)
+    bForceIncubator01Alarm  : BOOL := FALSE;    (* Forces Incubator 01 alarm contact *)
+    bForceIncubator02Alarm  : BOOL := FALSE;    (* Forces Incubator 02 alarm contact *)
 END_VAR
 
 // ==============================================================================
 // 1. SYSTEM HEARTBEAT BLINKER
 // ==============================================================================
-// Standard non-blocking IEC 61131-3 timer flip-flop
-// Must be called unconditionally outside IF blocks to properly self-reset
 tonBlinkTimer(IN := NOT tonBlinkTimer.Q, PT := tBlinkInterval);
 
 IF tonBlinkTimer.Q THEN
@@ -52,23 +66,108 @@ END_IF;
 
 
 // ==============================================================================
-// 2. IVF LAB TELEMETRY SIMULATION
+// 2. IVF LAB TELEMETRY SIMULATION & FAULT INJECTION
 // ==============================================================================
-// Generates realistic subtle thermal drifts around clinical setpoints
 tonSimTick(IN := NOT tonSimTick.Q, PT := T#1S);
 
 IF tonSimTick.Q AND bSimulateDynamics THEN
     iSimStep := (iSimStep + 1) MOD 360;
 
     // Lab Ambient: smooth drift around 25.0 °C (24.7 °C to 25.3 °C)
-    rLabAmbientTemp     := 25.0 + 0.3 * SIN(TO_REAL(iSimStep) * 0.05);
+    rLabAmbientTemp := 25.0 + 0.3 * SIN(TO_REAL(iSimStep) * 0.05);
 
     // Medical Fridge: refrigeration cycle around 3.0 °C (2.6 °C to 3.4 °C)
-    rMedFridgeTemp      := 3.0  + 0.4 * COS(TO_REAL(iSimStep) * 0.08);
+    IF bForceFridgeExcursion THEN
+        rMedFridgeTemp := 9.5;   // Over 8.0°C limit
+    ELSE
+        rMedFridgeTemp := 3.0 + 0.4 * COS(TO_REAL(iSimStep) * 0.08);
+    END_IF;
 
     // Medical Freezer: compressor cycle around -20.0 °C (-20.6 °C to -19.4 °C)
-    rMedFreezerTemp     := -20.0 + 0.6 * SIN(TO_REAL(iSimStep) * 0.06);
+    IF bForceFreezerExcursion THEN
+        rMedFreezerTemp := -12.0; // Over -15.0°C limit
+    ELSE
+        rMedFreezerTemp := -20.0 + 0.6 * SIN(TO_REAL(iSimStep) * 0.06);
+    END_IF;
 
-    // Cryo Tank: vapor phase LN2 thermal dynamics around -150.0 °C (-150.8 °C to -149.2 °C)
-    rCryoTankTemp       := -150.0 + 0.8 * COS(TO_REAL(iSimStep) * 0.03);
+    // Cryo Tank: vapor phase LN2 thermal dynamics around -150.0 °C
+    IF bForceCryoExcursion THEN
+        rCryoTankTemp := -125.0;  // Danger zone above -135.0°C
+    ELSE
+        rCryoTankTemp := -150.0 + 0.8 * COS(TO_REAL(iSimStep) * 0.03);
+    END_IF;
+
+    // Doors Simulation / Overrides
+    IF bForceDoor01Ajar THEN
+        bDoor01_MainDoor := TRUE;
+    END_IF;
+
+    IF bForceDoor02Ajar THEN
+        bDoor02_CryoLabDoor := TRUE;
+    END_IF;
+
+    // Incubators Simulated Contacts
+    bIncubator01_Alarm := bForceIncubator01Alarm;
+    bIncubator02_Alarm := bForceIncubator02Alarm;
 END_IF;
+
+
+// ==============================================================================
+// 3. CLINICAL ALARM EVALUATION (RTAC-STYLE PICKUP / DROPOUT & HYSTERESIS)
+// ==============================================================================
+
+// --- A. Medical Fridge Alarm (Normal: 2.0°C to 8.0°C, 2m pickup, 10s dropout) ---
+fbFridgeAlarm(
+    rVal          := rMedFridgeTemp,
+    bEnableHigh   := TRUE,
+    rHighPickup   := 8.0,
+    rHighDropout  := 7.5,      // 0.5°C hysteresis
+    bEnableLow    := TRUE,
+    rLowPickup    := 2.0,
+    rLowDropout   := 2.5,      // 0.5°C hysteresis
+    tPickupDelay  := T#2M,     // Sustained excursion required to trip
+    tDropoutDelay := T#10S     // Clean recovery required to reset
+);
+bMedFridgeAlarm := fbFridgeAlarm.bAlarm;
+
+
+// --- B. Medical Freezer Alarm (Normal: < -15.0°C, 3m pickup, 10s dropout) ---
+fbFreezerAlarm(
+    rVal          := rMedFreezerTemp,
+    bEnableHigh   := TRUE,
+    rHighPickup   := -15.0,
+    rHighDropout  := -16.5,    // 1.5°C hysteresis
+    bEnableLow    := FALSE,
+    tPickupDelay  := T#3M,     // Sustained warm excursion required to trip
+    tDropoutDelay := T#10S     // Clean recovery required to reset
+);
+bMedFreezerAlarm := fbFreezerAlarm.bAlarm;
+
+
+// --- C. Cryogenic LN2 Tank Alarm (Normal: < -135.0°C, 30s pickup, 10s dropout) ---
+fbCryoAlarm(
+    rVal          := rCryoTankTemp,
+    bEnableHigh   := TRUE,
+    rHighPickup   := -135.0,
+    rHighDropout  := -140.0,   // 5.0°C hysteresis
+    bEnableLow    := FALSE,
+    tPickupDelay  := T#30S,    // Rapid critical LN2 warning
+    tDropoutDelay := T#10S     // Clean LN2 fill required to reset
+);
+bCryoTankAlarm := fbCryoAlarm.bAlarm;
+
+
+// --- D. Cleanroom Doors Ajar Alarms (> 3 minutes open) ---
+fbDoor01Alarm(
+    IN            := bDoor01_MainDoor,
+    tPickupDelay  := T#3M,
+    tDropoutDelay := T#5S
+);
+bDoor01_Alarm := fbDoor01Alarm.Q;
+
+fbDoor02Alarm(
+    IN            := bDoor02_CryoLabDoor,
+    tPickupDelay  := T#3M,
+    tDropoutDelay := T#5S
+);
+bDoor02_Alarm := fbDoor02Alarm.Q;

@@ -972,6 +972,180 @@
       ],
       "title": "Active Sensor Health Status",
       "type": "stat"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 26
+      },
+      "id": 200,
+      "title": "Clinical Alarm Management & Audit Trail",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "$datasource"
+      },
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 7,
+        "x": 0,
+        "y": 27
+      },
+      "id": 201,
+      "options": {
+        "content": "<div style=\"display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; text-align:center; padding:16px;\">\n  <h3 style=\"color:#00e5ff; margin-bottom:12px; font-size:16px;\">Daily Alarm Pathway QA</h3>\n  <p style=\"color:#8899a6; font-size:13px; margin-bottom:18px;\">Triggers verified Priority 0 test notification to all on-call staff and writes permanent timestamp to CAP/CLIA audit log.</p>\n  <a href=\"http://scadapi02.local:8080/api/test\" target=\"_blank\" style=\"background:#2979ff; color:white; text-decoration:none; padding:14px 24px; border-radius:8px; font-weight:700; font-size:15px; box-shadow:0 4px 14px rgba(41,121,255,0.4); display:inline-block;\">🔔 Run Daily Alarm Test</a>\n  <div style=\"margin-top:16px; font-size:12px; color:#00e676;\">Kiosk & Cloud Verified</div>\n</div>",
+        "mode": "html"
+      },
+      "title": "Daily Alarm Verification",
+      "type": "text"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "$datasource"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Status"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "mode": "basic",
+                  "type": "color-background"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "options": {
+                      "match": "regex",
+                      "pattern": ".*ACTIVE.*",
+                      "result": {
+                        "color": "red"
+                      }
+                    },
+                    "type": "regex"
+                  },
+                  {
+                    "options": {
+                      "match": "regex",
+                      "pattern": ".*Attending.*",
+                      "result": {
+                        "color": "semi-dark-orange"
+                      }
+                    },
+                    "type": "regex"
+                  },
+                  {
+                    "options": {
+                      "match": "regex",
+                      "pattern": ".*Resolved.*",
+                      "result": {
+                        "color": "green"
+                      }
+                    },
+                    "type": "regex"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Action"
+            },
+            "properties": [
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "title": "✋ Silence / Acknowledge",
+                    "url": "http://scadapi02.local:8080/api/ack?id=${__data.fields.Action}",
+                    "targetBlank": true
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 17,
+        "x": 7,
+        "y": 27
+      },
+      "id": 202,
+      "options": {
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": true,
+            "displayName": "Time"
+          }
+        ]
+      },
+      "pluginVersion": "10.0.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "$datasource"
+          },
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT \n  triggered_at AS \"Time\",\n  equipment_name AS \"Equipment\",\n  alarm_type AS \"Alarm Condition\",\n  CASE \n    WHEN excursion_val IS NOT NULL THEN ROUND(excursion_val::numeric, 1)::text || ' °C'\n    ELSE 'TRIPPED'\n  END AS \"Reading\",\n  CASE \n    WHEN NOT is_acknowledged AND NOT is_resolved THEN '🔴 ACTIVE (SIREN)'\n    WHEN is_acknowledged AND NOT is_resolved THEN '🟡 Attending (' || COALESCE(acknowledged_by, 'Staff') || ')'\n    ELSE '🟢 Resolved (' || COALESCE(ROUND(duration_seconds / 60.0, 1)::text || 'm', 'OK') || ')'\n  END AS \"Status\",\n  id AS \"Action\"\nFROM mod_arc_postgre_sql.alarm_events\nORDER BY triggered_at DESC\nLIMIT 15;",
+          "refId": "A"
+        }
+      ],
+      "title": "Active Alarms & Regulatory Excursion History (Reverse Chronological)",
+      "type": "table"
     }
   ],
   "refresh": "30s",

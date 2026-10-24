@@ -28,7 +28,12 @@ INSERT INTO mod_arc_postgre_sql.channel_config (cnl_num, name) VALUES
     (122, 'DoorOpen_02'),
     (123, 'IncubatorAlarm_01'),
     (124, 'IncubatorAlarm_02'),
-    (125, 'Cryo Tank 1')
+    (125, 'Cryo Tank 1'),
+    (126, 'MedFridgeAlarm'),
+    (127, 'MedFreezerAlarm'),
+    (128, 'CryoTankAlarm'),
+    (129, 'DoorAlarm_01'),
+    (130, 'DoorAlarm_02')
 ON CONFLICT (cnl_num) DO UPDATE SET name = EXCLUDED.name;
 
 CREATE TABLE IF NOT EXISTS mod_arc_postgre_sql.alarm_events (
@@ -41,6 +46,7 @@ CREATE TABLE IF NOT EXISTS mod_arc_postgre_sql.alarm_events (
     pushover_receipt VARCHAR(64),
     is_acknowledged BOOLEAN DEFAULT FALSE,
     acknowledged_by VARCHAR(64),
+    acknowledged_by_token VARCHAR(64),
     acknowledged_at TIMESTAMPTZ,
     is_resolved BOOLEAN DEFAULT FALSE,
     resolved_at TIMESTAMPTZ,
