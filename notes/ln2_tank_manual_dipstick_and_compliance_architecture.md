@@ -138,27 +138,31 @@ ORDER BY logged_at DESC;
 
 ---
 
-## 5. The 3-Day (72-Hour) Escalation Lifecycle
+## 5. The Mon / Wed / Fri 5:00 PM Escalation Lifecycle
 
-A background thread (`ln2_schedule_watcher`) in [ivf_alert_engine.py](file:///home/bobostrom/Projects/labSCADA/ivf_alert_engine.py) evaluates the elapsed duration since the last log for every active tank every 60 seconds:
+A background thread (`ln2_schedule_watcher`) in [ivf_alert_engine.py](file:///home/bobostrom/Projects/labSCADA/ivf_alert_engine.py) evaluates compliance against the clinical **Monday, Wednesday, Friday by 5:00 PM** cleanroom schedule every 60 seconds.
 
-```
-  0h                                60h                           72h (3 Days)
-──┼──────────────────────────────────┼─────────────────────────────┼──────────────►
- Logged                          Due Warning                   OVERDUE SIREN
-• Clock starts              • Amber card on :8080         • Flashing Red on Kiosk
-• Green on Kiosk            • "Due within 12h"            • Priority 2 Emergency Siren
-• Resets timer              • Informational notice          via Pushover to team
+```text
+ ┌───────────────────────┬───────────────────────────────────────────┬────────────────────────────────────────┐
+ │ Day of Week           │ Time / Condition                          │ Kiosk Display / Pushover Escalation    │
+ ├───────────────────────┼───────────────────────────────────────────┼────────────────────────────────────────┤
+ │ Mon, Wed, or Fri      │ Midnight to 5:00 PM (Unchecked)           │ 🟡 DUE TODAY: Dipstick check due 5pm   │
+ │ Mon, Wed, or Fri      │ Logged by staff                           │ 🟢 COMPLETED: Today's check logged     │
+ │ Mon, Wed, or Fri      │ After 5:00 PM without log                 │ 🔴 OVERDUE: Priority 2 Emergency Siren │
+ │ Tue, Thu, Sat, or Sun │ Previous required check was satisfied     │ 🟢 ON SCHEDULE: Next check: [Day] 5pm  │
+ │ Tue, Thu, Sat, or Sun │ Previous required check was missed        │ 🔴 OVERDUE: Previous check missed      │
+ └───────────────────────┴───────────────────────────────────────────┴────────────────────────────────────────┘
 ```
 
 ### Escalation States
 
-| State | Window | Cleanroom Kiosk UI | Pushover Alerting |
+| State | Condition | Cleanroom Kiosk UI (:8080) | Pushover Alerting |
 | :--- | :--- | :--- | :--- |
-| **🟢 Normal** | `0h – 60h` | Card shows `CLOCK OK` with level (cm) and hours elapsed. | Silent. |
-| **🟡 Due Warning** | `60h – 72h` | Card turns Amber: `🟡 DUE TODAY (64h)`. | Optional low-priority informational chime once per shift. |
-| **🔴 OVERDUE** | `≥ 72h` | Flashing red banner: `🔴 OVERDUE: Cryo Tank 1 has NOT been inspected in > 72 hours!`. | **Priority 2 Repeating Siren** (retries every 60s for 2 hours) with discrete receipt tracking. |
-| **🟢 Auto-Reset** | *On Submit* | Instantly returns to Green. | Silences emergency siren, cancels Pushover receipt, and sends `🟢 RESOLVED` broadcast. |
+| **🟢 On Schedule** | Off-days (Tue, Thu, Sat, Sun) with last check completed. | Card badge `ON SCHEDULE` with hours elapsed and next check target. | Silent. |
+| **🟢 Completed** | Check recorded for today. | Card badge `COMPLETED` with initials and recorded level. | Silent. |
+| **🟡 Due Warning** | Scheduled day (Mon, Wed, Fri) before 5:00 PM without check. | Card badge `DUE TODAY` with amber border and due prompt. | Informational notice on shift start. |
+| **🔴 OVERDUE** | Scheduled day past 5:00 PM or off-day following missed check. | Card badge `OVERDUE` with red border and overdue notice. | **Priority 2 Repeating Siren** (retries every 60s for 2 hours) with discrete receipt tracking. |
+| **🟢 Auto-Reset** | Log submitted at any time. | Instantly returns to Green (`ON SCHEDULE` / `COMPLETED`). | Silences emergency siren, cancels Pushover receipt, and sends broadcast with next due target. |
 
 ---
 
@@ -175,28 +179,20 @@ Returns the latest inspection status and the 10 most recent logs.
   "tanks": {
     "Cryo Tank 1": {
       "tank_id": "Cryo Tank 1",
-      "level_cm": 21.5,
-      "was_filled": false,
+      "level_cm": 20.5,
+      "was_filled": true,
       "frost_condition": "Good",
       "initials": "BO",
-      "notes": "Dipstick verification test",
-      "logged_at": "2026-10-23 19:39:14.905524-08",
-      "hours_since": 0.1,
-      "status": "NORMAL"
+      "notes": "",
+      "logged_at": "2026-10-23 19:41:01.967513-08",
+      "hours_since": 15.1,
+      "status": "NORMAL",
+      "badge": "ON SCHEDULE",
+      "detail": "🟢 ON SCHEDULE: Next check: Monday (Oct 26) by 5:00 PM",
+      "next_check": "Monday (Oct 26) by 5:00 PM"
     }
   },
-  "history": [
-    {
-      "id": 2,
-      "tank_id": "Cryo Tank 1",
-      "level_cm": 21.5,
-      "was_filled": false,
-      "frost_condition": "Good",
-      "initials": "BO",
-      "notes": "Dipstick verification test",
-      "logged_at": "2026-10-23 19:39:14.905524-08"
-    }
-  ]
+  "history": [ ... ]
 }
 ```
 

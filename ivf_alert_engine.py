@@ -22,7 +22,7 @@ import threading
 import time
 import urllib.parse
 import urllib.request
-from datetime import datetime
+from datetime import datetime, timedelta
 
 PORT = 8080
 PG_USER = "postgres"
@@ -52,7 +52,7 @@ CHANNELS = {
     128: {"name": "Cryo Tank 1", "type": "discrete_alarm", "linked_analog": 125},
     129: {"name": "Main Cleanroom Door", "type": "door_alarm", "linked_contact": 121},
     130: {"name": "Cryo Lab Door", "type": "door_alarm", "linked_contact": 122},
-    199: {"name": "Cryo Tank 1", "type": "ln2_inspection", "unit": "hours", "max_interval": 72.0},
+    199: {"name": "Cryo Tank 1", "type": "ln2_inspection", "schedule": "Mon, Wed, Fri by 5:00 PM"},
 }
 
 # In-memory tracking of active alarm state machine
@@ -497,10 +497,75 @@ def phone_sync_and_escalation_worker():
 
 
 # ==============================================================================
-# LIQUID NITROGEN (LN2) 3-DAY MANUAL INSPECTION TRACKER
+# LIQUID NITROGEN (LN2) MON / WED / FRI 5:00 PM MANUAL INSPECTION TRACKER
 # ==============================================================================
+def evaluate_ln2_schedule(now, last_log_time, initials="--", level_cm=0.0):
+    """
+    Evaluates LN2 compliance for cleanroom Mon / Wed / Fri schedule (due by 5:00 PM).
+    """
+    SCHEDULE_DAYS = [0, 2, 4]  # 0=Monday, 2=Wednesday, 4=Friday
+    CUTOFF_HOUR = 17           # 5:00 PM
+
+    # 1. Determine last passed deadline
+    if now.weekday() in SCHEDULE_DAYS and now.hour >= CUTOFF_HOUR:
+        last_deadline_date = now.date()
+    else:
+        last_deadline_date = now.date() - timedelta(days=1)
+        while last_deadline_date.weekday() not in SCHEDULE_DAYS:
+            last_deadline_date -= timedelta(days=1)
+
+    last_deadline_day_start = datetime(last_deadline_date.year, last_deadline_date.month, last_deadline_date.day, 0, 0, 0)
+
+    # 2. Check if last deadline was satisfied
+    is_last_satisfied = (last_log_time is not None and last_log_time >= last_deadline_day_start)
+
+    # 3. Next upcoming deadline
+    today_due = (now.weekday() in SCHEDULE_DAYS and now.hour < CUTOFF_HOUR)
+    logged_today = (last_log_time is not None and last_log_time >= datetime(now.year, now.month, now.day, 0, 0, 0))
+
+    if today_due and not logged_today:
+        next_deadline_date = now.date()
+    else:
+        next_deadline_date = now.date() + timedelta(days=1)
+        while next_deadline_date.weekday() not in SCHEDULE_DAYS:
+            next_deadline_date += timedelta(days=1)
+
+    next_check_str = f"{next_deadline_date.strftime('%A (%b %-d)')} by 5:00 PM"
+
+    if not is_last_satisfied:
+        return {
+            "status": "OVERDUE",
+            "badge": "OVERDUE",
+            "detail": f"🔴 OVERDUE: {last_deadline_date.strftime('%A')} check was required by 5:00 PM!",
+            "next_check": next_check_str
+        }
+
+    if today_due:
+        if logged_today:
+            return {
+                "status": "NORMAL",
+                "badge": "COMPLETED",
+                "detail": f"🟢 COMPLETED: Today's check logged by {initials} ({level_cm:.1f} cm). Next check: {next_check_str}",
+                "next_check": next_check_str
+            }
+        else:
+            return {
+                "status": "DUE",
+                "badge": "DUE TODAY",
+                "detail": f"🟡 DUE TODAY: {now.strftime('%A')} dipstick check due by 5:00 PM.",
+                "next_check": next_check_str
+            }
+    else:
+        return {
+            "status": "NORMAL",
+            "badge": "ON SCHEDULE",
+            "detail": f"🟢 ON SCHEDULE: Next check: {next_check_str}",
+            "next_check": next_check_str
+        }
+
+
 def get_ln2_status():
-    """Returns latest inspection status and recent logs for all cryo tanks."""
+    """Returns latest inspection status and recent logs for all cryo tanks based on Mon/Wed/Fri 5pm schedule."""
     sql = """
     SELECT DISTINCT ON (tank_id) 
         tank_id, level_cm, was_filled, frost_condition, initials, notes, 
@@ -511,6 +576,7 @@ def get_ln2_status():
     """
     rows = db_query(sql)
     tanks = {}
+    now = datetime.now()
     for r in rows:
         if len(r) >= 8:
             t_id = r[0]
@@ -522,12 +588,15 @@ def get_ln2_status():
             ts = r[6]
             hours_since = float(r[7]) if r[7] else 0.0
 
-            if hours_since >= 72.0:
-                status = "OVERDUE"
-            elif hours_since >= 60.0:
-                status = "DUE"
-            else:
-                status = "NORMAL"
+            log_dt = None
+            if ts:
+                try:
+                    clean_ts = ts.split(".")[0]
+                    log_dt = datetime.strptime(clean_ts, "%Y-%m-%d %H:%M:%S")
+                except Exception:
+                    pass
+
+            sched = evaluate_ln2_schedule(now, log_dt, initials=initials, level_cm=lvl)
 
             tanks[t_id] = {
                 "tank_id": t_id,
@@ -538,7 +607,10 @@ def get_ln2_status():
                 "notes": notes,
                 "logged_at": ts,
                 "hours_since": hours_since,
-                "status": status
+                "status": sched["status"],
+                "badge": sched["badge"],
+                "detail": sched["detail"],
+                "next_check": sched["next_check"]
             }
 
     # Also fetch recent 10 history rows
@@ -566,7 +638,7 @@ def get_ln2_status():
 
 
 def record_ln2_log(tank_id, level_cm, was_filled, frost_condition, initials, notes=""):
-    """Inserts a new dipstick inspection log and resets the 3-day clock."""
+    """Inserts a new dipstick inspection log and satisfies current schedule requirement."""
     safe_tank = tank_id.replace("'", "''")
     safe_frost = frost_condition.replace("'", "''")
     safe_init = initials.strip().upper().replace("'", "''")
@@ -587,20 +659,25 @@ def record_ln2_log(tank_id, level_cm, was_filled, frost_condition, initials, not
         if 199 in active_alarms:
             resolve_alarm(199, final_val=level_cm)
 
+    # Determine next due date for notification
+    status_info = get_ln2_status()
+    t_info = status_info.get("tanks", {}).get(safe_tank, {})
+    next_due_msg = t_info.get("next_check", "Next Mon/Wed/Fri by 5:00 PM")
+
     # Send informational notification to team via Pushover
     filled_str = "Yes (Tank Topped Off)" if was_filled else "No (Level Check Only)"
     send_pushover_alert(
         title=f"🧊 LN2 LOGGED: {safe_tank} ({level_cm:.1f} cm)",
-        message=f"{safe_tank} inspected by {safe_init}. Level: {level_cm:.1f} cm. Filled: {filled_str}. Seal: {safe_frost}. 3-day inspection clock reset.",
+        message=f"{safe_tank} inspected by {safe_init}. Level: {level_cm:.1f} cm. Filled: {filled_str}. Seal: {safe_frost}. Next check: {next_due_msg}.",
         priority=0,
         sound="magic"
     )
-    print(f"[{datetime.now().strftime('%T')}] LN2 Log Recorded for {safe_tank}: {level_cm} cm by {safe_init} (Filled: {was_filled})")
+    print(f"[{datetime.now().strftime('%T')}] LN2 Log Recorded for {safe_tank}: {level_cm} cm by {safe_init} (Filled: {was_filled}). Next check: {next_due_msg}")
     return log_id
 
 
 def ln2_schedule_watcher():
-    """Background loop verifying that LN2 tanks are inspected every 3 days (72 hours)."""
+    """Background loop verifying that LN2 tanks are inspected per Mon/Wed/Fri 5:00 PM schedule."""
     while True:
         try:
             status_data = get_ln2_status()
@@ -608,20 +685,21 @@ def ln2_schedule_watcher():
 
             tank = tanks.get("Cryo Tank 1")
             if tank:
-                hours = tank["hours_since"]
-                if hours >= 72.0:
+                status = tank.get("status")
+                detail = tank.get("detail", "LN2 Manual Check Overdue")
+                if status == "OVERDUE":
                     # Overdue! Trigger Priority 2 Emergency Alarm with Receipt Tracking
                     with state_lock:
                         already_active = 199 in active_alarms
                     if not already_active:
-                        print(f"[{datetime.now().strftime('%T')}] LN2 INSPECTION OVERDUE: Cryo Tank 1 last checked {hours:.1f}h ago!")
+                        print(f"[{datetime.now().strftime('%T')}] LN2 INSPECTION OVERDUE: Cryo Tank 1 ({detail})")
                         trigger_alarm(
                             cnl_num=199,
                             equipment_name="Cryo Tank 1",
-                            alarm_type="LN2 Manual Check Overdue > 72h",
-                            excursion_val=round(hours, 1)
+                            alarm_type=detail,
+                            excursion_val=round(tank.get("hours_since", 0.0), 1)
                         )
-                elif hours < 72.0:
+                else:
                     with state_lock:
                         if 199 in active_alarms:
                             resolve_alarm(199, final_val=tank["level_cm"])
@@ -806,10 +884,11 @@ class ClinicalAlertHandler(http.server.BaseHTTPRequestHandler):
                   <div class="card-title">Cryo Tank 1 (Manual LN2)</div>
                   <div class="card-val"><span id="val-ln2-level">--</span><span class="card-unit">cm</span></div>
                   <div class="card-sub">
-                    <span id="sub-ln2-check">3-Day Inspection</span>
-                    <span id="badge-ln2" class="status-badge status-normal">CLOCK OK</span>
+                    <span id="sub-ln2-check">Schedule: Mon/Wed/Fri</span>
+                    <span id="badge-ln2" class="status-badge status-normal">ON SCHEDULE</span>
                   </div>
-                  <button class="btn" style="margin-top:14px; width:100%; background:#00b0ff; font-weight:700; padding:10px;" onclick="openLn2Modal()">🧊 Log Dipstick Check</button>
+                  <div id="ln2-next-due" style="font-size:11px; color:#8899a6; margin-top:6px;">Next: Mon, Wed, Fri by 5:00 PM</div>
+                  <button class="btn" style="margin-top:10px; width:100%; background:#00b0ff; font-weight:700; padding:10px;" onclick="openLn2Modal()">🧊 Log Dipstick Check</button>
                 </div>
 
                 <div class="card" id="card-ambient">
@@ -874,7 +953,7 @@ class ClinicalAlertHandler(http.server.BaseHTTPRequestHandler):
                   <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px;">
                     <div>
                       <h2 style="margin:0; font-size:1.3rem; color:#00e5ff;">🧊 Record LN2 Dipstick Check</h2>
-                      <div style="color:#8899a6; font-size:12px; margin-top:3px;">Resets 3-day inspection clock upon submission</div>
+                      <div style="color:#8899a6; font-size:12px; margin-top:3px;">Mon / Wed / Fri Cleanroom Schedule (Due by 5:00 PM)</div>
                     </div>
                     <button type="button" class="btn" style="background:transparent; border:1px solid rgba(255,255,255,0.2); font-size:16px; padding:6px 12px;" onclick="closeLn2Modal()">✕</button>
                   </div>
@@ -1175,18 +1254,24 @@ class ClinicalAlertHandler(http.server.BaseHTTPRequestHandler):
                         document.getElementById('val-ln2-level').innerText = t.level_cm.toFixed(1);
                         const b = document.getElementById('badge-ln2');
                         const sub = document.getElementById('sub-ln2-check');
-                        const h = t.hours_since;
-                        sub.innerText = `${{h.toFixed(1)}}h ago (${{t.initials}})`;
+                        const nextDue = document.getElementById('ln2-next-due');
+                        const card = document.getElementById('card-ln2');
+
+                        b.innerText = t.badge || 'ON SCHEDULE';
+                        sub.innerText = `${{t.hours_since.toFixed(1)}}h ago (${{t.initials}})`;
+                        if (nextDue) {{
+                          nextDue.innerText = t.detail || `Next: ${{t.next_check}}`;
+                        }}
 
                         if (t.status === 'OVERDUE') {{
-                          b.innerText = `OVERDUE (${{h.toFixed(0)}}h)`;
                           b.className = 'status-badge status-alert';
+                          if (card) card.style.borderLeft = '3px solid #ff1744';
                         }} else if (t.status === 'DUE') {{
-                          b.innerText = `DUE TODAY (${{h.toFixed(0)}}h)`;
                           b.className = 'status-badge status-warn';
+                          if (card) card.style.borderLeft = '3px solid #ffab00';
                         }} else {{
-                          b.innerText = 'CLOCK OK';
                           b.className = 'status-badge status-normal';
+                          if (card) card.style.borderLeft = '3px solid #00e5ff';
                         }}
                       }}
 
