@@ -469,7 +469,7 @@ def telemetry_scan_worker():
         except Exception as e:
             print(f"Scan loop error: {e}")
 
-        time.sleep(2.0)
+        time.sleep(1.0)
 
 
 def phone_sync_and_escalation_worker():
@@ -1502,35 +1502,43 @@ class ClinicalAlertHandler(http.server.BaseHTTPRequestHandler):
                         document.getElementById('val-ambient').innerText = r[101].toFixed(1);
                       }}
 
-                      // Fridge (102)
+                      // Fridge (Ch 102 Temp, Ch 111 PLC Alarm)
                       if (r[102] !== undefined) {{
                         const f = r[102];
                         document.getElementById('val-fridge').innerText = f.toFixed(1);
                         const b = document.getElementById('badge-fridge');
-                        if (f > 8.0 || f < 2.0) {{
+                        const isAlarm = (r[111] !== undefined) ? (r[111] > 0) : (f > 8.0 || f < 2.0);
+                        if (isAlarm) {{
                           b.innerText = 'EXCURSION';
                           b.className = 'status-badge status-alert';
+                        }} else if (f > 8.0 || f < 2.0) {{
+                          b.innerText = 'DELAY (2M)';
+                          b.className = 'status-badge status-warn';
                         }} else {{
                           b.innerText = 'NORMAL';
                           b.className = 'status-badge status-normal';
                         }}
                       }}
 
-                      // Freezer (103)
+                      // Freezer (Ch 103 Temp, Ch 112 PLC Alarm)
                       if (r[103] !== undefined) {{
                         const fz = r[103];
                         document.getElementById('val-freezer').innerText = fz.toFixed(1);
                         const b = document.getElementById('badge-freezer');
-                        if (fz > -15.0) {{
-                          b.innerText = 'HIGH';
+                        const isAlarm = (r[112] !== undefined) ? (r[112] > 0) : (fz > -15.0);
+                        if (isAlarm) {{
+                          b.innerText = 'EXCURSION';
                           b.className = 'status-badge status-alert';
+                        }} else if (fz > -15.0) {{
+                          b.innerText = 'DELAY (3M)';
+                          b.className = 'status-badge status-warn';
                         }} else {{
                           b.innerText = 'NORMAL';
                           b.className = 'status-badge status-normal';
                         }}
                       }}
 
-                      // Cryo Tank 1 (125)
+                      // Cryo Tank 1 (Ch 125 Temp, Ch 113 PLC Alarm)
                       if (r[125] !== undefined) {{
                         const cr1 = r[125];
                         document.getElementById('val-cryo1').innerText = cr1.toFixed(1);
@@ -1538,16 +1546,20 @@ class ClinicalAlertHandler(http.server.BaseHTTPRequestHandler):
                         if (detailC1) detailC1.innerText = cr1.toFixed(1);
 
                         const b1 = document.getElementById('badge-cryo1');
-                        if (cr1 > -135.0) {{
+                        const isAlarm1 = (r[113] !== undefined) ? (r[113] > 0) : (cr1 > -135.0);
+                        if (isAlarm1) {{
                           b1.innerText = 'CRITICAL';
                           b1.className = 'status-badge status-alert';
+                        }} else if (cr1 > -135.0) {{
+                          b1.innerText = 'DELAY (30S)';
+                          b1.className = 'status-badge status-warn';
                         }} else {{
                           b1.innerText = 'NORMAL';
                           b1.className = 'status-badge status-normal';
                         }}
                       }}
 
-                      // Cryo Tank 2 (104)
+                      // Cryo Tank 2 (Ch 104 Temp, Ch 114 PLC Alarm)
                       if (r[104] !== undefined) {{
                         const cr2 = r[104];
                         document.getElementById('val-cryo2').innerText = cr2.toFixed(1);
@@ -1555,33 +1567,37 @@ class ClinicalAlertHandler(http.server.BaseHTTPRequestHandler):
                         if (detailC2) detailC2.innerText = cr2.toFixed(1);
 
                         const b2 = document.getElementById('badge-cryo2');
-                        if (cr2 > -135.0) {{
+                        const isAlarm2 = (r[114] !== undefined) ? (r[114] > 0) : (cr2 > -135.0);
+                        if (isAlarm2) {{
                           b2.innerText = 'CRITICAL';
                           b2.className = 'status-badge status-alert';
+                        }} else if (cr2 > -135.0) {{
+                          b2.innerText = 'DELAY (30S)';
+                          b2.className = 'status-badge status-warn';
                         }} else {{
                           b2.innerText = 'NORMAL';
                           b2.className = 'status-badge status-normal';
                         }}
                       }}
 
-                      // Main Cleanroom Door (121)
+                      // Main Cleanroom Door (Ch 121 PLC Alarm: bDoor01_Alarm)
                       if (r[121] !== undefined) {{
-                        const d1 = r[121] > 0;
-                        document.getElementById('val-door1').innerText = d1 ? 'OPEN' : 'CLOSED';
-                        document.getElementById('val-door1').style.color = d1 ? '#ffab00' : '#f0f4f8';
+                        const d1Alarm = r[121] > 0;
+                        document.getElementById('val-door1').innerText = d1Alarm ? 'AJAR > 3M' : 'CLOSED';
+                        document.getElementById('val-door1').style.color = d1Alarm ? '#ff1744' : '#f0f4f8';
                         const b1 = document.getElementById('badge-door1');
-                        b1.innerText = d1 ? 'AJAR' : 'SECURE';
-                        b1.className = d1 ? 'status-badge status-warn' : 'status-badge status-normal';
+                        b1.innerText = d1Alarm ? 'ALARM' : 'SECURE';
+                        b1.className = d1Alarm ? 'status-badge status-alert' : 'status-badge status-normal';
                       }}
 
-                      // Cryo Lab Door (122)
+                      // Cryo Lab Door (Ch 122 PLC Alarm: bDoor02_Alarm)
                       if (r[122] !== undefined) {{
-                        const d2 = r[122] > 0;
-                        document.getElementById('val-door2').innerText = d2 ? 'OPEN' : 'CLOSED';
-                        document.getElementById('val-door2').style.color = d2 ? '#ffab00' : '#f0f4f8';
+                        const d2Alarm = r[122] > 0;
+                        document.getElementById('val-door2').innerText = d2Alarm ? 'AJAR > 3M' : 'CLOSED';
+                        document.getElementById('val-door2').style.color = d2Alarm ? '#ff1744' : '#f0f4f8';
                         const b2 = document.getElementById('badge-door2');
-                        b2.innerText = d2 ? 'AJAR' : 'SECURE';
-                        b2.className = d2 ? 'status-badge status-warn' : 'status-badge status-normal';
+                        b2.innerText = d2Alarm ? 'ALARM' : 'SECURE';
+                        b2.className = d2Alarm ? 'status-badge status-alert' : 'status-badge status-normal';
                       }}
 
                       // Incubators (123 & 124)
@@ -1859,8 +1875,8 @@ class ClinicalAlertHandler(http.server.BaseHTTPRequestHandler):
                 const initialTab = (window.location.pathname.startsWith('/cryo') || window.location.hash === '#cryo') ? 'cryo' : 'live';
                 switchTab(initialTab, false);
 
-                setInterval(updateTelemetry, 1500);
-                setInterval(loadAlarms, 3000);
+                setInterval(updateTelemetry, 1000);
+                setInterval(loadAlarms, 2000);
                 setInterval(updateLn2Status, 3000);
                 updateTelemetry();
                 loadAlarms();
