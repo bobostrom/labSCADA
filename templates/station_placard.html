@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Cryogenic Storage Station Placard - Advanced Fertility of Alaska</title>
+  <style>
+    @page { size: letter portrait; margin: 0.35in; }
+    * { box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: #0b1120; color: #0f172a; margin: 0; padding: 20px; }
+    
+    .nav-bar { background: #1e293b; color: #fff; padding: 12px 20px; border-radius: 10px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 12px rgba(0,0,0,0.3); max-width: 820px; margin-left: auto; margin-right: auto; }
+    .nav-links { display: flex; align-items: center; gap: 16px; font-size: 14px; }
+    .nav-links a { color: #38bdf8; text-decoration: none; font-weight: 700; }
+    .nav-links a:hover { text-decoration: underline; }
+    .btn-print { background: #0284c7; color: #fff; font-size: 15px; font-weight: 800; padding: 10px 22px; border: none; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 8px; box-shadow: 0 2px 8px rgba(2,132,199,0.4); }
+    .btn-print:hover { background: #0369a1; }
+
+    .placards-container { max-width: 820px; margin: 0 auto; }
+    
+    /* Single Station Laminated Placard */
+    .station-placard { background: #ffffff; border: 4px solid #0284c7; border-radius: 18px; padding: 28px 32px; box-shadow: 0 12px 36px rgba(0,0,0,0.25); }
+    
+    .station-header { text-align: center; border-bottom: 2px solid #e2e8f0; padding-bottom: 18px; margin-bottom: 20px; }
+    .clinic-badge { display: inline-block; font-size: 11.5px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; color: #0284c7; background: #f0f9ff; border: 1px solid #bae6fd; padding: 4px 14px; border-radius: 20px; margin-bottom: 8px; }
+    .station-title { font-size: 30px; font-weight: 900; margin: 0 0 6px; color: #0f172a; letter-spacing: -0.5px; }
+    .station-subtitle { font-size: 14px; font-weight: 600; color: #475569; margin: 0; }
+
+    /* Dual Tank Identification Badges */
+    .tanks-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 22px; }
+    .tank-badge-card { border: 2px solid #0284c7; background: #f8fafc; border-radius: 12px; padding: 12px 16px; display: flex; align-items: center; gap: 14px; }
+    .tank-badge-card.tank2 { border-color: #2563eb; background: #f8faff; }
+    .tank-icon { font-size: 28px; line-height: 1; }
+    .tank-badge-info { flex: 1; }
+    .tank-badge-tag { font-size: 10.5px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.8px; color: #0284c7; }
+    .tank-badge-card.tank2 .tank-badge-tag { color: #2563eb; }
+    .tank-badge-name { font-size: 17px; font-weight: 900; color: #0f172a; margin: 2px 0 1px; }
+    .tank-badge-desc { font-size: 11.5px; color: #64748b; font-weight: 600; }
+
+    /* Main Content: QR Code + SOP Instructions */
+    .main-grid { display: flex; gap: 24px; align-items: stretch; margin-bottom: 20px; }
+    
+    .qr-card { flex: 0 0 250px; background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 14px; padding: 18px 14px; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+    .qr-frame { width: 200px; height: 200px; background: #fff; padding: 8px; border-radius: 10px; border: 1px solid #cbd5e1; box-shadow: 0 2px 8px rgba(0,0,0,0.06); display: flex; align-items: center; justify-content: center; }
+    .qr-frame svg { width: 100%; height: 100%; }
+    .qr-action-title { font-size: 13px; font-weight: 900; color: #0f172a; margin: 10px 0 2px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .qr-action-desc { font-size: 11px; font-weight: 600; color: #64748b; margin-bottom: 8px; }
+    .direct-url { font-family: monospace; font-size: 11px; font-weight: 700; color: #0369a1; background: #e0f2fe; padding: 4px 8px; border-radius: 6px; border: 1px dashed #7dd3fc; word-break: break-all; }
+
+    .sop-card { flex: 1; background: #f0f9ff; border: 2px solid #bae6fd; border-radius: 14px; padding: 18px 20px; display: flex; flex-direction: column; justify-content: space-between; }
+    .sop-header-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid #bae6fd; padding-bottom: 8px; }
+    .sop-title { font-size: 13px; font-weight: 900; text-transform: uppercase; color: #0369a1; letter-spacing: 0.8px; margin: 0; }
+    .sop-schedule-pill { font-size: 11px; font-weight: 800; background: #0284c7; color: #fff; padding: 3px 10px; border-radius: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+    
+    .sop-steps { margin: 0; padding-left: 20px; font-size: 12.8px; line-height: 1.55; color: #1e293b; }
+    .sop-steps li { margin-bottom: 7px; }
+    .sop-steps li:last-child { margin-bottom: 0; }
+    .sop-steps strong { color: #0f172a; font-weight: 800; }
+    .step-highlight { background: #e0f2fe; padding: 1px 6px; border-radius: 4px; font-weight: 700; color: #0369a1; }
+
+    /* Regulatory Footer */
+    .regulatory-bar { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px 14px; display: flex; justify-content: space-between; align-items: center; font-size: 11.5px; color: #475569; }
+    .reg-item { display: flex; align-items: center; gap: 6px; font-weight: 600; }
+    .reg-item strong { color: #0f172a; }
+    .reg-warning { color: #dc2626; font-weight: 800; }
+
+    @media print {
+      body { background: #fff !important; padding: 0 !important; color: #000 !important; }
+      .nav-bar { display: none !important; }
+      .placards-container { max-width: 100% !important; }
+      .station-placard { border-width: 4px !important; box-shadow: none !important; padding: 22px 24px !important; border-radius: 12px !important; page-break-inside: avoid; }
+      .qr-frame { box-shadow: none !important; border-color: #94a3b8 !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="nav-bar">
+    <div class="nav-links">
+      <a href="/cryo">← Back to SCADA Cryo Suite</a>
+      <span style="opacity:0.4;">|</span>
+      <span>Station URL: <strong style="color:#38bdf8;">{{ station_url }}</strong></span>
+    </div>
+    <button class="btn-print" onclick="window.print()">🖨️ Print Laminated Station Placard</button>
+  </div>
+
+  <div class="placards-container">
+    <div class="station-placard">
+      <!-- Station Header -->
+      <div class="station-header">
+        <div class="clinic-badge">Advanced Fertility of Alaska • Cryopreservation Facility</div>
+        <h1 class="station-title">❄️ CRYOGENIC STORAGE STATION</h1>
+        <div class="station-subtitle">Liquid Nitrogen Specimen Storage (Dual MVE SC 47/11-V Dewars) • External Cleanroom Corridor</div>
+      </div>
+
+      <!-- Adjacent Tanks Identification -->
+      <div class="tanks-row">
+        <div class="tank-badge-card">
+          <div class="tank-icon">🥚</div>
+          <div class="tank-badge-info">
+            <div class="tank-badge-tag">Specimen Vessel 1</div>
+            <div class="tank-badge-name">CRYO TANK 1 (EMBRYOS)</div>
+            <div class="tank-badge-desc">Primary Embryology Specimen Storage</div>
+          </div>
+        </div>
+
+        <div class="tank-badge-card tank2">
+          <div class="tank-icon">🧬</div>
+          <div class="tank-badge-info">
+            <div class="tank-badge-tag">Specimen Vessel 2</div>
+            <div class="tank-badge-name">CRYO TANK 2 (SPERM)</div>
+            <div class="tank-badge-desc">Primary Andrology Specimen Storage</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Action & SOP -->
+      <div class="main-grid">
+        <!-- Single Unified QR Code -->
+        <div class="qr-card">
+          <div class="qr-frame">
+            {{ qr_svg | safe }}
+          </div>
+          <div class="qr-action-title">📱 Scan to Log Levels</div>
+          <div class="qr-action-desc">Point phone camera here • No app or login needed</div>
+          <div class="direct-url">{{ station_url }}</div>
+        </div>
+
+        <!-- Standard Operating Procedure -->
+        <div class="sop-card">
+          <div class="sop-header-bar">
+            <h3 class="sop-title">Manual Dipstick Standard Operating Procedure</h3>
+            <span class="sop-schedule-pill">Mon / Wed / Fri by 5:00 PM</span>
+          </div>
+          <ol class="sop-steps">
+            <li><strong>PPE:</strong> Put on insulated cryogenic gloves and protective face shield.</li>
+            <li><strong>Measure Level:</strong> Lower measuring ruler straight into tank until resting flat on the bottom plate. Hold <span class="step-highlight">5 seconds</span>.</li>
+            <li><strong>Read Frost:</strong> Withdraw ruler, wave in air 3 seconds, and immediately read the frost line in <span class="step-highlight">centimeters (cm)</span>.</li>
+            <li><strong>Scan QR:</strong> Open your smartphone camera and point at the code on the left.</li>
+            <li><strong>Select Tank & Submit:</strong> Tap <strong>Cryo Tank 1</strong> or <strong>Cryo Tank 2</strong> at the top of your phone screen. Enter the measured cm and your initials, then tap <strong>Submit</strong>.</li>
+            <li><strong>Log Adjacent Tank:</strong> On the confirmation screen, tap <span class="step-highlight">"Log Another Tank"</span> to immediately record the second tank without re-scanning.</li>
+          </ol>
+        </div>
+      </div>
+
+      <!-- Regulatory & Safety Notice -->
+      <div class="regulatory-bar">
+        <div class="reg-item">
+          <span>🛡️</span>
+          <span><strong>CAP / CLIA Compliance:</strong> All entries are logged directly into the digital clinical audit trail.</span>
+        </div>
+        <div class="reg-item">
+          <span>⚠️</span>
+          <span class="reg-warning">Critical Minimum: 10.0 cm</span>
+          <span style="color:#64748b;">(Refill required if level drops below 12.0 cm)</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
