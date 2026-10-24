@@ -976,7 +976,7 @@ class ClinicalAlertHandler(http.server.BaseHTTPRequestHandler):
                 .btn-test:hover {{ background:#00c853; transform:translateY(-1px); }}
 
                 /* Telemetry Grid (Main Page) */
-                .grid-telemetry {{ display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:16px; margin-bottom:24px; }}
+                .grid-telemetry {{ display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:16px; margin-bottom:24px; }}
                 .card {{ background:rgba(18,25,41,0.85); border:1px solid rgba(255,255,255,0.08); border-radius:12px; padding:18px; position:relative; overflow:hidden; transition:transform 0.15s; }}
                 .card-title {{ color:#8899a6; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px; }}
                 .card-val {{ font-size:2.2rem; font-weight:800; font-family:monospace; color:#f0f4f8; line-height:1.1; }}
@@ -1152,23 +1152,32 @@ class ClinicalAlertHandler(http.server.BaseHTTPRequestHandler):
                     </div>
                   </div>
 
-                  <!-- Medical Fridge -->
-                  <div class="card" id="card-fridge">
-                    <div class="card-title">Medical Refrigerator</div>
-                    <div class="card-val"><span id="val-fridge">--</span><span class="card-unit">°C</span></div>
-                    <div class="card-sub">
-                      <span>Target: 2.0°C – 8.0°C</span>
-                      <span id="badge-fridge" class="status-badge status-normal">NORMAL</span>
-                    </div>
-                  </div>
-
-                  <!-- Medical Freezer -->
-                  <div class="card" id="card-freezer">
-                    <div class="card-title">Medical Freezer</div>
-                    <div class="card-val"><span id="val-freezer">--</span><span class="card-unit">°C</span></div>
-                    <div class="card-sub">
-                      <span>Limit: &lt; -15.0°C</span>
-                      <span id="badge-freezer" class="status-badge status-normal">NORMAL</span>
+                  <!-- Combined Medical Cold Storage (Fridge & Freezer) -->
+                  <div class="card" id="card-cold-storage" style="border-top:3px solid #00e676;">
+                    <div class="card-title">Medical Cold Storage</div>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:8px;">
+                      <!-- Fridge Section -->
+                      <div style="background:rgba(9,13,22,0.65); padding:10px 12px; border-radius:8px; border:1px solid rgba(255,255,255,0.06);">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                          <span style="font-size:11px; font-weight:700; color:#8899a6; text-transform:uppercase;">Med Fridge</span>
+                          <span id="badge-fridge" class="status-badge status-normal">NORMAL</span>
+                        </div>
+                        <div style="font-size:1.75rem; font-weight:800; font-family:monospace; color:#f0f4f8; line-height:1.1;">
+                          <span id="val-fridge">--</span><span class="card-unit">°C</span>
+                        </div>
+                        <div style="font-size:11px; color:#8899a6; margin-top:5px;">Target: 2.0°C – 8.0°C</div>
+                      </div>
+                      <!-- Freezer Section -->
+                      <div style="background:rgba(9,13,22,0.65); padding:10px 12px; border-radius:8px; border:1px solid rgba(255,255,255,0.06);">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                          <span style="font-size:11px; font-weight:700; color:#8899a6; text-transform:uppercase;">Med Freezer</span>
+                          <span id="badge-freezer" class="status-badge status-normal">NORMAL</span>
+                        </div>
+                        <div style="font-size:1.75rem; font-weight:800; font-family:monospace; color:#f0f4f8; line-height:1.1;">
+                          <span id="val-freezer">--</span><span class="card-unit">°C</span>
+                        </div>
+                        <div style="font-size:11px; color:#8899a6; margin-top:5px;">Limit: &lt; -15.0°C</div>
+                      </div>
                     </div>
                   </div>
 
@@ -1182,23 +1191,32 @@ class ClinicalAlertHandler(http.server.BaseHTTPRequestHandler):
                     </div>
                   </div>
 
-                  <!-- Main Cleanroom Door -->
-                  <div class="card" id="card-door1">
-                    <div class="card-title">Main Cleanroom Door</div>
-                    <div class="card-val" id="val-door1" style="font-size:1.6rem; margin-top:6px;">CLOSED</div>
-                    <div class="card-sub">
-                      <span>Limit: &lt; 3m open</span>
-                      <span id="badge-door1" class="status-badge status-normal">SECURE</span>
-                    </div>
-                  </div>
-
-                  <!-- Cryo Lab Door -->
-                  <div class="card" id="card-door2">
-                    <div class="card-title">Cryo Lab Door</div>
-                    <div class="card-val" id="val-door2" style="font-size:1.6rem; margin-top:6px;">CLOSED</div>
-                    <div class="card-sub">
-                      <span>Limit: &lt; 3m open</span>
-                      <span id="badge-door2" class="status-badge status-normal">SECURE</span>
+                  <!-- Combined Cleanroom Doors Card -->
+                  <div class="card" id="card-doors" style="border-top:3px solid #2979ff;">
+                    <div class="card-title">Cleanroom Doors & Access</div>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:8px;">
+                      <!-- Main Door Section -->
+                      <div style="background:rgba(9,13,22,0.65); padding:10px 12px; border-radius:8px; border:1px solid rgba(255,255,255,0.06);">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                          <span style="font-size:11px; font-weight:700; color:#8899a6; text-transform:uppercase;">Main Door</span>
+                          <span id="badge-door1" class="status-badge status-normal">SECURE</span>
+                        </div>
+                        <div style="font-size:1.55rem; font-weight:800; font-family:monospace; color:#f0f4f8; margin-top:2px;" id="val-door1">
+                          CLOSED
+                        </div>
+                        <div style="font-size:11px; color:#8899a6; margin-top:5px;">Limit: &lt; 3m open</div>
+                      </div>
+                      <!-- Cryo Door Section -->
+                      <div style="background:rgba(9,13,22,0.65); padding:10px 12px; border-radius:8px; border:1px solid rgba(255,255,255,0.06);">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                          <span style="font-size:11px; font-weight:700; color:#8899a6; text-transform:uppercase;">Cryo Lab Door</span>
+                          <span id="badge-door2" class="status-badge status-normal">SECURE</span>
+                        </div>
+                        <div style="font-size:1.55rem; font-weight:800; font-family:monospace; color:#f0f4f8; margin-top:2px;" id="val-door2">
+                          CLOSED
+                        </div>
+                        <div style="font-size:11px; color:#8899a6; margin-top:5px;">Limit: &lt; 3m open</div>
+                      </div>
                     </div>
                   </div>
 
