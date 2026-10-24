@@ -25,6 +25,7 @@ import urllib.request
 from datetime import datetime, timedelta
 
 PORT = 8080
+REPO_DIR = os.path.dirname(os.path.abspath(__file__))
 PG_USER = "postgres"
 PG_PASS = "postgres"
 PG_HOST = "127.0.0.1"
@@ -825,6 +826,59 @@ class ClinicalAlertHandler(http.server.BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(json.dumps(data).encode("utf-8"))
 
+        elif parsed.path in ["/report/ln2", "/reports/ln2"]:
+            # Check if regenerate requested or file does not exist
+            report_html_path = os.path.join(REPO_DIR, "notes", "ln2_dipstick_compliance_report.html")
+            params = urllib.parse.parse_qs(parsed.query)
+            force_regen = params.get("regenerate", ["0"])[0] == "1"
+            if force_regen or not os.path.exists(report_html_path):
+                try:
+                    subprocess.run(["python3", os.path.join(REPO_DIR, "scripts", "generate_ln2_report.py")], check=True)
+                except Exception as e:
+                    print(f"Error generating report: {e}")
+            if os.path.exists(report_html_path):
+                with open(report_html_path, "rb") as f:
+                    content = f.read()
+                self.send_response(200)
+                self.send_header("Content-Type", "text/html; charset=utf-8")
+                self.send_header("Access-Control-Allow-Origin", "*")
+                self.end_headers()
+                self.wfile.write(content)
+            else:
+                self.send_response(404)
+                self.end_headers()
+                self.wfile.write(b"Report not found.")
+
+        elif parsed.path == "/report/ln2/md":
+            report_md_path = os.path.join(REPO_DIR, "notes", "ln2_dipstick_compliance_report.md")
+            if os.path.exists(report_md_path):
+                with open(report_md_path, "rb") as f:
+                    content = f.read()
+                self.send_response(200)
+                self.send_header("Content-Type", "text/markdown; charset=utf-8")
+                self.send_header("Access-Control-Allow-Origin", "*")
+                self.end_headers()
+                self.wfile.write(content)
+            else:
+                self.send_response(404)
+                self.end_headers()
+                self.wfile.write(b"Markdown report not found.")
+
+        elif parsed.path in ["/report/ln2/chart", "/notes/assets/ln2_sawtooth_chart.png"]:
+            chart_path = os.path.join(REPO_DIR, "notes", "assets", "ln2_sawtooth_chart.png")
+            if os.path.exists(chart_path):
+                with open(chart_path, "rb") as f:
+                    content = f.read()
+                self.send_response(200)
+                self.send_header("Content-Type", "image/png")
+                self.send_header("Access-Control-Allow-Origin", "*")
+                self.end_headers()
+                self.wfile.write(content)
+            else:
+                self.send_response(404)
+                self.end_headers()
+                self.wfile.write(b"Chart not found.")
+
         else:
             # Rich web view with live telemetry cards, QA button, and alarm table
             self.send_response(200)
@@ -985,7 +1039,8 @@ class ClinicalAlertHandler(http.server.BaseHTTPRequestHandler):
                     <h3 style="margin-bottom:4px;">Liquid Nitrogen Manual Dipstick Audit Trail (3-Day Cycle)</h3>
                     <p style="color:#8899a6; font-size:13px;">CAP/CLIA digital compliance log for manual tank levels in cm, fill tracking, and staff initials.</p>
                   </div>
-                  <div>
+                  <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                    <a href="/report/ln2" target="_blank" class="btn" style="text-decoration:none; display:inline-block; background:#00897b; font-weight:700; padding:12px 18px; border-radius:8px; font-size:14px; color:#ffffff; box-shadow:0 4px 14px rgba(0,137,123,0.3);">📊 Print Compliance Report (PDF)</a>
                     <button class="btn" style="background:#00e5ff; color:#090d16; font-size:15px; font-weight:700; padding:12px 24px; border-radius:8px; box-shadow:0 4px 14px rgba(0,229,255,0.3);" onclick="openLn2Modal()">🧊 Log Dipstick Check</button>
                   </div>
                 </div>
@@ -1432,6 +1487,16 @@ class ClinicalAlertHandler(http.server.BaseHTTPRequestHandler):
             try:
                 level_cm = float(level_str)
                 log_id = record_ln2_log(tank_id, level_cm, was_filled, frost, initials, notes)
+
+                # Automatically regenerate compliance report in background so charts stay up to date
+                try:
+                    threading.Thread(
+                        target=lambda: subprocess.run(["python3", os.path.join(REPO_DIR, "scripts", "generate_ln2_report.py")], check=False),
+                        daemon=True
+                    ).start()
+                except Exception as _re:
+                    pass
+
                 self.send_response(200)
                 self.send_header("Content-Type", "application/json")
                 self.send_header("Access-Control-Allow-Origin", "*")
