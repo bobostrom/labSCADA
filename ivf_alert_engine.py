@@ -1025,11 +1025,27 @@ class ClinicalAlertHandler(http.server.BaseHTTPRequestHandler):
                 self.end_headers()
                 self.wfile.write(b"Markdown report not found.")
 
+        elif parsed.path == "/favicon.ico":
+            asset_path = os.path.join(REPO_DIR, "notes", "assets", "KOMDlogo.png")
+            if os.path.exists(asset_path):
+                with open(asset_path, "rb") as f:
+                    content = f.read()
+                self.send_response(200)
+                self.send_header("Content-Type", "image/png")
+                self.send_header("Cache-Control", "public, max-age=86400")
+                self.send_header("Access-Control-Allow-Origin", "*")
+                self.end_headers()
+                self.wfile.write(content)
+            else:
+                self.send_response(404)
+                self.end_headers()
+                self.wfile.write(b"Favicon not found.")
+
         elif parsed.path.startswith("/assets/") or parsed.path.startswith("/notes/assets/"):
             filename = os.path.basename(parsed.path)
             asset_path = os.path.join(REPO_DIR, "notes", "assets", filename)
             if os.path.exists(asset_path) and os.path.isfile(asset_path):
-                content_type = "image/png" if filename.endswith(".png") else ("image/svg+xml" if filename.endswith(".svg") else "application/octet-stream")
+                content_type = "image/x-icon" if filename.endswith(".ico") else ("image/png" if filename.endswith(".png") else ("image/svg+xml" if filename.endswith(".svg") else "application/octet-stream"))
                 with open(asset_path, "rb") as f:
                     content = f.read()
                 self.send_response(200)
