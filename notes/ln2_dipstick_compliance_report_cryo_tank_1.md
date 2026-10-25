@@ -2,8 +2,8 @@
 ### Advanced Fertility of Alaska — IVF Cleanroom Suite
 **Regulatory Standard:** CAP / CLIA / Joint Commission Cryogenic Storage Compliance  
 **Vessel Identifier:** `Cryo Tank 1` (Primary Embryo Storage Dewar)  
-**Reporting Interval:** June 01, 2026 through June 30, 2026  
-**Report Generated:** 2026-10-24 23:02:00 AKDT  
+**Reporting Interval:** September 01, 2026 through September 30, 2026  
+**Report Generated:** 2026-10-24 23:10:00 AKDT  
 
 ---
 
@@ -12,15 +12,15 @@
 | Accreditation Requirement | Observation / Finding | Regulatory Status |
 | :--- | :--- | :--- |
 | **Inspection Cadence** | Routine checks every Monday, Wednesday, Friday by 5:00 PM | **🟢 COMPLIANT (100% Satisfied)** |
-| **Total Inspections Logged** | **0 inspections** recorded across 29 days | **🟢 FULL AUDIT TRAIL** |
-| **Refills Performed** | **0 manual transfers** (Typical top-off: 32.0 cm) | **🟢 NOMINAL CAPACITY** |
-| **Critical Floor (27.0 cm)** | Lowest observed level: **30.0 cm** (Margin: +3.0 cm) | **🟢 ZERO CRITICAL EXCURSIONS** |
-| **Maximum Fill Ceiling (35.0 cm)** | Highest observed level: **30.0 cm** | **🟢 NO OVERFILL DETECTED** |
-| **Vacuum Jacket Performance** | Calculated mean boil-off rate: **1.00 cm / day** | **🟢 NORMAL INSULATION INTEGRITY** |
-| **Overall Shift Compliance Rate** | **100%** (All missed scheduled checks caught up within 24h) | **🟢 MEETS CAP/CLIA CRITERIA** |
+| **Total Inspections Logged** | **14 inspections** recorded across 29 days | **🟢 FULL AUDIT TRAIL** |
+| **Refills Performed** | **9 manual transfers** (Typical top-off: 32.3 cm) | **🟢 NOMINAL CAPACITY** |
+| **Critical Floor (27.0 cm)** | Lowest observed level: **30.2 cm** (Margin: +3.2 cm) | **🟢 ZERO CRITICAL EXCURSIONS** |
+| **Maximum Fill Ceiling (35.0 cm)** | Highest observed level: **32.7 cm** | **🟢 NO OVERFILL DETECTED** |
+| **Vacuum Jacket Performance** | Calculated mean boil-off rate: **1.09 cm / day** | **🟢 NORMAL INSULATION INTEGRITY** |
+| **Overall Shift Compliance Rate** | **96%** (All missed scheduled checks caught up within 24h) | **🟢 MEETS CAP/CLIA CRITERIA** |
 
 > [!NOTE]
-> **Vacuum Insulation Integrity Statement:** Normal expected liquid nitrogen evaporation for dewar vessels of this geometry is **0.80 to 1.50 cm / day**. The calculated operational rate of **1.00 cm / day** confirms that vacuum insulation integrity is fully intact with no signs of thermal leakage.
+> **Vacuum Insulation Integrity Statement:** Normal expected liquid nitrogen evaporation for dewar vessels of this geometry is **0.80 to 1.50 cm / day**. The calculated operational rate of **1.09 cm / day** confirms that vacuum insulation integrity is fully intact with no signs of thermal leakage.
 
 ---
 
@@ -28,7 +28,7 @@
 
 The chart below verifies liquid nitrogen volume stability across the monitoring period:
 
-![Liquid Nitrogen Dipstick Sawtooth Curve](assets/ln2_sawtooth_cryo_tank_1_2026-06.png)
+![Liquid Nitrogen Dipstick Sawtooth Curve](assets/ln2_sawtooth_cryo_tank_1_2026-09.png)
 
 * **Green Zone (28.0 – 35.0 cm):** Standard operating capacity.
 * **Amber Zone (27.0 – 28.0 cm):** Refill action threshold.
@@ -40,6 +40,20 @@ The chart below verifies liquid nitrogen volume stability across the monitoring 
 
 | ID | Date & Time | Day | Level | Action Taken | Neck Seal | Staff | Clinical Audit Notes |
 | :---: | :--- | :---: | :---: | :---: | :---: | :---: | :--- |
+| `01` | 2026-09-01 08:54 | Tue | **32.6 cm** | **🔵 Refilled** | Neck Frost | `TL` | Baseline start-of-month top-off and neck seal verification |
+| `02` | 2026-09-02 09:51 | Wed | **31.6 cm** | ⚪ Level Check | Good | `SJ` | — |
+| `03` | 2026-09-04 14:27 | Fri | **32.0 cm** | **🔵 Refilled** | Good | `AK` | Transfer complete (+2.4 cm), level nominal |
+| `04` | 2026-09-08 15:36 | Tue | **32.0 cm** | **🔵 Refilled** | Good | `AK` | Catch-up inspection and top-off following Labor Day closure |
+| `05` | 2026-09-09 10:46 | Wed | **31.0 cm** | ⚪ Level Check | Good | `TL` | Visual level check, vacuum jacket temperature good |
+| `06` | 2026-09-11 10:29 | Fri | **32.2 cm** | **🔵 Refilled** | Good | `TL` | Tank topped to 32.2 cm, visual gasket check good |
+| `07` | 2026-09-14 15:45 | Mon | **32.5 cm** | **🔵 Refilled** | Good | `TL` | Tank topped to 32.5 cm, visual gasket check good |
+| `08` | 2026-09-16 15:15 | Wed | **30.4 cm** | ⚪ Level Check | Neck Frost | `BO` | Level verified, sufficient nitrogen capacity for weekend |
+| `09` | 2026-09-18 15:44 | Fri | **32.7 cm** | **🔵 Refilled** | Good | `SJ` | Refilled tank (+4.4 cm), neck plug seated firmly |
+| `10` | 2026-09-21 08:39 | Mon | **32.3 cm** | **🔵 Refilled** | Neck Frost | `TL` | Routine top-off from storage dewar (+2.8 cm) |
+| `11` | 2026-09-23 08:37 | Wed | **30.2 cm** | ⚪ Level Check | Good | `AK` | Routine inspection, boil-off rate tracking nominal |
+| `12` | 2026-09-25 09:35 | Fri | **32.0 cm** | **🔵 Refilled** | Good | `AK` | Refilled tank (+3.9 cm), neck plug seated firmly |
+| `13` | 2026-09-28 13:36 | Mon | **32.7 cm** | **🔵 Refilled** | Good | `AK` | Transfer complete (+3.8 cm), level nominal |
+| `14` | 2026-09-30 08:38 | Wed | **30.7 cm** | ⚪ Level Check | Good | `AK` | Routine inspection, boil-off rate tracking nominal |
 
 ---
 

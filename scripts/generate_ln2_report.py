@@ -681,29 +681,55 @@ def generate_monthly_packet(month_str=None, output_html_path=None):
     .toolbar-sep {{
       color: rgba(255,255,255,0.2);
     }}
-    .toolbar-label {{
-      color: #cbd5e1;
-      font-size: 13px;
-      font-weight: 700;
+    .month-btn-pill {{
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: #ffffff;
+      border: 2px solid #38bdf8;
+      border-radius: 8px;
+      padding: 6px 14px;
+      cursor: pointer;
+      box-shadow: 0 3px 14px rgba(0,0,0,0.4);
+      transition: all 0.15s;
+    }}
+    .month-btn-pill:hover {{
+      background: #f0f9ff;
+      border-color: #0284c7;
+      box-shadow: 0 4px 18px rgba(56,189,248,0.5);
+      transform: translateY(-1px);
+    }}
+    .month-pill-title {{
+      font-size: 12.5px;
+      font-weight: 800;
+      color: #0369a1;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.6px;
+      user-select: none;
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }}
     .month-picker-input {{
-      background: #041b2b;
-      border: 1.5px solid #61b9e7;
-      color: #ffffff;
-      padding: 6px 12px;
-      border-radius: 6px;
-      font-size: 14px;
-      font-weight: 800;
+      background: transparent;
+      border: none;
+      color: #0f172a;
+      padding: 2px 0;
+      font-size: 15px;
+      font-weight: 900;
       font-family: inherit;
       cursor: pointer;
       outline: none;
-      box-shadow: 0 0 10px rgba(97, 185, 231, 0.2);
     }}
-    .month-picker-input:focus {{
-      border-color: #38bdf8;
-      box-shadow: 0 0 14px rgba(56, 189, 248, 0.4);
+    .month-picker-input::-webkit-calendar-picker-indicator {{
+      cursor: pointer;
+      font-size: 19px;
+      filter: brightness(0.15) contrast(1.5);
+      margin-left: 6px;
+      padding: 2px;
+    }}
+    .month-btn-pill:active {{
+      transform: scale(0.98);
     }}
     .badge-tanks {{
       background: rgba(255, 255, 255, 0.08);
@@ -988,8 +1014,10 @@ def generate_monthly_packet(month_str=None, output_html_path=None):
     <div class="toolbar-left">
       <a href="/cryo" class="btn-back">← Back to SCADA Cryo Suite</a>
       <span class="toolbar-sep">|</span>
-      <label for="reportMonth" class="toolbar-label">📅 Compliance Month:</label>
-      <input type="month" id="reportMonth" value="{month_str}" min="2024-01" max="2035-12" class="month-picker-input" onchange="changeReportMonth(this.value)">
+      <div class="month-btn-pill" onclick="openMonthPicker()">
+        <span class="month-pill-title">📅 Select Month:</span>
+        <input type="month" id="reportMonth" value="{month_str}" min="2024-01" max="2035-12" class="month-picker-input" onchange="changeReportMonth(this.value)" onclick="try {{ this.showPicker(); }} catch(e) {{}}">
+      </div>
       <span class="badge-tanks">{len(tanks)} Tanks &bull; 1 Per Page</span>
     </div>
     <div class="toolbar-right">
@@ -1001,6 +1029,16 @@ def generate_monthly_packet(month_str=None, output_html_path=None):
   {all_sheets_joined}
 
   <script>
+    function openMonthPicker() {{
+      const el = document.getElementById('reportMonth');
+      if (el) {{
+        try {{
+          el.showPicker();
+        }} catch (e) {{
+          el.focus();
+        }}
+      }}
+    }}
     function changeReportMonth(newMonth) {{
       if (newMonth) {{
         window.location.href = '/report/ln2?month=' + newMonth;
