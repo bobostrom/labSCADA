@@ -1012,7 +1012,7 @@ def generate_monthly_packet(month_str=None, output_html_path=None):
   <!-- Top Sticky Clinical Toolbar -->
   <div class="report-toolbar">
     <div class="toolbar-left">
-      <a href="/cryo" class="btn-back">← Back to SCADA Cryo Suite</a>
+      <a href="/" class="btn-back">← Back to Main Page</a>
       <span class="toolbar-sep">|</span>
       <div class="month-btn-pill" onclick="openMonthPicker()">
         <span class="month-pill-title">📅 Select Month:</span>
