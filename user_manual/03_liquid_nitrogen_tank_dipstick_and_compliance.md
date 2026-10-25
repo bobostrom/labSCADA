@@ -8,7 +8,7 @@ Historically, laboratories track this using physical paper clipboards hung on th
 * **Accreditation Exposure:** CAP (College of American Pathologists), CLIA, and Joint Commission inspectors mandate strict, continuous, and tamper-proof verification of all storage vessel checks.
 * **Vacuum Insulation Failure:** A gradual loss of dewar vacuum insulation results in accelerated boil-off rates before temperatures rise. Paper logs rarely compute daily burn rates (`Δ cm / day`), masking impending vacuum failure until temperatures spike.
 
-This architecture transitions the laboratory from paper tracking to a **fully digital, glove-friendly cleanroom kiosk workflow** integrated into the SCADA alert controller and Grafana monitoring suite.
+This architecture transitions the laboratory from paper tracking to a **fully digital, glove-friendly cleanroom kiosk workflow** integrated into the SCADA alert controller and real-time operations dashboard.
 
 ---
 
@@ -42,8 +42,8 @@ This architecture transitions the laboratory from paper tracking to a **fully di
                              │                                 ▼
                              ▼ Read Queries          [On-Call Physician / Staff]
               ┌─────────────────────────────┐        Emergency siren silence
-              │ Grafana Kiosk & Dashboards  │        directly from phone screen
-              │ (Port 3000 & Grafana Cloud) │
+              │ Operations Kiosk & Reports  │        directly from phone screen
+              │ (Port 80/443 & Cloudflare)  │
               └─────────────────────────────┘
 ```
 
@@ -264,9 +264,9 @@ Accepts a new dipstick measurement, resets the 72-hour timer, and cancels active
 
 ---
 
-## 8. Grafana Telemetry & Boil-Off Visualization
+## 8. Real-Time Telemetry & Boil-Off Visualization
 
-In [grafana_ivf_lab_dashboard.json](file:///home/bobostrom/Projects/labSCADA/grafana_ivf_lab_dashboard.json) (Port `3000`), a dedicated section provides continuous visual compliance:
+In the cleanroom kiosk (`/`) and Cryo Suite (`/cryo`), dedicated visual panels provide continuous compliance:
 
 ### 1. Stat Gauge Panel: `Cryo Tank 1: Current Dipstick & 3-Day Clock`
 * Displays current level in `cm` alongside `Hours Since Check`.
