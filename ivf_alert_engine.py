@@ -976,21 +976,24 @@ class ClinicalAlertHandler(http.server.BaseHTTPRequestHandler):
 
         elif parsed.path in ["/report/ln2", "/reports/ln2"]:
             params = urllib.parse.parse_qs(parsed.query)
-            tank_param = params.get("tank", ["1"])[0]
+            month_param = params.get("month", [None])[0]
+            if not month_param:
+                month_param = datetime.now().strftime("%Y-%m")
+            
             force_regen = params.get("regenerate", ["0"])[0] == "1"
-            suffix = "tank2" if "2" in str(tank_param) else "tank1"
-            report_html_path = os.path.join(REPO_DIR, "notes", f"ln2_dipstick_compliance_report_{suffix}.html")
-            if not os.path.exists(report_html_path):
-                report_html_path = os.path.join(REPO_DIR, "notes", "ln2_dipstick_compliance_report.html")
+            report_packet_path = os.path.join(REPO_DIR, "notes", f"ln2_monthly_compliance_packet_{month_param}.html")
 
-            if force_regen or not os.path.exists(report_html_path):
+            if force_regen or not os.path.exists(report_packet_path):
                 try:
-                    subprocess.run(["python3", os.path.join(REPO_DIR, "scripts", "generate_ln2_report.py")], check=True)
+                    subprocess.run(["python3", os.path.join(REPO_DIR, "scripts", "generate_ln2_report.py"), "--month", month_param], check=True)
                 except Exception as e:
-                    print(f"Error generating report: {e}")
+                    print(f"Error generating monthly report packet: {e}")
 
-            if os.path.exists(report_html_path):
-                with open(report_html_path, "rb") as f:
+            if not os.path.exists(report_packet_path):
+                report_packet_path = os.path.join(REPO_DIR, "notes", "ln2_dipstick_compliance_report.html")
+
+            if os.path.exists(report_packet_path):
+                with open(report_packet_path, "rb") as f:
                     content = f.read()
                 self.send_response(200)
                 self.send_header("Content-Type", "text/html; charset=utf-8")
