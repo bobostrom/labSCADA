@@ -50,8 +50,9 @@ user_manual/
 * **CAP/CLIA 3-Day Protocol:** Standard operating procedure for physical wooden ruler dipstick measurements on Cryo Tank 1 (Embryos) and Cryo Tank 2 (Sperm).
 * **Touchscreen Logging Modal:** Fast numerical keypad entry on the kiosk, recording depth (cm), fill status, frost condition, and staff initials.
 * **Automatic Sensor Cross-Validation:** Automatic cross-checking of manual ruler readings against electronic depth sensors, flagging discrepancies $> 2.0\text{ cm}$.
-* **Sawtooth Evaporation Modeling:** 30-day boil-off rate tracking (cm/day) providing early warning of vacuum insulation degradation.
-* **Automated PDF / Printable Compliance Reports:** Generating formal, audit-ready inspection documentation.
+* **60-Day Dual Sawtooth Evaporation Modeling:** Real-time boil-off velocity tracking (cm/day) comparing healthy baseline cycling against accelerated vacuum degradation.
+* **Impending Vacuum Failure Protocol & Incident Case Study:** Operational response for Cryo Tank 2 vacuum breach, unrefilled downward plunge, specimen evacuation staging, and tank decommissioning.
+* **Automated PDF / Printable Compliance & Incident Reports:** Audit-ready 2-page reports with QA Director attestations for routine inspections and critical vessel failures.
 
 ---
 

@@ -281,11 +281,86 @@ In [grafana_ivf_lab_dashboard.json](file:///home/bobostrom/Projects/labSCADA/gra
 ### 3. Sawtooth Boil-Off Rate Modeling (Predictive Early Warning)
 Because levels are logged digitally every 3 days, natural LN2 evaporation produces a sawtooth chart:
 * **Nominal Daily Loss:** `~0.8 cm to 1.2 cm / day` (depending on dewar geometry).
-* **Vacuum Degradation Threshold:** If the dipstick level drops `> 2.5 cm / day`, the system detects rapid loss of vacuum before internal vapor temperatures rise above `-135°C`.
+* **Vacuum Degradation Threshold:** If the dipstick level drops `> 1.5 cm / day` (peaking `> 2.5 cm / day`), the system detects rapid loss of vacuum before internal vapor temperatures rise above `-135°C`.
+* **Dynamic 60-Day Dual Tank Switching:** On the kiosk and web interface, staff can toggle between **Tank 1 (Embryos)** and **Tank 2 (Sperm)** sawtooth curves to visually inspect vessel health and refill volume adherence.
 
 ---
 
-## 9. Diagnostic & Management Commands
+## 9. Impending Vacuum Failure Incident Protocol & Case Study (Cryo Tank 2)
+
+### Clinical Rationale: The Pathology of Vacuum Degradation
+In double-walled vacuum-insulated cryogenic vessels, an outer seal micro-crack or vacuum pinch-off leak destroys the thermal barrier between ambient air (`~20°C`) and liquid nitrogen (`-196°C`). 
+
+> [!WARNING]
+> **Temperature vs. Evaporation Velocity:**
+> When a vacuum jacket fails, liquid nitrogen boils off aggressively, but **internal vapor temperatures remain at -150°C to -196°C as long as liquid nitrogen remains in the tank**. 
+> Waiting for an electronic temperature alarm (`> -135°C`) means the liquid has completely vanished and biological specimens are minutes from catastrophic thawing!
+> 
+> The **dipstick evaporation rate (`Δ cm / day`)** is the primary early warning indicator of vacuum jacket failure.
+
+### Emergency SOP: Why Refills Are Withheld During Suspected Vacuum Breach
+When accelerated boil-off is detected accompanied by external frosting:
+1. **DO NOT TOP OFF THE VESSEL:** Pouring fresh LN2 into a breached vacuum jacket masks the true consumption velocity, accelerates boiling turbulence, and wastes liquid nitrogen.
+2. **ISOLATE & CALCULATE DAILY BURN RATE:** Determine `Δ cm / day` across successive checkpoints.
+3. **STAGE BACKUP VESSEL (Cryo Tank 1):** Immediately verify liquid level in the redundant dewar.
+4. **EVACUATE SPECIMENS BEFORE THE 27.0 CM FLOOR BREACH:** Authorize specimen transfer while ample liquid buffer remains ($> 15\text{ cm}$).
+
+---
+
+### Case Study: Cryo Tank 2 Impending Failure & Specimen Evacuation
+
+In the clinical demo dataset, **Cryo Tank 2 (Sperm Storage Dewar)** illustrates a complete vacuum degradation lifecycle across an 8-day unrefilled downward plunge:
+
+```text
+35.0 cm ──┬────────────────────────────────────────────────────────
+          │  🔵 Oct 16: Last routine top-off (32.8 cm, Good Seal)
+30.0 cm ──┼───────────╮
+          │           │ ⚪ Oct 19: 28.1 cm (1.68 cm/day, Neck Frost) ──> Hold refill
+27.0 cm ──┼───────────┼──────────────────────────────────────────── [CRITICAL SAFETY FLOOR]
+          │           ╰─── ⚪ Oct 21: 24.4 cm (1.85 cm/day, Vacuum Concern) ──> Stage backup
+20.0 cm ──┼───────────────────╰─── ⚪ Oct 23: 19.5 cm (2.45 cm/day, Sweating) ──> Evacuate to Tank 1
+          │                           ╰─── ⚪ Oct 24: 16.8 cm (Evacuation 100% complete)
+15.0 cm ──┴────────────────────────────────────────────────────────
+```
+
+#### Chronological Incident Audit Trail (`mod_arc_postgre_sql.ln2_tank_logs`)
+
+| Date & Checkpoint | Measured Level | 24h Boil-off Rate | Fill Action | Neck Seal Inspection | Clinical Notes & Operational Action |
+| :--- | :---: | :---: | :---: | :---: | :--- |
+| **Fri, Oct 16 (14:15)** | **32.8 cm** | 0.95 cm/day | 🔵 Refilled | Good | Scheduled weekend top-off (+3.2 cm), neck seal nominal. |
+| **Mon, Oct 19 (09:20)** | **28.1 cm** | **1.68 cm/day** | ⚪ Check Only | Neck Frost | Neck collar condensation observed. Daily boil-off elevated (~1.7 cm/day). Monitoring consumption; holding refill. |
+| **Wed, Oct 21 (10:15)** | **24.4 cm** | **1.85 cm/day** | ⚪ Check Only | **Vacuum Concern** | **CRITICAL: Level dropped below 27.0 cm floor!** Heavy frost collar on vacuum ring. Refill withheld per SOP — staging backup dewar for specimen evacuation. |
+| **Fri, Oct 23 (11:30)** | **19.5 cm** | **2.45 cm/day** | ⚪ Check Only | **Vacuum Concern** | **EMERGENCY: Vacuum loss confirmed (>2.4 cm/day).** Outer dewar sweating. Emergency specimen evacuation to Cryo Tank 1 authorized by Lab Director. DO NOT REFILL. |
+| **Sat, Oct 24 (13:00 / Today)** | **16.8 cm** | **2.50 cm/day** | ⚪ Check Only | **Vacuum Concern** | **Specimen evacuation 100% complete.** Tank 2 empty of biological materials. Chamber isolated and tagged for vacuum service/repair. |
+
+---
+
+### Regulatory Incident Report & CAP Attestation Workflow
+
+When an impending failure occurs, regulatory inspectors (CAP/CLIA) require proof that:
+1. The failure was detected proactively via evaporative rate monitoring before temperature limits were breached.
+2. All stored reproductive tissues were safely relocated with continuous liquid nitrogen coverage throughout the transfer.
+3. The affected vessel was formally decommissioned and tagged out.
+
+#### Accessing & Printing the Incident Report
+1. Open the Cleanroom Touchscreen Kiosk and navigate to **`❄️ Cryo Suite`** (`/cryo`).
+2. Cryo Tank 2 displays a crimson **`CRITICAL LEVEL`** status badge at **`16.8 cm`**.
+3. Under the **60-Day Sawtooth Curves** section, click **Tank 2 (Sperm) Curve**:
+   * The chart clearly displays the 45-day stable baseline followed by the steep red plunge.
+   * A callout indicator points to the failure:
+     > **CRITICAL: Accelerated Boil-Off — Impending Vacuum Failure (Specimens Evacuated to Tank 1)**
+4. In the upper right of the subpage or directly via URL:
+   * **HTML Print Report:** `http://192.168.10.133:8080/report/ln2/html?tank=2`
+   * **Markdown Document:** `http://192.168.10.133:8080/report/ln2/md?tank=2`
+   * **File Path in Repo:** [notes/ln2_dipstick_compliance_report_tank2.md](file:///home/bobostrom/Projects/labSCADA/notes/ln2_dipstick_compliance_report_tank2.md)
+5. Tap **`🖨️ Print / Save as PDF`**:
+   * Generates a 2-page formal report containing the high-resolution vector chart, the complete chronological audit table, the regulatory finding:
+     `🔴 CRITICAL FLOOR BREACH (Specimens Evacuated) | 🔴 ACCELERATED EVAPORATION / VACUUM DEGRADATION`
+   * Provides signature sign-off lines for the **Laboratory Director** and **Cleanroom QA Supervisor**.
+
+---
+
+## 10. Diagnostic & Management Commands
 
 ### Check Alert Engine & Scheduler Status
 ```bash
@@ -300,12 +375,17 @@ journalctl -u ivf-alert-engine.service -f
 ### Direct PostgreSQL Query for LN2 Records
 ```bash
 PGPASSWORD=postgres psql -h localhost -U postgres -d rapid_scada -c \
-  "SELECT id, tank_id, level_cm, was_filled, initials, logged_at FROM mod_arc_postgre_sql.ln2_tank_logs ORDER BY id DESC LIMIT 10;"
+  "SELECT id, tank_id, level_cm, was_filled, frost_condition, initials, logged_at FROM mod_arc_postgre_sql.ln2_tank_logs ORDER BY id DESC LIMIT 10;"
+```
+
+### Regenerate Dual-Tank Compliance Reports & Sawtooth Charts
+```bash
+python3 /home/bobostrom/Projects/labSCADA/scripts/generate_ln2_report.py
 ```
 
 ---
 
-## 10. Related User Manual Sections
+## 11. Related User Manual Sections
 
 * **Cleanroom Touchscreen Kiosk Operations:** [01_cleanroom_touchscreen_kiosk_operations.md](file:///home/bobostrom/Projects/labSCADA/user_manual/01_cleanroom_touchscreen_kiosk_operations.md) — Covers the physical touchscreen kiosk, 2-tab navigation (`/` and `/cryo`), 6-card dashboard layout, glove-friendly tap targets, and daily CAP verification banner.
 * **Clinical Alarm Architecture & Regulatory Lifecycle:** [02_clinical_alarm_response_and_regulatory_lifecycle.md](file:///home/bobostrom/Projects/labSCADA/user_manual/02_clinical_alarm_response_and_regulatory_lifecycle.md) — Detailed regulatory rationale (CAP/CLIA), PLC debouncing algorithms, Pushover receipt architecture, PostgreSQL schema, and complete operational walkthroughs.

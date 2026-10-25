@@ -147,15 +147,18 @@ A dedicated verification panel is positioned at the top of the Live Operations v
 
 Tapping the **`❄️ Cryo Suite`** tab transitions to the cryogenic compliance environment:
 
-1. **Current Physical Levels:** Liquid nitrogen depth (cm) compared against the critical minimum safe threshold ($10.0\text{ cm}$).
-2. **Sawtooth Evaporation Modeling:** A dynamic chart plotting the 30-day liquid nitrogen consumption curve, illustrating fill cycles, daily boil-off rates (cm/day), and projected refill dates.
+1. **Current Physical Levels & Safety Bands:** Liquid nitrogen depth (cm) compared against the nominal operating band ($28.0\text{ to }35.0\text{ cm}$), refill action buffer ($27.0\text{ to }28.0\text{ cm}$), and critical safety floor ($< 27.0\text{ cm}$). 
+   * If a vessel drops below the $27.0\text{ cm}$ floor or exhibits vacuum degradation, the kiosk card instantly transitions from green `ON SCHEDULE` to crimson **`CRITICAL LEVEL`** status with diagnostic incident warnings.
+2. **60-Day Dual-Tank Sawtooth Evaporation Modeling:** A dynamic chart plotting the 60-day liquid nitrogen consumption curve, illustrating fill cycles, daily boil-off rates (cm/day), and projected refill dates.
+   * **Dual Curve Switcher Chips:** Staff toggle between **Tank 1 (Embryos)** and **Tank 2 (Sperm)** to compare healthy baseline cycling against accelerated vacuum failure trends.
+   * **Automated Failure Callouts:** Vessels in distress display annotated red indicators directly on the chart highlighting boil-off velocity and emergency specimen transfer status.
 3. **Manual Dipstick Logging Modal:**
-   * Staff tap **`[ Log Manual Dipstick ]`**.
-   * An oversized numeric keypad modal allows quick entry of ruler readings (e.g., $14.5\text{ cm}$).
-   * Cross-checks manual measurement against the electronic sensor, flagging discrepancies $> 2.0\text{ cm}$.
+   * Staff tap **`[ 🧊 Log Tank 1 Check ]`** or **`[ 🧊 Log Tank 2 Check ]`**.
+   * An oversized touch modal allows rapid incrementing/decrementing of dipstick ruler readings (e.g., $32.5\text{ cm}$).
+   * Staff select nitrogen top-off status (`Yes (Filled)` vs `Check Only`), visual neck seal condition (`Good`, `Neck Frost`, `Vacuum Concern`), tap their staff initials chip, and submit.
    * Writes the audit record to `mod_arc_postgre_sql.ln2_tank_logs`.
-4. **1-Click Compliance Report Export:**
-   * Buttons to generate and print standalone HTML/PDF compliance reports for **Cryo Tank 1** (`/report/ln2?tank=1`) and **Cryo Tank 2** (`/report/ln2?tank=2`).
+4. **1-Click Compliance & Incident Report Export:**
+   * Instant generation and printing of audit-ready HTML/PDF compliance reports for **Cryo Tank 1** (`/report/ln2?tank=1`) and **Cryo Tank 2 Incident Report** (`/report/ln2?tank=2`).
 5. **Printable Mobile QR Code Station Placard (`/print/qr`):**
    * Staff tap **`[ 📱 Print Station QR Placard ]`** in the subpage header to generate a print-ready laminated station placard for the external cryo tanks.
    * Enables non-lab staff, facilities, and clinical nurses to scan the single QR code with their smartphone, select the tank (Tank 1 or Tank 2), and submit measurements without gowning into the cleanroom suite.
