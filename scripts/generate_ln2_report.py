@@ -593,8 +593,8 @@ def generate_monthly_packet(month_str=None, output_html_path=None):
         records = query_ln2_logs(tank, start_dt, end_dt)
         metrics = calculate_metrics(records, start_dt, end_dt, tank_id=tank)
         
-        # Render month-specific chart
-        chart_png = os.path.join(ASSETS_DIR, f"ln2_sawtooth_{suffix}_{month_str}.png")
+        # Render month-specific chart (overwrites single canonical file per tank)
+        chart_png = os.path.join(ASSETS_DIR, f"ln2_sawtooth_{suffix}.png")
         generate_sawtooth_chart(records, metrics, chart_png, start_dt, end_dt)
         
         with open(chart_png, "rb") as f:
@@ -1049,7 +1049,7 @@ def generate_monthly_packet(month_str=None, output_html_path=None):
 </html>"""
 
     if not output_html_path:
-        output_html_path = os.path.join(REPO_DIR, "notes", f"ln2_monthly_compliance_packet_{month_str}.html")
+        output_html_path = os.path.join(REPO_DIR, "notes", "ln2_monthly_compliance_packet.html")
         
     os.makedirs(os.path.dirname(output_html_path), exist_ok=True)
     with open(output_html_path, "w", encoding="utf-8") as f:
@@ -1085,7 +1085,7 @@ def main():
         records = query_ln2_logs(tank_name, start_dt, end_dt)
         metrics = calculate_metrics(records, start_dt, end_dt, tank_id=tank_name)
         report_md = os.path.join(REPO_DIR, "notes", f"ln2_dipstick_compliance_report_{suffix}.md")
-        generate_markdown_report(records, metrics, f"assets/ln2_sawtooth_{suffix}_{month_str}.png", report_md)
+        generate_markdown_report(records, metrics, f"assets/ln2_sawtooth_{suffix}.png", report_md)
         if "1" in suffix:
             shutil.copy2(report_md, REPORT_MD_PATH)
             

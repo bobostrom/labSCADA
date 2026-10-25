@@ -980,21 +980,14 @@ class ClinicalAlertHandler(http.server.BaseHTTPRequestHandler):
             if not month_param:
                 month_param = datetime.now().strftime("%Y-%m")
             
-            force_regen = params.get("regenerate", ["0"])[0] == "1"
-            report_packet_path = os.path.join(REPO_DIR, "notes", f"ln2_monthly_compliance_packet_{month_param}.html")
             script_path = os.path.join(REPO_DIR, "scripts", "generate_ln2_report.py")
+            report_packet_path = os.path.join(REPO_DIR, "notes", "ln2_monthly_compliance_packet.html")
 
-            # Automatically regenerate if script is newer than cached report file
-            needs_regen = force_regen or not os.path.exists(report_packet_path)
-            if not needs_regen and os.path.exists(script_path):
-                if os.path.getmtime(script_path) > os.path.getmtime(report_packet_path):
-                    needs_regen = True
-
-            if needs_regen:
-                try:
-                    subprocess.run(["python3", script_path, "--month", month_param], check=True)
-                except Exception as e:
-                    print(f"Error generating monthly report packet: {e}")
+            # Always generate fresh on-demand for requested month (stateless, zero accumulated files)
+            try:
+                subprocess.run(["python3", script_path, "--month", month_param], check=True)
+            except Exception as e:
+                print(f"Error generating monthly report packet for {month_param}: {e}")
 
             if not os.path.exists(report_packet_path):
                 report_packet_path = os.path.join(REPO_DIR, "notes", "ln2_dipstick_compliance_report.html")
@@ -1057,7 +1050,10 @@ class ClinicalAlertHandler(http.server.BaseHTTPRequestHandler):
             params = urllib.parse.parse_qs(parsed.query)
             tank_param = params.get("tank", ["1"])[0]
             suffix = "tank2" if "2" in str(tank_param) else "tank1"
-            chart_path = os.path.join(REPO_DIR, "notes", "assets", f"ln2_sawtooth_chart_{suffix}.png")
+            tank_num = "2" if "2" in str(tank_param) else "1"
+            chart_path = os.path.join(REPO_DIR, "notes", "assets", f"ln2_sawtooth_cryo_tank_{tank_num}.png")
+            if not os.path.exists(chart_path):
+                chart_path = os.path.join(REPO_DIR, "notes", "assets", f"ln2_sawtooth_chart_{suffix}.png")
             if not os.path.exists(chart_path):
                 chart_path = os.path.join(REPO_DIR, "notes", "assets", "ln2_sawtooth_chart.png")
             if os.path.exists(chart_path):

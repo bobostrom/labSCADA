@@ -19,3 +19,8 @@ __pycache__/
 *.precompilecache
 *.compilecache
 *.bak
+
+# Generated compliance reports and charts (rendered on-demand from PostgreSQL)
+notes/ln2_monthly_compliance_packet*.html
+notes/assets/ln2_sawtooth_cryo_tank_*.png
+
