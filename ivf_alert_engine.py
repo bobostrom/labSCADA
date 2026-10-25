@@ -826,9 +826,9 @@ def generate_qr_svg(url, box_size=8):
     return raw.decode("utf-8") if isinstance(raw, bytes) else raw
 
 
-def render_print_placards_html(host):
+def render_print_placards_html(host, scheme="http"):
     """Generates a high-resolution, printable 8.5x11 single station placard with a vector QR code for both cryo tanks."""
-    station_url = f"http://{host}/log"
+    station_url = f"{scheme}://{host}/log"
     qr_svg = generate_qr_svg(station_url, box_size=9)
     return render_template("station_placard.html", station_url=station_url, qr_svg=qr_svg)
 
@@ -1017,7 +1017,8 @@ class ClinicalAlertHandler(http.server.BaseHTTPRequestHandler):
                 self.wfile.write(b"Chart not found.")
         elif parsed.path in ["/print/qr", "/qr"]:
             host = self.headers.get("Host", "192.168.10.133")
-            html = render_print_placards_html(host)
+            scheme = "https" if ("trycloudflare.com" in host or self.headers.get("X-Forwarded-Proto") == "https" or "https" in self.headers.get("CF-Visitor", "")) else "http"
+            html = render_print_placards_html(host, scheme=scheme)
             self.send_response(200)
             self.send_header("Content-Type", "text/html; charset=utf-8")
             self.send_header("Access-Control-Allow-Origin", "*")
@@ -1039,10 +1040,11 @@ class ClinicalAlertHandler(http.server.BaseHTTPRequestHandler):
         elif parsed.path in ["/qr/station.svg", "/qr.svg", "/qr/tank1.svg", "/qr/tank2.svg"]:
             tank_num = "2" if "tank2" in parsed.path else ("1" if "tank1" in parsed.path else None)
             host = self.headers.get("Host", "192.168.10.133")
+            scheme = "https" if ("trycloudflare.com" in host or self.headers.get("X-Forwarded-Proto") == "https" or "https" in self.headers.get("CF-Visitor", "")) else "http"
             if tank_num:
-                target_url = f"http://{host}/log?tank={tank_num}"
+                target_url = f"{scheme}://{host}/log?tank={tank_num}"
             else:
-                target_url = f"http://{host}/log"
+                target_url = f"{scheme}://{host}/log"
             svg_data = generate_qr_svg(target_url, box_size=8)
             self.send_response(200)
             self.send_header("Content-Type", "image/svg+xml; charset=utf-8")
