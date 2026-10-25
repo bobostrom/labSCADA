@@ -43,12 +43,19 @@
     @keyframes pulse { 0% { opacity:0.4; } 50% { opacity:1; } 100% { opacity:0.4; } }
     .clock-display { font-family:monospace; font-size:13px; color:var(--text-muted); font-weight:600; }
 
-    /* Daily QA Banner (Top of Main Page) */
-    .qa-banner { background:linear-gradient(135deg, rgba(4,27,43,0.95), rgba(2,36,56,0.85)); border:1px solid rgba(0,230,118,0.3); border-left:5px solid #00e676; border-radius:12px; padding:16px 20px; margin-bottom:20px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px; box-shadow:0 4px 20px rgba(0,0,0,0.35); }
-    .qa-title { font-size:1.05rem; font-weight:700; color:#f0f4f8; margin:0 0 4px; display:flex; align-items:center; gap:10px; }
-    .qa-desc { font-size:13px; color:var(--text-muted); margin:0; }
-    .btn-test { background:#00e676; color:#090d16; font-size:14px; font-weight:800; padding:10px 22px; border-radius:8px; cursor:pointer; border:none; box-shadow:0 4px 14px rgba(0,230,118,0.3); transition:all 0.15s; }
+    /* Top Action Cards Grid (Main Page) */
+    .top-actions-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(360px, 1fr)); gap:16px; margin-bottom:20px; }
+    .action-banner { background:linear-gradient(135deg, rgba(4,27,43,0.95), rgba(2,36,56,0.85)); border:1px solid var(--border-subtle); border-radius:12px; padding:16px 20px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px; box-shadow:0 4px 20px rgba(0,0,0,0.35); }
+    .banner-qa { border-left:5px solid #00e676; border-color:rgba(0,230,118,0.3); }
+    .banner-reports { border-left:5px solid #0284c7; border-color:rgba(2,132,199,0.35); }
+    .banner-title { font-size:1.02rem; font-weight:700; color:#f0f4f8; margin:0 0 4px; display:flex; align-items:center; gap:10px; }
+    .banner-desc { font-size:12.5px; color:var(--text-muted); margin:0; line-height:1.4; }
+    
+    .btn-test { background:#00e676; color:#090d16; font-size:13.5px; font-weight:800; padding:10px 20px; border-radius:8px; cursor:pointer; border:none; box-shadow:0 4px 14px rgba(0,230,118,0.3); transition:all 0.15s; white-space:nowrap; }
     .btn-test:hover { background:#00c853; transform:translateY(-1px); }
+    
+    .btn-report-hub { background:#0284c7; color:#ffffff; font-size:13.5px; font-weight:800; padding:10px 20px; border-radius:8px; text-decoration:none; display:inline-flex; align-items:center; gap:6px; box-shadow:0 4px 14px rgba(2,132,199,0.35); transition:all 0.15s; white-space:nowrap; }
+    .btn-report-hub:hover { background:#0369a1; transform:translateY(-1px); color:#ffffff; }
 
     /* Telemetry Grid (Main Page) */
     .grid-telemetry { display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:16px; margin-bottom:24px; }
@@ -149,19 +156,38 @@
   <!-- PAGE 1: REAL-TIME CLINICAL OPERATIONS                          -->
   <!-- ============================================================== -->
   <div id="view-live">
-    <!-- 1. Top Section: Daily Alarm Verification (CAP/CLIA) -->
-    <div class="qa-banner">
-      <div>
-        <div class="qa-title">
-          <span>Daily Alarm Pathway Verification (CAP / CLIA)</span>
-          <span id="qaBadge" class="status-badge status-normal" style="font-size:11px;">PENDING</span>
+    <!-- 1. Top Section: Daily Alarm Pathway Verification & Compliance Reporting Hub -->
+    <div class="top-actions-grid">
+      <!-- Card 1: Daily Alarm Verification -->
+      <div class="action-banner banner-qa">
+        <div style="flex:1; min-width:220px;">
+          <div class="banner-title">
+            <span>Daily Alarm Pathway Verification</span>
+            <span id="qaBadge" class="status-badge status-normal" style="font-size:11px;">PENDING</span>
+          </div>
+          <p class="banner-desc" id="qaStatusText">
+            Dispatches Priority 0 pathway test to on-call embryology team and logs regulatory timestamp in PostgreSQL.
+          </p>
         </div>
-        <p class="qa-desc" id="qaStatusText">
-          Dispatches verified Priority 0 pathway test to on-call embryology team and logs regulatory timestamp in PostgreSQL.
-        </p>
+        <div>
+          <button class="btn-test" onclick="runDailyTest()">🔔 Run Pathway Test</button>
+        </div>
       </div>
-      <div>
-        <button class="btn-test" onclick="runDailyTest()">🔔 Run Daily Alarm Pathway Test</button>
+
+      <!-- Card 2: Regulatory Compliance Reports -->
+      <div class="action-banner banner-reports">
+        <div style="flex:1; min-width:220px;">
+          <div class="banner-title">
+            <span>Clinical Compliance &amp; Regulatory Audits</span>
+            <span class="status-badge" style="background:rgba(2,132,199,0.18); color:#38bdf8; border:1px solid rgba(2,132,199,0.35); font-size:11px;">CAP / CLIA</span>
+          </div>
+          <p class="banner-desc">
+            Multi-tank boil-off audit packets, calendar month picker, inspection tables, and director sign-offs.
+          </p>
+        </div>
+        <div>
+          <a href="/report/ln2" target="_blank" class="btn-report-hub">📋 Monthly Compliance Report Packet</a>
+        </div>
       </div>
     </div>
     <div id="testStatus" style="margin:-12px 0 16px; font-size:13px; font-weight:600; padding:0 8px;"></div>
