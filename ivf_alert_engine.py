@@ -1002,6 +1002,11 @@ class ClinicalAlertHandler(http.server.BaseHTTPRequestHandler):
                 self.send_header("Content-Type", "image/png")
                 self.send_header("Access-Control-Allow-Origin", "*")
                 self.end_headers()
+                self.wfile.write(content)
+            else:
+                self.send_response(404)
+                self.end_headers()
+                self.wfile.write(b"Chart not found.")
         elif parsed.path in ["/print/qr", "/qr"]:
             host = self.headers.get("Host", "192.168.10.133:8080")
             html = render_print_placards_html(host)
