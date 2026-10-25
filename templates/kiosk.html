@@ -3,41 +3,59 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>IVF Lab Clinical Operations & SCADA Alert Controller</title>
+  <title>Advanced Fertility of Alaska | Cleanroom Operations & SCADA Telemetry</title>
   <style>
+    :root {
+      --bg-app: #03141f;                 /* Deep Alaskan Navy */
+      --bg-card: rgba(4, 27, 43, 0.88);   /* Marine Blue Card */
+      --bg-card-sub: rgba(2, 18, 30, 0.85);
+      --border-subtle: rgba(97, 185, 231, 0.18);
+      --border-active: #037EAB;
+      --text-main: #f0f8ff;
+      --text-muted: #8ba2b5;
+      --brand-navy: #023C52;
+      --brand-blue: #037EAB;
+      --brand-glacier: #61B9E7;
+      --brand-gold: #CDA349;
+    }
     * { box-sizing:border-box; }
-    body { background:#090d16; color:#f0f4f8; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding:20px 24px 40px; margin:0; }
+    body { background:var(--bg-app); color:var(--text-main); font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding:20px 24px 40px; margin:0; }
     
     /* Top Header & Navigation */
-    header { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px; margin-bottom:20px; border-bottom:1px solid rgba(255,255,255,0.08); padding-bottom:16px; }
-    .brand-title { color:#00e5ff; font-size:1.55rem; font-weight:800; margin:0; letter-spacing:-0.3px; }
-    .brand-sub { color:#8899a6; font-size:0.85rem; margin-top:3px; }
+    header { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px; margin-bottom:20px; border-bottom:1px solid var(--border-subtle); padding-bottom:16px; }
+    .brand-identity { display:flex; align-items:center; gap:16px; }
+    .logo-badge { background:#ffffff; padding:6px 14px; border-radius:10px; display:flex; align-items:center; justify-content:center; box-shadow:0 3px 12px rgba(0,0,0,0.35); }
+    .afa-logo-img { height:38px; width:auto; max-width:240px; display:block; object-fit:contain; }
+    .brand-title { color:#ffffff; font-size:1.35rem; font-weight:800; margin:0; letter-spacing:-0.2px; }
+    .brand-sub { color:var(--text-muted); font-size:0.85rem; margin-top:4px; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+    .powered-by { display:inline-flex; align-items:center; gap:4px; background:rgba(97, 185, 231, 0.12); color:#61B9E7; border:1px solid rgba(97, 185, 231, 0.25); padding:2px 8px; border-radius:4px; font-size:11px; }
+    .powered-by strong { color:#ffffff; font-weight:700; }
     
-    .nav-tabs { display:inline-flex; background:#101726; padding:4px; border-radius:10px; border:1px solid rgba(255,255,255,0.1); gap:4px; }
+    .nav-tabs { display:inline-flex; background:rgba(2, 22, 34, 0.9); padding:4px; border-radius:10px; border:1px solid var(--border-subtle); gap:4px; }
     .nav-tab { background:transparent; color:#94a3b8; border:none; padding:10px 20px; border-radius:8px; font-size:14px; font-weight:700; cursor:pointer; transition:all 0.15s; }
     .nav-tab:hover { color:#f8fafc; }
-    .nav-tab.active { background:#00e5ff; color:#090d16; box-shadow:0 2px 12px rgba(0,229,255,0.35); }
+    .nav-tab.active { background:var(--brand-blue); color:#ffffff; box-shadow:0 2px 12px rgba(3,126,171,0.5); font-weight:800; }
     
     .header-meta { display:flex; align-items:center; gap:14px; }
     .badge-live { background:rgba(0,230,118,0.12); color:#00e676; border:1px solid rgba(0,230,118,0.4); padding:6px 14px; border-radius:100px; font-size:12px; font-weight:700; display:flex; align-items:center; gap:8px; }
     .pulse-dot { width:8px; height:8px; background:#00e676; border-radius:50%; box-shadow:0 0 8px #00e676; animation:pulse 1.5s infinite; }
     @keyframes pulse { 0% { opacity:0.4; } 50% { opacity:1; } 100% { opacity:0.4; } }
-    .clock-display { font-family:monospace; font-size:13px; color:#8899a6; font-weight:600; }
+    .clock-display { font-family:monospace; font-size:13px; color:var(--text-muted); font-weight:600; }
 
     /* Daily QA Banner (Top of Main Page) */
-    .qa-banner { background:linear-gradient(135deg, rgba(16,23,38,0.95), rgba(18,28,45,0.85)); border:1px solid rgba(0,230,118,0.3); border-left:5px solid #00e676; border-radius:12px; padding:16px 20px; margin-bottom:20px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px; box-shadow:0 4px 20px rgba(0,0,0,0.35); }
+    .qa-banner { background:linear-gradient(135deg, rgba(4,27,43,0.95), rgba(2,36,56,0.85)); border:1px solid rgba(0,230,118,0.3); border-left:5px solid #00e676; border-radius:12px; padding:16px 20px; margin-bottom:20px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px; box-shadow:0 4px 20px rgba(0,0,0,0.35); }
     .qa-title { font-size:1.05rem; font-weight:700; color:#f0f4f8; margin:0 0 4px; display:flex; align-items:center; gap:10px; }
-    .qa-desc { font-size:13px; color:#94a3b8; margin:0; }
+    .qa-desc { font-size:13px; color:var(--text-muted); margin:0; }
     .btn-test { background:#00e676; color:#090d16; font-size:14px; font-weight:800; padding:10px 22px; border-radius:8px; cursor:pointer; border:none; box-shadow:0 4px 14px rgba(0,230,118,0.3); transition:all 0.15s; }
     .btn-test:hover { background:#00c853; transform:translateY(-1px); }
 
     /* Telemetry Grid (Main Page) */
     .grid-telemetry { display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:16px; margin-bottom:24px; }
-    .card { background:rgba(18,25,41,0.85); border:1px solid rgba(255,255,255,0.08); border-radius:12px; padding:18px; position:relative; overflow:hidden; transition:transform 0.15s; }
-    .card-title { color:#8899a6; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px; }
-    .card-val { font-size:2.2rem; font-weight:800; font-family:monospace; color:#f0f4f8; line-height:1.1; }
-    .card-unit { font-size:1.05rem; color:#8899a6; margin-left:3px; }
-    .card-sub { font-size:12px; color:#8899a6; margin-top:8px; display:flex; justify-content:space-between; align-items:center; }
+    .card { background:var(--bg-card); border:1px solid var(--border-subtle); border-radius:12px; padding:18px; position:relative; overflow:hidden; transition:transform 0.15s; }
+    .card-title { color:var(--brand-glacier); font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px; }
+    .card-val { font-size:2.2rem; font-weight:800; font-family:monospace; color:#ffffff; line-height:1.1; }
+    .card-unit { font-size:1.05rem; color:var(--text-muted); margin-left:3px; }
+    .card-sub { font-size:12px; color:var(--text-muted); margin-top:8px; display:flex; justify-content:space-between; align-items:center; }
     
     .status-badge { font-size:11px; font-weight:800; padding:3px 8px; border-radius:4px; text-transform:uppercase; letter-spacing:0.4px; }
     .status-normal { background:rgba(0,230,118,0.15); color:#00e676; border:1px solid rgba(0,230,118,0.3); }
@@ -46,41 +64,41 @@
     @keyframes pulse-alert { 0% { opacity:0.8; } 50% { opacity:1; box-shadow:0 0 10px rgba(255,23,68,0.5); } 100% { opacity:0.8; } }
 
     /* Integrated Dipstick Sub-Panel in Cryo Cards */
-    .dipstick-subpanel { background:rgba(9,13,22,0.75); border:1px solid rgba(0,229,255,0.25); border-radius:10px; padding:12px; margin-top:14px; }
+    .dipstick-subpanel { background:var(--bg-card-sub); border:1px solid var(--border-subtle); border-radius:10px; padding:12px; margin-top:14px; }
     .dip-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
     .dip-level-row { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:4px; }
-    .dip-level { font-size:1.4rem; font-weight:800; font-family:monospace; color:#00e5ff; }
+    .dip-level { font-size:1.4rem; font-weight:800; font-family:monospace; color:var(--brand-glacier); }
     .dip-actions { display:flex; gap:8px; margin-top:10px; }
-    .btn-mini { background:#00b0ff; color:#090d16; border:none; padding:6px 12px; border-radius:6px; font-size:12px; font-weight:700; cursor:pointer; flex:1; text-align:center; }
-    .btn-mini:hover { background:#0091ea; }
-    .btn-mini-subtle { background:transparent; color:#00e5ff; border:1px solid rgba(0,229,255,0.3); padding:6px 10px; border-radius:6px; font-size:12px; font-weight:600; cursor:pointer; text-decoration:none; }
-    .btn-mini-subtle:hover { background:rgba(0,229,255,0.1); }
+    .btn-mini { background:var(--brand-blue); color:#ffffff; border:none; padding:7px 12px; border-radius:6px; font-size:12px; font-weight:700; cursor:pointer; flex:1; text-align:center; }
+    .btn-mini:hover { background:var(--brand-navy); }
+    .btn-mini-subtle { background:transparent; color:var(--brand-glacier); border:1px solid var(--border-subtle); padding:6px 10px; border-radius:6px; font-size:12px; font-weight:600; cursor:pointer; text-decoration:none; }
+    .btn-mini-subtle:hover { background:rgba(97,185,231,0.12); }
 
     /* Sub-Page Layout */
     .subpage-header { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px; margin-bottom:20px; }
-    .subpage-title { color:#00e5ff; font-size:1.45rem; font-weight:800; margin:0 0 4px; }
-    .subpage-desc { color:#8899a6; font-size:0.9rem; margin:0; }
+    .subpage-title { color:#ffffff; font-size:1.45rem; font-weight:800; margin:0 0 4px; }
+    .subpage-desc { color:var(--text-muted); font-size:0.9rem; margin:0; }
     .btn-report { text-decoration:none; display:inline-flex; align-items:center; gap:6px; background:#00897b; font-weight:700; padding:10px 16px; border-radius:8px; font-size:13px; color:#ffffff; box-shadow:0 4px 14px rgba(0,137,123,0.3); }
     .btn-report:hover { background:#00796b; }
     
     /* Large Cryo Detail Cards */
     .cryo-detail-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(320px, 1fr)); gap:18px; margin-bottom:24px; }
-    .cryo-card-lg { background:rgba(18,25,41,0.85); border:1px solid rgba(255,255,255,0.08); border-radius:14px; padding:22px; position:relative; }
-    .metrics-row { display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; background:rgba(9,13,22,0.6); padding:12px; border-radius:10px; margin:14px 0; border:1px solid rgba(255,255,255,0.05); }
-    .metric-label { font-size:11px; color:#8899a6; text-transform:uppercase; font-weight:600; margin-bottom:4px; }
-    .metric-val { font-size:1.15rem; font-weight:800; font-family:monospace; color:#f0f4f8; }
+    .cryo-card-lg { background:var(--bg-card); border:1px solid var(--border-subtle); border-radius:14px; padding:22px; position:relative; }
+    .metrics-row { display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; background:var(--bg-card-sub); padding:12px; border-radius:10px; margin:14px 0; border:1px solid var(--border-subtle); }
+    .metric-label { font-size:11px; color:var(--text-muted); text-transform:uppercase; font-weight:600; margin-bottom:4px; }
+    .metric-val { font-size:1.15rem; font-weight:800; font-family:monospace; color:#ffffff; }
 
     /* Chart Showcase */
-    .chart-container { background:rgba(9,13,22,0.9); border:1px solid rgba(255,255,255,0.1); border-radius:12px; padding:16px; margin-top:14px; text-align:center; }
+    .chart-container { background:var(--bg-card-sub); border:1px solid var(--border-subtle); border-radius:12px; padding:16px; margin-top:14px; text-align:center; }
     .chart-img { width:100%; max-height:420px; object-fit:contain; border-radius:8px; }
 
     /* Section Cards & Tables */
-    .section-card { background:rgba(18,25,41,0.85); border:1px solid rgba(255,255,255,0.08); border-radius:12px; padding:20px; margin-bottom:20px; }
+    .section-card { background:var(--bg-card); border:1px solid var(--border-subtle); border-radius:12px; padding:20px; margin-bottom:20px; }
     table { width:100%; border-collapse:collapse; margin-top:12px; }
     th, td { padding:10px 14px; text-align:left; border-bottom:1px solid rgba(255,255,255,0.06); font-size:13.5px; }
-    th { color:#8899a6; text-transform:uppercase; font-size:11.5px; letter-spacing:0.5px; }
-    .btn { background:#2979ff; color:white; border:none; padding:8px 16px; border-radius:6px; cursor:pointer; font-weight:600; }
-    .btn:hover { background:#1e6cd9; }
+    th { color:var(--brand-glacier); text-transform:uppercase; font-size:11.5px; letter-spacing:0.5px; }
+    .btn { background:var(--brand-blue); color:white; border:none; padding:8px 16px; border-radius:6px; cursor:pointer; font-weight:600; }
+    .btn:hover { background:var(--brand-navy); }
 
     /* LN2 Modal & Glove-Friendly Stepper */
     .modal-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(4,8,18,0.88); backdrop-filter:blur(6px); display:flex; justify-content:center; align-items:center; z-index:9999; }
@@ -104,9 +122,17 @@
 <body>
   <!-- Top Global Header -->
   <header>
-    <div>
-      <h1 class="brand-title">IVF Cleanroom Operations & SCADA Alert Controller</h1>
-      <div class="brand-sub">Advanced Fertility of Alaska — Clinical Embryology & Cryopreservation</div>
+    <div class="brand-identity">
+      <div class="logo-badge">
+        <img src="/assets/afa_logo.png" alt="Advanced Fertility of Alaska" class="afa-logo-img">
+      </div>
+      <div>
+        <h1 class="brand-title">Cleanroom Operations &amp; Cryogenic Monitoring</h1>
+        <div class="brand-sub">
+          <span>Advanced Fertility of Alaska &bull; Homer, AK</span>
+          <span class="powered-by">Powered by <strong>Lares Telemetry</strong></span>
+        </div>
+      </div>
     </div>
 
     <!-- Navigation Tabs -->

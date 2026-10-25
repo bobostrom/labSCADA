@@ -19,9 +19,10 @@ In an Assisted Reproductive Technology (ART) and embryology cleanroom suite, use
 
 The Cleanroom Kiosk web application is served through a high-performance **Nginx reverse proxy on standard Port 80 (and SSL Port 443)**, routing seamlessly to the [ivf_alert_engine.py](file:///home/bobostrom/Projects/labSCADA/ivf_alert_engine.py) daemon on port 8080:
 
-* **Primary Endpoint:** `http://192.168.10.133/` (No port number required)
-* **Mobile QR Endpoint:** `http://192.168.10.133/log`
-* **Rapid SCADA Admin:** `http://192.168.10.133:10008/` (or `/scada/`)
+* **Local LAN Endpoints:** `http://scada/` or `http://scada.local/` (Standard Port 80, no port required)
+* **Cloudflare Zero Trust Endpoint:** `https://komdivflab.larestelemetry.com/` (Encrypted remote access with zero open router ports)
+* **Mobile QR Dipstick Endpoint:** `https://komdivflab.larestelemetry.com/log` (or `http://scada/log`)
+* **Rapid SCADA Admin:** `http://scada:10008/` (or `/scada/`)
 * **Technology Stack:**
   * **Reverse Proxy:** Nginx 1.22 on Port 80/443 handling root delivery, SSL offloading, and WebSocket pass-through.
   * **Backend Service:** Native Python HTTP daemon running multi-threaded request workers and background telemetry scanners (`ivf_alert_engine.py :8080`).

@@ -1022,6 +1022,24 @@ class ClinicalAlertHandler(http.server.BaseHTTPRequestHandler):
                 self.end_headers()
                 self.wfile.write(b"Markdown report not found.")
 
+        elif parsed.path.startswith("/assets/") or parsed.path.startswith("/notes/assets/"):
+            filename = os.path.basename(parsed.path)
+            asset_path = os.path.join(REPO_DIR, "notes", "assets", filename)
+            if os.path.exists(asset_path) and os.path.isfile(asset_path):
+                content_type = "image/png" if filename.endswith(".png") else ("image/svg+xml" if filename.endswith(".svg") else "application/octet-stream")
+                with open(asset_path, "rb") as f:
+                    content = f.read()
+                self.send_response(200)
+                self.send_header("Content-Type", content_type)
+                self.send_header("Cache-Control", "public, max-age=86400")
+                self.send_header("Access-Control-Allow-Origin", "*")
+                self.end_headers()
+                self.wfile.write(content)
+            else:
+                self.send_response(404)
+                self.end_headers()
+                self.wfile.write(b"Asset not found.")
+
         elif parsed.path in ["/report/ln2/chart", "/notes/assets/ln2_sawtooth_chart.png"]:
             params = urllib.parse.parse_qs(parsed.query)
             tank_param = params.get("tank", ["1"])[0]
