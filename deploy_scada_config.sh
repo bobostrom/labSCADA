@@ -59,9 +59,10 @@ if [ -f "$CONFIG_DIR/Config/ScadaInstanceConfig.xml" ]; then
 fi
 
 # Ensure user ownership for ease of use
-sudo chown -R bobostrom:bobostrom /opt/scada
+TARGET_USER="${SUDO_USER:-$(whoami)}"
+sudo chown -R "${TARGET_USER}:${TARGET_USER}" /opt/scada
 
 echo "=== Restarting Rapid SCADA services ==="
-sudo systemctl restart scadaserver6 scadacomm6 scadaweb6
+sudo systemctl restart scadaserver6 scadacomm6 scadaweb6 scadaagent6 || true
 
 echo "=== Deployment Complete! ==="
