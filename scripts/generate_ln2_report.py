@@ -719,7 +719,11 @@ def generate_html_report(records, metrics, chart_png_path, output_html_path):
           <span>Cleanroom QA Supervisor Signature</span>
           <span>Date</span>
         </div>
-      </div>
+    </div>
+
+    <div style="margin-top: 36px; padding-top: 14px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; font-size: 11px; color: var(--text-muted);">
+      <span>Advanced Fertility of Alaska &bull; Cryogenic Specimen Compliance Audit</span>
+      <span>Powered by <strong>Lares Telemetry</strong></span>
     </div>
   </div>
 

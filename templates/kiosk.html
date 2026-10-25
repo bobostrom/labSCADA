@@ -27,9 +27,10 @@
     .logo-badge { background:#eef7f9; width:52px; height:52px; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 3px 14px rgba(0,0,0,0.4); border:2px solid rgba(97, 185, 231, 0.5); overflow:hidden; padding:2px; flex-shrink:0; }
     .brand-leaf-img { width:100%; height:100%; display:block; object-fit:contain; border-radius:50%; }
     .brand-title { color:#ffffff; font-size:1.35rem; font-weight:800; margin:0; letter-spacing:-0.2px; }
-    .brand-sub { color:var(--text-muted); font-size:0.85rem; margin-top:4px; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
-    .powered-by { display:inline-flex; align-items:center; gap:4px; background:rgba(97, 185, 231, 0.12); color:#61B9E7; border:1px solid rgba(97, 185, 231, 0.25); padding:2px 8px; border-radius:4px; font-size:11px; }
-    .powered-by strong { color:#ffffff; font-weight:700; }
+    .brand-sub { color:var(--text-muted); font-size:0.85rem; margin-top:4px; }
+    
+    .kiosk-footer { margin-top:40px; padding-top:16px; border-top:1px solid var(--border-subtle); display:flex; justify-content:space-between; align-items:center; color:var(--text-muted); font-size:12px; }
+    .kiosk-footer strong { color:var(--brand-glacier); }
     
     .nav-tabs { display:inline-flex; background:rgba(2, 22, 34, 0.9); padding:4px; border-radius:10px; border:1px solid var(--border-subtle); gap:4px; }
     .nav-tab { background:transparent; color:#94a3b8; border:none; padding:10px 20px; border-radius:8px; font-size:14px; font-weight:700; cursor:pointer; transition:all 0.15s; }
@@ -128,10 +129,7 @@
       </div>
       <div>
         <h1 class="brand-title">Cleanroom Operations &amp; Cryogenic Monitoring</h1>
-        <div class="brand-sub">
-          <span>Advanced Fertility of Alaska</span>
-          <span class="powered-by">Powered by <strong>Lares Telemetry</strong></span>
-        </div>
+        <div class="brand-sub">Advanced Fertility of Alaska</div>
       </div>
     </div>
 
@@ -442,6 +440,12 @@
       <div id="ln2HistoryTable">Loading inspection logs...</div>
     </div>
   </div>
+
+  <!-- Global Application Footer -->
+  <footer class="kiosk-footer">
+    <div>Advanced Fertility of Alaska &bull; Clinical SCADA Telemetry</div>
+    <div>Powered by <strong>Lares Telemetry</strong></div>
+  </footer>
 
   <!-- ============================================================== -->
   <!-- GLOVE-FRIENDLY LN2 INSPECTION MODAL                            -->
