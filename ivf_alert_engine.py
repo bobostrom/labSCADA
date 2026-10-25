@@ -989,9 +989,6 @@ class ClinicalAlertHandler(http.server.BaseHTTPRequestHandler):
             except Exception as e:
                 print(f"Error generating monthly report packet for {month_param}: {e}")
 
-            if not os.path.exists(report_packet_path):
-                report_packet_path = os.path.join(REPO_DIR, "notes", "ln2_dipstick_compliance_report.html")
-
             if os.path.exists(report_packet_path):
                 with open(report_packet_path, "rb") as f:
                     content = f.read()

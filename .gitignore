@@ -22,5 +22,7 @@ __pycache__/
 
 # Generated compliance reports and charts (rendered on-demand from PostgreSQL)
 notes/ln2_monthly_compliance_packet*.html
-notes/assets/ln2_sawtooth_cryo_tank_*.png
+notes/ln2_dipstick_compliance_report*.html
+notes/ln2_dipstick_compliance_report*.md
+notes/assets/ln2_sawtooth_*.png
 

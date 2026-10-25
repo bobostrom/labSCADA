@@ -1056,10 +1056,6 @@ def generate_monthly_packet(month_str=None, output_html_path=None):
         f.write(packet_html)
         
     print(f"Monthly Compliance Report Packet successfully saved to: {output_html_path}")
-    
-    # Also update default fallback copies
-    default_copy = os.path.join(REPO_DIR, "notes", "ln2_dipstick_compliance_report.html")
-    shutil.copy2(output_html_path, default_copy)
     return output_html_path
 
 
@@ -1072,22 +1068,8 @@ def main():
     month_str = args.month or datetime.now().strftime("%Y-%m")
     print(f"--- IVF SCADA LN2 Compliance Report Generator (Target Month: {month_str}) ---")
     
-    # Generate unified monthly packet
+    # Generate unified monthly packet (overwrites canonical working file)
     packet_path = generate_monthly_packet(month_str, args.output)
-    
-    # Also generate individual tank markdown files for backward compatibility
-    year, month = map(int, month_str.split("-"))
-    num_days = calendar.monthrange(year, month)[1]
-    start_dt = datetime(year, month, 1, 0, 0, 0)
-    end_dt = datetime(year, month, num_days, 23, 59, 59)
-    for tank_name in get_all_tank_ids():
-        suffix = tank_name.lower().replace(" ", "_")
-        records = query_ln2_logs(tank_name, start_dt, end_dt)
-        metrics = calculate_metrics(records, start_dt, end_dt, tank_id=tank_name)
-        report_md = os.path.join(REPO_DIR, "notes", f"ln2_dipstick_compliance_report_{suffix}.md")
-        generate_markdown_report(records, metrics, f"assets/ln2_sawtooth_{suffix}.png", report_md)
-        if "1" in suffix:
-            shutil.copy2(report_md, REPORT_MD_PATH)
             
     print("--- Monthly Compliance Report Packet Complete ---")
 
