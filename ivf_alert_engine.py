@@ -1016,7 +1016,7 @@ class ClinicalAlertHandler(http.server.BaseHTTPRequestHandler):
                 self.end_headers()
                 self.wfile.write(b"Chart not found.")
         elif parsed.path in ["/print/qr", "/qr"]:
-            host = self.headers.get("Host", "192.168.10.133:8080")
+            host = self.headers.get("Host", "192.168.10.133")
             html = render_print_placards_html(host)
             self.send_response(200)
             self.send_header("Content-Type", "text/html; charset=utf-8")
@@ -1027,7 +1027,7 @@ class ClinicalAlertHandler(http.server.BaseHTTPRequestHandler):
         elif parsed.path in ["/log", "/ln2_log"]:
             params = urllib.parse.parse_qs(parsed.query)
             tank_param = params.get("tank", ["1"])[0]
-            host = self.headers.get("Host", "192.168.10.133:8080")
+            host = self.headers.get("Host", "192.168.10.133")
             readings = get_current_channel_values()
             html = render_mobile_log_html(host, tank_param, readings)
             self.send_response(200)
@@ -1038,7 +1038,7 @@ class ClinicalAlertHandler(http.server.BaseHTTPRequestHandler):
 
         elif parsed.path in ["/qr/station.svg", "/qr.svg", "/qr/tank1.svg", "/qr/tank2.svg"]:
             tank_num = "2" if "tank2" in parsed.path else ("1" if "tank1" in parsed.path else None)
-            host = self.headers.get("Host", "192.168.10.133:8080")
+            host = self.headers.get("Host", "192.168.10.133")
             if tank_num:
                 target_url = f"http://{host}/log?tank={tank_num}"
             else:

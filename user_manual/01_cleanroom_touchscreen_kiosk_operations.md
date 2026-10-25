@@ -17,12 +17,15 @@ In an Assisted Reproductive Technology (ART) and embryology cleanroom suite, use
 
 ## 2. System Architecture & Web Delivery
 
-The Cleanroom Kiosk web application is served directly by the [ivf_alert_engine.py](file:///home/bobostrom/Projects/labSCADA/ivf_alert_engine.py) service running locally on `SCADAPi02` at port 8080:
+The Cleanroom Kiosk web application is served through a high-performance **Nginx reverse proxy on standard Port 80 (and SSL Port 443)**, routing seamlessly to the [ivf_alert_engine.py](file:///home/bobostrom/Projects/labSCADA/ivf_alert_engine.py) daemon on port 8080:
 
-* **Primary Endpoint:** `http://192.168.10.133:8080/`
+* **Primary Endpoint:** `http://192.168.10.133/` (No port number required)
+* **Mobile QR Endpoint:** `http://192.168.10.133/log`
+* **Rapid SCADA Admin:** `http://192.168.10.133:10008/` (or `/scada/`)
 * **Technology Stack:**
-  * **Backend:** Native Python HTTP daemon running multi-threaded request workers and background telemetry scanners.
-  * **Frontend:** Vanilla HTML5, CSS3 Grid/Flexbox design system, and client-side JavaScript.
+  * **Reverse Proxy:** Nginx 1.22 on Port 80/443 handling root delivery, SSL offloading, and WebSocket pass-through.
+  * **Backend Service:** Native Python HTTP daemon running multi-threaded request workers and background telemetry scanners (`ivf_alert_engine.py :8080`).
+  * **Frontend UI:** Jinja2 templates, vanilla HTML5, CSS3 Grid/Flexbox design system, and client-side JavaScript.
   * **Telemetry Polling:** Asynchronous 1.0-second JSON polling via `/api/telemetry`, fetching live values, alarm states, and CAP verification status directly from PostgreSQL.
   * **Client-Side Routing:** HTML5 `history.pushState` navigation supporting deep linking and instant switching between `/` and `/cryo` without page reloads.
 
