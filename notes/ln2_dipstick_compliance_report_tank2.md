@@ -3,7 +3,7 @@
 **Regulatory Standard:** CAP / CLIA / Joint Commission Cryogenic Storage Compliance  
 **Vessel Identifier:** `Cryo Tank 2` (Primary Sperm Storage Dewar)  
 **Reporting Interval:** September 01, 2026 through October 24, 2026  
-**Report Generated:** 2026-10-24 19:28:31 AKDT  
+**Report Generated:** 2026-10-24 21:57:01 AKDT  
 
 ---
 
@@ -12,8 +12,8 @@
 | Accreditation Requirement | Observation / Finding | Regulatory Status |
 | :--- | :--- | :--- |
 | **Inspection Cadence** | Routine checks every Monday, Wednesday, Friday by 5:00 PM | **🟢 COMPLIANT (100% Satisfied)** |
-| **Total Inspections Logged** | **25 inspections** recorded across 53 days | **🟢 FULL AUDIT TRAIL** |
-| **Refills Performed** | **15 manual transfers** (Typical top-off: 32.1 cm) | **🟢 NOMINAL CAPACITY** |
+| **Total Inspections Logged** | **27 inspections** recorded across 53 days | **🟢 FULL AUDIT TRAIL** |
+| **Refills Performed** | **17 manual transfers** (Typical top-off: 31.8 cm) | **🟢 NOMINAL CAPACITY** |
 | **Critical Floor (27.0 cm)** | Lowest observed level: **16.8 cm** (Critical Deficit: -10.2 cm) | **🔴 CRITICAL FLOOR BREACH (Specimens Evacuated)** |
 | **Maximum Fill Ceiling (35.0 cm)** | Highest observed level: **32.8 cm** | **🟢 NO OVERFILL DETECTED** |
 | **Vacuum Jacket Performance** | Calculated mean boil-off rate: **1.44 cm / day** | **🔴 ACCELERATED EVAPORATION / VACUUM DEGRADATION** |
@@ -67,6 +67,8 @@ The following permanent audit trail is exported directly from the SCADA PostgreS
 | `75` | 2026-10-21 10:15 | Wed | **24.4 cm** | ⚪ Level Check | Vacuum Concern | `AK` | WARNING: Level dropped below 27.0 cm floor! Heavy frost collar on vacuum ring. Refill withheld per SOP — staging backup dewar for specimen evacuation. |
 | `76` | 2026-10-23 11:30 | Fri | **19.5 cm** | ⚪ Level Check | Vacuum Concern | `BO` | CRITICAL: Rapid boil-off (>2.4 cm/day). Outer dewar condensation observed. Emergency specimen evacuation to Cryo Tank 1 authorized by Lab Director. DO NOT REFILL. |
 | `77` | 2026-10-24 13:00 | Sat | **16.8 cm** | ⚪ Level Check | Vacuum Concern | `TL` | Specimen evacuation 100% complete. Tank 2 empty of biological materials. Chamber isolated and tagged for vacuum service/repair. |
+| `78` | 2026-10-24 20:48 | Sat | **28.5 cm** | **🔵 Refilled** | Neck Frost | `BO` | Really bad all sperms is gone |
+| `81` | 2026-10-24 21:24 | Sat | **30.0 cm** | **🔵 Refilled** | Vacuum Concern | `AO` | All the embryos come over there, there are babies in the tank |
 
 ---
 

@@ -47,10 +47,32 @@ def render_template(template_name, **context):
     template = jinja_env.get_template(template_name)
     return template.render(**context)
 
-PG_USER = "postgres"
-PG_PASS = "postgres"
-PG_HOST = "127.0.0.1"
-PG_DB = "rapid_scada"
+def load_env_file(filepath):
+    """Loads key=value pairs from a file into os.environ if file exists."""
+    if os.path.exists(filepath):
+        try:
+            with open(filepath, "r", encoding="utf-8") as f:
+                for line in f:
+                    line = line.strip()
+                    if line and not line.startswith("#") and "=" in line:
+                        k, v = line.split("=", 1)
+                        k = k.strip()
+                        v = v.strip().strip("'\"")
+                        if k and k not in os.environ:
+                            os.environ[k] = v
+        except Exception as e:
+            print(f"Warning: could not load env file {filepath}: {e}")
+
+# Check system-wide config first, then local repo .env
+load_env_file("/etc/labscada/db.env")
+load_env_file(os.path.join(REPO_DIR, ".env"))
+
+PG_USER = os.environ.get("SCADA_PG_USER", os.environ.get("PGUSER", "postgres"))
+PG_PASS = os.environ.get("SCADA_PG_PASS", os.environ.get("PGPASSWORD", "postgres"))
+PG_HOST = os.environ.get("SCADA_PG_HOST", os.environ.get("PGHOST", "127.0.0.1"))
+PG_PORT = os.environ.get("SCADA_PG_PORT", os.environ.get("PGPORT", "5432"))
+PG_DB   = os.environ.get("SCADA_PG_DB",   os.environ.get("PGDATABASE", "rapid_scada"))
+PG_SSLMODE = os.environ.get("SCADA_PG_SSLMODE", os.environ.get("PGSSLMODE", "prefer"))
 
 PUSHOVER_TOKEN = "a2wmo7ofxhhpo2vc2ykdkhtnte8nb5"
 PUSHOVER_GROUP = "gepqspoh98t69c7o223hwbg8ponwyq"
@@ -93,9 +115,11 @@ def db_query(sql):
     """Executes a SQL SELECT query and returns rows as list of tuples."""
     env = os.environ.copy()
     env["PGPASSWORD"] = PG_PASS
+    if PG_SSLMODE:
+        env["PGSSLMODE"] = PG_SSLMODE
     try:
         res = subprocess.run(
-            ["psql", "-h", PG_HOST, "-U", PG_USER, "-d", PG_DB, "-t", "-A", "-F", "\t", "-c", sql],
+            ["psql", "-h", PG_HOST, "-p", str(PG_PORT), "-U", PG_USER, "-d", PG_DB, "-t", "-A", "-F", "\t", "-c", sql],
             env=env,
             capture_output=True,
             text=True,
@@ -118,9 +142,11 @@ def db_execute(sql):
     """Executes an INSERT / UPDATE / DELETE command."""
     env = os.environ.copy()
     env["PGPASSWORD"] = PG_PASS
+    if PG_SSLMODE:
+        env["PGSSLMODE"] = PG_SSLMODE
     try:
         res = subprocess.run(
-            ["psql", "-h", PG_HOST, "-U", PG_USER, "-d", PG_DB, "-q", "-c", sql],
+            ["psql", "-h", PG_HOST, "-p", str(PG_PORT), "-U", PG_USER, "-d", PG_DB, "-q", "-c", sql],
             env=env,
             capture_output=True,
             text=True,
@@ -1186,6 +1212,7 @@ def main():
     # Start HTTP server
     http.server.HTTPServer.allow_reuse_address = True
     server = http.server.HTTPServer(("0.0.0.0", PORT), ClinicalAlertHandler)
+    print(f"Connected to database at {PG_USER}@{PG_HOST}:{PG_PORT}/{PG_DB} (sslmode={PG_SSLMODE})")
     print(f"Ready. Listening for Kiosk / Web API calls on http://0.0.0.0:{PORT}")
     try:
         server.serve_forever()

@@ -22,21 +22,45 @@ import matplotlib.dates as mdates
 from matplotlib.patches import Patch
 from matplotlib.lines import Line2D
 
-# Database configuration
-PG_USER = "postgres"
-PG_PASS = "postgres"
-PG_HOST = "localhost"
-PG_DB = "rapid_scada"
-
 REPO_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ASSETS_DIR = os.path.join(REPO_DIR, "notes", "assets")
 REPORT_MD_PATH = os.path.join(REPO_DIR, "notes", "ln2_dipstick_compliance_report.md")
 CHART_PNG_PATH = os.path.join(ASSETS_DIR, "ln2_sawtooth_chart.png")
 
+def load_env_file(filepath):
+    """Loads key=value pairs from a file into os.environ if file exists."""
+    if os.path.exists(filepath):
+        try:
+            with open(filepath, "r", encoding="utf-8") as f:
+                for line in f:
+                    line = line.strip()
+                    if line and not line.startswith("#") and "=" in line:
+                        k, v = line.split("=", 1)
+                        k = k.strip()
+                        v = v.strip().strip("'\"")
+                        if k and k not in os.environ:
+                            os.environ[k] = v
+        except Exception as e:
+            print(f"Warning: could not load env file {filepath}: {e}")
+
+# Check system-wide config first, then local repo .env
+load_env_file("/etc/labscada/db.env")
+load_env_file(os.path.join(REPO_DIR, ".env"))
+
+# Database configuration
+PG_USER = os.environ.get("SCADA_PG_USER", os.environ.get("PGUSER", "postgres"))
+PG_PASS = os.environ.get("SCADA_PG_PASS", os.environ.get("PGPASSWORD", "postgres"))
+PG_HOST = os.environ.get("SCADA_PG_HOST", os.environ.get("PGHOST", "127.0.0.1"))
+PG_PORT = os.environ.get("SCADA_PG_PORT", os.environ.get("PGPORT", "5432"))
+PG_DB   = os.environ.get("SCADA_PG_DB",   os.environ.get("PGDATABASE", "rapid_scada"))
+PG_SSLMODE = os.environ.get("SCADA_PG_SSLMODE", os.environ.get("PGSSLMODE", "prefer"))
+
 def query_ln2_logs(tank_id="Cryo Tank 1"):
     """Fetches LN2 tank logs for a specific tank from PostgreSQL."""
     env = os.environ.copy()
     env["PGPASSWORD"] = PG_PASS
+    if PG_SSLMODE:
+        env["PGSSLMODE"] = PG_SSLMODE
     where_clause = f"WHERE tank_id = '{tank_id}'" if tank_id else ""
     sql = f"""
     SELECT id, tank_id, level_cm, was_filled, frost_condition, initials, notes, logged_at
@@ -44,7 +68,7 @@ def query_ln2_logs(tank_id="Cryo Tank 1"):
     {where_clause}
     ORDER BY logged_at ASC;
     """
-    cmd = ["psql", "-h", PG_HOST, "-U", PG_USER, "-d", PG_DB, "-t", "-A", "-F", "\t", "-c", sql]
+    cmd = ["psql", "-h", PG_HOST, "-p", str(PG_PORT), "-U", PG_USER, "-d", PG_DB, "-t", "-A", "-F", "\t", "-c", sql]
     res = subprocess.run(cmd, env=env, capture_output=True, text=True, check=True)
     
     records = []

@@ -3,7 +3,7 @@
 **Regulatory Standard:** CAP / CLIA / Joint Commission Cryogenic Storage Compliance  
 **Vessel Identifier:** `Cryo Tank 1` (Primary Embryo Storage Dewar)  
 **Reporting Interval:** September 01, 2026 through October 24, 2026  
-**Report Generated:** 2026-10-24 19:28:30 AKDT  
+**Report Generated:** 2026-10-24 21:56:59 AKDT  
 
 ---
 
@@ -12,8 +12,8 @@
 | Accreditation Requirement | Observation / Finding | Regulatory Status |
 | :--- | :--- | :--- |
 | **Inspection Cadence** | Routine checks every Monday, Wednesday, Friday by 5:00 PM | **🟢 COMPLIANT (100% Satisfied)** |
-| **Total Inspections Logged** | **27 inspections** recorded across 53 days | **🟢 FULL AUDIT TRAIL** |
-| **Refills Performed** | **18 manual transfers** (Typical top-off: 32.4 cm) | **🟢 NOMINAL CAPACITY** |
+| **Total Inspections Logged** | **29 inspections** recorded across 53 days | **🟢 FULL AUDIT TRAIL** |
+| **Refills Performed** | **19 manual transfers** (Typical top-off: 32.3 cm) | **🟢 NOMINAL CAPACITY** |
 | **Critical Floor (27.0 cm)** | Lowest observed level: **29.0 cm** (Margin: +2.0 cm) | **🟢 ZERO CRITICAL EXCURSIONS** |
 | **Maximum Fill Ceiling (35.0 cm)** | Highest observed level: **33.5 cm** | **🟢 NO OVERFILL DETECTED** |
 | **Vacuum Jacket Performance** | Calculated mean boil-off rate: **1.04 cm / day** | **🟢 NORMAL INSULATION INTEGRITY** |
@@ -69,6 +69,8 @@ The following permanent audit trail is exported directly from the SCADA PostgreS
 | `50` | 2026-10-24 14:15 | Sat | **33.5 cm** | **🔵 Refilled** | Good | `BO` | — |
 | `51` | 2026-10-24 14:16 | Sat | **33.5 cm** | **🔵 Refilled** | Good | `BO` | — |
 | `52` | 2026-10-24 19:17 | Sat | **29.0 cm** | ⚪ Level Check | Good | `BO` | — |
+| `79` | 2026-10-24 21:21 | Sat | **30.0 cm** | ⚪ Level Check | Good | `BO` | — |
+| `80` | 2026-10-24 21:22 | Sat | **30.0 cm** | **🔵 Refilled** | Vacuum Concern | `BO` | All embryos gone, tell the patients they're just sleeping |
 
 ---
 

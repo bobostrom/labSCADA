@@ -6,6 +6,8 @@ After=network.target scadacomm6.service postgresql.service
 Type=simple
 User=bobostrom
 WorkingDirectory=/home/bobostrom/Projects/labSCADA
+Environment=PYTHONUNBUFFERED=1
+EnvironmentFile=-/etc/labscada/db.env
 ExecStart=/usr/bin/python3 /home/bobostrom/Projects/labSCADA/ivf_alert_engine.py
 Restart=always
 RestartSec=5
