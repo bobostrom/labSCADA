@@ -1017,7 +1017,7 @@ class ClinicalAlertHandler(http.server.BaseHTTPRequestHandler):
                 self.wfile.write(b"Chart not found.")
         elif parsed.path in ["/print/qr", "/qr"]:
             host = self.headers.get("Host", "192.168.10.133")
-            scheme = "https" if ("trycloudflare.com" in host or self.headers.get("X-Forwarded-Proto") == "https" or "https" in self.headers.get("CF-Visitor", "")) else "http"
+            scheme = "https" if ("larestelemetry.com" in host or "trycloudflare.com" in host or self.headers.get("X-Forwarded-Proto") == "https" or "https" in self.headers.get("CF-Visitor", "")) else "http"
             html = render_print_placards_html(host, scheme=scheme)
             self.send_response(200)
             self.send_header("Content-Type", "text/html; charset=utf-8")
@@ -1040,7 +1040,7 @@ class ClinicalAlertHandler(http.server.BaseHTTPRequestHandler):
         elif parsed.path in ["/qr/station.svg", "/qr.svg", "/qr/tank1.svg", "/qr/tank2.svg"]:
             tank_num = "2" if "tank2" in parsed.path else ("1" if "tank1" in parsed.path else None)
             host = self.headers.get("Host", "192.168.10.133")
-            scheme = "https" if ("trycloudflare.com" in host or self.headers.get("X-Forwarded-Proto") == "https" or "https" in self.headers.get("CF-Visitor", "")) else "http"
+            scheme = "https" if ("larestelemetry.com" in host or "trycloudflare.com" in host or self.headers.get("X-Forwarded-Proto") == "https" or "https" in self.headers.get("CF-Visitor", "")) else "http"
             if tank_num:
                 target_url = f"{scheme}://{host}/log?tank={tank_num}"
             else:
