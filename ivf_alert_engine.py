@@ -982,10 +982,17 @@ class ClinicalAlertHandler(http.server.BaseHTTPRequestHandler):
             
             force_regen = params.get("regenerate", ["0"])[0] == "1"
             report_packet_path = os.path.join(REPO_DIR, "notes", f"ln2_monthly_compliance_packet_{month_param}.html")
+            script_path = os.path.join(REPO_DIR, "scripts", "generate_ln2_report.py")
 
-            if force_regen or not os.path.exists(report_packet_path):
+            # Automatically regenerate if script is newer than cached report file
+            needs_regen = force_regen or not os.path.exists(report_packet_path)
+            if not needs_regen and os.path.exists(script_path):
+                if os.path.getmtime(script_path) > os.path.getmtime(report_packet_path):
+                    needs_regen = True
+
+            if needs_regen:
                 try:
-                    subprocess.run(["python3", os.path.join(REPO_DIR, "scripts", "generate_ln2_report.py"), "--month", month_param], check=True)
+                    subprocess.run(["python3", script_path, "--month", month_param], check=True)
                 except Exception as e:
                     print(f"Error generating monthly report packet: {e}")
 
@@ -997,6 +1004,9 @@ class ClinicalAlertHandler(http.server.BaseHTTPRequestHandler):
                     content = f.read()
                 self.send_response(200)
                 self.send_header("Content-Type", "text/html; charset=utf-8")
+                self.send_header("Cache-Control", "no-cache, no-store, must-revalidate")
+                self.send_header("Pragma", "no-cache")
+                self.send_header("Expires", "0")
                 self.send_header("Access-Control-Allow-Origin", "*")
                 self.end_headers()
                 self.wfile.write(content)
