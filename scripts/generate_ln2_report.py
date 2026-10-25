@@ -612,9 +612,10 @@ def generate_monthly_packet(month_str=None, output_html_path=None):
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Monthly Compliance Report Packet ({month_name_year}) — Advanced Fertility of Alaska</title>
-  <link rel="icon" type="image/png" href="/assets/KOMDlogo.png">
-  <link rel="shortcut icon" type="image/png" href="/assets/KOMDlogo.png">
-  <link rel="apple-touch-icon" href="/assets/KOMDlogo.png">
+  <link rel="icon" type="image/x-icon" href="/favicon.ico?v=2">
+  <link rel="icon" type="image/png" sizes="64x64" href="/assets/KOMDlogo.png?v=2">
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=2">
+  <link rel="apple-touch-icon" href="/assets/KOMDlogo.png?v=2">
   <style>
     :root {{
       --primary: #0288d1;
