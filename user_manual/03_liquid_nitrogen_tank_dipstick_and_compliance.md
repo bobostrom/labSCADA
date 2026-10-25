@@ -22,7 +22,7 @@ This architecture transitions the laboratory from paper tracking to a **fully di
                         ┌──────────────────┴──────────────────┐
                         ▼                                     ▼
              [Wall Kiosk Display]                  [Phone via Tank QR Code]
-             http://scadapi02.local:8080           http://scadapi02.local:8080
+             http://scada.local (or :80)           https://komdivflab.larestelemetry.com
                         │                                     │
                         └──────────────────┬──────────────────┘
                                            │
