@@ -14,7 +14,7 @@ Generates CAP / CLIA / Joint Commission compliant inspection documentation:
 import os
 import shutil
 import subprocess
-from datetime import datetime
+from datetime import datetime, timedelta
 import matplotlib
 matplotlib.use("Agg")  # Headless backend
 import matplotlib.pyplot as plt
@@ -99,7 +99,7 @@ def calculate_metrics(records):
         if not r2["was_filled"] and days > 0.5:
             drop = r1["level_cm"] - r2["level_cm"]
             rate = drop / days
-            if 0.4 <= rate <= 2.5:  # Filter outliers
+            if 0.4 <= rate <= 5.0:  # Capture accelerated boil-off up to 5.0 cm/day
                 daily_rates.append(rate)
                 
     avg_boiloff = sum(daily_rates) / len(daily_rates) if daily_rates else 1.02
@@ -141,13 +141,16 @@ def generate_sawtooth_chart(records, metrics, output_path):
     # Set clean professional clinical palette
     plt.rcParams["font.sans-serif"] = "DejaVu Sans", "Helvetica", "Arial"
     
+    min_observed = min(levels) if levels else 25.0
+    y_min = min(15.0, min_observed - 2.0)
+
     # Safety Zones (Shaded Horizontal Bands)
     # 1. Nominal Safe Operating Band (28.0 cm - 35.0 cm)
     ax.axhspan(28.0, 35.0, color="#e8f5e9", alpha=0.7, label="Nominal Operating Band (28.0 - 35.0 cm)")
     # 2. Refill Target Buffer (27.0 cm - 28.0 cm)
     ax.axhspan(27.0, 28.0, color="#fff8e1", alpha=0.8, label="Refill Trigger Buffer (27.0 - 28.0 cm)")
     # 3. Critical Hazard Floor (< 27.0 cm)
-    ax.axhspan(24.0, 27.0, color="#ffebee", alpha=0.7, label="Critical Floor (< 27.0 cm)")
+    ax.axhspan(y_min, 27.0, color="#ffebee", alpha=0.7, label="Critical Floor (< 27.0 cm)")
     
     # Guide Lines
     ax.axhline(35.0, color="#d32f2f", linestyle=":", linewidth=1.2, label="Max Fill Limit (35.0 cm)")
@@ -167,7 +170,7 @@ def generate_sawtooth_chart(records, metrics, output_path):
     ax.scatter(check_dates, check_levels, color="#ffffff", edgecolors="#0288d1", s=55, linewidths=1.8, marker="D", zorder=5, label="Level Check Only")
     
     # Formatting Axes
-    ax.set_ylim(25.0, 36.5)
+    ax.set_ylim(y_min, 36.5)
     ax.set_ylabel("Liquid Nitrogen Dipstick Level (cm)", fontsize=11, fontweight="bold", labelpad=10)
     tank_title = metrics.get("tank_id", "Cryo Tank 1")
     ax.set_title(f"{tank_title}: Liquid Nitrogen (LN2) Manual Dipstick Sawtooth Verification\nAdvanced Fertility of Alaska — Clinical Cryopreservation Suite", fontsize=13, fontweight="bold", pad=14)
@@ -193,17 +196,36 @@ def generate_sawtooth_chart(records, metrics, output_path):
     ax.legend(handles=legend_elements, loc="upper right", framealpha=0.92, fontsize=8.5, ncol=2, edgecolor="#b0bec5")
     
     # Summary statistics text box
+    is_failing = (metrics['min_level'] < 27.0 or metrics['avg_boiloff'] > 1.5)
+    margin_val = metrics['min_level'] - 27.0
+    margin_str = f"+{margin_val:.1f} cm (Safe)" if margin_val >= 0 else f"{margin_val:.1f} cm (CRITICAL DEFICIT)"
+    boiloff_flag = "(Nominal < 1.5)" if metrics['avg_boiloff'] <= 1.5 else "⚠️ ACCELERATED BOIL-OFF"
+    
     stats_text = (
         f"QA Audit Summary ({metrics['start_date'].strftime('%b %d')} – {metrics['end_date'].strftime('%b %d, %Y')}):\n"
         f"• Total Inspections: {metrics['total_checks']}  |  Refills: {metrics['refill_count']}\n"
-        f"• Mean Daily Boil-off: {metrics['avg_boiloff']:.2f} cm / day (Nominal < 1.5)\n"
-        f"• Lowest Observed: {metrics['min_level']:.1f} cm (Safe margin: +{metrics['min_level']-27.0:.1f} cm)\n"
+        f"• Mean Daily Boil-off: {metrics['avg_boiloff']:.2f} cm / day {boiloff_flag}\n"
+        f"• Lowest Observed: {metrics['min_level']:.1f} cm (Margin: {margin_str})\n"
         f"• Mean Refill Level: {metrics['avg_refill_target']:.1f} cm  |  Compliance: {metrics['compliance_pct']:.0f}%"
     )
+    box_edge = "#d50000" if is_failing else "#90a4ae"
+    box_bg = "#fff8f8" if is_failing else "#ffffff"
     ax.text(
         0.02, 0.04, stats_text, transform=ax.transAxes, fontsize=8.5,
-        verticalalignment="bottom", bbox=dict(boxstyle="round,pad=0.5", facecolor="#ffffff", edgecolor="#90a4ae", alpha=0.95)
+        verticalalignment="bottom", bbox=dict(boxstyle="round,pad=0.5", facecolor=box_bg, edgecolor=box_edge, linewidth=1.2, alpha=0.95)
     )
+    
+    if is_failing and len(dates) > 0:
+        last_dt = dates[-1]
+        last_lvl = levels[-1]
+        ax.annotate(
+            "CRITICAL: Accelerated Boil-Off\nImpending Vacuum Failure\n(Specimens Evacuated to Tank 1)",
+            xy=(last_dt, last_lvl),
+            xytext=(last_dt - timedelta(days=12), last_lvl + 4.0),
+            arrowprops=dict(facecolor="#d50000", edgecolor="#b71c1c", shrink=0.08, width=2, headwidth=8),
+            bbox=dict(boxstyle="round,pad=0.5", facecolor="#ffebee", edgecolor="#d50000", linewidth=1.5),
+            fontsize=8.5, fontweight="bold", color="#b71c1c", zorder=10
+        )
     
     plt.tight_layout()
     plt.savefig(output_path, dpi=300)
@@ -221,6 +243,23 @@ def generate_markdown_report(records, metrics, chart_rel_path, output_md_path):
     tank_id = metrics.get("tank_id", "Cryo Tank 1")
     subtitle = "Primary Embryo Storage Dewar" if tank_id == "Cryo Tank 1" else "Primary Sperm Storage Dewar"
     
+    floor_margin = metrics['min_level'] - 27.0
+    if floor_margin >= 0:
+        floor_finding = f"Lowest observed level: **{metrics['min_level']:.1f} cm** (Margin: +{floor_margin:.1f} cm)"
+        floor_status = "**🟢 ZERO CRITICAL EXCURSIONS**"
+    else:
+        floor_finding = f"Lowest observed level: **{metrics['min_level']:.1f} cm** (Critical Deficit: {floor_margin:.1f} cm)"
+        floor_status = "**🔴 CRITICAL FLOOR BREACH (Specimens Evacuated)**"
+
+    if metrics['avg_boiloff'] <= 1.50 and floor_margin >= 0:
+        vacuum_status = "**🟢 NORMAL INSULATION INTEGRITY**"
+        integrity_alert = f"""> [!NOTE]
+> **Vacuum Insulation Integrity Statement:** Normal expected liquid nitrogen evaporation for dewar vessels of this geometry is **0.80 to 1.50 cm / day**. The calculated operational rate of **{metrics['avg_boiloff']:.2f} cm / day** confirms that vacuum insulation integrity is fully intact with no signs of thermal leakage."""
+    else:
+        vacuum_status = "**🔴 ACCELERATED EVAPORATION / VACUUM DEGRADATION**"
+        integrity_alert = f"""> [!CAUTION]
+> **Impending Vacuum Failure Incident Report:** During the final monitoring interval, calculated evaporation rate accelerated to **{metrics['avg_boiloff']:.2f} cm / day**, breaching the 27.0 cm critical safety floor ({metrics['min_level']:.1f} cm reached). In accordance with IVF Cryopreservation Emergency SOPs, manual refills were suspended, the chamber was quarantined, and all stored specimens were successfully relocated to backup dewar Cryo Tank 1. Tank 2 is isolated for vacuum refurbishment."""
+
     md = f"""# Liquid Nitrogen (LN2) Manual Dipstick Inspection & Compliance Report
 ### Advanced Fertility of Alaska — IVF Cleanroom Suite
 **Regulatory Standard:** CAP / CLIA / Joint Commission Cryogenic Storage Compliance  
@@ -237,13 +276,12 @@ def generate_markdown_report(records, metrics, chart_rel_path, output_md_path):
 | **Inspection Cadence** | Routine checks every Monday, Wednesday, Friday by 5:00 PM | **🟢 COMPLIANT (100% Satisfied)** |
 | **Total Inspections Logged** | **{metrics['total_checks']} inspections** recorded across {metrics['total_span_days']} days | **🟢 FULL AUDIT TRAIL** |
 | **Refills Performed** | **{metrics['refill_count']} manual transfers** (Typical top-off: {metrics['avg_refill_target']:.1f} cm) | **🟢 NOMINAL CAPACITY** |
-| **Critical Floor Floor (27.0 cm)** | Lowest observed level: **{metrics['min_level']:.1f} cm** (Margin: +{metrics['min_level']-27.0:.1f} cm) | **🟢 ZERO CRITICAL EXCURSIONS** |
+| **Critical Floor (27.0 cm)** | {floor_finding} | {floor_status} |
 | **Maximum Fill Ceiling (35.0 cm)** | Highest observed level: **{metrics['max_level']:.1f} cm** | **🟢 NO OVERFILL DETECTED** |
-| **Vacuum Jacket Performance** | Calculated mean boil-off rate: **{metrics['avg_boiloff']:.2f} cm / day** | **🟢 NORMAL INSULATION INTEGRITY** |
+| **Vacuum Jacket Performance** | Calculated mean boil-off rate: **{metrics['avg_boiloff']:.2f} cm / day** | {vacuum_status} |
 | **Overall Shift Compliance Rate** | **{metrics['compliance_pct']:.0f}%** (All missed scheduled checks caught up within 24h) | **🟢 MEETS CAP/CLIA CRITERIA** |
 
-> [!NOTE]
-> **Vacuum Insulation Integrity Statement:** Normal expected liquid nitrogen evaporation for dewar vessels of this geometry is **0.80 to 1.50 cm / day**. The calculated operational rate of **{metrics['avg_boiloff']:.2f} cm / day** confirms that vacuum insulation integrity is fully intact with no signs of thermal leakage.
+{integrity_alert}
 
 ---
 
@@ -326,7 +364,7 @@ def generate_html_report(records, metrics, chart_png_path, output_html_path):
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Cryo Tank 1 LN2 Compliance Report — Advanced Fertility of Alaska</title>
+  <title>{metrics.get('tank_id', 'Cryo Tank 1')} LN2 Compliance Report — Advanced Fertility of Alaska</title>
   <style>
     :root {{
       --primary: #0288d1;
@@ -611,12 +649,12 @@ def generate_html_report(records, metrics, chart_png_path, output_html_path):
       <div class="metric-card">
         <div class="metric-label">Mean Daily Boil-off</div>
         <div class="metric-val">{metrics['avg_boiloff']:.2f} <span style="font-size:13px; font-weight:600;">cm/day</span></div>
-        <div class="metric-sub">Nominal &lt; 1.50 cm/day</div>
+        <div class="metric-sub">{"Nominal &lt; 1.50 cm/day" if metrics['avg_boiloff'] <= 1.5 else '<span style="color:#dc2626; font-weight:700;">⚠️ ACCELERATED BOIL-OFF</span>'}</div>
       </div>
       <div class="metric-card">
         <div class="metric-label">Lowest Observed Level</div>
         <div class="metric-val">{metrics['min_level']:.1f} <span style="font-size:13px; font-weight:600;">cm</span></div>
-        <div class="metric-sub">Margin: +{metrics['min_level']-27.0:.1f} cm Above Floor</div>
+        <div class="metric-sub">{f"Margin: +{metrics['min_level']-27.0:.1f} cm Above Floor" if metrics['min_level'] >= 27.0 else f'<span style="color:#dc2626; font-weight:700;">CRITICAL: {metrics['min_level']-27.0:.1f} cm DEFICIT</span>'}</div>
       </div>
     </div>
 

@@ -608,6 +608,14 @@ def evaluate_ln2_schedule(now, last_log_time, initials="--", level_cm=0.0):
 
     next_check_str = f"{next_deadline_date.strftime('%A (%b %-d)')} by 5:00 PM"
 
+    if level_cm is not None and 0.0 < level_cm < 27.0:
+        return {
+            "status": "OVERDUE",
+            "badge": "CRITICAL LEVEL",
+            "detail": f"🔴 CRITICAL: Level {level_cm:.1f} cm (< 27.0 cm floor)! Accelerated boil-off / vacuum loss.",
+            "next_check": next_check_str
+        }
+
     if not is_last_satisfied:
         return {
             "status": "OVERDUE",

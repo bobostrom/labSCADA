@@ -3,7 +3,7 @@
 **Regulatory Standard:** CAP / CLIA / Joint Commission Cryogenic Storage Compliance  
 **Vessel Identifier:** `Cryo Tank 1` (Primary Embryo Storage Dewar)  
 **Reporting Interval:** September 01, 2026 through October 24, 2026  
-**Report Generated:** 2026-10-24 19:17:49 AKDT  
+**Report Generated:** 2026-10-24 19:28:30 AKDT  
 
 ---
 
@@ -14,7 +14,7 @@
 | **Inspection Cadence** | Routine checks every Monday, Wednesday, Friday by 5:00 PM | **🟢 COMPLIANT (100% Satisfied)** |
 | **Total Inspections Logged** | **27 inspections** recorded across 53 days | **🟢 FULL AUDIT TRAIL** |
 | **Refills Performed** | **18 manual transfers** (Typical top-off: 32.4 cm) | **🟢 NOMINAL CAPACITY** |
-| **Critical Floor Floor (27.0 cm)** | Lowest observed level: **29.0 cm** (Margin: +2.0 cm) | **🟢 ZERO CRITICAL EXCURSIONS** |
+| **Critical Floor (27.0 cm)** | Lowest observed level: **29.0 cm** (Margin: +2.0 cm) | **🟢 ZERO CRITICAL EXCURSIONS** |
 | **Maximum Fill Ceiling (35.0 cm)** | Highest observed level: **33.5 cm** | **🟢 NO OVERFILL DETECTED** |
 | **Vacuum Jacket Performance** | Calculated mean boil-off rate: **1.04 cm / day** | **🟢 NORMAL INSULATION INTEGRITY** |
 | **Overall Shift Compliance Rate** | **96%** (All missed scheduled checks caught up within 24h) | **🟢 MEETS CAP/CLIA CRITERIA** |
