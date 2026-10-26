@@ -209,7 +209,7 @@ def cancel_pushover_receipt(receipt):
     """Cancels a specific repeating emergency Priority 2 alert in Pushover."""
     if not receipt:
         return False
-    url = f"https://api.pushover.net/1/receipts/cancel/{receipt}.json"
+    url = f"https://api.pushover.net/1/receipts/{receipt}/cancel.json"
     encoded = urllib.parse.urlencode({"token": PUSHOVER_TOKEN}).encode("utf-8")
     req = urllib.request.Request(url, data=encoded, method="POST")
     try:
@@ -362,9 +362,10 @@ def resolve_alarm(cnl_num, final_val=None):
 
     print(f"[{datetime.now().strftime('%T')}] RESOLVED: {equip} (Duration: {duration_str})")
 
-    # If the repeating siren was never acknowledged, cancel it now
-    if receipt and not alarm["is_acknowledged"]:
-        cancel_pushover_receipt(receipt)
+    # Under Option 1 (Forced Wake-Up Policy):
+    # Do NOT cancel the Pushover repeating siren upon physical recovery.
+    # The siren continues repeating every 60s and the 'Acknowledge' button remains
+    # active on staff phones until an authorized person acknowledges on phone or kiosk.
 
     # Update database
     sql = f"""
@@ -376,11 +377,11 @@ def resolve_alarm(cnl_num, final_val=None):
     """
     db_execute(sql)
 
-    # Send Priority 0 "RESOLVED" notification with chime
+    # Send Priority 0 "RECOVERED" notification with chime
     val_disp = f"({final_val:.1f} cm)" if (cnl_num in (198, 199) and final_val is not None) else (f"({final_val:.1f}°C)" if final_val is not None else "")
     send_pushover_alert(
-        title=f"🟢 RESOLVED: {equip} Normal",
-        message=f"{equip} has returned to safe operational range {val_disp}. Duration: {duration_str}.",
+        title=f"🟢 RECOVERED: {equip} Normal",
+        message=f"{equip} has returned to safe operational range {val_disp}. Duration: {duration_str}. Siren will continue repeating until acknowledged on phone or kiosk.",
         priority=0,
         sound="magic"
     )
@@ -523,12 +524,11 @@ def phone_sync_and_escalation_worker():
     """Syncs mobile phone acknowledgments from Pushover and monitors escalations."""
     while True:
         try:
-            # 1. Sync Mobile Phone Acknowledgment from Pushover
+            # 1. Sync Mobile Phone Acknowledgment from Pushover (both active and recovered alarms)
             sql = """
             SELECT id, pushover_receipt, equipment_name 
             FROM mod_arc_postgre_sql.alarm_events 
             WHERE is_acknowledged = FALSE 
-              AND is_resolved = FALSE 
               AND pushover_receipt IS NOT NULL;
             """
             unacked_rows = db_query(sql)
@@ -595,7 +595,13 @@ def phone_sync_and_escalation_worker():
         except Exception as e:
             print(f"Escalation worker error: {e}")
 
-        time.sleep(15.0)
+        # Poll faster (5s) if there are active unacknowledged sirens, otherwise 15s
+        has_unacked = False
+        try:
+            has_unacked = len(unacked_rows) > 0
+        except Exception:
+            pass
+        time.sleep(5.0 if has_unacked else 15.0)
 
 
 # ==============================================================================
@@ -1025,11 +1031,29 @@ class ClinicalAlertHandler(http.server.BaseHTTPRequestHandler):
                 self.end_headers()
                 self.wfile.write(b"Markdown report not found.")
 
+        elif parsed.path == "/favicon.ico":
+            asset_path = os.path.join(REPO_DIR, "notes", "assets", "favicon.ico")
+            if not os.path.exists(asset_path):
+                asset_path = os.path.join(REPO_DIR, "notes", "assets", "KOMDlogo.png")
+            if os.path.exists(asset_path):
+                with open(asset_path, "rb") as f:
+                    content = f.read()
+                self.send_response(200)
+                self.send_header("Content-Type", "image/x-icon")
+                self.send_header("Cache-Control", "no-cache, must-revalidate")
+                self.send_header("Access-Control-Allow-Origin", "*")
+                self.end_headers()
+                self.wfile.write(content)
+            else:
+                self.send_response(404)
+                self.end_headers()
+                self.wfile.write(b"Favicon not found.")
+
         elif parsed.path.startswith("/assets/") or parsed.path.startswith("/notes/assets/"):
             filename = os.path.basename(parsed.path)
             asset_path = os.path.join(REPO_DIR, "notes", "assets", filename)
             if os.path.exists(asset_path) and os.path.isfile(asset_path):
-                content_type = "image/png" if filename.endswith(".png") else ("image/svg+xml" if filename.endswith(".svg") else "application/octet-stream")
+                content_type = "image/x-icon" if filename.endswith(".ico") else ("image/png" if filename.endswith(".png") else ("image/svg+xml" if filename.endswith(".svg") else "application/octet-stream"))
                 with open(asset_path, "rb") as f:
                     content = f.read()
                 self.send_response(200)

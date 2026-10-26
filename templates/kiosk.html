@@ -4,6 +4,10 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Advanced Fertility of Alaska | Cleanroom Operations & SCADA Telemetry</title>
+  <link rel="icon" type="image/x-icon" href="/favicon.ico?v=2">
+  <link rel="icon" type="image/png" sizes="64x64" href="/assets/KOMDlogo.png?v=2">
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=2">
+  <link rel="apple-touch-icon" href="/assets/KOMDlogo.png?v=2">
   <style>
     :root {
       --bg-app: #03141f;                 /* Deep Alaskan Navy */
@@ -65,7 +69,7 @@
     .card-unit { font-size:1.05rem; color:var(--text-muted); margin-left:3px; }
     .card-sub { font-size:12px; color:var(--text-muted); margin-top:8px; display:flex; justify-content:space-between; align-items:center; }
     
-    .status-badge { font-size:11px; font-weight:800; padding:3px 8px; border-radius:4px; text-transform:uppercase; letter-spacing:0.4px; }
+    .status-badge { font-size:10px; font-weight:800; padding:2px 6px; border-radius:4px; text-transform:uppercase; letter-spacing:0.3px; white-space:nowrap; display:inline-block; }
     .status-normal { background:rgba(0,230,118,0.15); color:#00e676; border:1px solid rgba(0,230,118,0.3); }
     .status-warn { background:rgba(255,171,0,0.15); color:#ffab00; border:1px solid rgba(255,171,0,0.3); }
     .status-alert { background:rgba(255,23,68,0.22); color:#ff1744; border:1px solid rgba(255,23,68,0.4); font-weight:800; animation:pulse-alert 1.5s infinite; }
@@ -263,26 +267,26 @@
         <div class="card-title">Medical Cold Storage</div>
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:8px;">
           <!-- Fridge Section -->
-          <div style="background:rgba(9,13,22,0.65); padding:10px 12px; border-radius:8px; border:1px solid rgba(255,255,255,0.06);">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-              <span style="font-size:11px; font-weight:700; color:#8899a6; text-transform:uppercase;">Med Fridge</span>
+          <div style="background:rgba(9,13,22,0.65); padding:10px 10px; border-radius:8px; border:1px solid rgba(255,255,255,0.06); min-width:0; overflow:hidden;">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:4px; margin-bottom:4px;">
+              <span style="font-size:11px; font-weight:700; color:#8899a6; text-transform:uppercase;">Fridge</span>
               <span id="badge-fridge" class="status-badge status-normal">NORMAL</span>
             </div>
-            <div style="font-size:1.75rem; font-weight:800; font-family:monospace; color:#f0f4f8; line-height:1.1;">
+            <div style="font-size:1.65rem; font-weight:800; font-family:monospace; color:#f0f4f8; line-height:1.1;">
               <span id="val-fridge">--</span><span class="card-unit">°C</span>
             </div>
-            <div style="font-size:11px; color:#8899a6; margin-top:5px;">Target: 2.0°C – 8.0°C</div>
+            <div style="font-size:11px; color:#8899a6; margin-top:5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Target: 2.0°C – 8.0°C</div>
           </div>
           <!-- Freezer Section -->
-          <div style="background:rgba(9,13,22,0.65); padding:10px 12px; border-radius:8px; border:1px solid rgba(255,255,255,0.06);">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-              <span style="font-size:11px; font-weight:700; color:#8899a6; text-transform:uppercase;">Med Freezer</span>
+          <div style="background:rgba(9,13,22,0.65); padding:10px 10px; border-radius:8px; border:1px solid rgba(255,255,255,0.06); min-width:0; overflow:hidden;">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:4px; margin-bottom:4px;">
+              <span style="font-size:11px; font-weight:700; color:#8899a6; text-transform:uppercase;">Freezer</span>
               <span id="badge-freezer" class="status-badge status-normal">NORMAL</span>
             </div>
-            <div style="font-size:1.75rem; font-weight:800; font-family:monospace; color:#f0f4f8; line-height:1.1;">
+            <div style="font-size:1.65rem; font-weight:800; font-family:monospace; color:#f0f4f8; line-height:1.1;">
               <span id="val-freezer">--</span><span class="card-unit">°C</span>
             </div>
-            <div style="font-size:11px; color:#8899a6; margin-top:5px;">Limit: &lt; -15.0°C</div>
+            <div style="font-size:11px; color:#8899a6; margin-top:5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Limit: &lt; -15.0°C</div>
           </div>
         </div>
       </div>
@@ -302,26 +306,26 @@
         <div class="card-title">Cleanroom Doors & Access</div>
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:8px;">
           <!-- Main Door Section -->
-          <div style="background:rgba(9,13,22,0.65); padding:10px 12px; border-radius:8px; border:1px solid rgba(255,255,255,0.06);">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+          <div style="background:rgba(9,13,22,0.65); padding:10px 10px; border-radius:8px; border:1px solid rgba(255,255,255,0.06); min-width:0; overflow:hidden;">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:4px; margin-bottom:4px;">
               <span style="font-size:11px; font-weight:700; color:#8899a6; text-transform:uppercase;">Main Door</span>
               <span id="badge-door1" class="status-badge status-normal">SECURE</span>
             </div>
-            <div style="font-size:1.55rem; font-weight:800; font-family:monospace; color:#f0f4f8; margin-top:2px;" id="val-door1">
+            <div style="font-size:1.5rem; font-weight:800; font-family:monospace; color:#f0f4f8; margin-top:2px;" id="val-door1">
               CLOSED
             </div>
-            <div style="font-size:11px; color:#8899a6; margin-top:5px;">Limit: &lt; 3m open</div>
+            <div style="font-size:11px; color:#8899a6; margin-top:5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Limit: &lt; 3m open</div>
           </div>
           <!-- Cryo Door Section -->
-          <div style="background:rgba(9,13,22,0.65); padding:10px 12px; border-radius:8px; border:1px solid rgba(255,255,255,0.06);">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-              <span style="font-size:11px; font-weight:700; color:#8899a6; text-transform:uppercase;">Cryo Lab Door</span>
+          <div style="background:rgba(9,13,22,0.65); padding:10px 10px; border-radius:8px; border:1px solid rgba(255,255,255,0.06); min-width:0; overflow:hidden;">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:4px; margin-bottom:4px;">
+              <span style="font-size:11px; font-weight:700; color:#8899a6; text-transform:uppercase;">Cryo Door</span>
               <span id="badge-door2" class="status-badge status-normal">SECURE</span>
             </div>
-            <div style="font-size:1.55rem; font-weight:800; font-family:monospace; color:#f0f4f8; margin-top:2px;" id="val-door2">
+            <div style="font-size:1.5rem; font-weight:800; font-family:monospace; color:#f0f4f8; margin-top:2px;" id="val-door2">
               CLOSED
             </div>
-            <div style="font-size:11px; color:#8899a6; margin-top:5px;">Limit: &lt; 3m open</div>
+            <div style="font-size:11px; color:#8899a6; margin-top:5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Limit: &lt; 3m open</div>
           </div>
         </div>
       </div>
@@ -345,7 +349,7 @@
           <p style="color:#8899a6; font-size:13px; margin:3px 0 0;">Reverse chronological history. Tap Acknowledge to silence repeating sirens.</p>
         </div>
       </div>
-      <div id="alarmsTable">Loading alarms...</div>
+      <div id="alarmsTable" style="overflow-x:auto;">Loading alarms...</div>
     </div>
   </div>
 
@@ -614,15 +618,18 @@
           }
 
           // Fridge (Ch 102 Temp, Ch 111 PLC Alarm)
+          let isFridgeAlarm = false;
+          let isFridgeWarn = false;
           if (r[102] !== undefined) {
             const f = r[102];
             document.getElementById('val-fridge').innerText = f.toFixed(1);
             const b = document.getElementById('badge-fridge');
-            const isAlarm = (r[111] !== undefined) ? (r[111] > 0) : (f > 8.0 || f < 2.0);
-            if (isAlarm) {
+            isFridgeAlarm = (r[111] !== undefined) ? (r[111] > 0) : (f > 8.0 || f < 2.0);
+            isFridgeWarn = !isFridgeAlarm && (f > 8.0 || f < 2.0);
+            if (isFridgeAlarm) {
               b.innerText = 'EXCURSION';
               b.className = 'status-badge status-alert';
-            } else if (f > 8.0 || f < 2.0) {
+            } else if (isFridgeWarn) {
               b.innerText = 'DELAY (2M)';
               b.className = 'status-badge status-warn';
             } else {
@@ -632,20 +639,35 @@
           }
 
           // Freezer (Ch 103 Temp, Ch 112 PLC Alarm)
+          let isFreezerAlarm = false;
+          let isFreezerWarn = false;
           if (r[103] !== undefined) {
             const fz = r[103];
             document.getElementById('val-freezer').innerText = fz.toFixed(1);
             const b = document.getElementById('badge-freezer');
-            const isAlarm = (r[112] !== undefined) ? (r[112] > 0) : (fz > -15.0);
-            if (isAlarm) {
+            isFreezerAlarm = (r[112] !== undefined) ? (r[112] > 0) : (fz > -15.0);
+            isFreezerWarn = !isFreezerAlarm && (fz > -15.0);
+            if (isFreezerAlarm) {
               b.innerText = 'EXCURSION';
               b.className = 'status-badge status-alert';
-            } else if (fz > -15.0) {
+            } else if (isFreezerWarn) {
               b.innerText = 'DELAY (3M)';
               b.className = 'status-badge status-warn';
             } else {
               b.innerText = 'NORMAL';
               b.className = 'status-badge status-normal';
+            }
+          }
+
+          // Dynamic Border Color for Medical Cold Storage
+          const cardCS = document.getElementById('card-cold-storage');
+          if (cardCS) {
+            if (isFridgeAlarm || isFreezerAlarm) {
+              cardCS.style.borderTopColor = '#ff1744';
+            } else if (isFridgeWarn || isFreezerWarn) {
+              cardCS.style.borderTopColor = '#ffab00';
+            } else {
+              cardCS.style.borderTopColor = '#00e676';
             }
           }
 
@@ -692,8 +714,9 @@
           }
 
           // Main Cleanroom Door (Ch 121 PLC Alarm: bDoor01_Alarm)
+          let d1Alarm = false;
           if (r[121] !== undefined) {
-            const d1Alarm = r[121] > 0;
+            d1Alarm = r[121] > 0;
             document.getElementById('val-door1').innerText = d1Alarm ? 'AJAR > 3M' : 'CLOSED';
             document.getElementById('val-door1').style.color = d1Alarm ? '#ff1744' : '#f0f4f8';
             const b1 = document.getElementById('badge-door1');
@@ -702,13 +725,20 @@
           }
 
           // Cryo Lab Door (Ch 122 PLC Alarm: bDoor02_Alarm)
+          let d2Alarm = false;
           if (r[122] !== undefined) {
-            const d2Alarm = r[122] > 0;
+            d2Alarm = r[122] > 0;
             document.getElementById('val-door2').innerText = d2Alarm ? 'AJAR > 3M' : 'CLOSED';
             document.getElementById('val-door2').style.color = d2Alarm ? '#ff1744' : '#f0f4f8';
             const b2 = document.getElementById('badge-door2');
             b2.innerText = d2Alarm ? 'ALARM' : 'SECURE';
             b2.className = d2Alarm ? 'status-badge status-alert' : 'status-badge status-normal';
+          }
+
+          // Dynamic Border Color for Cleanroom Doors Card
+          const cardDoors = document.getElementById('card-doors');
+          if (cardDoors) {
+            cardDoors.style.borderTopColor = (d1Alarm || d2Alarm) ? '#ff1744' : '#2979ff';
           }
 
           // Incubators (123 & 124)
@@ -759,27 +789,89 @@
             document.getElementById('alarmsTable').innerHTML = '<p style="color:#00e676; padding:12px 0;">🟢 All systems normal. No alarm events recorded.</p>';
             return;
           }
-          let h = '<table><thead><tr><th>Time</th><th>Equipment</th><th>Condition</th><th>Reading</th><th>Status</th><th>Action</th></tr></thead><tbody>';
+          let h = '<table style="min-width:700px;"><thead><tr>' +
+                  '<th>Time</th>' +
+                  '<th>Equipment</th>' +
+                  '<th>Condition</th>' +
+                  '<th>Reading</th>' +
+                  '<th>Status</th>' +
+                  '<th>Acknowledged By</th>' +
+                  '<th>Action</th>' +
+                  '</tr></thead><tbody>';
+
           rows.forEach(r => {
             let statusHtml = '';
             let actHtml = '-';
-            if (!r.is_acknowledged && !r.is_resolved) {
-              if (r.priority === 1) {
-                statusHtml = '<span style="color:#ffab00; font-weight:700;">⚠️ ACTIVE (WARNING)</span>';
-                actHtml = `<button class="btn" style="background:#ffab00; color:#0f172a; font-weight:700;" onclick="ackAlarm(${r.id})">✋ Acknowledge</button>`;
-              } else {
-                statusHtml = '<span style="color:#ff1744; font-weight:700;">🔴 ACTIVE (SIREN)</span>';
-                actHtml = `<button class="btn" onclick="ackAlarm(${r.id})">✋ Acknowledge</button>`;
-              }
-            } else if (r.is_acknowledged && !r.is_resolved) {
-              const tok = r.acknowledged_by_token ? ` title="Immutable Token: ${r.acknowledged_by_token}"` : '';
-              statusHtml = `<span style="color:#ffab00; font-weight:600;"${tok}>🟡 Attending (${r.acknowledged_by || 'Staff'})</span>`;
+            let whoAckHtml = '';
+            let rowStyle = '';
+
+            const isUnacked = !r.is_acknowledged;
+            const isResolved = r.is_resolved;
+
+            // 1. Acknowledged By Column
+            if (isUnacked) {
+              whoAckHtml = '<span style="color:#ff5252; font-weight:700; font-size:11.5px; letter-spacing:0.3px;">UNACKNOWLEDGED</span>';
             } else {
-              statusHtml = '<span style="color:#00e676;">🟢 Resolved</span>';
+              const name = r.acknowledged_by || 'Staff';
+              let ackTimeStr = '';
+              if (r.acknowledged_at) {
+                const parts = r.acknowledged_at.split(' ');
+                if (parts.length > 1) {
+                  ackTimeStr = `<span style="font-size:11px; color:#8899a6; display:block;">at ${parts[1].split('.')[0]}</span>`;
+                }
+              }
+              const tokAttr = r.acknowledged_by_token ? ` title="Token: ${r.acknowledged_by_token}"` : '';
+              whoAckHtml = `<span style="color:#00e5ff; font-weight:600;"${tokAttr}>${name}</span>${ackTimeStr}`;
             }
-            const valDisp = r.excursion_val !== null ? ([198, 199].includes(r.cnl_num) ? r.excursion_val + 'h overdue' : r.excursion_val + '°C') : '-';
+
+            // 2. Status & Action Columns
+            if (isUnacked && !isResolved) {
+              // Active ongoing alarm
+              if (r.priority === 1) {
+                statusHtml = '<span style="color:#ffab00; font-weight:700;">⚠️ ACTIVE (WARN)</span>';
+                actHtml = `<button class="btn" style="background:#ffab00; color:#0f172a; font-weight:700; padding:6px 14px; font-size:12px;" onclick="ackAlarm(${r.id})">✋ Acknowledge</button>`;
+              } else {
+                statusHtml = '<span style="color:#ff1744; font-weight:800;">🔴 ACTIVE (SIREN)</span>';
+                actHtml = `<button class="btn" style="background:#ff1744; color:#ffffff; font-weight:800; padding:6px 14px; font-size:12px;" onclick="ackAlarm(${r.id})">✋ Silence & Ack</button>`;
+              }
+              rowStyle = 'style="background:rgba(255,23,68,0.12);"';
+            } else if (!isUnacked && !isResolved) {
+              // Acknowledged, chamber attending / in progress
+              statusHtml = '<span style="color:#00b0ff; font-weight:700;">🟡 Attending</span>';
+              actHtml = '<span style="color:#8899a6; font-size:12px;">In Progress</span>';
+            } else if (isUnacked && isResolved) {
+              // Recovered on its own, but unacknowledged (past excursion needing sign-off)
+              const dur = r.duration_seconds ? ` (${r.duration_seconds < 60 ? r.duration_seconds + 's' : Math.floor(r.duration_seconds / 60) + 'm ' + (r.duration_seconds % 60) + 's'})` : '';
+              statusHtml = `<span style="color:#ffab00; font-weight:700;">⚠️ RECOVERED${dur}</span>`;
+              actHtml = `<button class="btn" style="background:#ffab00; color:#0b111e; font-weight:800; padding:6px 14px; font-size:12px;" onclick="ackAlarm(${r.id})">✍️ Sign Off</button>`;
+              rowStyle = 'style="background:rgba(255,171,0,0.08); border-left:3px solid #ffab00;"';
+            } else {
+              // Fully acknowledged and resolved
+              const dur = r.duration_seconds ? ` (${r.duration_seconds < 60 ? r.duration_seconds + 's' : Math.floor(r.duration_seconds / 60) + 'm ' + (r.duration_seconds % 60) + 's'})` : '';
+              statusHtml = `<span style="color:#00e676; font-weight:600;">🟢 Resolved${dur}</span>`;
+              actHtml = '<span style="color:#64748b; font-size:12px;">Complete</span>';
+            }
+
+            let valDisp = '-';
+            if (r.excursion_val !== null) {
+              if ([198, 199].includes(r.cnl_num)) {
+                valDisp = r.excursion_val + 'h overdue';
+              } else {
+                const num = parseFloat(r.excursion_val);
+                valDisp = !isNaN(num) ? num.toFixed(1) + '°C' : r.excursion_val + '°C';
+              }
+            }
             const timeDisp = r.triggered_at ? r.triggered_at.split('.')[0] : '-';
-            h += `<tr><td>${timeDisp}</td><td><b>${r.equipment_name}</b></td><td>${r.alarm_type}</td><td>${valDisp}</td><td>${statusHtml}</td><td>${actHtml}</td></tr>`;
+
+            h += `<tr ${rowStyle}>` +
+                 `<td>${timeDisp}</td>` +
+                 `<td><b>${r.equipment_name}</b></td>` +
+                 `<td>${r.alarm_type}</td>` +
+                 `<td>${valDisp}</td>` +
+                 `<td>${statusHtml}</td>` +
+                 `<td>${whoAckHtml}</td>` +
+                 `<td>${actHtml}</td>` +
+                 `</tr>`;
           });
           h += '</tbody></table>';
           document.getElementById('alarmsTable').innerHTML = h;
