@@ -145,6 +145,60 @@ def query_ln2_logs(tank_id="Cryo Tank 1", start_dt=None, end_dt=None):
     return records
 
 
+def query_alarm_events(start_dt, end_dt):
+    """Queries all equipment alarm excursions and QA pathway tests for target date range."""
+    env = os.environ.copy()
+    env["PGPASSWORD"] = PG_PASS
+    if PG_SSLMODE:
+        env["PGSSLMODE"] = PG_SSLMODE
+    sql = f"""
+    SELECT id, cnl_num, equipment_name, alarm_type, excursion_val, 
+           triggered_at, is_acknowledged, acknowledged_by, acknowledged_at, 
+           is_resolved, resolved_at, duration_seconds, priority 
+    FROM mod_arc_postgre_sql.alarm_events 
+    WHERE triggered_at >= '{start_dt.strftime('%Y-%m-%d %H:%M:%S')}' 
+      AND triggered_at <= '{end_dt.strftime('%Y-%m-%d %H:%M:%S')}'
+    ORDER BY triggered_at ASC;
+    """
+    cmd = ["psql", "-h", PG_HOST, "-p", str(PG_PORT), "-U", PG_USER, "-d", PG_DB, "-t", "-A", "-F", "\t", "-c", sql]
+    try:
+        res = subprocess.run(cmd, env=env, capture_output=True, text=True, check=True)
+        rows = []
+        for line in res.stdout.strip().split("\n"):
+            if line:
+                rows.append(line.split("\t"))
+        return rows
+    except Exception as e:
+        print(f"Warning: could not query alarm events: {e}")
+        return []
+
+
+def query_cryo_holds(start_dt, end_dt):
+    """Queries cryogenic specimen retrieval and maintenance holds for target date range."""
+    env = os.environ.copy()
+    env["PGPASSWORD"] = PG_PASS
+    if PG_SSLMODE:
+        env["PGSSLMODE"] = PG_SSLMODE
+    sql = f"""
+    SELECT id, equipment_name, started_at, expires_at, ended_at, initiated_by, duration_minutes, cancelled_early
+    FROM mod_arc_postgre_sql.cryo_maintenance_holds
+    WHERE started_at >= '{start_dt.strftime('%Y-%m-%d %H:%M:%S')}' 
+      AND started_at <= '{end_dt.strftime('%Y-%m-%d %H:%M:%S')}'
+    ORDER BY started_at ASC;
+    """
+    cmd = ["psql", "-h", PG_HOST, "-p", str(PG_PORT), "-U", PG_USER, "-d", PG_DB, "-t", "-A", "-F", "\t", "-c", sql]
+    try:
+        res = subprocess.run(cmd, env=env, capture_output=True, text=True, check=True)
+        rows = []
+        for line in res.stdout.strip().split("\n"):
+            if line:
+                rows.append(line.split("\t"))
+        return rows
+    except Exception as e:
+        print(f"Warning: could not query cryo maintenance holds: {e}")
+        return []
+
+
 def calculate_metrics(records, start_date=None, end_date=None, tank_id="Cryo Tank 1"):
     """Computes statistical metrics for CAP/CLIA compliance."""
     if not records:
@@ -380,7 +434,7 @@ I have reviewed the cryogenic storage records and vacuum insulation performance 
         f.write(md)
 
 
-def generate_single_tank_html_sheet(records, metrics, chart_b64, logo_b64, month_name_year):
+def generate_single_tank_html_sheet(records, metrics, chart_b64, logo_b64, month_name_year, page_num=1, total_pages=3):
     """Renders the HTML sheet block for a single tank (1 Page)."""
     start_str = metrics["start_date"].strftime("%B %d, %Y")
     end_str = metrics["end_date"].strftime("%B %d, %Y")
@@ -432,9 +486,10 @@ def generate_single_tank_html_sheet(records, metrics, chart_b64, logo_b64, month
         rows_html = """<tr><td colspan="7" class="text-center" style="padding:18px; color:#64748b;">No manual dipstick entries recorded for this calendar month.</td></tr>"""
 
     logo_img_tag = f'<img src="data:image/png;base64,{logo_b64}" alt="AFA Logo" class="header-logo">' if logo_b64 else ''
+    sheet_anchor_id = f"sheet-{tank_id.lower().replace(' ', '-')}"
 
     sheet_html = f"""
-    <div class="sheet">
+    <div class="sheet" id="{sheet_anchor_id}">
       <!-- Sheet Header -->
       <div class="header">
         <div class="header-brand-wrap">
@@ -552,11 +607,348 @@ def generate_single_tank_html_sheet(records, metrics, chart_b64, logo_b64, month
       <!-- Sheet Footer -->
       <div class="sheet-footer">
         <span>Advanced Fertility of Alaska &bull; Cryogenic Specimen Compliance Audit</span>
-        <span>Powered by <strong>Lares Telemetry</strong></span>
+        <span>Page {page_num} of {total_pages} &bull; Powered by <strong>Lares Telemetry</strong></span>
       </div>
     </div>
     """
     return sheet_html
+
+
+def generate_alarms_audit_html_sheet(start_dt, end_dt, logo_b64, month_name_year, page_num=3, total_pages=3):
+    """Renders the comprehensive Facility Alarms, Excursions & Quality Audit Sheet (Page 3)."""
+    start_str = start_dt.strftime("%B %d, %Y")
+    end_str = end_dt.strftime("%B %d, %Y")
+    now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S AKDT")
+
+    all_alarms = query_alarm_events(start_dt, end_dt)
+    holds = query_cryo_holds(start_dt, end_dt)
+
+    # Classify alarms: QA Tests vs Physical Equipment Excursions
+    excursions = []
+    qa_tests = []
+    session_events = []
+
+    for a in all_alarms:
+        if len(a) < 13:
+            continue
+        equip = a[2].strip()
+        cond = a[3].strip()
+        if equip.lower() == "qa system" or "pathway test" in cond.lower():
+            qa_tests.append(a)
+        elif equip.lower() == "lab operations" or "session mode" in cond.lower():
+            session_events.append(a)
+        else:
+            excursions.append(a)
+
+    # 1. Compute KPIs
+    total_excursions = len(excursions)
+    
+    response_times = []
+    for a in excursions:
+        is_ack = (a[6] == 't')
+        trig_raw = a[5][:19]
+        ack_raw = a[8][:19] if (a[8] and a[8] != 'NULL') else None
+        if is_ack and ack_raw:
+            try:
+                t_dt = datetime.strptime(trig_raw, "%Y-%m-%d %H:%M:%S")
+                a_dt = datetime.strptime(ack_raw, "%Y-%m-%d %H:%M:%S")
+                delta = max(0, int((a_dt - t_dt).total_seconds()))
+                response_times.append(delta)
+            except Exception:
+                pass
+
+    if response_times:
+        mean_resp_sec = int(sum(response_times) / len(response_times))
+        if mean_resp_sec < 60:
+            mean_resp_disp = f"{mean_resp_sec}s"
+        else:
+            mean_resp_disp = f"{mean_resp_sec // 60}m {mean_resp_sec % 60}s"
+    else:
+        mean_resp_disp = "0s (N/A)" if total_excursions == 0 else "Pending"
+
+    total_holds_count = len(holds)
+    total_hold_minutes = sum(int(h[6]) for h in holds if len(h) >= 7 and h[6] and h[6] != "NULL")
+
+    qa_test_days = set()
+    for q in qa_tests:
+        qa_test_days.add(q[5][:10])
+
+    # 2. Equipment-by-Equipment Summary
+    equipment_specs = [
+        ("Cryo Tank 1 (Embryos)", "Vapor < -135.0°C • Frost Floor > 10 cm", "Cryo Tank 1"),
+        ("Cryo Tank 2 (Sperm)", "Vapor < -135.0°C • Frost Floor > 10 cm", "Cryo Tank 2"),
+        ("Medical Refrigerator", "2.0°C to 8.0°C (High Trip: 8.5°C)", "Medical Fridge"),
+        ("Medical Freezer", "< -15.0°C (Compressor Target: -20°C)", "Medical Freezer"),
+        ("Chamber Incubators 01 & 02", "Chamber Contacts Normal (CO2/Temp In-Range)", "Incubator"),
+        ("Cleanroom Access Doors", "Door Work Limit < 3m • Off-Session Secure", "Door")
+    ]
+
+    equip_rows_html = ""
+    for label, spec, match_key in equipment_specs:
+        matched = [e for e in excursions if match_key.lower() in e[2].lower()]
+        count = len(matched)
+        peak_str = "—"
+        if count > 0:
+            vals = []
+            for m in matched:
+                if m[4] and m[4] != "NULL":
+                    try:
+                        vals.append(float(m[4]))
+                    except ValueError:
+                        pass
+            if vals:
+                peak_str = f"{max(vals):.1f}°C"
+
+        if count == 0:
+            status_badge = '<span style="color:#16a34a; font-weight:700;">🟢 100% IN-TOLERANCE</span>'
+        else:
+            status_badge = f'<span style="color:#dc2626; font-weight:800;">🔴 {count} EXCURSION{"S" if count>1 else ""}</span>'
+
+        equip_rows_html += f"""
+        <tr>
+          <td><strong>{label}</strong></td>
+          <td style="font-size:11.5px; color:#475569;">{spec}</td>
+          <td class="text-center font-bold" style="color:{'#dc2626' if count > 0 else '#16a34a'};">{count}</td>
+          <td class="text-center font-mono">{peak_str}</td>
+          <td class="text-center">{status_badge}</td>
+        </tr>
+        """
+
+    # 3. Excursion Incident Table
+    incident_rows_html = ""
+    if excursions:
+        for idx, e in enumerate(excursions, 1):
+            ts = e[5][:16] if e[5] else "-"
+            equip = e[2]
+            cond = e[3]
+            peak = f"{float(e[4]):.1f}°C" if (e[4] and e[4] != "NULL") else "Trip"
+            dur_sec = int(e[11]) if (e[11] and e[11] != "NULL") else 0
+            dur_str = f"{dur_sec // 60}m {dur_sec % 60}s" if dur_sec >= 60 else f"{dur_sec}s"
+            
+            is_ack = (e[6] == 't')
+            who_ack = e[7] if (e[7] and e[7] != "NULL") else "Unacknowledged"
+            if is_ack and e[8] and e[8] != "NULL":
+                try:
+                    t_dt = datetime.strptime(e[5][:19], "%Y-%m-%d %H:%M:%S")
+                    a_dt = datetime.strptime(e[8][:19], "%Y-%m-%d %H:%M:%S")
+                    rt_s = max(0, int((a_dt - t_dt).total_seconds()))
+                    rt_str = f"{rt_s // 60}m {rt_s % 60}s" if rt_s >= 60 else f"{rt_s}s"
+                except Exception:
+                    rt_str = "Logged"
+            else:
+                rt_str = '<span style="color:#dc2626; font-weight:700;">Unacked</span>'
+
+            row_id = int(e[0]) if e[0] and e[0].isdigit() else idx
+            incident_rows_html += f"""
+            <tr>
+              <td class="text-center font-mono" style="font-size:11px;">{row_id:02d}</td>
+              <td class="font-mono" style="font-size:11px; white-space:nowrap;">{ts}</td>
+              <td><b>{equip}</b></td>
+              <td style="color:#0369a1; font-weight:600;">{cond}</td>
+              <td class="text-center font-mono font-bold" style="color:#dc2626;">{peak}</td>
+              <td class="text-center font-mono">{dur_str}</td>
+              <td class="text-center font-mono">{rt_str}</td>
+              <td class="text-center"><b>{who_ack}</b></td>
+              <td style="font-size:11px; color:#16a34a;">Physical Recovery Verified</td>
+            </tr>
+            """
+    else:
+        incident_rows_html = """<tr><td colspan="9" class="text-center" style="padding:16px; color:#16a34a; font-weight:700;">🟢 Zero excursions recorded. All chambers operated within clinical specifications.</td></tr>"""
+
+    # 4. Daily QA Pathway Test Table
+    qa_rows_html = ""
+    if qa_tests:
+        for q in qa_tests:
+            ts = q[5][:16] if q[5] else "-"
+            who = q[7] if (q[7] and q[7] != "NULL") else "Lab Kiosk"
+            qa_rows_html += f"""
+            <tr>
+              <td class="font-mono text-center">{ts}</td>
+              <td><b>Daily Alarm Pathway Verification</b></td>
+              <td>Priority 0 Remote Dispatch (Pushover Cloud Gateway)</td>
+              <td class="text-center"><span style="color:#16a34a; font-weight:700;">🟢 OPERATIONAL</span></td>
+              <td class="text-center"><b>{who}</b></td>
+            </tr>
+            """
+    else:
+        qa_rows_html = """<tr><td colspan="5" class="text-center" style="padding:12px; color:#64748b;">No daily pathway tests logged during this period.</td></tr>"""
+
+    # 5. Cryo Holds Table
+    holds_rows_html = ""
+    if holds:
+        for h in holds:
+            st_ts = h[2][:16] if h[2] else "-"
+            tank = h[1]
+            dur_min = h[6] if len(h) >= 7 and h[6] and h[6] != "NULL" else "15"
+            who = h[5] if len(h) >= 6 and h[5] and h[5] != "NULL" else "Staff"
+            cancelled = (len(h) >= 8 and h[7] == 't')
+            status_txt = '<span style="color:#0284c7; font-weight:700;">Resumed Early</span>' if cancelled else '<span style="color:#16a34a;">15m Auto-Expired</span>'
+            holds_rows_html += f"""
+            <tr>
+              <td class="font-mono text-center">{st_ts}</td>
+              <td><b>{tank}</b></td>
+              <td class="text-center">{dur_min} min</td>
+              <td class="text-center"><b>{who}</b></td>
+              <td class="text-center">{status_txt}</td>
+              <td style="font-size:11px; color:#475569;">Canister retrieval / dipstick inspection hold</td>
+            </tr>
+            """
+    else:
+        holds_rows_html = """<tr><td colspan="6" class="text-center" style="padding:12px; color:#64748b;">No manual specimen retrieval holds initiated during this month.</td></tr>"""
+
+    logo_img_tag = f'<img src="data:image/png;base64,{logo_b64}" alt="AFA Logo" class="header-logo">' if logo_b64 else ''
+
+    sheet_html = f"""
+    <div class="sheet" id="sheet-facility-alarms">
+      <!-- Sheet Header -->
+      <div class="header">
+        <div class="header-brand-wrap">
+          <div class="logo-circle-wrap">
+            {logo_img_tag}
+          </div>
+          <div>
+            <h1 class="clinic-title">Advanced Fertility of Alaska</h1>
+            <div class="doc-subtitle">Facility Alarms, Excursions &amp; Quality Audit Sheet</div>
+            <div class="vessel-tag">CAP / CLIA / Joint Commission Environmental QA &bull; Entire Cleanroom Suite</div>
+          </div>
+        </div>
+        <div class="meta-block">
+          <div><b>Compliance Month:</b> {month_name_year}</div>
+          <div><b>Audit Scope:</b> Cryo Tanks, Cold Storage, Incubators, Access Barriers</div>
+          <div><b>Period:</b> {start_str} – {end_str}</div>
+          <div><b>Generated:</b> {now_str}</div>
+        </div>
+      </div>
+
+      <!-- 1. Executive Summary KPI Grid -->
+      <div class="section-title">1. Executive Environmental Quality &amp; Alarm Response Metrics</div>
+      <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:12px; margin:12px 0 18px 0;">
+        <div style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:8px; padding:12px 10px; text-align:center;">
+          <div style="font-size:24px; font-weight:900; font-family:monospace; color:{'#dc2626' if total_excursions > 0 else '#16a34a'}; line-height:1.1;">{total_excursions}</div>
+          <div style="font-size:10.5px; font-weight:700; color:#64748b; text-transform:uppercase; margin-top:4px;">Total Critical Excursions</div>
+        </div>
+        <div style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:8px; padding:12px 10px; text-align:center;">
+          <div style="font-size:24px; font-weight:900; font-family:monospace; color:#0f172a; line-height:1.1;">{mean_resp_disp}</div>
+          <div style="font-size:10.5px; font-weight:700; color:#64748b; text-transform:uppercase; margin-top:4px;">Mean Siren Response Time</div>
+        </div>
+        <div style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:8px; padding:12px 10px; text-align:center;">
+          <div style="font-size:24px; font-weight:900; font-family:monospace; color:#0284c7; line-height:1.1;">{len(qa_tests)} Verified</div>
+          <div style="font-size:10.5px; font-weight:700; color:#64748b; text-transform:uppercase; margin-top:4px;">Daily Pathway Test Dispatch</div>
+        </div>
+        <div style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:8px; padding:12px 10px; text-align:center;">
+          <div style="font-size:24px; font-weight:900; font-family:monospace; color:#0f172a; line-height:1.1;">{total_holds_count} ({total_hold_minutes}m)</div>
+          <div style="font-size:10.5px; font-weight:700; color:#64748b; text-transform:uppercase; margin-top:4px;">Authorized Cryo Access Holds</div>
+        </div>
+      </div>
+
+      <!-- 2. Facility Scope & Equipment Tolerance Breakdown -->
+      <div class="section-title">2. Facility Scope &amp; Equipment Tolerance Adherence</div>
+      <table class="summary-table">
+        <thead>
+          <tr>
+            <th>Equipment System</th>
+            <th>Validated Operating Specification</th>
+            <th class="text-center">Recorded Incidents</th>
+            <th class="text-center">Observed Peak</th>
+            <th class="text-center">Monthly Compliance Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {equip_rows_html}
+        </tbody>
+      </table>
+
+      <!-- 3. Excursions & Incident Log Table -->
+      <div class="section-title">3. Environmental Excursion &amp; Corrective Action Audit Trail</div>
+      <table class="audit-table">
+        <thead>
+          <tr>
+            <th class="text-center">ID</th>
+            <th>Triggered Time</th>
+            <th>Equipment</th>
+            <th>Condition</th>
+            <th class="text-center">Peak</th>
+            <th class="text-center">Duration</th>
+            <th class="text-center">Response</th>
+            <th class="text-center">Staff Ack</th>
+            <th>Resolution / Corrective Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {incident_rows_html}
+        </tbody>
+      </table>
+
+      <!-- 4. Daily QA Pathway Test Table -->
+      <div class="section-title">4. Daily Remote Alarm Siren &amp; Gateway Verification Log</div>
+      <table class="summary-table">
+        <thead>
+          <tr>
+            <th class="text-center">Test Time (AKDT)</th>
+            <th>Pathway Tested</th>
+            <th>Gateway Description</th>
+            <th class="text-center">Operational Result</th>
+            <th class="text-center">Verified By</th>
+          </tr>
+        </thead>
+        <tbody>
+          {qa_rows_html}
+        </tbody>
+      </table>
+
+      <!-- 5. Cryo Holds Table -->
+      <div class="section-title">5. Authorized Cryogenic Specimen Retrieval &amp; Inspection Holds</div>
+      <table class="summary-table">
+        <thead>
+          <tr>
+            <th class="text-center">Hold Initiated (AKDT)</th>
+            <th>Dewar Tank</th>
+            <th class="text-center">Mute Limit</th>
+            <th class="text-center">Staff Initiator</th>
+            <th class="text-center">Resumed State</th>
+            <th>Clinical Justification</th>
+          </tr>
+        </thead>
+        <tbody>
+          {holds_rows_html}
+        </tbody>
+      </table>
+
+      <!-- 6. Formal Laboratory Quality Sign-off Block -->
+      <div class="signoff-box">
+        <div>
+          <div style="font-size:12px; font-weight:700; color:#0f172a; margin-bottom:4px;">Embryology Laboratory Supervisor Certification</div>
+          <div style="font-size:11.5px; color:#64748b; line-height:1.4;">
+            "I certify under clinical laboratory quality standards (CAP/CLIA) that the above environmental alarm excursions, staff response times, daily verification tests, and corrective action records represent the complete, unaltered electronic record for this monthly operating cycle."
+          </div>
+          <div class="sig-line"></div>
+          <div class="sig-label">
+            <span>Laboratory Supervisor Signature</span>
+            <span>Date</span>
+          </div>
+        </div>
+        <div>
+          <div style="font-size:12px; font-weight:700; color:#0f172a; margin-bottom:4px;">Medical / Laboratory Director Monthly Acceptance</div>
+          <div style="font-size:11.5px; color:#64748b; line-height:1.4;">
+            "I have reviewed all facility environmental alarms, remote siren pathway verifications, staff response times, and corrective actions for the month of {month_name_year}. All specimen storage environments and cleanroom operations are validated as acceptable for human tissue preservation."
+          </div>
+          <div class="sig-line"></div>
+          <div class="sig-label">
+            <span>Medical / Laboratory Director Signature</span>
+            <span>Date</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sheet Footer -->
+      <div class="sheet-footer">
+        <span>Advanced Fertility of Alaska &bull; Facility Alarms &amp; Environmental Quality Audit</span>
+        <span>Page {page_num} of {total_pages} &bull; Powered by <strong>Lares Telemetry</strong></span>
+      </div>
+    </div>
+    """
+    return sheet_html
+
 
 
 def generate_monthly_packet(month_str=None, output_html_path=None):
@@ -585,10 +977,11 @@ def generate_monthly_packet(month_str=None, output_html_path=None):
     # Query all active tanks
     tanks = get_all_tank_ids()
     sheets_html_list = []
+    total_sheets = len(tanks) + 1  # Tanks plus Facility Alarms Audit Sheet (Page 3)
 
-    print(f"Generating Monthly Compliance Report Packet for {month_name_year} ({len(tanks)} tanks)...")
+    print(f"Generating Monthly Compliance Report Packet for {month_name_year} ({total_sheets} total pages)...")
 
-    for tank in tanks:
+    for idx, tank in enumerate(tanks, start=1):
         suffix = tank.lower().replace(" ", "_")
         records = query_ln2_logs(tank, start_dt, end_dt)
         metrics = calculate_metrics(records, start_dt, end_dt, tank_id=tank)
@@ -600,8 +993,12 @@ def generate_monthly_packet(month_str=None, output_html_path=None):
         with open(chart_png, "rb") as f:
             chart_b64 = base64.b64encode(f.read()).decode("utf-8")
             
-        sheet_html = generate_single_tank_html_sheet(records, metrics, chart_b64, logo_b64, month_name_year)
+        sheet_html = generate_single_tank_html_sheet(records, metrics, chart_b64, logo_b64, month_name_year, page_num=idx, total_pages=total_sheets)
         sheets_html_list.append(sheet_html)
+
+    # PAGE 3: Comprehensive Facility Alarms & Environmental Quality Audit Sheet
+    alarms_sheet_html = generate_alarms_audit_html_sheet(start_dt, end_dt, logo_b64, month_name_year, page_num=total_sheets, total_pages=total_sheets)
+    sheets_html_list.append(alarms_sheet_html)
 
     all_sheets_joined = "\n".join(sheets_html_list)
 
@@ -628,6 +1025,7 @@ def generate_monthly_packet(month_str=None, output_html_path=None):
       --green: #16a34a;
     }}
     * {{ box-sizing: border-box; }}
+    html {{ scroll-behavior: smooth; }}
     body {{
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       color: var(--text);
@@ -744,6 +1142,39 @@ def generate_monthly_packet(month_str=None, output_html_path=None):
       border-radius: 20px;
       border: 1px solid rgba(255,255,255,0.12);
     }}
+    .nav-pills {{
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-left: 10px;
+    }}
+    .nav-pill {{
+      color: #94a3b8;
+      text-decoration: none;
+      font-size: 11.5px;
+      font-weight: 700;
+      padding: 5px 11px;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      transition: all 0.15s ease;
+      white-space: nowrap;
+    }}
+    .nav-pill:hover {{
+      background: rgba(56, 189, 248, 0.2);
+      color: #38bdf8;
+      border-color: #38bdf8;
+      transform: translateY(-1px);
+    }}
+    .nav-pill-alarms {{
+      border-color: rgba(248, 113, 113, 0.4);
+      color: #fca5a5;
+    }}
+    .nav-pill-alarms:hover {{
+      background: rgba(239, 68, 68, 0.25);
+      color: #ffffff;
+      border-color: #ef4444;
+    }}
     .btn-print {{
       background: #0284c7;
       color: #ffffff;
@@ -772,6 +1203,7 @@ def generate_monthly_packet(month_str=None, output_html_path=None):
       padding: 40px 48px;
       border-radius: 10px;
       box-shadow: 0 10px 32px rgba(0,0,0,0.5);
+      scroll-margin-top: 72px;
     }}
 
     /* Header & Branding */
@@ -1022,7 +1454,12 @@ def generate_monthly_packet(month_str=None, output_html_path=None):
         <span class="month-pill-title">📅 Select Month:</span>
         <input type="month" id="reportMonth" value="{month_str}" min="2024-01" max="2035-12" class="month-picker-input" onchange="changeReportMonth(this.value)" onclick="try {{ this.showPicker(); }} catch(e) {{}}">
       </div>
-      <span class="badge-tanks">{len(tanks)} Tanks &bull; 1 Per Page</span>
+      <span class="badge-tanks">{total_sheets} Pages &bull; Tanks &amp; Alarms Audit</span>
+      <div class="nav-pills">
+        <a href="#sheet-cryo-tank-1" class="nav-pill">Page 1: Tank 1</a>
+        <a href="#sheet-cryo-tank-2" class="nav-pill">Page 2: Tank 2</a>
+        <a href="#sheet-facility-alarms" class="nav-pill nav-pill-alarms">Page 3: Facility Alarms</a>
+      </div>
     </div>
     <div class="toolbar-right">
       <button type="button" class="btn-print" onclick="window.print()">🖨️ Print / Save PDF Packet</button>

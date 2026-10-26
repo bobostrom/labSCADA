@@ -262,6 +262,18 @@ Accepts a new dipstick measurement, resets the 72-hour timer, and cancels active
 }
 ```
 
+### 5. `GET /report/ln2` (Monthly Compliance Report Packet)
+Generates the comprehensive monthly clinical audit packet. Features a floating clinical toolbar with instant month picker (`?month=YYYY-MM`), quick page jump pills, and physical 1-page-per-sheet printing (`@media print`):
+* **Page 1: Cryo Tank 1 (Embryos)** — Accreditation findings, 240 DPI sawtooth boil-off curve, chronological dipstick audit trail, and supervisor/director sign-offs.
+* **Page 2: Cryo Tank 2 (Sperm)** — Accreditation findings, vacuum integrity metrics, incident documentation, chronological audit trail, and sign-offs.
+* **Page 3: Facility Alarms, Excursions & Quality Audit Sheet** — Complete clinical audit covering the entire cleanroom suite:
+  1. *Executive Metrics:* Total excursions, mean staff siren response time, verified daily pathway tests, and authorized specimen access holds.
+  2. *Equipment Tolerance Adherence:* Scope breakdown across Cryo Tank 1, Cryo Tank 2, Medical Refrigerator, Medical Freezer, Chamber Incubators 01 & 02, and Cleanroom Access Barriers.
+  3. *Corrective Action Audit Trail:* Chronological incident log with trigger timestamps, peak values, duration, staff acknowledgement latency, and physical recovery verification.
+  4. *Daily Remote Siren & Gateway Verification:* Daily Priority 0 Pushover dispatch tests with operator initials and operational results.
+  5. *Authorized Specimen Retrieval & Maintenance Holds:* 15-minute mute limits, staff initiator, auto-expiry vs. early manual resume records.
+  6. *Formal Laboratory QA Sign-Off Block:* Dual certification lines for Embryology Laboratory Supervisor and Medical/Laboratory Director.
+
 ---
 
 ## 8. Real-Time Telemetry & Boil-Off Visualization
