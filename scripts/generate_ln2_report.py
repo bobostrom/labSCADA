@@ -28,7 +28,7 @@ from matplotlib.patches import Patch
 from matplotlib.lines import Line2D
 
 REPO_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-ASSETS_DIR = os.path.join(REPO_DIR, "notes", "assets")
+ASSETS_DIR = os.path.join(REPO_DIR, "assets")
 LOGO_PATH = os.path.join(ASSETS_DIR, "KOMDlogo.png")
 REPORT_MD_PATH = os.path.join(REPO_DIR, "notes", "ln2_dipstick_compliance_report.md")
 CHART_PNG_PATH = os.path.join(ASSETS_DIR, "ln2_sawtooth_chart.png")

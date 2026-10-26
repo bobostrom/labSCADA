@@ -1051,7 +1051,9 @@ class ClinicalAlertHandler(http.server.BaseHTTPRequestHandler):
 
         elif parsed.path.startswith("/assets/") or parsed.path.startswith("/notes/assets/"):
             filename = os.path.basename(parsed.path)
-            asset_path = os.path.join(REPO_DIR, "notes", "assets", filename)
+            asset_path = os.path.join(REPO_DIR, "assets", filename)
+            if not os.path.exists(asset_path):
+                asset_path = os.path.join(REPO_DIR, "notes", "assets", filename)
             if os.path.exists(asset_path) and os.path.isfile(asset_path):
                 content_type = "image/x-icon" if filename.endswith(".ico") else ("image/png" if filename.endswith(".png") else ("image/svg+xml" if filename.endswith(".svg") else "application/octet-stream"))
                 with open(asset_path, "rb") as f:
@@ -1067,16 +1069,18 @@ class ClinicalAlertHandler(http.server.BaseHTTPRequestHandler):
                 self.end_headers()
                 self.wfile.write(b"Asset not found.")
 
-        elif parsed.path in ["/report/ln2/chart", "/notes/assets/ln2_sawtooth_chart.png"]:
+        elif parsed.path in ["/report/ln2/chart", "/assets/ln2_sawtooth_chart.png", "/notes/assets/ln2_sawtooth_chart.png"]:
             params = urllib.parse.parse_qs(parsed.query)
             tank_param = params.get("tank", ["1"])[0]
             suffix = "tank2" if "2" in str(tank_param) else "tank1"
             tank_num = "2" if "2" in str(tank_param) else "1"
-            chart_path = os.path.join(REPO_DIR, "notes", "assets", f"ln2_sawtooth_cryo_tank_{tank_num}.png")
+            chart_path = os.path.join(REPO_DIR, "assets", f"ln2_sawtooth_cryo_tank_{tank_num}.png")
             if not os.path.exists(chart_path):
-                chart_path = os.path.join(REPO_DIR, "notes", "assets", f"ln2_sawtooth_chart_{suffix}.png")
+                chart_path = os.path.join(REPO_DIR, "assets", f"ln2_sawtooth_chart_{suffix}.png")
             if not os.path.exists(chart_path):
-                chart_path = os.path.join(REPO_DIR, "notes", "assets", "ln2_sawtooth_chart.png")
+                chart_path = os.path.join(REPO_DIR, "assets", "ln2_sawtooth_chart.png")
+            if not os.path.exists(chart_path):
+                chart_path = os.path.join(REPO_DIR, "notes", "assets", f"ln2_sawtooth_cryo_tank_{tank_num}.png")
             if os.path.exists(chart_path):
                 with open(chart_path, "rb") as f:
                     content = f.read()

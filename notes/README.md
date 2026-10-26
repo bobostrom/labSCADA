@@ -8,5 +8,5 @@ This directory contains internal engineering scratch notes, network setups, rout
 * **[routersetup for labmon.md](routersetup%20for%20labmon.md):** MikroTik RouterOS setup, dynamic DNS, and firewall configuration.
 * **[user_access_and_custom_domain_strategy.md](user_access_and_custom_domain_strategy.md):** Cloudflare Zero Trust tunnel and custom domain access strategy.
 * **[cloud_database_and_supabase_strategy.md](cloud_database_and_supabase_strategy.md):** Architecture for multi-clinic replication, Supabase PostgreSQL, auth, and cloud report storage.
-* **`assets/`:** Generated charts, report assets, and diagrams.
+* **`assets/`:** Symlink to root [`../assets/`](../assets/) containing clinical logos, favicons, and generated charts.
 * **`router_backups/`:** RouterOS backup scripts and exports.

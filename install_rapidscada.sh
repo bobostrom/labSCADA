@@ -161,7 +161,9 @@ fi
 
 # Deploy favicon to webroot
 sudo mkdir -p /var/www/html
-if [ -f "$REPO_DIR/notes/assets/favicon.ico" ]; then
+if [ -f "$REPO_DIR/assets/favicon.ico" ]; then
+    sudo cp "$REPO_DIR/assets/favicon.ico" /var/www/html/favicon.ico
+elif [ -f "$REPO_DIR/notes/assets/favicon.ico" ]; then
     sudo cp "$REPO_DIR/notes/assets/favicon.ico" /var/www/html/favicon.ico
 fi
 
