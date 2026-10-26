@@ -1086,9 +1086,17 @@ def render_mobile_log_html(host, tank_param, readings):
     t2_temp = readings.get(104, readings.get(114, -196.0))
     t2_level = readings.get(198, 16.8)
 
+    ln2_data = get_ln2_status()
+    t1_info = ln2_data.get("tanks", {}).get("Cryo Tank 1", {})
+    t2_info = ln2_data.get("tanks", {}).get("Cryo Tank 2", {})
+
+    t1_last_log = t1_info.get("level_cm", 28.0)
+    t2_last_log = t2_info.get("level_cm", 30.0)
+
+    selected_last_log = t2_last_log if is_tank2 else t1_last_log
+    init_level = f"{selected_last_log:.1f}"
     disp_temp = f"{t2_temp if is_tank2 else t1_temp:.1f} °C"
     disp_sensor = f"{t2_level if is_tank2 else t1_level:.1f} cm"
-    init_level = f"{t2_level if is_tank2 else t1_level:.1f}"
 
     return render_template(
         "mobile_log.html",
@@ -1099,10 +1107,10 @@ def render_mobile_log_html(host, tank_param, readings):
         init_level=init_level,
         t1_temp_disp=f"{t1_temp:.1f} °C",
         t1_level_disp=f"{t1_level:.1f} cm",
-        t1_default_val=f"{t1_level:.1f}",
+        t1_default_val=f"{t1_last_log:.1f}",
         t2_temp_disp=f"{t2_temp:.1f} °C",
         t2_level_disp=f"{t2_level:.1f} cm",
-        t2_default_val=f"{t2_level:.1f}"
+        t2_default_val=f"{t2_last_log:.1f}"
     )
 
 
