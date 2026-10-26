@@ -53,13 +53,15 @@ To eliminate false emergency alerts while ensuring fail-safe detection of genuin
 
 ### Configured Equipment Delay Filters
 
-| Equipment | Analog Temp Channel | Discrete Alarm Channel | Pickup Delay (`tPickupDelay`) | Clinical Rationale |
-| :--- | :--- | :--- | :--- | :--- |
-| **Medical Freezer** | Ch 111 (`rMedFreezerTemp`) | Ch 124 (`bMedFreezerAlarm`) | **3 Minutes** (`T#3M`) | Deep cold storage thermal inertia; accommodates daily inventory checks. |
-| **Medical Refrigerator** | Ch 112 (`rMedFridgeTemp`) | Ch 123 (`bMedFridgeAlarm`) | **2 Minutes** (`T#2M`) | Refrigerator air mix recovers rapidly; 2 minutes filters normal door access. |
-| **Cryo Tank 1 (Embryos)** | Ch 125 / Ch 113 (`rCryoTank1Temp`) | Ch 126 (`bCryoTank1Alarm`) | **30 Seconds** (`T#30S`) | Liquid nitrogen vapor requires immediate warning upon thermal rise. |
-| **Cryo Tank 2 (Sperm)** | Ch 104 / Ch 114 (`rCryoTank2Temp`) | Ch 127 (`bCryoTank2Alarm`) | **30 Seconds** (`T#30S`) | Immediate warning upon vapor elevation or level depletion. |
-| **Cleanroom Doors** | — | Ch 121 / Ch 122 (`bDoor01/02_Alarm`) | **3 Minutes** (`T#3M`) | Allows standard personnel entry/exit and cart transfer without nuisance sirens. |
+| Equipment | Analog Temp Channel | Warning Pickup Channel | Discrete Alarm Channel | Pickup Delay (`tPickupDelay`) | Clinical Rationale |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Medical Refrigerator** | Ch 102 (`rMedFridgeTemp`) | Ch 115 (`bMedFridgeWarn`) | Ch 111 (`bMedFridgeAlarm`) | **2 Minutes** (`T#2M`) | Refrigerator air mix recovers rapidly; 2 minutes filters normal door access. |
+| **Medical Freezer** | Ch 103 (`rMedFreezerTemp`) | Ch 116 (`bMedFreezerWarn`) | Ch 112 (`bMedFreezerAlarm`) | **3 Minutes** (`T#3M`) | Deep cold storage thermal inertia; accommodates daily inventory checks. |
+| **Cryo Tank 1 (Embryos)** | Ch 125 (`rCryoTank1Temp`) | Ch 117 (`bCryoTank1Warn`) | Ch 113 (`bCryoTank1Alarm`) | **30 Seconds** (`T#30S`) | Liquid nitrogen vapor requires immediate warning upon thermal rise. |
+| **Cryo Tank 2 (Sperm)** | Ch 104 (`rCryoTank2Temp`) | Ch 118 (`bCryoTank2Warn`) | Ch 114 (`bCryoTank2Alarm`) | **30 Seconds** (`T#30S`) | Immediate warning upon vapor elevation or level depletion. |
+| **Cleanroom Doors** | — (Ch 119/120 Contacts) | — | Ch 121 / Ch 122 (`bDoor01/02_Alarm`) | **3 Minutes** (`T#3M`) | Allows standard personnel entry/exit and cart transfer without nuisance sirens. |
+| **Chamber Incubator 01** | — (Chamber A Contact) | — | Ch 123 (`bIncubator01_Alarm`) | Instant Relay Trip | Chamber A internal gas/temp alarm; active `IN_SESSION`, suppressed `OFF_SESSION`. |
+| **Chamber Incubator 02** | — (Chamber B Contact) | — | Ch 124 (`bIncubator02_Alarm`) | Instant Relay Trip | Chamber B internal gas/temp alarm; active `IN_SESSION`, suppressed `OFF_SESSION`. |
 
 ### Transient Dip Suppression Policy
 * **Regulatory Consensus:** Thermal fluctuations that recover within the PLC pickup delay window are intentionally **suppressed from generating entries in `mod_arc_postgre_sql.alarm_events`**.
@@ -134,33 +136,43 @@ All data resides in PostgreSQL under the `mod_arc_postgre_sql` schema in databas
                  │                                         │
                  └────────────────────┬────────────────────┘
                                       │
-                                      ▼
-                      ┌─────────────────────────────────┐
-                      │     alarm_events                │
-                      ├─────────────────────────────────┤
-                      │ id (SERIAL PRIMARY KEY)         │
-                      │ cnl_num (INT)                   │
-                      │ equipment_name (VARCHAR)        │
-                      │ alarm_type (VARCHAR)            │
-                      │ excursion_val (DOUBLE)          │
-                      │ triggered_at (TIMESTAMPTZ)      │
-                      │ pushover_receipt (VARCHAR)      │
-                      │ is_acknowledged (BOOLEAN)       │
-                      │ acknowledged_by (VARCHAR)       │
-                      │ acknowledged_by_token (VARCHAR) │
-                      │ acknowledged_at (TIMESTAMPTZ)   │
-                      │ is_resolved (BOOLEAN)           │
-                      │ resolved_at (TIMESTAMPTZ)       │
-                      │ duration_seconds (INT)          │
-                      │ priority (INT)                  │
-                      │ corrective_action_notes (TEXT)  │
-                      ├─────────────────────────────────┤
-                      │ Discrete clinical audit log     │
-                      │ Permanent, immutable records    │
-                      └─────────────────────────────────┘
+        ┌─────────────────────────────┼─────────────────────────────┐
+        ▼                             ▼                             ▼
+┌───────────────────────────┐ ┌───────────────────────────┐ ┌───────────────────────────┐
+│ alarm_events              │ │ cleanroom_door_events     │ │ lab_operational_mode      │
+├───────────────────────────┤ ├───────────────────────────┤ ├───────────────────────────┤
+│ id (SERIAL PRIMARY KEY)   │ │ id (SERIAL PRIMARY KEY)   │ │ id (SERIAL PRIMARY KEY)   │
+│ cnl_num (INT)             │ │ door_name (VARCHAR)       │ │ current_mode (VARCHAR)    │
+│ equipment_name (VARCHAR)  │ │ opened_at (TIMESTAMPTZ)   │ │ updated_at (TIMESTAMPTZ)  │
+│ alarm_type (VARCHAR)      │ │ closed_at (TIMESTAMPTZ)   │ │ updated_by (VARCHAR)      │
+│ excursion_val (DOUBLE)    │ │ duration_seconds (INT)    │ │ notes (TEXT)              │
+│ triggered_at (TIMESTAMPTZ)│ │ lab_mode (VARCHAR)        │ ├───────────────────────────┤
+│ pushover_receipt (VARCHAR)│ │ alarm_tripped (BOOLEAN)   │ │ IN_SESSION vs OFF_SESSION │
+│ is_acknowledged (BOOLEAN) │ ├───────────────────────────┤ │ Mode determines incubator │
+│ acknowledged_by (VARCHAR) │ │ Discrete entry/exit log   │ │ alarm evaluation rules    │
+│ acknowledged_at (TZ)      │ │ Real-time open duration   │ └───────────────────────────┘
+│ is_resolved (BOOLEAN)     │ └───────────────────────────┘
+│ resolved_at (TIMESTAMPTZ) │                 │
+│ duration_seconds (INT)    │                 ▼
+│ priority (INT)            │ ┌───────────────────────────┐ ┌───────────────────────────┐
+│ corrective_action_notes   │ │ cryo_maintenance_holds   │ │ ln2_tank_logs             │
+├───────────────────────────┤ ├───────────────────────────┤ ├───────────────────────────┤
+│ Discrete clinical audit   │ │ id (SERIAL PRIMARY KEY)   │ │ id (SERIAL PRIMARY KEY)   │
+│ Immutable CAP/CLIA trail  │ │ equipment_name (VARCHAR)  │ │ tank_id (VARCHAR)         │
+└───────────────────────────┘ │ started_at (TIMESTAMPTZ)  │ │ level_cm (NUMERIC)        │
+                              │ expires_at (TIMESTAMPTZ)  │ │ was_filled (BOOLEAN)      │
+                              │ ended_at (TIMESTAMPTZ)    │ │ frost_condition (VARCHAR) │
+                              │ initiated_by (VARCHAR)    │ │ initials (VARCHAR)        │
+                              │ duration_minutes (INT)    │ │ notes (TEXT)              │
+                              │ cancelled_early (BOOLEAN) │ │ logged_at (TIMESTAMPTZ)   │
+                              ├───────────────────────────┤ ├───────────────────────────┤
+                              │ 15-minute specimen pause  │ │ 3-day dipstick compliance │
+                              └───────────────────────────┘ └───────────────────────────┘
 ```
 
-### Table DDL: `mod_arc_postgre_sql.alarm_events`
+### Table DDL: Core Regulatory Schemas
+
+#### 1. Discrete Clinical Alarms (`mod_arc_postgre_sql.alarm_events`)
 ```sql
 CREATE TABLE IF NOT EXISTS mod_arc_postgre_sql.alarm_events (
     id SERIAL PRIMARY KEY,
@@ -179,6 +191,41 @@ CREATE TABLE IF NOT EXISTS mod_arc_postgre_sql.alarm_events (
     duration_seconds INTEGER,
     priority INTEGER DEFAULT 2,
     corrective_action_notes TEXT
+);
+```
+
+#### 2. Cleanroom Door Ingress/Egress Events (`mod_arc_postgre_sql.cleanroom_door_events`)
+```sql
+CREATE TABLE IF NOT EXISTS mod_arc_postgre_sql.cleanroom_door_events (
+    id SERIAL PRIMARY KEY,
+    door_name VARCHAR(64) NOT NULL,
+    opened_at TIMESTAMPTZ NOT NULL,
+    closed_at TIMESTAMPTZ,
+    duration_seconds INTEGER,
+    lab_mode VARCHAR(32) NOT NULL DEFAULT 'IN_SESSION',
+    alarm_tripped BOOLEAN DEFAULT FALSE
+);
+```
+
+#### 3. Operational Session Mode & Maintenance Holds (`lab_operational_mode` & `cryo_maintenance_holds`)
+```sql
+CREATE TABLE IF NOT EXISTS mod_arc_postgre_sql.lab_operational_mode (
+    id SERIAL PRIMARY KEY,
+    current_mode VARCHAR(32) NOT NULL DEFAULT 'IN_SESSION',
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_by VARCHAR(64) DEFAULT 'Lab Staff',
+    notes TEXT
+);
+
+CREATE TABLE IF NOT EXISTS mod_arc_postgre_sql.cryo_maintenance_holds (
+    id SERIAL PRIMARY KEY,
+    equipment_name VARCHAR(64) NOT NULL,
+    started_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    expires_at TIMESTAMPTZ NOT NULL,
+    ended_at TIMESTAMPTZ,
+    initiated_by VARCHAR(64) DEFAULT 'Lab Staff',
+    duration_minutes INTEGER DEFAULT 15,
+    cancelled_early BOOLEAN DEFAULT FALSE
 );
 
 GRANT USAGE ON SCHEMA mod_arc_postgre_sql TO grafana_reader;
@@ -207,11 +254,11 @@ This section details exactly what happens across the physical hardware, PLC, SCA
 
 | Phase | Time | System State | Rapid SCADA & PLC | Alert Engine & Pushover | Database Action (`rapid_scada`) |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **1. Door Ajar & Warm Up** | $T_0 = 13:30:00$ | Door opens. Air temp reaches $+8.4^\circ\text{C}$. | Ch 112 = 8.4°C. PLC timer `fbFridgeAlarm.TON` starts. Ch 123 (`bMedFridgeAlarm`) = 0. | Kiosk badge turns `🟡 DELAY (2M)`. No Pushover alerts. | **`curcopy_current`:** Ch 112 updated to 8.4.<br>**`mincopy_historical`:** Logs 8.4°C at 13:31:00.<br>**`alarm_events`:** **0 rows written.** (Transient dip suppressed). |
-| **2. Excursion Trip** | $T_1 = 13:32:00$<br>($T_0 + 2\text{m}$) | Temp has remained $>8.0^\circ\text{C}$ for 2m (now $+9.8^\circ\text{C}$). | PLC timer completes: `fbFridgeAlarm.bAlarm` $\rightarrow$ `TRUE`. Ch 123 $\rightarrow$ 1. | IVF Alert Engine sends Priority 2 siren with receipt `r7k9m2x4v1`. Kiosk flashes red banner. | **`alarm_events`:** **NEW ROW INSERTED** (id=33, is_acknowledged=FALSE, is_resolved=FALSE).<br>See [SQL Insert](#sql-insert-at-trip) below. |
+| **1. Door Ajar & Warm Up** | $T_0 = 13:30:00$ | Door opens. Air temp reaches $+8.4^\circ\text{C}$. | Ch 102 = 8.4°C. PLC timer `fbFridgeAlarm.TON` starts. Ch 111 (`bMedFridgeAlarm`) = 0, Ch 115 (`bMedFridgeWarn`) = 1. | Kiosk badge turns `🟡 DELAY (2M)`. No Pushover alerts. | **`curcopy_current`:** Ch 102 updated to 8.4.<br>**`mincopy_historical`:** Logs 8.4°C at 13:31:00.<br>**`alarm_events`:** **0 rows written.** (Transient dip suppressed). |
+| **2. Excursion Trip** | $T_1 = 13:32:00$<br>($T_0 + 2\text{m}$) | Temp has remained $>8.0^\circ\text{C}$ for 2m (now $+9.8^\circ\text{C}$). | PLC timer completes: `fbFridgeAlarm.bAlarm` $\rightarrow$ `TRUE`. Ch 111 $\rightarrow$ 1. | IVF Alert Engine sends Priority 2 siren with receipt `r7k9m2x4v1`. Kiosk flashes red banner. | **`alarm_events`:** **NEW ROW INSERTED** (id=33, is_acknowledged=FALSE, is_resolved=FALSE).<br>See [SQL Insert](#sql-insert-at-trip) below. |
 | **3. Acknowledgment** | $T_2 = 13:33:15$<br>($T_1 + 75\text{s}$) | User taps kiosk or phone notification. | Hardware unaffected. | Engine calls Pushover API to cancel receipt `r7k9m2x4v1`. Dispatches silent broadcast to all staff: *"🔕 Acknowledged by Dr. Ostrom. Staff attending."* | **`alarm_events`:** **ROW 33 UPDATED** with `is_acknowledged = TRUE`, `acknowledged_by = 'Dr. Ostrom'`, `acknowledged_at = NOW()`.<br>See [SQL Update](#sql-update-at-acknowledgment) below. |
-| **4. Door Closed & Cooling** | $T_3 = 13:35:00$<br>($T_1 + 3\text{m}$) | User closes fridge door; compressor cools chamber. | Ch 112 drops: $9.8^\circ\text{C} \rightarrow 8.9^\circ\text{C} \rightarrow 7.6^\circ\text{C}$. Ch 123 remains 1 while $>8.0^\circ\text{C}$. | Kiosk banner remains steady green: `🟢 ACKNOWLEDGED: In-Lab Staff Attending`. | **`mincopy_historical`:** Records 1-minute historical trace showing cooling rate.<br>**`alarm_events`:** No change (still active, acknowledged). |
-| **5. Resolution & Restabilization** | $T_4 = 13:38:00$<br>($T_1 + 6\text{m}$) | Temp drops below $+8.0^\circ\text{C}$ (reaches $+7.5^\circ\text{C}$). | PLC timer resets: `fbFridgeAlarm.bAlarm` $\rightarrow$ `FALSE`. Ch 123 $\rightarrow$ 0. | Engine detects Ch 123 drop. Sends Priority 0 chime: *"🟢 RESOLVED: Medical Refrigerator Normal (7.5°C). Duration: 6m 0s."* Kiosk banner dismisses. | **`alarm_events`:** **ROW 33 FINALIZED** with `is_resolved = TRUE`, `resolved_at = NOW()`, `duration_seconds = 360`.<br>See [SQL Update](#sql-update-at-resolution) below. |
+| **4. Door Closed & Cooling** | $T_3 = 13:35:00$<br>($T_1 + 3\text{m}$) | User closes fridge door; compressor cools chamber. | Ch 102 drops: $9.8^\circ\text{C} \rightarrow 8.9^\circ\text{C} \rightarrow 7.6^\circ\text{C}$. Ch 111 remains 1 while $>8.0^\circ\text{C}$. | Kiosk banner remains steady green: `🟢 ACKNOWLEDGED: In-Lab Staff Attending`. | **`mincopy_historical`:** Records 1-minute historical trace showing cooling rate.<br>**`alarm_events`:** No change (still active, acknowledged). |
+| **5. Resolution & Restabilization** | $T_4 = 13:38:00$<br>($T_1 + 6\text{m}$) | Temp drops below $+8.0^\circ\text{C}$ (reaches $+7.5^\circ\text{C}$). | PLC timer resets: `fbFridgeAlarm.bAlarm` $\rightarrow$ `FALSE`. Ch 111 $\rightarrow$ 0. | Engine detects Ch 111 drop. Sends Priority 0 chime: *"🟢 RESOLVED: Medical Refrigerator Normal (7.5°C). Duration: 6m 0s."* Kiosk banner dismisses. | **`alarm_events`:** **ROW 33 FINALIZED** with `is_resolved = TRUE`, `resolved_at = NOW()`, `duration_seconds = 360`.<br>See [SQL Update](#sql-update-at-resolution) below. |
 
 ---
 
@@ -223,7 +270,7 @@ Executed by [trigger_alarm()](file:///home/bobostrom/Projects/labSCADA/ivf_alert
 INSERT INTO mod_arc_postgre_sql.alarm_events 
     (cnl_num, equipment_name, alarm_type, excursion_val, triggered_at, pushover_receipt, is_acknowledged, is_resolved, priority)
 VALUES 
-    (123, 'Medical Refrigerator', 'High Temperature Excursion', 9.8, '2026-10-24 13:32:00-08', 'r7k9m2x4v1', FALSE, FALSE, 2)
+    (111, 'Medical Refrigerator', 'High Temperature Excursion', 9.8, '2026-10-24 13:32:00-08', 'r7k9m2x4v1', FALSE, FALSE, 2)
 RETURNING id;
 ```
 
@@ -253,9 +300,28 @@ WHERE id = 33;
 ## 6. Regulatory Compliance Auditing & Inspector Queries
 
 When laboratory accreditation bodies (CAP, CLIA, Joint Commission) inspect the facility, inspectors ask for proof of:
-1. Equipment temperature stability.
+1. Equipment temperature stability and continuous compliance.
 2. Timely response and human intervention during an out-of-range event.
 3. Total elapsed time before the chamber returned to safe operating parameters.
+4. Cleanroom door barrier integrity and air pressure/environmental containment.
+5. Verification that alarms are tested on a daily schedule.
+
+---
+
+### Official Monthly Compliance Report Packet (`/report/ln2`)
+
+To eliminate manual data gathering during inspections, the system generates a unified, print-ready 3-page monthly compliance packet at `http://<server-ip>/report/ln2` (or via the **📑 Monthly Compliance Report Packet** link on the Kiosk Cryo Suite tab):
+* **Page 1: Cryo Tank 1 (Embryos)** — CAP accreditation findings, 240 DPI sawtooth boil-off curve, chronological dipstick audit trail, and supervisor/director sign-offs.
+* **Page 2: Cryo Tank 2 (Sperm)** — Vacuum integrity metrics, incident documentation, chronological audit trail, and sign-offs.
+* **Page 3: Facility Alarms, Excursions & Quality Audit Sheet** — Complete clinical audit covering the entire cleanroom suite:
+  1. *Executive Reliability Metrics:* Total clinical excursions, mean staff siren response latency (seconds), verified daily pathway tests, and authorized maintenance holds.
+  2. *Equipment Tolerance Adherence:* Scope breakdown across Cryo Tank 1, Cryo Tank 2, Medical Refrigerator, Medical Freezer, Chamber Incubator 01 (Chamber A), Chamber Incubator 02 (Chamber B), and Cleanroom Access Barriers.
+  3. *Corrective Action Audit Trail:* Chronological incident log with trigger timestamps, peak values, duration, staff acknowledgement attribution, and physical recovery verification.
+  4. *Daily Remote Siren & Gateway Verification:* Daily 9:00 AM Priority 0 Pushover dispatch tests with operator initials and operational results.
+  5. *Authorized Specimen Access & Maintenance Holds:* 15-minute mute limits, staff initiator, auto-expiry vs. early manual resume records.
+  6. *Formal Laboratory QA Sign-Off Block:* Dual certification lines for Embryology Laboratory Supervisor and Medical/Laboratory Director.
+
+---
 
 ### Audit Inspection Query: Excursion Event Log
 ```sql
@@ -280,6 +346,41 @@ ORDER BY triggered_at DESC;
 | **33** | 2026-10-24 13:32:00 | Medical Refrigerator | 9.8 °C | Dr. Ostrom | 13:33:15 | 75s | 13:38:00 | 6m 0s |
 | **32** | 2026-10-24 09:14:10 | Incubator 01 | 35.6 °C | Lab Kiosk | 09:14:52 | 42s | 09:21:05 | 6m 55s |
 
+---
+
+### Cleanroom Door Ingress/Egress Audit Query
+```sql
+SELECT 
+    id AS "Door Event ID",
+    door_name AS "Access Barrier",
+    to_char(opened_at, 'YYYY-MM-DD HH24:MI:SS') AS "Opened Time",
+    to_char(closed_at, 'HH24:MI:SS') AS "Closed Time",
+    duration_seconds || 's' AS "Ajar Duration",
+    lab_mode AS "Session Mode",
+    CASE WHEN alarm_tripped THEN '🚨 Tripped (>3m)' ELSE 'Nominal' END AS "Alarm Status"
+FROM mod_arc_postgre_sql.cleanroom_door_events
+WHERE opened_at >= NOW() - INTERVAL '7 days'
+ORDER BY opened_at DESC
+LIMIT 25;
+```
+
+---
+
+### Operational Session Mode Audit Query
+```sql
+SELECT 
+    id AS "Session ID",
+    current_mode AS "Operational Mode",
+    to_char(updated_at, 'YYYY-MM-DD HH24:MI:SS') AS "Timestamp",
+    updated_by AS "Operator",
+    COALESCE(notes, 'Standard clinical changeover') AS "Clinical Purpose"
+FROM mod_arc_postgre_sql.lab_operational_mode
+ORDER BY id DESC
+LIMIT 10;
+```
+
+---
+
 ### Cross-Validation Query: Raw Historical Time-Series Trace
 To verify the exact cooling curve during an excursion, inspectors correlate the event ID with raw historical intervals in `mincopy_historical`:
 ```sql
@@ -288,7 +389,7 @@ SELECT
     val AS "Temp (°C)",
     stat AS "Status"
 FROM mod_arc_postgre_sql.mincopy_historical
-WHERE cnl_num = 112 
+WHERE cnl_num = 102 
   AND d_time BETWEEN '2026-10-24 13:28:00' AND '2026-10-24 13:42:00'
 ORDER BY d_time ASC;
 ```
@@ -297,7 +398,8 @@ ORDER BY d_time ASC;
 
 ## 7. Related User Manual Sections & System Files
 
-* **Cleanroom Touchscreen Kiosk Operations:** [01_cleanroom_touchscreen_kiosk_operations.md](file:///home/bobostrom/Projects/labSCADA/user_manual/01_cleanroom_touchscreen_kiosk_operations.md) — Covers the physical touchscreen kiosk, 2-tab navigation (`/` and `/cryo`), 6-card dashboard layout, glove-friendly tap targets, and daily CAP verification banner.
-* **Liquid Nitrogen Compliance & Dipstick Auditing:** [03_liquid_nitrogen_tank_dipstick_and_compliance.md](file:///home/bobostrom/Projects/labSCADA/user_manual/03_liquid_nitrogen_tank_dipstick_and_compliance.md) — Covers dual cryo tank dipstick audit protocols, sawtooth evaporative modeling, and automated report generation.
-* **Alert Engine Implementation:** [ivf_alert_engine.py](file:///home/bobostrom/Projects/labSCADA/ivf_alert_engine.py) — The Python service handling telemetry scanning, Pushover dispatch/cancellation, and web kiosk hosting on port 8080.
-* **PLC Source Code:** [codesys/src/PLC_PRG.st](file:///home/bobostrom/Projects/labSCADA/codesys/src/PLC_PRG.st) — CODESYS IEC 61131-3 logic managing `tPickupDelay` filters and discrete alarm bits.
+* **Cleanroom Touchscreen Kiosk Operations:** [01_cleanroom_touchscreen_kiosk_operations.md](file:///home/bobostrom/Projects/labSCADA/user_manual/01_cleanroom_touchscreen_kiosk_operations.md) — Covers the physical touchscreen kiosk, 2-tab navigation (`/` and `/cryo`), 6-card dashboard layout (with split Incubators 01 & 02), Operational Session Mode selector, dual-tab audit log (`🚨 Alarms & Siren Log` vs `🚪 Cleanroom Door Log`), compact vertical dipstick stepper, and daily CAP verification banner.
+* **Liquid Nitrogen Compliance & Dipstick Auditing:** [03_liquid_nitrogen_tank_dipstick_and_compliance.md](file:///home/bobostrom/Projects/labSCADA/user_manual/03_liquid_nitrogen_tank_dipstick_and_compliance.md) — Covers dual cryo tank dipstick audit protocols, sawtooth evaporative modeling, pre-populated historical checks, and the 3-Page Monthly Compliance Report Packet.
+* **Physical Cryo Tank Mute Pushbutton Plan:** [notes/cryo_tank_mute_button_plan.md](file:///home/bobostrom/Projects/labSCADA/notes/cryo_tank_mute_button_plan.md) — Industrial engineering plan for WAGO digital I/O momentary tank-mounted pushbutton pausing cryo alarms for 15 minutes during top-offs and specimen retrieval.
+* **Alert Engine Implementation:** [ivf_alert_engine.py](file:///home/bobostrom/Projects/labSCADA/ivf_alert_engine.py) — The Python service handling telemetry scanning, Pushover dispatch/cancellation, REST API, report generation, and web kiosk hosting on port 8080.
+* **PLC Source Code:** [codesys/src/PLC_PRG.st](file:///home/bobostrom/Projects/labSCADA/codesys/src/PLC_PRG.st) — CODESYS IEC 61131-3 logic managing `tPickupDelay` filters, hysteresis deadbands, and discrete alarm bits.

@@ -51,7 +51,7 @@ This architecture transitions the laboratory from paper tracking to a **fully di
 
 ## 3. Glove-Friendly Cleanroom Touchscreen UX (Port `:8080`)
 
-Technicians and embryologists work gloved in sterile attire and cannot manipulate delicate on-screen mobile keyboards. The inspection interface at `http://<server-ip>:8080` provides high-contrast, oversized touch targets:
+Technicians and embryologists work gloved in sterile attire and cannot manipulate delicate on-screen mobile keyboards. The inspection interface at `http://<server-ip>/` provides high-contrast, oversized touch targets and a compact vertical stepper:
 
 ### Touchscreen Inspection Dialog
 ```text
@@ -63,9 +63,14 @@ Technicians and embryologists work gloved in sterile attire and cannot manipulat
 ║ [ Cryo Tank 1 (Embryos) ]*   [ Cryo Tank 2 (Sperm) ]                    ║
 ║                                                                         ║
 ║ DIPSTICK LEVEL (CM)                                                     ║
-║ ┌──────────┐  ┌──────────┐  ┌──────────────┐  ┌──────────┐  ┌─────────┐ ║
-║ │  - 1.0   │  │  - 0.5   │  │   21.5 cm    │  │  + 0.5   │  │ + 1.0   │ ║
-║ └──────────┘  └──────────┘  └──────────────┘  └──────────┘  └─────────┘ ║
+║                     ┌──────────────────────┐                            ║
+║                     │  + 0.5  │   + 1.0    │                            ║
+║                     ├──────────────────────┤                            ║
+║                     │       21.5 cm        │                            ║
+║                     │ Previous check: 21.5 │                            ║
+║                     ├──────────────────────┤                            ║
+║                     │  - 0.5  │   - 1.0    │                            ║
+║                     └──────────────────────┘                            ║
 ║                                                                         ║
 ║ NITROGEN ADDED / TOPPED OFF?                                            ║
 ║ ┌────────────────────────────────┐  ┌─────────────────────────────────┐ ║
@@ -86,6 +91,13 @@ Technicians and embryologists work gloved in sterile attire and cannot manipulat
 ║ └─────────────────────────────────────────────────────────────────────┘ ║
 ╚═════════════════════════════════════════════════════════════════════════╝
 ```
+
+### Key Touchscreen & Mobile Ergonomic Features
+* **Compact Vertical Stepper:** Dual positive adjustments (`+0.5`, `+1.0`) positioned directly above the reading box, and dual negative adjustments (`-0.5`, `-1.0`) positioned directly below. This eliminates lateral button overflow on tablet and smartphone viewports.
+* **Compact 3-Digit Measurement Box:** Sized strictly at 135px width with bold 26px digits and a subtle `cm` badge, preventing excessive horizontal stretch while maintaining large touch targets.
+* **Automatic Historical Pre-Population:** The level input is automatically pre-populated with the **last recorded manual measurement** from `mod_arc_postgre_sql.ln2_tank_logs` (e.g. `21.5 cm`).
+* **Visual Baseline Reference:** Displays a subtitle hint (`Previous check: 21.5 cm`) directly below the measurement box so staff immediately see the historical starting point and only need to tap `-0.5` or `-1.0` a couple of times for normal evaporation.
+* **Instant Tank Switcher Sync:** Toggling between **Cryo Tank 1** and **Cryo Tank 2** immediately re-queries and updates the baseline measurement and reference hint without page reload.
 
 ---
 
@@ -148,13 +160,14 @@ At *Advanced Fertility of Alaska*, the cryogenic storage dewars (**Cryo Tank 1: 
 Scanning the station QR code opens a mobile-optimized card directly on any iOS or Android smartphone browser (no app download or login required on the clinic Wi-Fi network):
 * **Dual Tank Switcher:** Prominent tabs at the top allow selecting between **Cryo Tank 1 (Embryos)** and **Cryo Tank 2 (Sperm)** with a single touch.
 * **Live Telemetry Comparison:** Displays the active tank's real-time electronic vapor temperature (e.g. `-196.2°C`) and electronic depth sensor reading, allowing staff to perform an instant sanity check against their physical ruler reading.
-* **Compact Vertical Stepper:** A narrow, thumb-friendly vertical keypad optimized for one-handed operation on mobile screens (`+0.5` / `+1.0` buttons on top, centered high-contrast level display with `cm` badge, `-0.5` / `-1.0` buttons below).
+* **Compact Vertical Stepper & 3-Digit Box:** A narrow 135px thumb-friendly vertical keypad optimized for one-handed operation on mobile screens (`+0.5` / `+1.0` buttons on top, centered high-contrast level display with `cm` badge, `-0.5` / `-1.0` buttons below).
+* **Automatic Baseline Pre-Population:** Automatically pre-populates with the last recorded manual check from `mod_arc_postgre_sql.ln2_tank_logs` with a reference line (`Previous check: XX.X cm`).
 * **Quick Initials / Staff Identifier:** Includes quick chips for clinical staff (`BO`, `SJ`, `AK`, `TL`, `RN`, `Facilities`) and a text box for custom names.
 * **Instant Confirmation & Quick Sequential Reset:** Upon tapping **Submit**, the form validates the input, stores the record in PostgreSQL, and displays a green confirmation receipt. Tapping **"Log Another Tank"** automatically toggles the active tank so the adjacent tank can be inspected and recorded without rescanning.
 
 ### Printing the Laminated Station Placard (`/print/qr`)
 To print the unified placard for mounting between the physical tanks:
-1. Open **`http://192.168.10.133:8080/print/qr`** in any web browser (or click **📱 Print Station QR Placard** on the Kiosk Cryo Suite tab).
+1. Open **`http://192.168.10.133/print/qr`** in any web browser (or click **📱 Print Station QR Placard** on the Kiosk Cryo Suite tab).
 2. The page renders a single, high-contrast station placard formatted for standard 8.5" x 11" letter paper:
    * **Dual Tank Badges:** Clear labeling for Cryo Tank 1 (Embryos) and Cryo Tank 2 (Sperm).
    * **Unified Vector QR Code:** High-resolution SVG pointing directly to `http://<host>/log`.
@@ -397,8 +410,9 @@ python3 /home/bobostrom/Projects/labSCADA/scripts/generate_ln2_report.py
 
 ---
 
-## 11. Related User Manual Sections
+## 11. Related User Manual Sections & Engineering References
 
-* **Cleanroom Touchscreen Kiosk Operations:** [01_cleanroom_touchscreen_kiosk_operations.md](file:///home/bobostrom/Projects/labSCADA/user_manual/01_cleanroom_touchscreen_kiosk_operations.md) — Covers the physical touchscreen kiosk, 2-tab navigation (`/` and `/cryo`), 6-card dashboard layout, glove-friendly tap targets, and daily CAP verification banner.
+* **Cleanroom Touchscreen Kiosk Operations:** [01_cleanroom_touchscreen_kiosk_operations.md](file:///home/bobostrom/Projects/labSCADA/user_manual/01_cleanroom_touchscreen_kiosk_operations.md) — Covers the physical touchscreen kiosk, 2-tab navigation (`/` and `/cryo`), 6-card dashboard layout (with split Incubators 01 & 02), Operational Session Mode selector, and compact vertical dipstick stepper.
 * **Clinical Alarm Architecture & Regulatory Lifecycle:** [02_clinical_alarm_response_and_regulatory_lifecycle.md](file:///home/bobostrom/Projects/labSCADA/user_manual/02_clinical_alarm_response_and_regulatory_lifecycle.md) — Detailed regulatory rationale (CAP/CLIA), PLC debouncing algorithms, Pushover receipt architecture, PostgreSQL schema, and complete operational walkthroughs.
+* **Physical Cryo Tank Mute Pushbutton Plan:** [notes/cryo_tank_mute_button_plan.md](file:///home/bobostrom/Projects/labSCADA/notes/cryo_tank_mute_button_plan.md) — Industrial engineering plan for WAGO digital I/O momentary tank-mounted pushbutton pausing cryo alarms for 15 minutes during top-offs and specimen retrieval.
 * **Alert Engine Implementation:** [ivf_alert_engine.py](file:///home/bobostrom/Projects/labSCADA/ivf_alert_engine.py) — The Python service handling telemetry scanning, Pushover dispatch/cancellation, and web kiosk hosting on port 8080.

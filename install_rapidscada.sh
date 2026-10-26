@@ -136,6 +136,12 @@ if [ -f "$REPO_DIR/setup_ln2_tracking.sql" ]; then
     sudo -u postgres psql -d rapid_scada -f "$REPO_DIR/setup_ln2_tracking.sql"
 fi
 
+# Apply Session lifecycle, cleanroom door events, and maintenance holds
+if [ -f "$REPO_DIR/setup_session_and_audit.sql" ]; then
+    echo "Applying session lifecycle and door audit schema..."
+    sudo -u postgres psql -d rapid_scada -f "$REPO_DIR/setup_session_and_audit.sql"
+fi
+
 # Ensure /etc/labscada/db.env exists
 sudo mkdir -p /etc/labscada
 if [ ! -f "/etc/labscada/db.env" ] && [ -f "$REPO_DIR/db.env.example" ]; then
@@ -208,7 +214,9 @@ echo "🎉 IVF Lab SCADA Installation Complete!"
 echo "----------------------------------------------------------"
 echo "Touchscreen Kiosk (Live Ops):   http://${HOST_IP}/"
 echo "Cryo Tank Audit Suite:          http://${HOST_IP}/cryo"
+echo "Monthly Compliance Report:      http://${HOST_IP}/report/ln2"
 echo "Mobile QR LN2 Dipstick Log:     http://${HOST_IP}/log"
+echo "Printable Station QR Placard:   http://${HOST_IP}/print/qr"
 echo "Rapid SCADA Webstation:         http://${HOST_IP}/scada/ (admin / scada)"
 echo "----------------------------------------------------------"
 echo "System Daemons: scadaserver6, scadacomm6, scadaweb6, ivf-alert-engine"

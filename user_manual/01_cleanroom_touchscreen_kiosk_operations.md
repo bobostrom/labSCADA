@@ -80,7 +80,28 @@ The main operational screen (`/`) presents the cleanroom status in a responsive,
 3. **Medical Cold Storage (Consolidated Card):** Combines the Medical Refrigerator (Ch 112) and Medical Freezer (Ch 111) into a single cohesive card. Displays separate live readouts and status badges for both chambers.
 4. **Cleanroom Ambient:** Tracks laboratory environmental parameters ensuring strict compliance with cleanroom ventilation, positive differential pressure, and humidity standards.
 5. **Cleanroom Doors & Access (Consolidated Card):** Integrates Main Cleanroom Door (Ch 121) and Cryo Lab Door (Ch 122). Shows live contact status and suppresses door sirens until the PLC 3-minute on-delay timer expires.
-6. **Chamber Incubators:** Live temperature, CO2, and O2 readouts for embryo culture chambers.
+6. **Chamber Incubators (Dual Split Card):** Separated into independent side-by-side sub-cards for **Incubator 01 (Chamber A, Channel 123)** and **Incubator 02 (Chamber B, Channel 124)**:
+   * **Individual Status Badges:** Independent `CLEAR` 🟢 vs. `TRIPPED` 🔴 indicators for each culture chamber.
+   * **Live Values & Subtext:** Displays `NORMAL` vs. `ALARM`, alongside `Chamber A • In-Range` or `Chamber Trip Active`.
+   * **Dynamic Card Accent:** The top card border turns crimson (`#ff1744`) if either chamber trips, cyan (`#00b0ff`) when both are clear, and slate (`#64748b`) when off-session.
+   * **Off-Session Standby:** During `OFF_SESSION` mode, both chambers display `STANDBY` with `Alarms Suppressed`.
+
+---
+
+### Operational Session Mode Selector (IN_SESSION vs. OFF_SESSION)
+
+Positioned directly in the top clinical header bar, this toggle tailors alarm logic to clinical activity:
+* **`IN_SESSION` (Active Culture Mode):** Full clinical monitoring active. Chamber incubators actively trip Pushover sirens. Cleanroom perimeter doors allow a 3-minute transit delay buffer.
+* **`OFF_SESSION` (Lab Dormant Mode):** Incubators are powered off (alarms suppressed). Any cleanroom perimeter door opening immediately trips zero-delay emergency intrusion alerts.
+* **Audit Trail Integration:** Tapping the mode pill opens a confirmation modal recording technician initials, clinical notes, and timestamped transitions directly to `mod_arc_postgre_sql.lab_operational_mode`.
+
+---
+
+### Dual-Tab Clinical History & Door Audit Card
+
+Directly beneath the 6-card grid, staff toggle between two real-time audit tables:
+* **`🚨 Alarms & Siren Log` Tab:** Reverse-chronological history of all threshold excursions, staff acknowledgments, response latencies, and physical restabilizations.
+* **`🚪 Cleanroom Door Log` Tab:** Complete physical access audit trail tracking door name, open/close timestamps, duration open (seconds), active operational mode, and whether the 3-minute alarm delay was exceeded.
 
 ---
 
@@ -157,12 +178,18 @@ Tapping the **`❄️ Cryo Suite`** tab transitions to the cryogenic compliance 
    * **Dual Curve Switcher Chips:** Staff toggle between **Tank 1 (Embryos)** and **Tank 2 (Sperm)** to compare healthy baseline cycling against accelerated vacuum failure trends.
    * **Automated Failure Callouts:** Vessels in distress display annotated red indicators directly on the chart highlighting boil-off velocity and emergency specimen transfer status.
 3. **Manual Dipstick Logging Modal:**
-   * Staff tap **`[ 🧊 Log Tank 1 Check ]`** or **`[ 🧊 Log Tank 2 Check ]`**.
-   * An oversized touch modal allows rapid incrementing/decrementing of dipstick ruler readings (e.g., $32.5\text{ cm}$).
-   * Staff select nitrogen top-off status (`Yes (Filled)` vs `Check Only`), visual neck seal condition (`Good`, `Neck Frost`, `Vacuum Concern`), tap their staff initials chip, and submit.
-   * Writes the audit record to `mod_arc_postgre_sql.ln2_tank_logs`.
-4. **1-Click Compliance & Incident Report Export:**
-   * Instant generation and printing of audit-ready HTML/PDF compliance reports for **Cryo Tank 1** (`/report/ln2?tank=1`) and **Cryo Tank 2 Incident Report** (`/report/ln2?tank=2`).
+   * Staff tap **`[ 🧊 Log Tank 1 Check ]`** or **`[ 🧊 Log Tank 2 Check ]`** (or tap **`🧊 Log Check`** on the main dashboard card).
+   * **Compact Vertical Stepper:** Arranged with `+` buttons (`+0.5`, `+1.0`) positioned directly above the number, a centered 3-digit measurement box (`XX.X cm`), and `-` buttons (`-0.5`, `-1.0`) positioned directly below. Sized to fit standard touchscreens and mobile displays without horizontal button clipping.
+   * **Automatic Baseline Pre-Population:** Automatically retrieves and displays the **last recorded manual dipstick measurement** from `mod_arc_postgre_sql.ln2_tank_logs` (e.g. `28.0 cm`), accompanied by a reference line (`Previous check: 28.0 cm`).
+   * **Glove-Friendly Fields:** Staff select nitrogen top-off status (`Yes (Filled)` vs `Check Only`), visual neck seal condition (`Good`, `Neck Frost`, `Vacuum Concern`), tap their staff initials chip, and submit.
+   * **Physical Mute Button Plan:** For hands-free operation while wearing bulky cryogenic safety gloves, a physical momentary illuminated pushbutton plan is documented in [notes/cryo_tank_mute_button_plan.md](file:///home/bobostrom/Projects/labSCADA/notes/cryo_tank_mute_button_plan.md) (WAGO 750-431 DI, CODESYS 15m timer auto-expiry).
+4. **Unified 3-Page Monthly Compliance Report Packet (`/report/ln2`):**
+   * Accessible via top navigation or directly via URL (`http://192.168.10.133/report/ln2?month=YYYY-MM`).
+   * **Physical Paging:** Uses `@media print` physical page-break-after rules formatted strictly for regulatory 3-ring binder archiving:
+     * **Page 1: Cryo Tank 1 (Embryos)** — Accreditation metrics, 240 DPI sawtooth boil-off curve, chronological dipstick audit trail, and supervisor/director sign-offs.
+     * **Page 2: Cryo Tank 2 (Sperm)** — Accreditation metrics, vacuum degradation lifecycle documentation, chronological audit trail, and sign-offs.
+     * **Page 3: Facility Alarms, Excursions & Quality Audit Sheet** — Complete facility audit encompassing all equipment (Cryo Tanks, Medical Fridge/Freezer, Chamber Incubators 01 & 02, Cleanroom Doors), mean siren latency, daily Priority 0 pathway dispatches, specimen holds, and dual Supervisor/Director signature attestations.
+   * **Clinical Toolbar:** Sticky toolbar with `📅 Select Month` dropdown picker, total page badge, smooth scroll jump pills (`Page 1`, `Page 2`, `Page 3`), and `🖨️ Print / Save PDF Packet`.
 5. **Printable Mobile QR Code Station Placard (`/print/qr`):**
    * Staff tap **`[ 📱 Print Station QR Placard ]`** in the subpage header to generate a print-ready laminated station placard for the external cryo tanks.
    * Enables non-lab staff, facilities, and clinical nurses to scan the single QR code with their smartphone, select the tank (Tank 1 or Tank 2), and submit measurements without gowning into the cleanroom suite.
