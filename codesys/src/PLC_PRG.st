@@ -103,10 +103,14 @@ IF tonSimTick.Q AND bSimulateDynamics THEN
     // Doors Simulation / Overrides
     IF bForceDoor01Ajar THEN
         bDoor01_MainDoor := TRUE;
+    ELSE
+        bDoor01_MainDoor := FALSE;
     END_IF;
 
     IF bForceDoor02Ajar THEN
         bDoor02_CryoLabDoor := TRUE;
+    ELSE
+        bDoor02_CryoLabDoor := FALSE;
     END_IF;
 
     // Incubators Simulated Contacts
@@ -116,7 +120,7 @@ END_IF;
 
 
 // ==============================================================================
-// 3. CLINICAL ALARM EVALUATION (RTAC-STYLE PICKUP / DROPOUT & HYSTERESIS)
+// 3. CLINICAL ALARM EVALUATION (PICKUP / DROPOUT & HYSTERESIS)
 // ==============================================================================
 
 // --- A. Medical Fridge Alarm (Normal: 2.0°C to 8.0°C, 2m pickup, 10s dropout) ---
