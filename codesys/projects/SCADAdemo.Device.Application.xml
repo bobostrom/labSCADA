@@ -13,13 +13,19 @@
     <Node name="Application">
       <Node name="PLC_PRG">
         <Node name="bCryoTank1Alarm" type="T_BOOL" access="ReadWrite" />
+        <Node name="bCryoTank1Warn" type="T_BOOL" access="ReadWrite" />
         <Node name="bCryoTank2Alarm" type="T_BOOL" access="ReadWrite" />
+        <Node name="bCryoTank2Warn" type="T_BOOL" access="ReadWrite" />
         <Node name="bDoor01_Alarm" type="T_BOOL" access="ReadWrite" />
+        <Node name="bDoor01_MainDoor" type="T_BOOL" access="ReadWrite" />
         <Node name="bDoor02_Alarm" type="T_BOOL" access="ReadWrite" />
+        <Node name="bDoor02_CryoLabDoor" type="T_BOOL" access="ReadWrite" />
         <Node name="bIncubator01_Alarm" type="T_BOOL" access="ReadWrite" />
         <Node name="bIncubator02_Alarm" type="T_BOOL" access="ReadWrite" />
         <Node name="bMedFreezerAlarm" type="T_BOOL" access="ReadWrite" />
+        <Node name="bMedFreezerWarn" type="T_BOOL" access="ReadWrite" />
         <Node name="bMedFridgeAlarm" type="T_BOOL" access="ReadWrite" />
+        <Node name="bMedFridgeWarn" type="T_BOOL" access="ReadWrite" />
         <Node name="rCryoTank1Temp" type="T_REAL" access="ReadWrite" />
         <Node name="rCryoTank2Temp" type="T_REAL" access="ReadWrite" />
         <Node name="rLabAmbientTemp" type="T_REAL" access="ReadWrite" />
