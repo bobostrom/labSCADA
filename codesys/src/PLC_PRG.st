@@ -21,7 +21,7 @@ VAR
     bDoor02_CryoLabDoor     : BOOL := FALSE;    (* FALSE = Closed, TRUE = Open *)
 
     (* --- Discrete Clinical Alarm Outputs (Published over OPC UA) --- *)
-    bMedFridgeAlarm         : BOOL := FALSE;    (* TRUE when Fridge > 8.0°C or < 2.0°C for > 2m *)
+    bMedFridgeAlarm         : BOOL := FALSE;    (* TRUE when Fridge > 8.5°C or < 2.0°C for > 2m *)
     bMedFreezerAlarm        : BOOL := FALSE;    (* TRUE when Freezer > -15.0°C for > 3m *)
     bCryoTank1Alarm          : BOOL := FALSE;    (* TRUE when Cryo Tank > -135.0°C for > 30s *)
     bCryoTank2Alarm          : BOOL := FALSE;    (* TRUE when Cryo Tank > -135.0°C for > 30s *)
@@ -29,6 +29,12 @@ VAR
     bDoor02_Alarm           : BOOL := FALSE;    (* TRUE when Cryo Door held open > 3m *)
     bIncubator01_Alarm      : BOOL := FALSE;    (* Incubator 01 Alarm Contact *)
     bIncubator02_Alarm      : BOOL := FALSE;    (* Incubator 02 Alarm Contact *)
+
+    (* --- Discrete Pre-Alarm Pickup / Delay States (Single Source of Truth) --- *)
+    bMedFridgeWarn          : BOOL := FALSE;    (* TRUE during excursion pickup delay *)
+    bMedFreezerWarn         : BOOL := FALSE;    (* TRUE during freezer warm pickup delay *)
+    bCryoTank1Warn          : BOOL := FALSE;    (* TRUE during Cryo 1 warm pickup delay *)
+    bCryoTank2Warn          : BOOL := FALSE;    (* TRUE during Cryo 2 warm pickup delay *)
 
     (* --- Clinical Alarm Function Blocks (RTAC-Style Pickup / Dropout & Hysteresis) --- *)
     fbFridgeAlarm           : FB_AnalogAlarm;
@@ -136,6 +142,7 @@ fbFridgeAlarm(
     tDropoutDelay := T#10S     // Clean recovery required to reset
 );
 bMedFridgeAlarm := fbFridgeAlarm.bAlarm;
+bMedFridgeWarn  := fbFridgeAlarm.bPickup AND NOT fbFridgeAlarm.bAlarm;
 
 
 // --- B. Medical Freezer Alarm (Normal: < -15.0°C, 3m pickup, 10s dropout) ---
@@ -149,6 +156,7 @@ fbFreezerAlarm(
     tDropoutDelay := T#10S     // Clean recovery required to reset
 );
 bMedFreezerAlarm := fbFreezerAlarm.bAlarm;
+bMedFreezerWarn  := fbFreezerAlarm.bPickup AND NOT fbFreezerAlarm.bAlarm;
 
 
 // --- C. Cryogenic LN2 Tank Alarm (Normal: < -135.0°C, 30s pickup, 10s dropout) ---
@@ -162,6 +170,7 @@ fbCryo1Alarm(
     tDropoutDelay := T#10S     // Clean LN2 fill required to reset
 );
 bCryoTank1Alarm := fbCryo1Alarm.bAlarm;
+bCryoTank1Warn  := fbCryo1Alarm.bPickup AND NOT fbCryo1Alarm.bAlarm;
 
 fbCryo2Alarm(
     rVal          := rCryoTank2Temp,
@@ -173,6 +182,7 @@ fbCryo2Alarm(
     tDropoutDelay := T#10S     // Clean LN2 fill required to reset
 );
 bCryoTank2Alarm := fbCryo2Alarm.bAlarm;
+bCryoTank2Warn  := fbCryo2Alarm.bPickup AND NOT fbCryo2Alarm.bAlarm;
 
 
 

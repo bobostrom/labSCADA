@@ -94,6 +94,12 @@ CHANNELS = {
     112: {"name": "Medical Freezer", "type": "discrete_alarm", "linked_analog": 103, "priority": 2},
     113: {"name": "Cryo Tank 1", "type": "discrete_alarm", "linked_analog": 125, "priority": 2},
     114: {"name": "Cryo Tank 2", "type": "discrete_alarm", "linked_analog": 104, "priority": 2},
+    115: {"name": "Medical Fridge Warning", "type": "warning_delay", "linked_analog": 102, "priority": 0},
+    116: {"name": "Medical Freezer Warning", "type": "warning_delay", "linked_analog": 103, "priority": 0},
+    117: {"name": "Cryo Tank 1 Warning", "type": "warning_delay", "linked_analog": 125, "priority": 0},
+    118: {"name": "Cryo Tank 2 Warning", "type": "warning_delay", "linked_analog": 104, "priority": 0},
+    119: {"name": "Main Cleanroom Door Contact", "type": "door_contact", "priority": 0},
+    120: {"name": "Cryo Lab Door Contact", "type": "door_contact", "priority": 0},
     121: {"name": "Main Cleanroom Door", "type": "door_alarm", "priority": 2},
     122: {"name": "Cryo Lab Door", "type": "door_alarm", "priority": 2},
     123: {"name": "Incubator 01", "type": "incubator", "priority": 2},
@@ -485,7 +491,7 @@ def telemetry_scan_worker():
             # Med Fridge (Cnl 102)
             if 102 in readings and 111 not in readings:
                 f_temp = readings[102]
-                if f_temp > 8.0 or f_temp < 2.0:
+                if f_temp > 8.5 or f_temp < 2.0:
                     trigger_alarm(102, "Medical Fridge", "Temperature Excursion", f_temp)
                 elif f_temp <= 7.5 and f_temp >= 2.5:
                     resolve_alarm(102, f_temp)

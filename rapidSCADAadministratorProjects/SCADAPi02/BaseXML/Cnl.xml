@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <ArrayOfCnl xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
   <Cnl>
     <CnlNum>101</CnlNum>
@@ -324,7 +324,7 @@
   <Cnl>
     <CnlNum>115</CnlNum>
     <Active>true</Active>
-    <Name> SensorStatus_05</Name>
+    <Name>Med Fridge Warn</Name>
     <Code />
     <DataTypeID xsi:nil="true" />
     <DataLen xsi:nil="true" />
@@ -347,7 +347,7 @@
   <Cnl>
     <CnlNum>116</CnlNum>
     <Active>true</Active>
-    <Name>SensorStatus_06</Name>
+    <Name>Med Freezer Warn</Name>
     <Code />
     <DataTypeID xsi:nil="true" />
     <DataLen xsi:nil="true" />
@@ -370,7 +370,7 @@
   <Cnl>
     <CnlNum>117</CnlNum>
     <Active>true</Active>
-    <Name>SensorStatus_07</Name>
+    <Name>Cryo Tank 1 Warn</Name>
     <Code />
     <DataTypeID xsi:nil="true" />
     <DataLen xsi:nil="true" />
@@ -393,7 +393,7 @@
   <Cnl>
     <CnlNum>118</CnlNum>
     <Active>true</Active>
-    <Name>SensorStatus_08</Name>
+    <Name>Cryo Tank 2 Warn</Name>
     <Code />
     <DataTypeID xsi:nil="true" />
     <DataLen xsi:nil="true" />
@@ -416,7 +416,7 @@
   <Cnl>
     <CnlNum>119</CnlNum>
     <Active>true</Active>
-    <Name> SensorStatus_09</Name>
+    <Name>Main Door Contact</Name>
     <Code />
     <DataTypeID xsi:nil="true" />
     <DataLen xsi:nil="true" />
@@ -439,7 +439,7 @@
   <Cnl>
     <CnlNum>120</CnlNum>
     <Active>true</Active>
-    <Name>SensorStatus_10</Name>
+    <Name>Cryo Door Contact</Name>
     <Code />
     <DataTypeID xsi:nil="true" />
     <DataLen xsi:nil="true" />

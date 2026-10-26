@@ -314,7 +314,7 @@
             <div style="font-size:1.5rem; font-weight:800; font-family:monospace; color:#f0f4f8; margin-top:2px;" id="val-door1">
               CLOSED
             </div>
-            <div style="font-size:11px; color:#8899a6; margin-top:5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Limit: &lt; 3m open</div>
+            <div style="font-size:11px; color:#8899a6; margin-top:5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Limit: Hold delay limit</div>
           </div>
           <!-- Cryo Door Section -->
           <div style="background:rgba(9,13,22,0.65); padding:10px 10px; border-radius:8px; border:1px solid rgba(255,255,255,0.06); min-width:0; overflow:hidden;">
@@ -325,7 +325,7 @@
             <div style="font-size:1.5rem; font-weight:800; font-family:monospace; color:#f0f4f8; margin-top:2px;" id="val-door2">
               CLOSED
             </div>
-            <div style="font-size:11px; color:#8899a6; margin-top:5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Limit: &lt; 3m open</div>
+            <div style="font-size:11px; color:#8899a6; margin-top:5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Limit: Hold delay limit</div>
           </div>
         </div>
       </div>
@@ -617,20 +617,20 @@
             document.getElementById('val-ambient').innerText = r[101].toFixed(1);
           }
 
-          // Fridge (Ch 102 Temp, Ch 111 PLC Alarm)
+          // Fridge (Ch 102 Temp, Ch 111 PLC Alarm, Ch 115 PLC Warn Delay)
           let isFridgeAlarm = false;
           let isFridgeWarn = false;
           if (r[102] !== undefined) {
             const f = r[102];
             document.getElementById('val-fridge').innerText = f.toFixed(1);
             const b = document.getElementById('badge-fridge');
-            isFridgeAlarm = (r[111] !== undefined) ? (r[111] > 0) : (f > 8.0 || f < 2.0);
-            isFridgeWarn = !isFridgeAlarm && (f > 8.0 || f < 2.0);
+            isFridgeAlarm = r[111] > 0;
+            isFridgeWarn = !isFridgeAlarm && (r[115] > 0);
             if (isFridgeAlarm) {
               b.innerText = 'EXCURSION';
               b.className = 'status-badge status-alert';
             } else if (isFridgeWarn) {
-              b.innerText = 'DELAY (2M)';
+              b.innerText = 'DELAY';
               b.className = 'status-badge status-warn';
             } else {
               b.innerText = 'NORMAL';
@@ -638,20 +638,20 @@
             }
           }
 
-          // Freezer (Ch 103 Temp, Ch 112 PLC Alarm)
+          // Freezer (Ch 103 Temp, Ch 112 PLC Alarm, Ch 116 PLC Warn Delay)
           let isFreezerAlarm = false;
           let isFreezerWarn = false;
           if (r[103] !== undefined) {
             const fz = r[103];
             document.getElementById('val-freezer').innerText = fz.toFixed(1);
             const b = document.getElementById('badge-freezer');
-            isFreezerAlarm = (r[112] !== undefined) ? (r[112] > 0) : (fz > -15.0);
-            isFreezerWarn = !isFreezerAlarm && (fz > -15.0);
+            isFreezerAlarm = r[112] > 0;
+            isFreezerWarn = !isFreezerAlarm && (r[116] > 0);
             if (isFreezerAlarm) {
               b.innerText = 'EXCURSION';
               b.className = 'status-badge status-alert';
             } else if (isFreezerWarn) {
-              b.innerText = 'DELAY (3M)';
+              b.innerText = 'DELAY';
               b.className = 'status-badge status-warn';
             } else {
               b.innerText = 'NORMAL';
@@ -671,7 +671,7 @@
             }
           }
 
-          // Cryo Tank 1 (Ch 125 Temp, Ch 113 PLC Alarm)
+          // Cryo Tank 1 (Ch 125 Temp, Ch 113 PLC Alarm, Ch 117 PLC Warn Delay)
           if (r[125] !== undefined) {
             const cr1 = r[125];
             document.getElementById('val-cryo1').innerText = cr1.toFixed(1);
@@ -679,12 +679,13 @@
             if (detailC1) detailC1.innerText = cr1.toFixed(1);
 
             const b1 = document.getElementById('badge-cryo1');
-            const isAlarm1 = (r[113] !== undefined) ? (r[113] > 0) : (cr1 > -135.0);
+            const isAlarm1 = r[113] > 0;
+            const isWarn1 = !isAlarm1 && (r[117] > 0);
             if (isAlarm1) {
               b1.innerText = 'CRITICAL';
               b1.className = 'status-badge status-alert';
-            } else if (cr1 > -135.0) {
-              b1.innerText = 'DELAY (30S)';
+            } else if (isWarn1) {
+              b1.innerText = 'DELAY';
               b1.className = 'status-badge status-warn';
             } else {
               b1.innerText = 'NORMAL';
@@ -692,7 +693,7 @@
             }
           }
 
-          // Cryo Tank 2 (Ch 104 Temp, Ch 114 PLC Alarm)
+          // Cryo Tank 2 (Ch 104 Temp, Ch 114 PLC Alarm, Ch 118 PLC Warn Delay)
           if (r[104] !== undefined) {
             const cr2 = r[104];
             document.getElementById('val-cryo2').innerText = cr2.toFixed(1);
@@ -700,12 +701,13 @@
             if (detailC2) detailC2.innerText = cr2.toFixed(1);
 
             const b2 = document.getElementById('badge-cryo2');
-            const isAlarm2 = (r[114] !== undefined) ? (r[114] > 0) : (cr2 > -135.0);
+            const isAlarm2 = r[114] > 0;
+            const isWarn2 = !isAlarm2 && (r[118] > 0);
             if (isAlarm2) {
               b2.innerText = 'CRITICAL';
               b2.className = 'status-badge status-alert';
-            } else if (cr2 > -135.0) {
-              b2.innerText = 'DELAY (30S)';
+            } else if (isWarn2) {
+              b2.innerText = 'DELAY';
               b2.className = 'status-badge status-warn';
             } else {
               b2.innerText = 'NORMAL';
@@ -713,32 +715,60 @@
             }
           }
 
-          // Main Cleanroom Door (Ch 121 PLC Alarm: bDoor01_Alarm)
-          let d1Alarm = false;
-          if (r[121] !== undefined) {
-            d1Alarm = r[121] > 0;
-            document.getElementById('val-door1').innerText = d1Alarm ? 'AJAR > 3M' : 'CLOSED';
-            document.getElementById('val-door1').style.color = d1Alarm ? '#ff1744' : '#f0f4f8';
-            const b1 = document.getElementById('badge-door1');
-            b1.innerText = d1Alarm ? 'ALARM' : 'SECURE';
-            b1.className = d1Alarm ? 'status-badge status-alert' : 'status-badge status-normal';
+          // Main Cleanroom Door (Ch 119 PLC Contact, Ch 121 PLC Alarm)
+          let d1Alarm = (r[121] > 0);
+          let d1Open = (r[119] > 0);
+          const valD1 = document.getElementById('val-door1');
+          const badgeD1 = document.getElementById('badge-door1');
+          if (d1Alarm) {
+            valD1.innerText = 'AJAR';
+            valD1.style.color = '#ff1744';
+            badgeD1.innerText = 'ALARM';
+            badgeD1.className = 'status-badge status-alert';
+          } else if (d1Open) {
+            valD1.innerText = 'OPEN';
+            valD1.style.color = '#ffab00';
+            badgeD1.innerText = 'DELAY';
+            badgeD1.className = 'status-badge status-warn';
+          } else {
+            valD1.innerText = 'CLOSED';
+            valD1.style.color = '#f0f4f8';
+            badgeD1.innerText = 'SECURE';
+            badgeD1.className = 'status-badge status-normal';
           }
 
-          // Cryo Lab Door (Ch 122 PLC Alarm: bDoor02_Alarm)
-          let d2Alarm = false;
-          if (r[122] !== undefined) {
-            d2Alarm = r[122] > 0;
-            document.getElementById('val-door2').innerText = d2Alarm ? 'AJAR > 3M' : 'CLOSED';
-            document.getElementById('val-door2').style.color = d2Alarm ? '#ff1744' : '#f0f4f8';
-            const b2 = document.getElementById('badge-door2');
-            b2.innerText = d2Alarm ? 'ALARM' : 'SECURE';
-            b2.className = d2Alarm ? 'status-badge status-alert' : 'status-badge status-normal';
+          // Cryo Lab Door (Ch 120 PLC Contact, Ch 122 PLC Alarm)
+          let d2Alarm = (r[122] > 0);
+          let d2Open = (r[120] > 0);
+          const valD2 = document.getElementById('val-door2');
+          const badgeD2 = document.getElementById('badge-door2');
+          if (d2Alarm) {
+            valD2.innerText = 'AJAR';
+            valD2.style.color = '#ff1744';
+            badgeD2.innerText = 'ALARM';
+            badgeD2.className = 'status-badge status-alert';
+          } else if (d2Open) {
+            valD2.innerText = 'OPEN';
+            valD2.style.color = '#ffab00';
+            badgeD2.innerText = 'DELAY';
+            badgeD2.className = 'status-badge status-warn';
+          } else {
+            valD2.innerText = 'CLOSED';
+            valD2.style.color = '#f0f4f8';
+            badgeD2.innerText = 'SECURE';
+            badgeD2.className = 'status-badge status-normal';
           }
 
           // Dynamic Border Color for Cleanroom Doors Card
           const cardDoors = document.getElementById('card-doors');
           if (cardDoors) {
-            cardDoors.style.borderTopColor = (d1Alarm || d2Alarm) ? '#ff1744' : '#2979ff';
+            if (d1Alarm || d2Alarm) {
+              cardDoors.style.borderTopColor = '#ff1744';
+            } else if (d1Open || d2Open) {
+              cardDoors.style.borderTopColor = '#ffab00';
+            } else {
+              cardDoors.style.borderTopColor = '#2979ff';
+            }
           }
 
           // Incubators (123 & 124)

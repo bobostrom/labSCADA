@@ -201,10 +201,16 @@ To maintain version history:
        - `PLC_PRG.bDoor01_MainDoor` (BOOL: False=Closed, True=Open)
        - `PLC_PRG.bDoor02_CryoLabDoor` (BOOL: False=Closed, True=Open)
        - `PLC_PRG.bLedOutput` (Heartbeat BOOL)
+     * **Discrete Warning / Pickup Delay States (Single Source of Truth):**
+       - `PLC_PRG.bMedFridgeWarn` (BOOL: Active during Fridge excursion pickup delay)
+       - `PLC_PRG.bMedFreezerWarn` (BOOL: Active during Freezer warm pickup delay)
+       - `PLC_PRG.bCryoTank1Warn` (BOOL: Active during Cryo 1 warm pickup delay)
+       - `PLC_PRG.bCryoTank2Warn` (BOOL: Active during Cryo 2 warm pickup delay)
      * **Evaluated Clinical Alarms (Hysteresis & On-Delay Filtered):**
-       - `PLC_PRG.bMedFridgeAlarm` (BOOL: High >8.0°C / Low <2.0°C, 2m delay)
+       - `PLC_PRG.bMedFridgeAlarm` (BOOL: High >8.5°C / Low <2.0°C, 2m delay)
        - `PLC_PRG.bMedFreezerAlarm` (BOOL: High >-15.0°C, 3m delay)
-       - `PLC_PRG.bCryoTankAlarm` (BOOL: High >-135.0°C, 30s delay)
+       - `PLC_PRG.bCryoTank1Alarm` (BOOL: High >-135.0°C, 30s delay)
+       - `PLC_PRG.bCryoTank2Alarm` (BOOL: High >-135.0°C, 30s delay)
        - `PLC_PRG.bDoor01_Alarm` (BOOL: Open > 3m delay)
        - `PLC_PRG.bDoor02_Alarm` (BOOL: Open > 3m delay)
        - `PLC_PRG.bIncubator01_Alarm` (BOOL: Contact Alarm)
