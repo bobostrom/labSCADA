@@ -679,7 +679,8 @@ def generate_alarms_audit_html_sheet(start_dt, end_dt, logo_b64, month_name_year
         ("Cryo Tank 2 (Sperm)", "Vapor < -135.0°C • Frost Floor > 10 cm", "Cryo Tank 2"),
         ("Medical Refrigerator", "2.0°C to 8.0°C (High Trip: 8.5°C)", "Medical Fridge"),
         ("Medical Freezer", "< -15.0°C (Compressor Target: -20°C)", "Medical Freezer"),
-        ("Chamber Incubators 01 & 02", "Chamber Contacts Normal (CO2/Temp In-Range)", "Incubator"),
+        ("Chamber Incubator 01", "Chamber Contact Normal (CO2/Temp In-Range)", "Incubator 01"),
+        ("Chamber Incubator 02", "Chamber Contact Normal (CO2/Temp In-Range)", "Incubator 02"),
         ("Cleanroom Access Doors", "Door Work Limit < 3m • Off-Session Secure", "Door")
     ]
 

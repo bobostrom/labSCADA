@@ -349,13 +349,32 @@
         </div>
       </div>
 
-      <!-- Chamber Incubators -->
-      <div class="card" id="card-incubators">
+      <!-- Chamber Incubators Card -->
+      <div class="card" id="card-incubators" style="border-top:3px solid #00b0ff;">
         <div class="card-title">Chamber Incubators</div>
-        <div class="card-val" id="val-incubators" style="font-size:1.6rem; margin-top:6px;">NORMAL</div>
-        <div class="card-sub">
-          <span>Incubator 01 & 02</span>
-          <span id="badge-incubators" class="status-badge status-normal">ALL CLEAR</span>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:8px;">
+          <!-- Incubator 01 Section -->
+          <div style="background:rgba(9,13,22,0.65); padding:10px 10px; border-radius:8px; border:1px solid rgba(255,255,255,0.06); min-width:0; overflow:hidden;">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:4px; margin-bottom:4px;">
+              <span style="font-size:11px; font-weight:700; color:#8899a6; text-transform:uppercase;">Incubator 01</span>
+              <span id="badge-incubator1" class="status-badge status-normal">CLEAR</span>
+            </div>
+            <div style="font-size:1.5rem; font-weight:800; font-family:monospace; color:#f0f4f8; margin-top:2px;" id="val-incubator1">
+              NORMAL
+            </div>
+            <div style="font-size:11px; color:#8899a6; margin-top:5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" id="sub-incubator1">Chamber A &bull; In-Range</div>
+          </div>
+          <!-- Incubator 02 Section -->
+          <div style="background:rgba(9,13,22,0.65); padding:10px 10px; border-radius:8px; border:1px solid rgba(255,255,255,0.06); min-width:0; overflow:hidden;">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:4px; margin-bottom:4px;">
+              <span style="font-size:11px; font-weight:700; color:#8899a6; text-transform:uppercase;">Incubator 02</span>
+              <span id="badge-incubator2" class="status-badge status-normal">CLEAR</span>
+            </div>
+            <div style="font-size:1.5rem; font-weight:800; font-family:monospace; color:#f0f4f8; margin-top:2px;" id="val-incubator2">
+              NORMAL
+            </div>
+            <div style="font-size:11px; color:#8899a6; margin-top:5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" id="sub-incubator2">Chamber B &bull; In-Range</div>
+          </div>
         </div>
       </div>
     </div>
@@ -907,32 +926,85 @@
             }
           }
 
-          // Chamber Incubators (123 & 124)
+          // Chamber Incubators (123 = Incubator 01, 124 = Incubator 02)
           const inc1 = r[123] || 0;
           const inc2 = r[124] || 0;
-          const incAlarm = (inc1 > 0 || inc2 > 0);
-          const valInc = document.getElementById('val-incubators');
-          const bInc = document.getElementById('badge-incubators');
+          const inc1Alarm = (inc1 > 0);
+          const inc2Alarm = (inc2 > 0);
           const cardInc = document.getElementById('card-incubators');
 
+          const valInc1 = document.getElementById('val-incubator1');
+          const badgeInc1 = document.getElementById('badge-incubator1');
+          const subInc1 = document.getElementById('sub-incubator1');
+
+          const valInc2 = document.getElementById('val-incubator2');
+          const badgeInc2 = document.getElementById('badge-incubator2');
+          const subInc2 = document.getElementById('sub-incubator2');
+
           if (currentMode === 'OFF_SESSION') {
-            valInc.innerText = 'STANDBY';
-            valInc.style.color = '#94a3b8';
-            bInc.innerText = 'OFF-SESSION';
-            bInc.className = 'status-badge';
-            bInc.style.background = 'rgba(148, 163, 184, 0.15)';
-            bInc.style.color = '#94a3b8';
-            bInc.style.border = '1px solid rgba(148, 163, 184, 0.3)';
-            if (cardInc) cardInc.style.opacity = '0.75';
+            if (cardInc) {
+              cardInc.style.opacity = '0.75';
+              cardInc.style.borderTopColor = '#64748b';
+            }
+
+            if (valInc1) {
+              valInc1.innerText = 'STANDBY';
+              valInc1.style.color = '#94a3b8';
+            }
+            if (badgeInc1) {
+              badgeInc1.innerText = 'OFF-SESSION';
+              badgeInc1.className = 'status-badge';
+              badgeInc1.style.background = 'rgba(148, 163, 184, 0.15)';
+              badgeInc1.style.color = '#94a3b8';
+              badgeInc1.style.border = '1px solid rgba(148, 163, 184, 0.3)';
+            }
+            if (subInc1) subInc1.innerText = 'Alarms Suppressed';
+
+            if (valInc2) {
+              valInc2.innerText = 'STANDBY';
+              valInc2.style.color = '#94a3b8';
+            }
+            if (badgeInc2) {
+              badgeInc2.innerText = 'OFF-SESSION';
+              badgeInc2.className = 'status-badge';
+              badgeInc2.style.background = 'rgba(148, 163, 184, 0.15)';
+              badgeInc2.style.color = '#94a3b8';
+              badgeInc2.style.border = '1px solid rgba(148, 163, 184, 0.3)';
+            }
+            if (subInc2) subInc2.innerText = 'Alarms Suppressed';
           } else {
-            if (cardInc) cardInc.style.opacity = '1.0';
-            valInc.innerText = incAlarm ? 'ALARM' : 'NORMAL';
-            valInc.style.color = incAlarm ? '#ff1744' : '#f0f4f8';
-            bInc.innerText = incAlarm ? 'TRIPPED' : 'ALL CLEAR';
-            bInc.className = incAlarm ? 'status-badge status-alert' : 'status-badge status-normal';
-            bInc.style.background = '';
-            bInc.style.color = '';
-            bInc.style.border = '';
+            if (cardInc) {
+              cardInc.style.opacity = '1.0';
+              cardInc.style.borderTopColor = (inc1Alarm || inc2Alarm) ? '#ff1744' : '#00b0ff';
+            }
+
+            // Incubator 01
+            if (valInc1) {
+              valInc1.innerText = inc1Alarm ? 'ALARM' : 'NORMAL';
+              valInc1.style.color = inc1Alarm ? '#ff1744' : '#f0f4f8';
+            }
+            if (badgeInc1) {
+              badgeInc1.innerText = inc1Alarm ? 'TRIPPED' : 'CLEAR';
+              badgeInc1.className = inc1Alarm ? 'status-badge status-alert' : 'status-badge status-normal';
+              badgeInc1.style.background = '';
+              badgeInc1.style.color = '';
+              badgeInc1.style.border = '';
+            }
+            if (subInc1) subInc1.innerText = inc1Alarm ? 'Chamber Trip Active' : 'Chamber A • In-Range';
+
+            // Incubator 02
+            if (valInc2) {
+              valInc2.innerText = inc2Alarm ? 'ALARM' : 'NORMAL';
+              valInc2.style.color = inc2Alarm ? '#ff1744' : '#f0f4f8';
+            }
+            if (badgeInc2) {
+              badgeInc2.innerText = inc2Alarm ? 'TRIPPED' : 'CLEAR';
+              badgeInc2.className = inc2Alarm ? 'status-badge status-alert' : 'status-badge status-normal';
+              badgeInc2.style.background = '';
+              badgeInc2.style.color = '';
+              badgeInc2.style.border = '';
+            }
+            if (subInc2) subInc2.innerText = inc2Alarm ? 'Chamber Trip Active' : 'Chamber B • In-Range';
           }
         })
         .catch(e => console.error('Telemetry error:', e));
