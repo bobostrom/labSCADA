@@ -362,9 +362,10 @@ def resolve_alarm(cnl_num, final_val=None):
 
     print(f"[{datetime.now().strftime('%T')}] RESOLVED: {equip} (Duration: {duration_str})")
 
-    # If the repeating siren was never acknowledged, cancel it now
-    if receipt and not alarm["is_acknowledged"]:
-        cancel_pushover_receipt(receipt)
+    # Under Option 1 (Forced Wake-Up Policy):
+    # Do NOT cancel the Pushover repeating siren upon physical recovery.
+    # The siren continues repeating every 60s and the 'Acknowledge' button remains
+    # active on staff phones until an authorized person acknowledges on phone or kiosk.
 
     # Update database
     sql = f"""
@@ -376,11 +377,11 @@ def resolve_alarm(cnl_num, final_val=None):
     """
     db_execute(sql)
 
-    # Send Priority 0 "RESOLVED" notification with chime
+    # Send Priority 0 "RECOVERED" notification with chime
     val_disp = f"({final_val:.1f} cm)" if (cnl_num in (198, 199) and final_val is not None) else (f"({final_val:.1f}°C)" if final_val is not None else "")
     send_pushover_alert(
-        title=f"🟢 RESOLVED: {equip} Normal",
-        message=f"{equip} has returned to safe operational range {val_disp}. Duration: {duration_str}.",
+        title=f"🟢 RECOVERED: {equip} Normal",
+        message=f"{equip} has returned to safe operational range {val_disp}. Duration: {duration_str}. Siren will continue repeating until acknowledged on phone or kiosk.",
         priority=0,
         sound="magic"
     )
@@ -523,12 +524,11 @@ def phone_sync_and_escalation_worker():
     """Syncs mobile phone acknowledgments from Pushover and monitors escalations."""
     while True:
         try:
-            # 1. Sync Mobile Phone Acknowledgment from Pushover
+            # 1. Sync Mobile Phone Acknowledgment from Pushover (both active and recovered alarms)
             sql = """
             SELECT id, pushover_receipt, equipment_name 
             FROM mod_arc_postgre_sql.alarm_events 
             WHERE is_acknowledged = FALSE 
-              AND is_resolved = FALSE 
               AND pushover_receipt IS NOT NULL;
             """
             unacked_rows = db_query(sql)
@@ -595,7 +595,13 @@ def phone_sync_and_escalation_worker():
         except Exception as e:
             print(f"Escalation worker error: {e}")
 
-        time.sleep(15.0)
+        # Poll faster (5s) if there are active unacknowledged sirens, otherwise 15s
+        has_unacked = False
+        try:
+            has_unacked = len(unacked_rows) > 0
+        except Exception:
+            pass
+        time.sleep(5.0 if has_unacked else 15.0)
 
 
 # ==============================================================================
