@@ -86,6 +86,25 @@
     .summary-box { background: #02121c; border: 1px solid var(--border-subtle); border-radius: 10px; padding: 14px; text-align: left; margin-bottom: 20px; font-size: 13px; line-height: 1.6; color: #94a3b8; }
     .summary-box strong { color: #f0f4f8; }
     .btn-reset { width: 100%; background: var(--brand-blue); color: #ffffff; border: none; border-radius: 10px; font-size: 15px; font-weight: 800; padding: 13px; cursor: pointer; }
+
+    /* Specimen Retrieval & Alarm Hold Card */
+    .hold-card { margin-bottom: 16px; }
+    .btn-hold-mute { width: 100%; background: rgba(205, 163, 73, 0.12); border: 1px solid rgba(205, 163, 73, 0.35); border-radius: 10px; padding: 10px 14px; display: flex; align-items: center; gap: 12px; cursor: pointer; transition: all 0.15s; text-align: left; }
+    .btn-hold-mute:hover { background: rgba(205, 163, 73, 0.2); border-color: rgba(205, 163, 73, 0.55); }
+    .btn-hold-mute:active { transform: scale(0.98); }
+    .hold-icon { font-size: 24px; flex-shrink: 0; }
+    .hold-btn-title { color: #facc15; font-size: 13px; font-weight: 800; letter-spacing: -0.1px; }
+    .hold-btn-sub { color: #94a3b8; font-size: 11px; margin-top: 2px; }
+
+    .hold-active-banner { background: linear-gradient(135deg, rgba(234, 88, 12, 0.22), rgba(205, 163, 73, 0.15)); border: 1.5px solid #f59e0b; border-radius: 10px; padding: 12px 14px; box-shadow: 0 0 16px rgba(245, 158, 11, 0.25); }
+    .hold-active-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
+    .hold-pulse-dot { width: 9px; height: 9px; background: #f59e0b; border-radius: 50%; box-shadow: 0 0 8px #f59e0b; animation: hold-pulse 1.2s infinite; flex-shrink: 0; }
+    @keyframes hold-pulse { 0% { opacity: 0.4; transform: scale(0.9); } 50% { opacity: 1; transform: scale(1.15); } 100% { opacity: 0.4; transform: scale(0.9); } }
+    .hold-active-title { color: #fbbf24; font-size: 12.5px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; flex: 1; }
+    .hold-countdown { font-family: monospace; font-size: 17px; font-weight: 900; color: #fff; background: rgba(0,0,0,0.45); padding: 2px 8px; border-radius: 6px; border: 1px solid rgba(251, 191, 36, 0.4); }
+    .hold-active-sub { font-size: 11.5px; color: #e2e8f0; margin-bottom: 10px; line-height: 1.35; }
+    .btn-hold-cancel { width: 100%; background: #0284c7; color: #fff; border: none; border-radius: 7px; padding: 8px; font-size: 12.5px; font-weight: 800; cursor: pointer; transition: all 0.15s; }
+    .btn-hold-cancel:hover { background: #0369a1; }
   </style>
 </head>
 <body>
@@ -115,6 +134,34 @@
           <div class="telem-item">
             <div class="telem-val" id="dispSensor">{{ disp_sensor }}</div>
             <div class="telem-lbl">Sensor Depth</div>
+          </div>
+        </div>
+
+        <!-- Specimen Retrieval & Inspection Alarm Hold Card -->
+        <div class="hold-card" id="holdCard">
+          <div id="holdInactiveWrap">
+            <button type="button" class="btn-hold-mute" id="btnStartHold" onclick="toggleHold(true)">
+              <span class="hold-icon">⏱️</span>
+              <div style="text-align:left;">
+                <div class="hold-btn-title">Mute Alarms for Retrieval / Inspection (15 min)</div>
+                <div class="hold-btn-sub">Silences vapor temp sirens during canister retrieval. Auto-resumes in 15m.</div>
+              </div>
+            </button>
+          </div>
+          <div id="holdActiveWrap" style="display:none;">
+            <div class="hold-active-banner">
+              <div class="hold-active-header">
+                <span class="hold-pulse-dot"></span>
+                <span class="hold-active-title" id="holdActiveTitle">Alarms Muted</span>
+                <span class="hold-countdown" id="holdCountdown">15:00</span>
+              </div>
+              <div class="hold-active-sub" id="holdActiveSub">
+                Alarms muted for sample access. Sirens auto-resume when timer reaches zero.
+              </div>
+              <button type="button" class="btn-hold-cancel" onclick="toggleHold(false)">
+                ▶️ Resume Alarms Now
+              </button>
+            </div>
           </div>
         </div>
 
@@ -317,6 +364,97 @@
       const nextTank = (activeTank === "Cryo Tank 1") ? "Cryo Tank 2" : "Cryo Tank 1";
       setTank(nextTank);
     }
+
+    // =========================================================================
+    // Real-Time Telemetry & Specimen Retrieval Alarm Hold Management
+    // =========================================================================
+    let currentHolds = {};
+
+    function updateHoldCardUI() {
+      const hold = currentHolds[activeTank] || currentHolds["All Cryo Tanks"] || currentHolds["ALL"];
+      const inactWrap = document.getElementById("holdInactiveWrap");
+      const actWrap = document.getElementById("holdActiveWrap");
+      const titleEl = document.getElementById("holdActiveTitle");
+      const subEl = document.getElementById("holdActiveSub");
+      const countEl = document.getElementById("holdCountdown");
+
+      if (hold && hold.remaining_seconds > 0) {
+        inactWrap.style.display = "none";
+        actWrap.style.display = "block";
+        const m = Math.floor(hold.remaining_seconds / 60);
+        const s = hold.remaining_seconds % 60;
+        countEl.innerText = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+        titleEl.innerText = `Alarms Muted (${activeTank})`;
+        const initiated = hold.user ? `Initiated by ${hold.user}. ` : '';
+        subEl.innerText = `${initiated}Silenced for sample retrieval. Sirens auto-resume when timer reaches zero.`;
+      } else {
+        inactWrap.style.display = "block";
+        actWrap.style.display = "none";
+      }
+    }
+
+    function toggleHold(start) {
+      const initVal = document.getElementById("mobileInitials").value.trim().toUpperCase() || "Staff";
+      const endpoint = start ? "/api/cryo-hold" : "/api/cryo-hold/cancel";
+      fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          tank: activeTank,
+          duration_minutes: 15,
+          user: initVal
+        })
+      })
+      .then(res => res.json())
+      .then(d => {
+        syncTelemetry();
+      })
+      .catch(e => console.error("Hold toggle error:", e));
+    }
+
+    function syncTelemetry() {
+      fetch("/api/status")
+        .then(res => res.json())
+        .then(data => {
+          // Update live hold states
+          currentHolds = data.cryo_holds || {};
+          updateHoldCardUI();
+
+          // Update live readings for current active tank
+          const r = data.readings || {};
+          if (activeTank === "Cryo Tank 1") {
+            if (r[125] !== undefined) document.getElementById("dispTemp").innerText = r[125].toFixed(1) + "°C";
+            if (r[107] !== undefined) document.getElementById("dispSensor").innerText = r[107].toFixed(1) + " cm";
+          } else {
+            if (r[104] !== undefined) document.getElementById("dispTemp").innerText = r[104].toFixed(1) + "°C";
+            if (r[108] !== undefined) document.getElementById("dispSensor").innerText = r[108].toFixed(1) + " cm";
+          }
+        })
+        .catch(err => console.error("Telemetry sync error:", err));
+    }
+
+    // Local 1-second countdown ticker
+    setInterval(() => {
+      let changed = false;
+      for (const k in currentHolds) {
+        if (currentHolds[k] && currentHolds[k].remaining_seconds > 0) {
+          currentHolds[k].remaining_seconds -= 1;
+          changed = true;
+        }
+      }
+      if (changed) updateHoldCardUI();
+    }, 1000);
+
+    // Initial fetch and continuous 4-second sync with server
+    syncTelemetry();
+    setInterval(syncTelemetry, 4000);
+
+    // Update hold card when switching tanks
+    const originalSetTank = setTank;
+    setTank = function(tank) {
+      originalSetTank(tank);
+      updateHoldCardUI();
+    };
   </script>
 </body>
 </html>

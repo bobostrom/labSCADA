@@ -181,6 +181,194 @@ def get_current_channel_values():
 
 
 # ==============================================================================
+# LAB SESSION LIFECYCLE & AUDIT MANAGEMENT
+# ==============================================================================
+cached_lab_mode = None
+last_mode_check_time = 0
+
+def get_current_lab_mode():
+    """Returns 'IN_SESSION' or 'OFF_SESSION' (cached for 2 seconds)."""
+    global cached_lab_mode, last_mode_check_time
+    now = time.time()
+    if cached_lab_mode and (now - last_mode_check_time < 2.0):
+        return cached_lab_mode
+    rows = db_query("SELECT current_mode FROM mod_arc_postgre_sql.lab_operational_mode ORDER BY id DESC LIMIT 1;")
+    if rows and rows[0] and rows[0][0]:
+        cached_lab_mode = rows[0][0].strip()
+    else:
+        cached_lab_mode = "IN_SESSION"
+    last_mode_check_time = now
+    return cached_lab_mode
+
+
+def set_lab_mode(new_mode, user="Lab Staff", notes=""):
+    """Sets lab operating mode and inserts an audit record."""
+    global cached_lab_mode, last_mode_check_time
+    safe_mode = "OFF_SESSION" if new_mode.upper() == "OFF_SESSION" else "IN_SESSION"
+    safe_user = user.replace("'", "''")
+    safe_notes = notes.replace("'", "''")
+    db_execute(f"INSERT INTO mod_arc_postgre_sql.lab_operational_mode (current_mode, updated_by, notes) VALUES ('{safe_mode}', '{safe_user}', '{safe_notes}');")
+    cached_lab_mode = safe_mode
+    last_mode_check_time = time.time()
+
+    icon = "🟢" if safe_mode == "IN_SESSION" else "⏸️"
+    send_pushover_alert(
+        title=f"{icon} Lab Operating Mode: {safe_mode}",
+        message=f"Lab operational status switched to {safe_mode} by {user}. Notes: {notes or 'None'}.",
+        priority=0,
+        sound="magic"
+    )
+    return safe_mode
+
+
+# Door Event State Tracking
+door_event_states = {
+    119: {"name": "Main Cleanroom Door", "alarm_cnl": 121, "is_open": False, "opened_at": None, "event_id": None, "alarm_tripped": False},
+    120: {"name": "Cryo Lab Door", "alarm_cnl": 122, "is_open": False, "opened_at": None, "event_id": None, "alarm_tripped": False}
+}
+
+def track_door_events(readings, current_mode):
+    """Tracks physical door open/close transitions and duration in PostgreSQL."""
+    now = time.time()
+    for contact_cnl, st in door_event_states.items():
+        is_now_open = (readings.get(contact_cnl, 0) > 0)
+        is_now_alarm = (readings.get(st["alarm_cnl"], 0) > 0)
+        door_name = st["name"]
+
+        if is_now_open and not st["is_open"]:
+            # Transition: CLOSED -> OPEN
+            st["is_open"] = True
+            st["opened_at"] = now
+            st["alarm_tripped"] = is_now_alarm
+            sql = f"""
+            INSERT INTO mod_arc_postgre_sql.cleanroom_door_events 
+            (door_name, opened_at, lab_mode, alarm_tripped) 
+            VALUES ('{door_name}', NOW(), '{current_mode}', {str(is_now_alarm).lower()})
+            RETURNING id;
+            """
+            rows = db_query(sql)
+            if rows and rows[0]:
+                try:
+                    st["event_id"] = int(rows[0][0])
+                except Exception:
+                    st["event_id"] = None
+
+            if current_mode == "OFF_SESSION":
+                send_pushover_alert(
+                    title=f"⚠️ Off-Session Access: {door_name}",
+                    message=f"{door_name} was opened during Off-Session Standby mode at {datetime.now().strftime('%H:%M:%S')}.",
+                    priority=1,
+                    sound="intermission"
+                )
+
+        elif not is_now_open and st["is_open"]:
+            # Transition: OPEN -> CLOSED
+            dur = max(1, int(now - (st["opened_at"] or now)))
+            event_id = st["event_id"]
+            alarm_flag = st["alarm_tripped"] or is_now_alarm
+            if event_id:
+                db_execute(f"""
+                UPDATE mod_arc_postgre_sql.cleanroom_door_events 
+                SET closed_at = NOW(), duration_seconds = {dur}, alarm_tripped = {str(alarm_flag).lower()} 
+                WHERE id = {event_id};
+                """)
+            st["is_open"] = False
+            st["opened_at"] = None
+            st["event_id"] = None
+            st["alarm_tripped"] = False
+
+        elif is_now_open and st["is_open"] and is_now_alarm and not st["alarm_tripped"]:
+            st["alarm_tripped"] = True
+            if st["event_id"]:
+                db_execute(f"UPDATE mod_arc_postgre_sql.cleanroom_door_events SET alarm_tripped = TRUE WHERE id = {st['event_id']};")
+
+
+# Cryo Maintenance / Retrieval Hold State
+# { "Cryo Tank 1": {"expires_at": float, "started_at": float, "user": str, "db_id": int} }
+active_cryo_holds = {}
+
+def is_cryo_hold_active(equipment_name):
+    """Returns True if alarms for equipment_name are currently suppressed."""
+    with state_lock:
+        for k in [equipment_name, "All Cryo Tanks", "ALL"]:
+            hold = active_cryo_holds.get(k)
+            if hold:
+                if time.time() < hold["expires_at"]:
+                    return True
+                else:
+                    active_cryo_holds.pop(k, None)
+    return False
+
+def get_active_cryo_holds():
+    """Returns dict of active holds with remaining seconds."""
+    now = time.time()
+    holds_info = {}
+    with state_lock:
+        to_del = []
+        for equip, h in active_cryo_holds.items():
+            rem = int(h["expires_at"] - now)
+            if rem > 0:
+                holds_info[equip] = {
+                    "remaining_seconds": rem,
+                    "started_at": h["started_at"],
+                    "user": h["user"]
+                }
+            else:
+                to_del.append(equip)
+        for eq in to_del:
+            active_cryo_holds.pop(eq, None)
+    return holds_info
+
+def start_cryo_hold(equipment_name, duration_minutes=15, user="Lab Staff"):
+    """Starts a timed maintenance hold for specimen retrieval / dipstick check."""
+    now = time.time()
+    dur_min = max(1, min(120, int(duration_minutes)))
+    exp = now + (dur_min * 60)
+    targets = ["Cryo Tank 1", "Cryo Tank 2"] if ("all" in equipment_name.lower()) else [equipment_name]
+
+    for target in targets:
+        safe_equip = target.replace("'", "''")
+        safe_user = user.replace("'", "''")
+        sql = f"""
+        INSERT INTO mod_arc_postgre_sql.cryo_maintenance_holds 
+        (equipment_name, started_at, expires_at, initiated_by, duration_minutes) 
+        VALUES ('{safe_equip}', NOW(), NOW() + interval '{dur_min} minutes', '{safe_user}', {dur_min})
+        RETURNING id;
+        """
+        rows = db_query(sql)
+        db_id = int(rows[0][0]) if (rows and rows[0]) else None
+        with state_lock:
+            active_cryo_holds[target] = {
+                "expires_at": exp,
+                "started_at": now,
+                "user": user,
+                "db_id": db_id
+            }
+
+    # Resolve any currently active alarms on target units
+    mute_cnls = []
+    for target in targets:
+        if "1" in target:
+            mute_cnls.extend([113, 125])
+        if "2" in target:
+            mute_cnls.extend([114, 104])
+    for c in set(mute_cnls):
+        resolve_alarm(c)
+    return True
+
+def cancel_cryo_hold(equipment_name, user="Lab Staff"):
+    """Cancels maintenance hold early and returns tank to live monitoring."""
+    targets = ["Cryo Tank 1", "Cryo Tank 2"] if ("all" in equipment_name.lower()) else [equipment_name]
+    for target in targets:
+        with state_lock:
+            hold = active_cryo_holds.pop(target, None)
+        if hold and hold.get("db_id"):
+            db_execute(f"UPDATE mod_arc_postgre_sql.cryo_maintenance_holds SET ended_at = NOW(), cancelled_early = TRUE WHERE id = {hold['db_id']};")
+    return True
+
+
+
+# ==============================================================================
 # PUSHOVER API CLIENT
 # ==============================================================================
 def send_pushover_alert(title, message, priority=0, sound="pushover", retry=60, expire=7200):
@@ -462,6 +650,10 @@ def telemetry_scan_worker():
         try:
             readings = get_current_channel_values()
             now = time.time()
+            current_mode = get_current_lab_mode()
+
+            # Track door open/close transitions and duration in database
+            track_door_events(readings, current_mode)
 
             # 1. Evaluate Discrete Alarm Bits from CODESYS (Channels 111-114, 121-124)
             discrete_evals = [
@@ -480,6 +672,17 @@ def telemetry_scan_worker():
                     val = readings[cnl]
                     linked = CHANNELS.get(cnl, {}).get("linked_analog")
                     analog_val = readings.get(linked) if linked else None
+
+                    # Suppress Incubators if Off-Session
+                    if cnl in (123, 124) and current_mode == "OFF_SESSION":
+                        resolve_alarm(cnl, analog_val)
+                        continue
+
+                    # Suppress Cryo Tank if in manual Maintenance / Retrieval Hold
+                    if cnl in (113, 114) and is_cryo_hold_active(equip):
+                        resolve_alarm(cnl, analog_val)
+                        continue
+
                     if val > 0:
                         # Discrete alarm bit is HIGH
                         trigger_alarm(cnl, equip, alarm_type, analog_val)
@@ -507,18 +710,20 @@ def telemetry_scan_worker():
             # Cryo Tank 1 (Cnl 125)
             if 125 in readings and 113 not in readings:
                 c_temp = readings[125]
-                if c_temp > -135.0:
-                    trigger_alarm(125, "Cryo Tank 1", "Liquid Nitrogen Excursion", c_temp)
-                elif c_temp <= -140.0:
-                    resolve_alarm(125, c_temp)
+                if not is_cryo_hold_active("Cryo Tank 1"):
+                    if c_temp > -135.0:
+                        trigger_alarm(125, "Cryo Tank 1", "Liquid Nitrogen Excursion", c_temp)
+                    elif c_temp <= -140.0:
+                        resolve_alarm(125, c_temp)
 
             # Cryo Tank 2 (Cnl 104)
             if 104 in readings and 114 not in readings:
                 c2_temp = readings[104]
-                if c2_temp > -135.0:
-                    trigger_alarm(104, "Cryo Tank 2", "Liquid Nitrogen Excursion", c2_temp)
-                elif c2_temp <= -140.0:
-                    resolve_alarm(104, c2_temp)
+                if not is_cryo_hold_active("Cryo Tank 2"):
+                    if c2_temp > -135.0:
+                        trigger_alarm(104, "Cryo Tank 2", "Liquid Nitrogen Excursion", c2_temp)
+                    elif c2_temp <= -140.0:
+                        resolve_alarm(104, c2_temp)
 
         except Exception as e:
             print(f"Scan loop error: {e}")
@@ -934,7 +1139,9 @@ class ClinicalAlertHandler(http.server.BaseHTTPRequestHandler):
                 "active_alarm_count": len(alarms_copy),
                 "active_alarms": alarms_copy,
                 "readings": readings,
-                "last_qa": last_qa
+                "last_qa": last_qa,
+                "lab_mode": get_current_lab_mode(),
+                "cryo_holds": get_active_cryo_holds()
             }
             self.send_response(200)
             self.send_header("Content-Type", "application/json")
@@ -985,6 +1192,62 @@ class ClinicalAlertHandler(http.server.BaseHTTPRequestHandler):
             self.send_header("Access-Control-Allow-Origin", "*")
             self.end_headers()
             self.wfile.write(json.dumps(data).encode("utf-8"))
+
+        elif parsed.path in ["/api/lab_mode", "/api/lab-mode"]:
+            rows = db_query("""
+            SELECT id, current_mode, updated_at, updated_by, notes 
+            FROM mod_arc_postgre_sql.lab_operational_mode 
+            ORDER BY id DESC LIMIT 20;
+            """)
+            history = []
+            for r in rows:
+                if len(r) >= 5:
+                    history.append({
+                        "id": int(r[0]),
+                        "mode": r[1],
+                        "updated_at": r[2],
+                        "updated_by": r[3] if r[3] and r[3] != "NULL" else "Staff",
+                        "notes": r[4] if r[4] and r[4] != "NULL" else ""
+                    })
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.end_headers()
+            self.wfile.write(json.dumps({
+                "mode": get_current_lab_mode(),
+                "history": history
+            }).encode("utf-8"))
+
+        elif parsed.path in ["/api/cryo_hold", "/api/cryo-hold"]:
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.end_headers()
+            self.wfile.write(json.dumps(get_active_cryo_holds()).encode("utf-8"))
+
+        elif parsed.path in ["/api/door_events", "/api/door-events"]:
+            rows = db_query("""
+            SELECT id, door_name, opened_at, closed_at, duration_seconds, lab_mode, alarm_tripped 
+            FROM mod_arc_postgre_sql.cleanroom_door_events 
+            ORDER BY opened_at DESC LIMIT 30;
+            """)
+            events = []
+            for r in rows:
+                if len(r) >= 7:
+                    events.append({
+                        "id": int(r[0]),
+                        "door_name": r[1],
+                        "opened_at": r[2],
+                        "closed_at": r[3] if r[3] and r[3] != "NULL" else None,
+                        "duration_seconds": int(r[4]) if r[4] and r[4] != "NULL" else None,
+                        "lab_mode": r[5],
+                        "alarm_tripped": (r[6] == "t")
+                    })
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.end_headers()
+            self.wfile.write(json.dumps(events).encode("utf-8"))
 
         elif parsed.path in ["/report/ln2", "/reports/ln2"]:
             params = urllib.parse.parse_qs(parsed.query)
@@ -1245,6 +1508,71 @@ class ClinicalAlertHandler(http.server.BaseHTTPRequestHandler):
                 self.send_header("Content-Type", "application/json")
                 self.end_headers()
                 self.wfile.write(json.dumps({"error": "Invalid level_cm value"}).encode("utf-8"))
+
+        elif parsed.path in ["/api/lab_mode", "/api/lab-mode"]:
+            content_length = int(self.headers.get("Content-Length", 0))
+            body_str = self.rfile.read(content_length).decode("utf-8") if content_length > 0 else ""
+            payload = {}
+            if body_str:
+                try:
+                    payload = json.loads(body_str)
+                except Exception:
+                    raw_qs = urllib.parse.parse_qs(body_str)
+                    payload = {k: v[0] for k, v in raw_qs.items()}
+
+            mode = payload.get("mode") or "IN_SESSION"
+            user = payload.get("user") or payload.get("by") or "Lab Staff"
+            notes = payload.get("notes") or ""
+            res_mode = set_lab_mode(mode, user=user, notes=notes)
+
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.end_headers()
+            self.wfile.write(json.dumps({"success": True, "mode": res_mode}).encode("utf-8"))
+
+        elif parsed.path in ["/api/cryo_hold", "/api/cryo-hold"]:
+            content_length = int(self.headers.get("Content-Length", 0))
+            body_str = self.rfile.read(content_length).decode("utf-8") if content_length > 0 else ""
+            payload = {}
+            if body_str:
+                try:
+                    payload = json.loads(body_str)
+                except Exception:
+                    raw_qs = urllib.parse.parse_qs(body_str)
+                    payload = {k: v[0] for k, v in raw_qs.items()}
+
+            tank = payload.get("tank") or payload.get("tank_id") or "Cryo Tank 1"
+            dur = payload.get("duration_minutes") or payload.get("duration") or 15
+            user = payload.get("user") or payload.get("initials") or "Lab Staff"
+            start_cryo_hold(tank, duration_minutes=int(dur), user=user)
+
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.end_headers()
+            self.wfile.write(json.dumps({"success": True, "tank": tank, "duration_minutes": int(dur)}).encode("utf-8"))
+
+        elif parsed.path in ["/api/cryo_hold/cancel", "/api/cryo-hold/cancel"]:
+            content_length = int(self.headers.get("Content-Length", 0))
+            body_str = self.rfile.read(content_length).decode("utf-8") if content_length > 0 else ""
+            payload = {}
+            if body_str:
+                try:
+                    payload = json.loads(body_str)
+                except Exception:
+                    raw_qs = urllib.parse.parse_qs(body_str)
+                    payload = {k: v[0] for k, v in raw_qs.items()}
+
+            tank = payload.get("tank") or payload.get("tank_id") or "Cryo Tank 1"
+            user = payload.get("user") or "Lab Staff"
+            cancel_cryo_hold(tank, user=user)
+
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.end_headers()
+            self.wfile.write(json.dumps({"success": True, "tank": tank, "cancelled": True}).encode("utf-8"))
 
         else:
             self.send_response(404)

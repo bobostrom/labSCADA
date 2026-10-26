@@ -129,6 +129,19 @@
     .chip-fill.active { background:rgba(0,230,118,0.2); color:#00e676; border-color:#00e676; font-weight:700; box-shadow:0 0 10px rgba(0,230,118,0.2); }
     .text-input { width:100%; box-sizing:border-box; background:#090d16; border:1px solid rgba(255,255,255,0.15); border-radius:8px; color:#f0f4f8; font-size:14px; padding:10px 12px; }
     .text-input:focus { outline:none; border-color:#00e5ff; }
+
+    /* Session Mode Badge & Modal */
+    .badge-session { display:inline-flex; align-items:center; gap:8px; padding:6px 14px; border-radius:100px; font-size:12px; font-weight:800; letter-spacing:0.4px; cursor:pointer; user-select:none; transition:all 0.2s ease; }
+    .badge-session:hover { transform:translateY(-1px); filter:brightness(1.1); }
+    .badge-session.session-active { background:rgba(0,230,118,0.14); color:#00e676; border:1px solid rgba(0,230,118,0.45); }
+    .badge-session.session-active .session-dot { background:#00e676; box-shadow:0 0 8px #00e676; }
+    .badge-session.session-standby { background:rgba(245,158,11,0.15); color:#f59e0b; border:1px solid rgba(245,158,11,0.45); }
+    .badge-session.session-standby .session-dot { background:#f59e0b; box-shadow:0 0 8px #f59e0b; }
+    .session-dot { width:8px; height:8px; border-radius:50%; display:inline-block; }
+
+    .session-mode-card { flex:1; background:#090d16; border:2px solid rgba(255,255,255,0.12); border-radius:10px; padding:14px; cursor:pointer; transition:all 0.15s; }
+    .session-mode-card:hover { border-color:rgba(97,185,231,0.5); }
+    .session-mode-card.active { background:rgba(3,126,171,0.22); border-color:#00e5ff; box-shadow:0 0 14px rgba(0,229,255,0.25); }
   </style>
 </head>
 <body>
@@ -151,6 +164,10 @@
     </div>
 
     <div class="header-meta">
+      <div id="sessionModeChip" class="badge-session session-active" onclick="openSessionModal()" title="Click to view or switch clinical session mode">
+        <span class="session-dot"></span>
+        <span id="sessionModeLabel">CLINICAL IN-SESSION</span>
+      </div>
       <div class="clock-display" id="liveClock">--:--:-- AKDT</div>
       <div class="badge-live"><div class="pulse-dot"></div> Telemetry Live</div>
     </div>
@@ -225,6 +242,7 @@
           <div id="ln2-next-due-1" style="font-size:11px; color:#8899a6; margin-top:2px;">Next: Mon/Wed/Fri by 5:00 PM</div>
           <div class="dip-actions">
             <button class="btn-mini" onclick="openLn2ModalFor('Cryo Tank 1')">🧊 Log Check</button>
+            <button class="btn-mini" id="btn-hold-cryo1" style="background:#0284c7;" onclick="toggleCryoHoldKiosk('Cryo Tank 1')">⏱️ Mute (15m)</button>
             <button class="btn-mini-subtle" onclick="switchTab('cryo')">Audit Trail →</button>
           </div>
         </div>
@@ -257,6 +275,7 @@
           <div id="ln2-next-due-2" style="font-size:11px; color:#8899a6; margin-top:2px;">Next: Mon/Wed/Fri by 5:00 PM</div>
           <div class="dip-actions">
             <button class="btn-mini" onclick="openLn2ModalFor('Cryo Tank 2')">🧊 Log Check</button>
+            <button class="btn-mini" id="btn-hold-cryo2" style="background:#0284c7;" onclick="toggleCryoHoldKiosk('Cryo Tank 2')">⏱️ Mute (15m)</button>
             <button class="btn-mini-subtle" onclick="switchTab('cryo')">Audit Trail →</button>
           </div>
         </div>
@@ -345,11 +364,16 @@
     <div class="section-card">
       <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:8px;">
         <div>
-          <h3 style="margin:0; font-size:1.15rem; color:#f0f4f8;">Active Alarms & Clinical Audit Trail</h3>
-          <p style="color:#8899a6; font-size:13px; margin:3px 0 0;">Reverse chronological history. Tap Acknowledge to silence repeating sirens.</p>
+          <h3 style="margin:0; font-size:1.15rem; color:#f0f4f8;" id="auditSectionTitle">Active Alarms &amp; Clinical Audit Trail</h3>
+          <p style="color:#8899a6; font-size:13px; margin:3px 0 0;" id="auditSectionDesc">Reverse chronological history. Tap Acknowledge to silence repeating sirens.</p>
+        </div>
+        <div style="display:flex; gap:6px; background:rgba(2,22,34,0.9); padding:3px; border-radius:8px; border:1px solid var(--border-subtle);">
+          <button type="button" class="nav-tab active" id="btnAuditAlarms" style="padding:6px 14px; font-size:12.5px;" onclick="switchAuditView('alarms')">🚨 Alarms &amp; Siren Log</button>
+          <button type="button" class="nav-tab" id="btnAuditDoors" style="padding:6px 14px; font-size:12.5px;" onclick="switchAuditView('doors')">🚪 Cleanroom Door Log</button>
         </div>
       </div>
       <div id="alarmsTable" style="overflow-x:auto;">Loading alarms...</div>
+      <div id="doorsTable" style="overflow-x:auto; display:none;">Loading door events...</div>
     </div>
   </div>
 
@@ -474,6 +498,59 @@
     <div>Advanced Fertility of Alaska &bull; Clinical SCADA Telemetry</div>
     <div>Powered by <strong>Lares Telemetry</strong></div>
   </footer>
+
+  <!-- Modal: Lab Operational Mode Selector -->
+  <div class="modal-overlay" id="sessionModal" style="display:none;" onclick="if(event.target===this) closeSessionModal()">
+    <div class="modal-box">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+        <h2 style="margin:0; font-size:1.35rem; color:#f0f4f8;">Lab Operational Mode</h2>
+        <button type="button" onclick="closeSessionModal()" style="background:transparent; border:none; color:#8899a6; font-size:22px; cursor:pointer;">&times;</button>
+      </div>
+
+      <p style="color:#94a3b8; font-size:13px; margin:0 0 16px; line-height:1.45;">
+        The clinic cycles between quarterly clinical operating sessions (~2 weeks) and dormant standby periods. Select target mode:
+      </p>
+
+      <div style="display:flex; gap:12px; margin-bottom:18px;">
+        <div id="opt-mode-in" class="session-mode-card active" onclick="selectSessionMode('IN_SESSION')">
+          <div style="font-size:16px; font-weight:800; color:#10b981; margin-bottom:4px;">🟢 In-Session Active</div>
+          <div style="font-size:12px; color:#cbd5e1; line-height:1.35;">Full clinical procedures. Incubator monitoring active. Cleanroom doors 3-min hold delay enabled.</div>
+        </div>
+        <div id="opt-mode-off" class="session-mode-card" onclick="selectSessionMode('OFF_SESSION')">
+          <div style="font-size:16px; font-weight:800; color:#f59e0b; margin-bottom:4px;">⏸️ Off-Session Standby</div>
+          <div style="font-size:12px; color:#cbd5e1; line-height:1.35;">Lab dormant. Incubators powered off (alarms suppressed). Any cleanroom door opening alerts immediately.</div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Authorized Staff Initials / Name</label>
+        <input type="text" id="sessionUser" class="text-input" placeholder="e.g. BO, Sarah" maxlength="24">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Notes / Reason (Optional)</label>
+        <input type="text" id="sessionNotes" class="text-input" placeholder="e.g. Q4 Embryology Session start">
+      </div>
+
+      <div id="sessionErr" style="color:#ef4444; font-size:12.5px; font-weight:700; margin-bottom:12px; display:none;"></div>
+
+      <div style="display:flex; gap:10px; margin-top:20px;">
+        <button type="button" class="btn" style="flex:1; background:#1e293b;" onclick="closeSessionModal()">Cancel</button>
+        <button type="button" class="btn" style="flex:1; background:#00e676; color:#090d16; font-weight:800;" id="btnSaveSessionMode" onclick="saveSessionMode()">Confirm Mode Change</button>
+      </div>
+
+      <!-- Historical Transition Audit Trail -->
+      <div style="margin-top:22px; padding-top:16px; border-top:1px solid rgba(255,255,255,0.12);">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+          <span style="font-size:11.5px; font-weight:800; color:var(--brand-glacier); text-transform:uppercase; letter-spacing:0.5px;">Operational Mode Audit Trail</span>
+          <span style="font-size:11px; color:#8899a6;">Permanent PostgreSQL Record</span>
+        </div>
+        <div id="sessionHistoryTable" style="max-height:190px; overflow-y:auto; border-radius:8px; border:1px solid rgba(255,255,255,0.06); background:#02121c;">
+          Loading transition history...
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- ============================================================== -->
   <!-- GLOVE-FRIENDLY LN2 INSPECTION MODAL                            -->
@@ -671,16 +748,30 @@
             }
           }
 
+          // Lab Session Mode
+          const currentMode = data.lab_mode || 'IN_SESSION';
+          const sessionChip = document.getElementById('sessionModeChip');
+          const sessionLabel = document.getElementById('sessionModeLabel');
+          if (sessionChip && sessionLabel) {
+            if (currentMode === 'OFF_SESSION') {
+              sessionChip.className = 'badge-session session-standby';
+              sessionLabel.innerText = 'OFF-SESSION (STANDBY)';
+            } else {
+              sessionChip.className = 'badge-session session-active';
+              sessionLabel.innerText = 'CLINICAL IN-SESSION';
+            }
+          }
+
           // Cryo Tank 1 (Ch 125 Temp, Ch 113 PLC Alarm, Ch 117 PLC Warn Delay)
+          const b1 = document.getElementById('badge-cryo1');
+          const isAlarm1 = r[113] > 0;
+          const isWarn1 = !isAlarm1 && (r[117] > 0);
           if (r[125] !== undefined) {
             const cr1 = r[125];
             document.getElementById('val-cryo1').innerText = cr1.toFixed(1);
             const detailC1 = document.getElementById('detail-cryo1-temp');
             if (detailC1) detailC1.innerText = cr1.toFixed(1);
 
-            const b1 = document.getElementById('badge-cryo1');
-            const isAlarm1 = r[113] > 0;
-            const isWarn1 = !isAlarm1 && (r[117] > 0);
             if (isAlarm1) {
               b1.innerText = 'CRITICAL';
               b1.className = 'status-badge status-alert';
@@ -694,15 +785,15 @@
           }
 
           // Cryo Tank 2 (Ch 104 Temp, Ch 114 PLC Alarm, Ch 118 PLC Warn Delay)
+          const b2 = document.getElementById('badge-cryo2');
+          const isAlarm2 = r[114] > 0;
+          const isWarn2 = !isAlarm2 && (r[118] > 0);
           if (r[104] !== undefined) {
             const cr2 = r[104];
             document.getElementById('val-cryo2').innerText = cr2.toFixed(1);
             const detailC2 = document.getElementById('detail-cryo2-temp');
             if (detailC2) detailC2.innerText = cr2.toFixed(1);
 
-            const b2 = document.getElementById('badge-cryo2');
-            const isAlarm2 = r[114] > 0;
-            const isWarn2 = !isAlarm2 && (r[118] > 0);
             if (isAlarm2) {
               b2.innerText = 'CRITICAL';
               b2.className = 'status-badge status-alert';
@@ -713,6 +804,51 @@
               b2.innerText = 'NORMAL';
               b2.className = 'status-badge status-normal';
             }
+          }
+
+          // Cryo Holds Evaluation
+          const holds = data.cryo_holds || {};
+          const hold1 = holds["Cryo Tank 1"] || holds["All Cryo Tanks"] || holds["ALL"];
+          const hold2 = holds["Cryo Tank 2"] || holds["All Cryo Tanks"] || holds["ALL"];
+          const btnH1 = document.getElementById('btn-hold-cryo1');
+          const btnH2 = document.getElementById('btn-hold-cryo2');
+
+          if (hold1 && hold1.remaining_seconds > 0) {
+            const m = Math.ceil(hold1.remaining_seconds / 60);
+            b1.innerText = `HOLD (${m}m)`;
+            b1.className = 'status-badge status-warn';
+            if (btnH1) {
+              btnH1.innerText = `🟡 Muted (${m}m)`;
+              btnH1.style.background = '#d97706';
+            }
+            const cardC1 = document.getElementById('card-cryo1');
+            if (cardC1 && !isAlarm1) cardC1.style.borderTopColor = '#f59e0b';
+          } else {
+            if (btnH1) {
+              btnH1.innerText = '⏱️ Mute (15m)';
+              btnH1.style.background = '#0284c7';
+            }
+            const cardC1 = document.getElementById('card-cryo1');
+            if (cardC1 && !isAlarm1 && !isWarn1) cardC1.style.borderTopColor = '#00e5ff';
+          }
+
+          if (hold2 && hold2.remaining_seconds > 0) {
+            const m = Math.ceil(hold2.remaining_seconds / 60);
+            b2.innerText = `HOLD (${m}m)`;
+            b2.className = 'status-badge status-warn';
+            if (btnH2) {
+              btnH2.innerText = `🟡 Muted (${m}m)`;
+              btnH2.style.background = '#d97706';
+            }
+            const cardC2 = document.getElementById('card-cryo2');
+            if (cardC2 && !isAlarm2) cardC2.style.borderTopColor = '#f59e0b';
+          } else {
+            if (btnH2) {
+              btnH2.innerText = '⏱️ Mute (15m)';
+              btnH2.style.background = '#0284c7';
+            }
+            const cardC2 = document.getElementById('card-cryo2');
+            if (cardC2 && !isAlarm2 && !isWarn2) cardC2.style.borderTopColor = '#00b0ff';
           }
 
           // Main Cleanroom Door (Ch 119 PLC Contact, Ch 121 PLC Alarm)
@@ -726,10 +862,10 @@
             badgeD1.innerText = 'ALARM';
             badgeD1.className = 'status-badge status-alert';
           } else if (d1Open) {
-            valD1.innerText = 'OPEN';
-            valD1.style.color = '#ffab00';
-            badgeD1.innerText = 'DELAY';
-            badgeD1.className = 'status-badge status-warn';
+            valD1.innerText = (currentMode === 'OFF_SESSION') ? 'ENTRY' : 'OPEN';
+            valD1.style.color = (currentMode === 'OFF_SESSION') ? '#ff1744' : '#ffab00';
+            badgeD1.innerText = (currentMode === 'OFF_SESSION') ? 'OFF-SESSION' : 'DELAY';
+            badgeD1.className = (currentMode === 'OFF_SESSION') ? 'status-badge status-alert' : 'status-badge status-warn';
           } else {
             valD1.innerText = 'CLOSED';
             valD1.style.color = '#f0f4f8';
@@ -748,10 +884,10 @@
             badgeD2.innerText = 'ALARM';
             badgeD2.className = 'status-badge status-alert';
           } else if (d2Open) {
-            valD2.innerText = 'OPEN';
-            valD2.style.color = '#ffab00';
-            badgeD2.innerText = 'DELAY';
-            badgeD2.className = 'status-badge status-warn';
+            valD2.innerText = (currentMode === 'OFF_SESSION') ? 'ENTRY' : 'OPEN';
+            valD2.style.color = (currentMode === 'OFF_SESSION') ? '#ff1744' : '#ffab00';
+            badgeD2.innerText = (currentMode === 'OFF_SESSION') ? 'OFF-SESSION' : 'DELAY';
+            badgeD2.className = (currentMode === 'OFF_SESSION') ? 'status-badge status-alert' : 'status-badge status-warn';
           } else {
             valD2.innerText = 'CLOSED';
             valD2.style.color = '#f0f4f8';
@@ -762,7 +898,7 @@
           // Dynamic Border Color for Cleanroom Doors Card
           const cardDoors = document.getElementById('card-doors');
           if (cardDoors) {
-            if (d1Alarm || d2Alarm) {
+            if (d1Alarm || d2Alarm || (currentMode === 'OFF_SESSION' && (d1Open || d2Open))) {
               cardDoors.style.borderTopColor = '#ff1744';
             } else if (d1Open || d2Open) {
               cardDoors.style.borderTopColor = '#ffab00';
@@ -771,15 +907,33 @@
             }
           }
 
-          // Incubators (123 & 124)
+          // Chamber Incubators (123 & 124)
           const inc1 = r[123] || 0;
           const inc2 = r[124] || 0;
           const incAlarm = (inc1 > 0 || inc2 > 0);
-          document.getElementById('val-incubators').innerText = incAlarm ? 'ALARM' : 'NORMAL';
-          document.getElementById('val-incubators').style.color = incAlarm ? '#ff1744' : '#f0f4f8';
+          const valInc = document.getElementById('val-incubators');
           const bInc = document.getElementById('badge-incubators');
-          bInc.innerText = incAlarm ? 'TRIPPED' : 'ALL CLEAR';
-          bInc.className = incAlarm ? 'status-badge status-alert' : 'status-badge status-normal';
+          const cardInc = document.getElementById('card-incubators');
+
+          if (currentMode === 'OFF_SESSION') {
+            valInc.innerText = 'STANDBY';
+            valInc.style.color = '#94a3b8';
+            bInc.innerText = 'OFF-SESSION';
+            bInc.className = 'status-badge';
+            bInc.style.background = 'rgba(148, 163, 184, 0.15)';
+            bInc.style.color = '#94a3b8';
+            bInc.style.border = '1px solid rgba(148, 163, 184, 0.3)';
+            if (cardInc) cardInc.style.opacity = '0.75';
+          } else {
+            if (cardInc) cardInc.style.opacity = '1.0';
+            valInc.innerText = incAlarm ? 'ALARM' : 'NORMAL';
+            valInc.style.color = incAlarm ? '#ff1744' : '#f0f4f8';
+            bInc.innerText = incAlarm ? 'TRIPPED' : 'ALL CLEAR';
+            bInc.className = incAlarm ? 'status-badge status-alert' : 'status-badge status-normal';
+            bInc.style.background = '';
+            bInc.style.color = '';
+            bInc.style.border = '';
+          }
         })
         .catch(e => console.error('Telemetry error:', e));
     }
@@ -1104,6 +1258,204 @@
         .catch(e => console.error('LN2 fetch error:', e));
     }
 
+    // =========================================================================
+    // Session Mode & Cryo Hold Management Functions
+    // =========================================================================
+    let selectedMode = 'IN_SESSION';
+    let currentAuditTab = 'alarms';
+
+    function openSessionModal() {
+      document.getElementById('sessionModal').style.display = 'flex';
+      document.getElementById('sessionErr').style.display = 'none';
+      loadSessionHistory();
+    }
+
+    function closeSessionModal() {
+      document.getElementById('sessionModal').style.display = 'none';
+    }
+
+    function selectSessionMode(mode) {
+      selectedMode = mode;
+      document.getElementById('opt-mode-in').className = (mode === 'IN_SESSION') ? 'session-mode-card active' : 'session-mode-card';
+      document.getElementById('opt-mode-off').className = (mode === 'OFF_SESSION') ? 'session-mode-card active' : 'session-mode-card';
+    }
+
+    function loadSessionHistory() {
+      fetch('/api/lab-mode')
+        .then(r => r.json())
+        .then(d => {
+          if (d.mode) selectSessionMode(d.mode);
+          const history = d.history || [];
+          const container = document.getElementById('sessionHistoryTable');
+          if (!container) return;
+          if (history.length === 0) {
+            container.innerHTML = '<p style="color:#8899a6; padding:12px; margin:0;">No mode transitions recorded yet.</p>';
+            return;
+          }
+          let h = '<table style="width:100%; font-size:12px; margin:0;"><thead><tr>' +
+                  '<th style="padding:8px 10px;">Time</th>' +
+                  '<th style="padding:8px 10px;">Mode</th>' +
+                  '<th style="padding:8px 10px;">Staff</th>' +
+                  '<th style="padding:8px 10px;">Notes / Reason</th>' +
+                  '</tr></thead><tbody>';
+          history.forEach(row => {
+            const timeStr = row.updated_at ? row.updated_at.split('.')[0] : '-';
+            const isAct = (row.mode === 'IN_SESSION');
+            const badge = isAct 
+              ? '<span style="color:#00e676; font-weight:800; font-size:11px;">🟢 IN-SESSION</span>'
+              : '<span style="color:#f59e0b; font-weight:800; font-size:11px;">⏸️ OFF-SESSION</span>';
+            const userStr = row.updated_by || 'Staff';
+            const notesStr = row.notes ? row.notes : '<span style="color:#64748b;">-</span>';
+            h += `<tr>` +
+                 `<td style="padding:8px 10px; font-family:monospace; color:#cbd5e1;">${timeStr}</td>` +
+                 `<td style="padding:8px 10px;">${badge}</td>` +
+                 `<td style="padding:8px 10px;"><b>${userStr}</b></td>` +
+                 `<td style="padding:8px 10px; color:#94a3b8;">${notesStr}</td>` +
+                 `</tr>`;
+          });
+          h += '</tbody></table>';
+          container.innerHTML = h;
+        })
+        .catch(e => console.error('Error loading session history:', e));
+    }
+
+    function saveSessionMode() {
+      const u = document.getElementById('sessionUser').value.trim() || 'Kiosk Staff';
+      const n = document.getElementById('sessionNotes').value.trim();
+      const btn = document.getElementById('btnSaveSessionMode');
+      btn.disabled = true;
+      btn.innerText = 'Updating...';
+
+      fetch('/api/lab-mode', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mode: selectedMode, user: u, notes: n })
+      })
+      .then(r => r.json())
+      .then(d => {
+        btn.disabled = false;
+        btn.innerText = 'Confirm Mode Change';
+        loadSessionHistory();
+        updateTelemetry();
+        document.getElementById('sessionNotes').value = '';
+      })
+      .catch(e => {
+        btn.disabled = false;
+        btn.innerText = 'Confirm Mode Change';
+        const err = document.getElementById('sessionErr');
+        err.innerText = 'Error saving operational mode: ' + e;
+        err.style.display = 'block';
+      });
+    }
+
+    function toggleCryoHoldKiosk(tank) {
+      fetch('/api/status')
+        .then(r => r.json())
+        .then(d => {
+          const holds = d.cryo_holds || {};
+          const isHolding = !!(holds[tank] || holds["All Cryo Tanks"] || holds["ALL"]);
+          if (isHolding) {
+            if (confirm(`Resume live alarms and sirens for ${tank} now?`)) {
+              fetch('/api/cryo-hold/cancel', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ tank: tank, user: 'Kiosk Staff' })
+              }).then(() => updateTelemetry());
+            }
+          } else {
+            fetch('/api/cryo-hold', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ tank: tank, duration_minutes: 15, user: 'Kiosk Staff' })
+            }).then(() => updateTelemetry());
+          }
+        });
+    }
+
+    // =========================================================================
+    // Cleanroom Door Audit Log Viewer
+    // =========================================================================
+    function switchAuditView(tab) {
+      currentAuditTab = tab;
+      const btnA = document.getElementById('btnAuditAlarms');
+      const btnD = document.getElementById('btnAuditDoors');
+      const tblA = document.getElementById('alarmsTable');
+      const tblD = document.getElementById('doorsTable');
+      const title = document.getElementById('auditSectionTitle');
+      const desc = document.getElementById('auditSectionDesc');
+
+      if (tab === 'doors') {
+        btnA.className = 'nav-tab';
+        btnD.className = 'nav-tab active';
+        tblA.style.display = 'none';
+        tblD.style.display = 'block';
+        title.innerText = 'Cleanroom Door Access Log';
+        desc.innerText = 'Chronological log of cleanroom physical access, open duration, and session context.';
+        loadDoorEvents();
+      } else {
+        btnA.className = 'nav-tab active';
+        btnD.className = 'nav-tab';
+        tblA.style.display = 'block';
+        tblD.style.display = 'none';
+        title.innerText = 'Active Alarms & Clinical Audit Trail';
+        desc.innerText = 'Reverse chronological history. Tap Acknowledge to silence repeating sirens.';
+        loadAlarms();
+      }
+    }
+
+    function loadDoorEvents() {
+      fetch('/api/door-events')
+        .then(r => r.json())
+        .then(events => {
+          const container = document.getElementById('doorsTable');
+          if (!events || events.length === 0) {
+            container.innerHTML = '<p style="color:#00e676; padding:12px 0;">🚪 No door access transitions recorded yet.</p>';
+            return;
+          }
+          let h = '<table style="min-width:700px;"><thead><tr>' +
+                  '<th>Opened At</th>' +
+                  '<th>Door</th>' +
+                  '<th>Closed At</th>' +
+                  '<th>Duration</th>' +
+                  '<th>Session Mode</th>' +
+                  '<th>Alarm Tripped</th>' +
+                  '</tr></thead><tbody>';
+
+          events.forEach(ev => {
+            const openStr = ev.opened_at ? ev.opened_at.split('.')[0] : '-';
+            const closeStr = ev.closed_at ? ev.closed_at.split('.')[0] : '<span style="color:#ffab00; font-weight:700;">CURRENTLY OPEN</span>';
+            let durStr = '-';
+            if (ev.duration_seconds !== null && ev.duration_seconds !== undefined) {
+              const m = Math.floor(ev.duration_seconds / 60);
+              const s = ev.duration_seconds % 60;
+              durStr = m > 0 ? `${m}m ${s}s` : `${s}s`;
+            } else if (!ev.closed_at) {
+              durStr = '<span style="color:#ffab00;">In Progress</span>';
+            }
+
+            const modeBadge = (ev.lab_mode === 'OFF_SESSION') 
+              ? '<span style="background:rgba(245,158,11,0.2); color:#f59e0b; padding:2px 7px; border-radius:4px; font-weight:700; font-size:11px;">OFF-SESSION</span>'
+              : '<span style="background:rgba(0,230,118,0.15); color:#00e676; padding:2px 7px; border-radius:4px; font-weight:700; font-size:11px;">IN-SESSION</span>';
+
+            const alarmBadge = ev.alarm_tripped 
+              ? '<span class="status-badge status-alert">EXCURSION</span>'
+              : '<span class="status-badge status-normal">SECURE</span>';
+
+            h += `<tr>` +
+                 `<td>${openStr}</td>` +
+                 `<td><strong>${ev.door_name}</strong></td>` +
+                 `<td>${closeStr}</td>` +
+                 `<td style="font-family:monospace; font-weight:700;">${durStr}</td>` +
+                 `<td>${modeBadge}</td>` +
+                 `<td>${alarmBadge}</td>` +
+                 `</tr>`;
+          });
+          h += '</tbody></table>';
+          container.innerHTML = h;
+        })
+        .catch(e => console.error('Door events fetch error:', e));
+    }
+
     // Initialization
     const initialTab = (window.location.pathname.startsWith('/cryo') || window.location.hash === '#cryo') ? 'cryo' : 'live';
     switchTab(initialTab, false);
@@ -1111,6 +1463,7 @@
     setInterval(updateTelemetry, 1000);
     setInterval(loadAlarms, 2000);
     setInterval(updateLn2Status, 3000);
+    setInterval(() => { if (currentAuditTab === 'doors') loadDoorEvents(); }, 3000);
     updateTelemetry();
     loadAlarms();
     updateLn2Status();
