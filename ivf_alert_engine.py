@@ -209,7 +209,7 @@ def cancel_pushover_receipt(receipt):
     """Cancels a specific repeating emergency Priority 2 alert in Pushover."""
     if not receipt:
         return False
-    url = f"https://api.pushover.net/1/receipts/cancel/{receipt}.json"
+    url = f"https://api.pushover.net/1/receipts/{receipt}/cancel.json"
     encoded = urllib.parse.urlencode({"token": PUSHOVER_TOKEN}).encode("utf-8")
     req = urllib.request.Request(url, data=encoded, method="POST")
     try:

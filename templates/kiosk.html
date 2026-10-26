@@ -349,7 +349,7 @@
           <p style="color:#8899a6; font-size:13px; margin:3px 0 0;">Reverse chronological history. Tap Acknowledge to silence repeating sirens.</p>
         </div>
       </div>
-      <div id="alarmsTable">Loading alarms...</div>
+      <div id="alarmsTable" style="overflow-x:auto;">Loading alarms...</div>
     </div>
   </div>
 
@@ -789,27 +789,89 @@
             document.getElementById('alarmsTable').innerHTML = '<p style="color:#00e676; padding:12px 0;">🟢 All systems normal. No alarm events recorded.</p>';
             return;
           }
-          let h = '<table><thead><tr><th>Time</th><th>Equipment</th><th>Condition</th><th>Reading</th><th>Status</th><th>Action</th></tr></thead><tbody>';
+          let h = '<table style="min-width:700px;"><thead><tr>' +
+                  '<th>Time</th>' +
+                  '<th>Equipment</th>' +
+                  '<th>Condition</th>' +
+                  '<th>Reading</th>' +
+                  '<th>Status</th>' +
+                  '<th>Acknowledged By</th>' +
+                  '<th>Action</th>' +
+                  '</tr></thead><tbody>';
+
           rows.forEach(r => {
             let statusHtml = '';
             let actHtml = '-';
-            if (!r.is_acknowledged && !r.is_resolved) {
-              if (r.priority === 1) {
-                statusHtml = '<span style="color:#ffab00; font-weight:700;">⚠️ ACTIVE (WARNING)</span>';
-                actHtml = `<button class="btn" style="background:#ffab00; color:#0f172a; font-weight:700;" onclick="ackAlarm(${r.id})">✋ Acknowledge</button>`;
-              } else {
-                statusHtml = '<span style="color:#ff1744; font-weight:700;">🔴 ACTIVE (SIREN)</span>';
-                actHtml = `<button class="btn" onclick="ackAlarm(${r.id})">✋ Acknowledge</button>`;
-              }
-            } else if (r.is_acknowledged && !r.is_resolved) {
-              const tok = r.acknowledged_by_token ? ` title="Immutable Token: ${r.acknowledged_by_token}"` : '';
-              statusHtml = `<span style="color:#ffab00; font-weight:600;"${tok}>🟡 Attending (${r.acknowledged_by || 'Staff'})</span>`;
+            let whoAckHtml = '';
+            let rowStyle = '';
+
+            const isUnacked = !r.is_acknowledged;
+            const isResolved = r.is_resolved;
+
+            // 1. Acknowledged By Column
+            if (isUnacked) {
+              whoAckHtml = '<span style="color:#ff5252; font-weight:700; font-size:11.5px; letter-spacing:0.3px;">UNACKNOWLEDGED</span>';
             } else {
-              statusHtml = '<span style="color:#00e676;">🟢 Resolved</span>';
+              const name = r.acknowledged_by || 'Staff';
+              let ackTimeStr = '';
+              if (r.acknowledged_at) {
+                const parts = r.acknowledged_at.split(' ');
+                if (parts.length > 1) {
+                  ackTimeStr = `<span style="font-size:11px; color:#8899a6; display:block;">at ${parts[1].split('.')[0]}</span>`;
+                }
+              }
+              const tokAttr = r.acknowledged_by_token ? ` title="Token: ${r.acknowledged_by_token}"` : '';
+              whoAckHtml = `<span style="color:#00e5ff; font-weight:600;"${tokAttr}>${name}</span>${ackTimeStr}`;
             }
-            const valDisp = r.excursion_val !== null ? ([198, 199].includes(r.cnl_num) ? r.excursion_val + 'h overdue' : r.excursion_val + '°C') : '-';
+
+            // 2. Status & Action Columns
+            if (isUnacked && !isResolved) {
+              // Active ongoing alarm
+              if (r.priority === 1) {
+                statusHtml = '<span style="color:#ffab00; font-weight:700;">⚠️ ACTIVE (WARN)</span>';
+                actHtml = `<button class="btn" style="background:#ffab00; color:#0f172a; font-weight:700; padding:6px 14px; font-size:12px;" onclick="ackAlarm(${r.id})">✋ Acknowledge</button>`;
+              } else {
+                statusHtml = '<span style="color:#ff1744; font-weight:800;">🔴 ACTIVE (SIREN)</span>';
+                actHtml = `<button class="btn" style="background:#ff1744; color:#ffffff; font-weight:800; padding:6px 14px; font-size:12px;" onclick="ackAlarm(${r.id})">✋ Silence & Ack</button>`;
+              }
+              rowStyle = 'style="background:rgba(255,23,68,0.12);"';
+            } else if (!isUnacked && !isResolved) {
+              // Acknowledged, chamber attending / in progress
+              statusHtml = '<span style="color:#00b0ff; font-weight:700;">🟡 Attending</span>';
+              actHtml = '<span style="color:#8899a6; font-size:12px;">In Progress</span>';
+            } else if (isUnacked && isResolved) {
+              // Recovered on its own, but unacknowledged (past excursion needing sign-off)
+              const dur = r.duration_seconds ? ` (${r.duration_seconds < 60 ? r.duration_seconds + 's' : Math.floor(r.duration_seconds / 60) + 'm ' + (r.duration_seconds % 60) + 's'})` : '';
+              statusHtml = `<span style="color:#ffab00; font-weight:700;">⚠️ RECOVERED${dur}</span>`;
+              actHtml = `<button class="btn" style="background:#ffab00; color:#0b111e; font-weight:800; padding:6px 14px; font-size:12px;" onclick="ackAlarm(${r.id})">✍️ Sign Off</button>`;
+              rowStyle = 'style="background:rgba(255,171,0,0.08); border-left:3px solid #ffab00;"';
+            } else {
+              // Fully acknowledged and resolved
+              const dur = r.duration_seconds ? ` (${r.duration_seconds < 60 ? r.duration_seconds + 's' : Math.floor(r.duration_seconds / 60) + 'm ' + (r.duration_seconds % 60) + 's'})` : '';
+              statusHtml = `<span style="color:#00e676; font-weight:600;">🟢 Resolved${dur}</span>`;
+              actHtml = '<span style="color:#64748b; font-size:12px;">Complete</span>';
+            }
+
+            let valDisp = '-';
+            if (r.excursion_val !== null) {
+              if ([198, 199].includes(r.cnl_num)) {
+                valDisp = r.excursion_val + 'h overdue';
+              } else {
+                const num = parseFloat(r.excursion_val);
+                valDisp = !isNaN(num) ? num.toFixed(1) + '°C' : r.excursion_val + '°C';
+              }
+            }
             const timeDisp = r.triggered_at ? r.triggered_at.split('.')[0] : '-';
-            h += `<tr><td>${timeDisp}</td><td><b>${r.equipment_name}</b></td><td>${r.alarm_type}</td><td>${valDisp}</td><td>${statusHtml}</td><td>${actHtml}</td></tr>`;
+
+            h += `<tr ${rowStyle}>` +
+                 `<td>${timeDisp}</td>` +
+                 `<td><b>${r.equipment_name}</b></td>` +
+                 `<td>${r.alarm_type}</td>` +
+                 `<td>${valDisp}</td>` +
+                 `<td>${statusHtml}</td>` +
+                 `<td>${whoAckHtml}</td>` +
+                 `<td>${actHtml}</td>` +
+                 `</tr>`;
           });
           h += '</tbody></table>';
           document.getElementById('alarmsTable').innerHTML = h;
