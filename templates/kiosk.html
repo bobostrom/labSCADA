@@ -1227,9 +1227,16 @@
 
     function submitLn2Log() {
       const lvlStr = document.getElementById('ln2LevelInput').value;
+      const levelVal = parseFloat(lvlStr);
       const initials = document.getElementById('ln2InitialsInput').value.trim();
       const notes = document.getElementById('ln2NotesInput').value.trim();
       const msgEl = document.getElementById('modalSubmitMsg');
+
+      if (isNaN(levelVal) || levelVal <= 0) {
+        msgEl.style.color = '#ff1744';
+        msgEl.innerText = '⚠️ Please enter a valid dipstick level (cm).';
+        return;
+      }
 
       if (!initials) {
         msgEl.style.color = '#ff1744';
@@ -1239,7 +1246,7 @@
 
       const payload = {
         tank_id: currentTank,
-        level_cm: parseFloat(lvlStr),
+        level_cm: levelVal,
         was_filled: currentFill,
         frost_condition: currentSeal,
         initials: initials,
