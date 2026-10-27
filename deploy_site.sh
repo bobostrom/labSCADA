@@ -31,7 +31,7 @@ sudo mkdir -p /etc/labscada
 
 echo "-> Installing $SOURCE_ENV to /etc/labscada/site.env..."
 sudo cp "$SOURCE_ENV" /etc/labscada/site.env
-sudo chmod 640 /etc/labscada/site.env
+sudo chmod 644 /etc/labscada/site.env
 
 # Also keep a local site.env symlink or copy for local non-root development
 cp "$SOURCE_ENV" "$REPO_DIR/site.env"
