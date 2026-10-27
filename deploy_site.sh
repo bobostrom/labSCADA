@@ -36,6 +36,17 @@ sudo chmod 640 /etc/labscada/site.env
 # Also keep a local site.env symlink or copy for local non-root development
 cp "$SOURCE_ENV" "$REPO_DIR/site.env"
 
+# Deploy site-specific Rapid SCADA configuration (e.g. WAGO vs Raspberry Pi OPC UA mappings)
+if [ -d "$SITE_DIR/scada_config" ]; then
+    echo "-> Deploying site-specific Rapid SCADA configs from $SITE_DIR/scada_config..."
+    sudo cp "$SITE_DIR/scada_config/"*.xml /opt/scada/ScadaComm/Config/ 2>/dev/null || true
+    if systemctl is-active --quiet scadacomm6.service 2>/dev/null; then
+        echo "-> Restarting scadacomm6.service..."
+        sudo systemctl restart scadacomm6.service
+        echo "✅ scadacomm6 restarted with $SITE configuration!"
+    fi
+fi
+
 echo "-> Restarting ivf-alert-engine.service..."
 if systemctl is-active --quiet ivf-alert-engine.service 2>/dev/null; then
     sudo systemctl restart ivf-alert-engine.service
@@ -45,3 +56,4 @@ else
 fi
 
 echo "=== Site Activation Complete: $SITE ==="
+

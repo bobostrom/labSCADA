@@ -18,6 +18,9 @@ __pycache__/
 *.~*
 *.precompilecache
 *.compilecache
+*.bootinfo
+*.bootinfo_guids
+*.compileinfo
 *.bak
 
 # Generated compliance reports and charts (rendered on-demand from PostgreSQL)
@@ -26,4 +29,6 @@ notes/ln2_dipstick_compliance_report*.html
 notes/ln2_dipstick_compliance_report*.md
 assets/ln2_sawtooth_*.png
 notes/assets/ln2_sawtooth_*.png
-
+# Local site environment & secrets
+site.env
+.env
