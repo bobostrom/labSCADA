@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
-  <title>{{ clinic_name }} | Cryo Tank LN2 Entry</title>
+  <title>{{ clinic_name }} | LN2 Dewar Entry</title>
   <link rel="icon" type="image/png" sizes="128x128" href="{{ clinic_logo }}?v=3">
   <link rel="icon" type="image/png" sizes="64x64" href="{{ clinic_logo }}?v=3">
   <link rel="shortcut icon" type="image/png" href="{{ clinic_logo }}?v=3">
@@ -121,8 +121,8 @@
       <div id="formSection">
         <!-- Tank Switcher -->
         <div class="tank-tabs">
-          <div class="tank-tab {% if not is_tank2 %}active-t1{% endif %}" id="tab-tank1" onclick="setTank('Cryo Tank 1')">Cryo Tank 1 (Embryos)</div>
-          <div class="tank-tab {% if is_tank2 %}active-t2{% endif %}" id="tab-tank2" onclick="setTank('Cryo Tank 2')">Cryo Tank 2 (Sperm)</div>
+          <div class="tank-tab {% if not is_tank2 %}active-t1{% endif %}" id="tab-tank1" onclick="setTank('Dewar 1')">Dewar 1 (Embryos)</div>
+          <div class="tank-tab {% if is_tank2 %}active-t2{% endif %}" id="tab-tank2" onclick="setTank('Dewar 2')">Dewar 2 (Sperm)</div>
         </div>
 
         <!-- Real-Time Telemetry Strip -->
@@ -255,13 +255,15 @@
     let frostSeal = "Good";
 
     const tankData = {
+      "Dewar 1": { temp: "{{ t1_temp_disp }}", sensor: "{{ t1_level_disp }}", defaultVal: "{{ t1_default_val }}" },
+      "Dewar 2": { temp: "{{ t2_temp_disp }}", sensor: "{{ t2_level_disp }}", defaultVal: "{{ t2_default_val }}" },
       "Cryo Tank 1": { temp: "{{ t1_temp_disp }}", sensor: "{{ t1_level_disp }}", defaultVal: "{{ t1_default_val }}" },
       "Cryo Tank 2": { temp: "{{ t2_temp_disp }}", sensor: "{{ t2_level_disp }}", defaultVal: "{{ t2_default_val }}" }
     };
 
     function setTank(tank) {
       activeTank = tank;
-      const isT1 = (tank === "Cryo Tank 1");
+      const isT1 = (tank === "Dewar 1" || tank === "Cryo Tank 1");
       document.getElementById("tab-tank1").className = isT1 ? "tank-tab active-t1" : "tank-tab";
       document.getElementById("tab-tank2").className = isT1 ? "tank-tab" : "tank-tab active-t2";
       
@@ -368,7 +370,7 @@
       document.getElementById("formSection").style.display = "block";
       document.getElementById("successSection").style.display = "none";
       // Auto-toggle to the other tank for quick sequential checks
-      const nextTank = (activeTank === "Cryo Tank 1") ? "Cryo Tank 2" : "Cryo Tank 1";
+      const nextTank = (activeTank === "Dewar 1" || activeTank === "Cryo Tank 1") ? "Dewar 2" : "Dewar 1";
       setTank(nextTank);
     }
 

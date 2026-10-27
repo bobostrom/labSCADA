@@ -174,7 +174,7 @@
     <!-- Navigation Tabs -->
     <div class="nav-tabs">
       <button class="nav-tab active" id="tab-live" onclick="switchTab('live')">🌡️ Live Operations</button>
-      <button class="nav-tab" id="tab-cryo" onclick="switchTab('cryo')">🧊 Cryo Tank Audit</button>
+      <button class="nav-tab" id="tab-cryo" onclick="switchTab('cryo')">🧊 LN2 Dewar Audit</button>
     </div>
 
     <div class="header-meta">
@@ -229,11 +229,11 @@
 
     <!-- 2. Middle Section: Live Real-Time Telemetry Grid -->
     <div class="grid-telemetry">
-      <!-- Cryo Tank 1 (Embryos) -->
+      <!-- Dewar 1 (Embryos) -->
       <div class="card" id="card-cryo1" style="border-top:3px solid #00e5ff;">
         <div style="display:flex; justify-content:space-between; align-items:flex-start;">
           <div>
-            <div class="card-title">Cryo Tank 1 (Embryos)</div>
+            <div class="card-title">Dewar 1 (Embryos)</div>
             <div class="card-val"><span id="val-cryo1">--</span><span class="card-unit">°C</span></div>
           </div>
           <span id="badge-cryo1" class="status-badge status-normal">NORMAL</span>
@@ -255,18 +255,18 @@
           </div>
           <div id="ln2-next-due-1" style="font-size:11px; color:#8899a6; margin-top:2px;">Next: Mon/Wed/Fri by 5:00 PM</div>
           <div class="dip-actions">
-            <button class="btn-mini" onclick="openLn2ModalFor('Cryo Tank 1')">🧊 Log Check</button>
-            <button class="btn-mini" id="btn-hold-cryo1" style="background:#0284c7;" onclick="toggleCryoHoldKiosk('Cryo Tank 1')">⏱️ Mute (15m)</button>
+            <button class="btn-mini" onclick="openLn2ModalFor('Dewar 1')">🧊 Log Check</button>
+            <button class="btn-mini" id="btn-hold-cryo1" style="background:#0284c7;" onclick="toggleCryoHoldKiosk('Dewar 1')">⏱️ Mute (15m)</button>
             <button class="btn-mini-subtle" onclick="switchTab('cryo')">Audit Trail →</button>
           </div>
         </div>
       </div>
 
-      <!-- Cryo Tank 2 (Sperm) -->
+      <!-- Dewar 2 (Sperm) -->
       <div class="card" id="card-cryo2" style="border-top:3px solid #00b0ff;">
         <div style="display:flex; justify-content:space-between; align-items:flex-start;">
           <div>
-            <div class="card-title">Cryo Tank 2 (Sperm)</div>
+            <div class="card-title">Dewar 2 (Sperm)</div>
             <div class="card-val"><span id="val-cryo2">--</span><span class="card-unit">°C</span></div>
           </div>
           <span id="badge-cryo2" class="status-badge status-normal">NORMAL</span>
@@ -288,8 +288,8 @@
           </div>
           <div id="ln2-next-due-2" style="font-size:11px; color:#8899a6; margin-top:2px;">Next: Mon/Wed/Fri by 5:00 PM</div>
           <div class="dip-actions">
-            <button class="btn-mini" onclick="openLn2ModalFor('Cryo Tank 2')">🧊 Log Check</button>
-            <button class="btn-mini" id="btn-hold-cryo2" style="background:#0284c7;" onclick="toggleCryoHoldKiosk('Cryo Tank 2')">⏱️ Mute (15m)</button>
+            <button class="btn-mini" onclick="openLn2ModalFor('Dewar 2')">🧊 Log Check</button>
+            <button class="btn-mini" id="btn-hold-cryo2" style="background:#0284c7;" onclick="toggleCryoHoldKiosk('Dewar 2')">⏱️ Mute (15m)</button>
             <button class="btn-mini-subtle" onclick="switchTab('cryo')">Audit Trail →</button>
           </div>
         </div>
@@ -432,7 +432,7 @@
       <div class="cryo-card-lg" style="border-top:4px solid #00e5ff;">
         <div style="display:flex; justify-content:space-between; align-items:flex-start;">
           <div>
-            <div style="font-size:13px; font-weight:700; color:#00e5ff; text-transform:uppercase;">Cryo Tank 1 (Embryos)</div>
+            <div style="font-size:13px; font-weight:700; color:#00e5ff; text-transform:uppercase;">Dewar 1 (Embryos)</div>
             <div style="font-size:2.4rem; font-weight:800; font-family:monospace; color:#f0f4f8; margin-top:4px;">
               <span id="detail-ln2-level-1">--</span><span style="font-size:1.2rem; color:#8899a6;"> cm</span>
             </div>
@@ -459,14 +459,14 @@
           <div><b>Last Check:</b> <span id="detail-last-check-1">--</span></div>
           <div><b>Schedule:</b> <span id="detail-next-check-1">Mon / Wed / Fri by 5:00 PM</span></div>
         </div>
-        <button class="btn" style="width:100%; background:#00b0ff; font-weight:800; margin-top:14px; padding:12px; border-radius:8px;" onclick="openLn2ModalFor('Cryo Tank 1')">🧊 Log Tank 1 Check</button>
+        <button class="btn" style="width:100%; background:#00b0ff; font-weight:800; margin-top:14px; padding:12px; border-radius:8px;" onclick="openLn2ModalFor('Dewar 1')">🧊 Log Dewar 1 Check</button>
       </div>
 
       <!-- Tank 2 Detail -->
       <div class="cryo-card-lg" style="border-top:4px solid #00b0ff;">
         <div style="display:flex; justify-content:space-between; align-items:flex-start;">
           <div>
-            <div style="font-size:13px; font-weight:700; color:#00b0ff; text-transform:uppercase;">Cryo Tank 2 (Sperm)</div>
+            <div style="font-size:13px; font-weight:700; color:#00b0ff; text-transform:uppercase;">Dewar 2 (Sperm)</div>
             <div style="font-size:2.4rem; font-weight:800; font-family:monospace; color:#f0f4f8; margin-top:4px;">
               <span id="detail-ln2-level-2">--</span><span style="font-size:1.2rem; color:#8899a6;"> cm</span>
             </div>
@@ -493,7 +493,7 @@
           <div><b>Last Check:</b> <span id="detail-last-check-2">--</span></div>
           <div><b>Schedule:</b> <span id="detail-next-check-2">Mon / Wed / Fri by 5:00 PM</span></div>
         </div>
-        <button class="btn" style="width:100%; background:#00b0ff; font-weight:800; margin-top:14px; padding:12px; border-radius:8px;" onclick="openLn2ModalFor('Cryo Tank 2')">🧊 Log Tank 2 Check</button>
+        <button class="btn" style="width:100%; background:#00b0ff; font-weight:800; margin-top:14px; padding:12px; border-radius:8px;" onclick="openLn2ModalFor('Dewar 2')">🧊 Log Dewar 2 Check</button>
       </div>
     </div>
 
@@ -601,8 +601,8 @@
       <div class="form-group">
         <label class="form-label">Tank Identifier</label>
         <div class="chips-row">
-          <div class="chip active" id="chip-tank-1" onclick="selectTank('Cryo Tank 1')">Cryo Tank 1 (Embryos)</div>
-          <div class="chip" id="chip-tank-2" onclick="selectTank('Cryo Tank 2')">Cryo Tank 2 (Sperm)</div>
+          <div class="chip active" id="chip-tank-1" onclick="selectTank('Dewar 1')">Dewar 1 (Embryos)</div>
+          <div class="chip" id="chip-tank-2" onclick="selectTank('Dewar 2')">Dewar 2 (Sperm)</div>
         </div>
       </div>
 
@@ -854,8 +854,8 @@
 
           // Cryo Holds Evaluation
           const holds = data.cryo_holds || {};
-          const hold1 = holds["Cryo Tank 1"] || holds["All Cryo Tanks"] || holds["ALL"];
-          const hold2 = holds["Cryo Tank 2"] || holds["All Cryo Tanks"] || holds["ALL"];
+          const hold1 = holds["Dewar 1"] || holds["Cryo Tank 1"] || holds["All Dewars"] || holds["All Cryo Tanks"] || holds["ALL"];
+          const hold2 = holds["Dewar 2"] || holds["Cryo Tank 2"] || holds["All Dewars"] || holds["All Cryo Tanks"] || holds["ALL"];
           const btnH1 = document.getElementById('btn-hold-cryo1');
           const btnH2 = document.getElementById('btn-hold-cryo2');
 
@@ -1162,10 +1162,12 @@
     }
 
     // LN2 Modal & Inspection Handlers
-    let currentTank = 'Cryo Tank 1';
+    let currentTank = 'Dewar 1';
     let currentFill = false;
     let currentSeal = 'Good';
     let lastRecordedLevels = {
+      'Dewar 1': 28.0,
+      'Dewar 2': 30.0,
       'Cryo Tank 1': 28.0,
       'Cryo Tank 2': 30.0
     };
@@ -1199,8 +1201,8 @@
 
     function selectTank(tank) {
       currentTank = tank;
-      document.getElementById('chip-tank-1').className = (tank === 'Cryo Tank 1') ? 'chip active' : 'chip';
-      document.getElementById('chip-tank-2').className = (tank === 'Cryo Tank 2') ? 'chip active' : 'chip';
+      document.getElementById('chip-tank-1').className = (tank === 'Dewar 1' || tank === 'Cryo Tank 1') ? 'chip active' : 'chip';
+      document.getElementById('chip-tank-2').className = (tank === 'Dewar 2' || tank === 'Cryo Tank 2') ? 'chip active' : 'chip';
       syncModalLevelToCurrentTank();
     }
 
@@ -1293,10 +1295,13 @@
         .then(data => {
           const tanks = data.tanks || {};
           
-          // 1. Update Cryo Tank 1
-          const t1 = tanks['Cryo Tank 1'];
+          // 1. Update Dewar 1
+          const t1 = tanks['Dewar 1'] || tanks['Cryo Tank 1'];
           if (t1) {
-            if (typeof t1.level_cm === 'number') lastRecordedLevels['Cryo Tank 1'] = t1.level_cm;
+            if (typeof t1.level_cm === 'number') {
+              lastRecordedLevels['Dewar 1'] = t1.level_cm;
+              lastRecordedLevels['Cryo Tank 1'] = t1.level_cm;
+            }
             const lvl1 = t1.level_cm.toFixed(1);
             const hrs1 = `${t1.hours_since.toFixed(1)}h ago (${t1.initials})`;
             const due1 = t1.detail || `Next: ${t1.next_check}`;
@@ -1328,11 +1333,13 @@
             if (dB1) dB1.className = badgeClass1;
           }
 
-          // 2. Update Cryo Tank 2
-          const t2 = tanks['Cryo Tank 2'];
+          // 2. Update Dewar 2
+          const t2 = tanks['Dewar 2'] || tanks['Cryo Tank 2'];
           if (t2) {
-            if (typeof t2.level_cm === 'number') lastRecordedLevels['Cryo Tank 2'] = t2.level_cm;
-            const lvl2 = t2.level_cm.toFixed(1);
+            if (typeof t2.level_cm === 'number') {
+              lastRecordedLevels['Dewar 2'] = t2.level_cm;
+              lastRecordedLevels['Cryo Tank 2'] = t2.level_cm;
+            }
             const hrs2 = `${t2.hours_since.toFixed(1)}h ago (${t2.initials})`;
             const due2 = t2.detail || `Next: ${t2.next_check}`;
             const badgeTxt2 = t2.badge || 'ON SCHEDULE';

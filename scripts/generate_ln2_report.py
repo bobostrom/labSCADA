@@ -88,7 +88,7 @@ def get_all_tank_ids():
             return tanks
     except Exception as e:
         print(f"Warning: could not query distinct tanks: {e}")
-    return ["Cryo Tank 1", "Cryo Tank 2"]
+    return ["Dewar 1", "Dewar 2"]
 
 
 def get_available_months():
@@ -110,7 +110,7 @@ def get_available_months():
     return [curr]
 
 
-def query_ln2_logs(tank_id="Cryo Tank 1", start_dt=None, end_dt=None):
+def query_ln2_logs(tank_id="Dewar 1", start_dt=None, end_dt=None):
     """Fetches LN2 tank logs for a specific tank and optional date range."""
     env = os.environ.copy()
     env["PGPASSWORD"] = PG_PASS
@@ -118,7 +118,12 @@ def query_ln2_logs(tank_id="Cryo Tank 1", start_dt=None, end_dt=None):
         env["PGSSLMODE"] = PG_SSLMODE
     where_parts = []
     if tank_id:
-        where_parts.append(f"tank_id = '{tank_id}'")
+        if tank_id in ("Dewar 1", "Cryo Tank 1"):
+            where_parts.append("(tank_id = 'Dewar 1' OR tank_id = 'Cryo Tank 1')")
+        elif tank_id in ("Dewar 2", "Cryo Tank 2"):
+            where_parts.append("(tank_id = 'Dewar 2' OR tank_id = 'Cryo Tank 2')")
+        else:
+            where_parts.append(f"tank_id = '{tank_id}'")
     if start_dt:
         where_parts.append(f"logged_at >= '{start_dt.strftime('%Y-%m-%d %H:%M:%S')}'")
     if end_dt:
@@ -686,8 +691,8 @@ def generate_alarms_audit_html_sheet(start_dt, end_dt, logo_b64, month_name_year
 
     # 2. Equipment-by-Equipment Summary
     equipment_specs = [
-        ("Cryo Tank 1 (Embryos)", "Vapor < -135.0°C • Frost Floor > 10 cm", "Cryo Tank 1"),
-        ("Cryo Tank 2 (Sperm)", "Vapor < -135.0°C • Frost Floor > 10 cm", "Cryo Tank 2"),
+        ("Dewar 1 (Embryos)", "Vapor < -135.0°C • Frost Floor > 10 cm", "Dewar 1"),
+        ("Dewar 2 (Sperm)", "Vapor < -135.0°C • Frost Floor > 10 cm", "Dewar 2"),
         ("Medical Refrigerator", "2.0°C to 8.0°C (High Trip: 8.5°C)", "Medical Fridge"),
         ("Medical Freezer", "< -15.0°C (Compressor Target: -20°C)", "Medical Freezer"),
         ("Chamber Incubator 01", "Chamber Contact Normal (CO2/Temp In-Range)", "Incubator 01"),
@@ -826,7 +831,7 @@ def generate_alarms_audit_html_sheet(start_dt, end_dt, logo_b64, month_name_year
         </div>
         <div class="meta-block">
           <div><b>Compliance Month:</b> {month_name_year}</div>
-          <div><b>Audit Scope:</b> Cryo Tanks, Cold Storage, Incubators, Access Barriers</div>
+          <div><b>Audit Scope:</b> Dewars, Cold Storage, Incubators, Access Barriers</div>
           <div><b>Period:</b> {start_str} – {end_str}</div>
           <div><b>Generated:</b> {now_str}</div>
         </div>

@@ -102,25 +102,25 @@ CHANNELS = {
     101: {"name": "Lab Ambient", "type": "ambient", "low": 20.0, "high": 27.0, "priority": 1},
     102: {"name": "Medical Fridge", "type": "fridge", "low": 2.0, "high": 8.0, "priority": 2},
     103: {"name": "Medical Freezer", "type": "freezer", "high": -15.0, "priority": 2},
-    104: {"name": "Cryo Tank 2", "type": "cryo", "high": -135.0, "priority": 2},
-    125: {"name": "Cryo Tank 1", "type": "cryo", "high": -135.0, "priority": 2},
+    104: {"name": "Dewar 2", "type": "cryo", "high": -135.0, "priority": 2},
+    125: {"name": "Dewar 1", "type": "cryo", "high": -135.0, "priority": 2},
     # Discrete alarm channels from CODESYS
     111: {"name": "Medical Fridge", "type": "discrete_alarm", "linked_analog": 102, "priority": 2},
     112: {"name": "Medical Freezer", "type": "discrete_alarm", "linked_analog": 103, "priority": 2},
-    113: {"name": "Cryo Tank 1", "type": "discrete_alarm", "linked_analog": 125, "priority": 2},
-    114: {"name": "Cryo Tank 2", "type": "discrete_alarm", "linked_analog": 104, "priority": 2},
+    113: {"name": "Dewar 1", "type": "discrete_alarm", "linked_analog": 125, "priority": 2},
+    114: {"name": "Dewar 2", "type": "discrete_alarm", "linked_analog": 104, "priority": 2},
     115: {"name": "Medical Fridge Warning", "type": "warning_delay", "linked_analog": 102, "priority": 0},
     116: {"name": "Medical Freezer Warning", "type": "warning_delay", "linked_analog": 103, "priority": 0},
-    117: {"name": "Cryo Tank 1 Warning", "type": "warning_delay", "linked_analog": 125, "priority": 0},
-    118: {"name": "Cryo Tank 2 Warning", "type": "warning_delay", "linked_analog": 104, "priority": 0},
+    117: {"name": "Dewar 1 Warning", "type": "warning_delay", "linked_analog": 125, "priority": 0},
+    118: {"name": "Dewar 2 Warning", "type": "warning_delay", "linked_analog": 104, "priority": 0},
     119: {"name": "Main Cleanroom Door Contact", "type": "door_contact", "priority": 0},
     120: {"name": "Cryo Lab Door Contact", "type": "door_contact", "priority": 0},
     121: {"name": "Main Cleanroom Door", "type": "door_alarm", "priority": 2},
     122: {"name": "Cryo Lab Door", "type": "door_alarm", "priority": 2},
     123: {"name": "Incubator 01", "type": "incubator", "priority": 2},
     124: {"name": "Incubator 02", "type": "incubator", "priority": 2},
-    198: {"name": "Cryo Tank 2", "type": "ln2_inspection", "schedule": "Mon, Wed, Fri by 5:00 PM", "priority": 1},
-    199: {"name": "Cryo Tank 1", "type": "ln2_inspection", "schedule": "Mon, Wed, Fri by 5:00 PM", "priority": 1},
+    198: {"name": "Dewar 2", "type": "ln2_inspection", "schedule": "Mon, Wed, Fri by 5:00 PM", "priority": 1},
+    199: {"name": "Dewar 1", "type": "ln2_inspection", "schedule": "Mon, Wed, Fri by 5:00 PM", "priority": 1},
 }
 
 # In-memory tracking of active alarm state machine
@@ -305,7 +305,7 @@ active_cryo_holds = {}
 def is_cryo_hold_active(equipment_name):
     """Returns True if alarms for equipment_name are currently suppressed."""
     with state_lock:
-        for k in [equipment_name, "All Cryo Tanks", "ALL"]:
+        for k in [equipment_name, "All Dewars", "All Cryo Tanks", "ALL"]:
             hold = active_cryo_holds.get(k)
             if hold:
                 if time.time() < hold["expires_at"]:
@@ -339,7 +339,7 @@ def start_cryo_hold(equipment_name, duration_minutes=15, user="Lab Staff"):
     now = time.time()
     dur_min = max(1, min(120, int(duration_minutes)))
     exp = now + (dur_min * 60)
-    targets = ["Cryo Tank 1", "Cryo Tank 2"] if ("all" in equipment_name.lower()) else [equipment_name]
+    targets = ["Dewar 1", "Dewar 2"] if ("all" in equipment_name.lower()) else [equipment_name]
 
     for target in targets:
         safe_equip = target.replace("'", "''")
@@ -373,7 +373,7 @@ def start_cryo_hold(equipment_name, duration_minutes=15, user="Lab Staff"):
 
 def cancel_cryo_hold(equipment_name, user="Lab Staff"):
     """Cancels maintenance hold early and returns tank to live monitoring."""
-    targets = ["Cryo Tank 1", "Cryo Tank 2"] if ("all" in equipment_name.lower()) else [equipment_name]
+    targets = ["Dewar 1", "Dewar 2"] if ("all" in equipment_name.lower()) else [equipment_name]
     for target in targets:
         with state_lock:
             hold = active_cryo_holds.pop(target, None)
@@ -674,8 +674,8 @@ def telemetry_scan_worker():
             discrete_evals = [
                 (111, "Medical Fridge", "Temperature Excursion"),
                 (112, "Medical Freezer", "Temperature Excursion"),
-                (113, "Cryo Tank 1", "Liquid Nitrogen Excursion"),
-                (114, "Cryo Tank 2", "Liquid Nitrogen Excursion"),
+                (113, "Dewar 1", "Liquid Nitrogen Excursion"),
+                (114, "Dewar 2", "Liquid Nitrogen Excursion"),
                 (121, "Main Cleanroom Door", "Door Held Open > 3m"),
                 (122, "Cryo Lab Door", "Door Held Open > 3m"),
                 (123, "Incubator 01", "Chamber Alarm Contact"),
@@ -693,7 +693,7 @@ def telemetry_scan_worker():
                         resolve_alarm(cnl, analog_val)
                         continue
 
-                    # Suppress Cryo Tank if in manual Maintenance / Retrieval Hold
+                    # Suppress Dewar if in manual Maintenance / Retrieval Hold
                     if cnl in (113, 114) and is_cryo_hold_active(equip):
                         resolve_alarm(cnl, analog_val)
                         continue
@@ -722,21 +722,21 @@ def telemetry_scan_worker():
                 elif fz_temp <= -16.5:
                     resolve_alarm(103, fz_temp)
 
-            # Cryo Tank 1 (Cnl 125)
+            # Dewar 1 (Cnl 125)
             if 125 in readings and 113 not in readings:
                 c_temp = readings[125]
-                if not is_cryo_hold_active("Cryo Tank 1"):
+                if not is_cryo_hold_active("Dewar 1") and not is_cryo_hold_active("Cryo Tank 1"):
                     if c_temp > -135.0:
-                        trigger_alarm(125, "Cryo Tank 1", "Liquid Nitrogen Excursion", c_temp)
+                        trigger_alarm(125, "Dewar 1", "Liquid Nitrogen Excursion", c_temp)
                     elif c_temp <= -140.0:
                         resolve_alarm(125, c_temp)
 
-            # Cryo Tank 2 (Cnl 104)
+            # Dewar 2 (Cnl 104)
             if 104 in readings and 114 not in readings:
                 c2_temp = readings[104]
-                if not is_cryo_hold_active("Cryo Tank 2"):
+                if not is_cryo_hold_active("Dewar 2") and not is_cryo_hold_active("Cryo Tank 2"):
                     if c2_temp > -135.0:
-                        trigger_alarm(104, "Cryo Tank 2", "Liquid Nitrogen Excursion", c2_temp)
+                        trigger_alarm(104, "Dewar 2", "Liquid Nitrogen Excursion", c2_temp)
                     elif c2_temp <= -140.0:
                         resolve_alarm(104, c2_temp)
 
@@ -922,6 +922,10 @@ def get_ln2_status():
     for r in rows:
         if len(r) >= 8:
             t_id = r[0]
+            if t_id == "Cryo Tank 1":
+                t_id = "Dewar 1"
+            elif t_id == "Cryo Tank 2":
+                t_id = "Dewar 2"
             lvl = float(r[1]) if r[1] else 0.0
             filled = (r[2] == "t")
             frost = r[3]
@@ -955,8 +959,8 @@ def get_ln2_status():
                 "next_check": sched["next_check"]
             }
 
-    # Ensure both tanks have baseline representation
-    for expected_tank in ["Cryo Tank 1", "Cryo Tank 2"]:
+    # Ensure both dewars have baseline representation
+    for expected_tank in ["Dewar 1", "Dewar 2"]:
         if expected_tank not in tanks:
             sched_def = evaluate_ln2_schedule(now, None)
             tanks[expected_tank] = {
@@ -1015,8 +1019,8 @@ def record_ln2_log(tank_id, level_cm, was_filled, frost_condition, initials, not
     rows = db_query(sql)
     log_id = int(rows[0][0]) if rows and rows[0] else 0
 
-    # Resolve overdue alarm for this specific tank (199 for Tank 1, 198 for Tank 2)
-    alarm_cnl = 199 if safe_tank == "Cryo Tank 1" else 198
+    # Resolve overdue alarm for this specific dewar (199 for Dewar 1, 198 for Dewar 2)
+    alarm_cnl = 199 if ("1" in safe_tank) else 198
     with state_lock:
         if alarm_cnl in active_alarms:
             resolve_alarm(alarm_cnl, final_val=level_cm)
@@ -1027,7 +1031,7 @@ def record_ln2_log(tank_id, level_cm, was_filled, frost_condition, initials, not
     next_due_msg = t_info.get("next_check", "Next Mon/Wed/Fri by 5:00 PM")
 
     # Send informational notification to team via Pushover
-    filled_str = "Yes (Tank Topped Off)" if was_filled else "No (Level Check Only)"
+    filled_str = "Yes (Dewar Topped Off)" if was_filled else "No (Level Check Only)"
     send_pushover_alert(
         title=f"🧊 LN2 LOGGED: {safe_tank} ({level_cm:.1f} cm)",
         message=f"{safe_tank} inspected by {safe_init}. Level: {level_cm:.1f} cm. Filled: {filled_str}. Seal: {safe_frost}. Next check: {next_due_msg}.",
@@ -1039,12 +1043,12 @@ def record_ln2_log(tank_id, level_cm, was_filled, frost_condition, initials, not
 
 
 def ln2_schedule_watcher():
-    """Background loop verifying that LN2 tanks are inspected per Mon/Wed/Fri 5:00 PM schedule."""
+    """Background loop verifying that LN2 dewars are inspected per Mon/Wed/Fri 5:00 PM schedule."""
     while True:
         try:
             status_data = get_ln2_status()
             tanks = status_data.get("tanks", {})
-            tank_cnls = [("Cryo Tank 1", 199), ("Cryo Tank 2", 198)]
+            tank_cnls = [("Dewar 1", 199), ("Dewar 2", 198)]
             for tank_name, cnl_num in tank_cnls:
                 tank = tanks.get(tank_name)
                 if tank:
@@ -1085,7 +1089,7 @@ def generate_qr_svg(url, box_size=8):
 
 
 def render_print_placards_html(host, scheme="http"):
-    """Generates a high-resolution, printable 8.5x11 single station placard with a vector QR code for both cryo tanks."""
+    """Generates a high-resolution, printable 8.5x11 single station placard with a vector QR code for both dewars."""
     station_url = f"{scheme}://{host}/log"
     qr_svg = generate_qr_svg(station_url, box_size=9)
     return render_template("station_placard.html", station_url=station_url, qr_svg=qr_svg)
@@ -1094,7 +1098,7 @@ def render_print_placards_html(host, scheme="http"):
 def render_mobile_log_html(host, tank_param, readings):
     """Renders a responsive, mobile-first dipstick entry interface for staff scanning QR codes with their phone."""
     is_tank2 = "2" in str(tank_param)
-    default_tank = "Cryo Tank 2" if is_tank2 else "Cryo Tank 1"
+    default_tank = "Dewar 2" if is_tank2 else "Dewar 1"
     
     t1_temp = readings.get(125, readings.get(113, -196.2))
     t1_level = readings.get(199, 14.5)
@@ -1102,8 +1106,8 @@ def render_mobile_log_html(host, tank_param, readings):
     t2_level = readings.get(198, 16.8)
 
     ln2_data = get_ln2_status()
-    t1_info = ln2_data.get("tanks", {}).get("Cryo Tank 1", {})
-    t2_info = ln2_data.get("tanks", {}).get("Cryo Tank 2", {})
+    t1_info = ln2_data.get("tanks", {}).get("Dewar 1", ln2_data.get("tanks", {}).get("Cryo Tank 1", {}))
+    t2_info = ln2_data.get("tanks", {}).get("Dewar 2", ln2_data.get("tanks", {}).get("Cryo Tank 2", {}))
 
     t1_last_log = t1_info.get("level_cm", 28.0)
     t2_last_log = t2_info.get("level_cm", 30.0)

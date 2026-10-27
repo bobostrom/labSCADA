@@ -15,8 +15,8 @@ VAR
     rLabAmbientTemp         : REAL := 25.0;     (* Target ~25.0 °C *)
     rMedFridgeTemp          : REAL;             (* Target ~3.0 °C (Normal: 2.0°C to 8.0°C) *)
     rMedFreezerTemp         : REAL;             (* Target ~ -20.0 °C (Normal: < -15.0°C) *)
-    rCryoTank1Temp          : REAL;             (* Target ~ -150.0 °C (Normal: < -135.0°C) *)
-    rCryoTank2Temp          : REAL;             (* Target ~ -150.0 °C (Normal: < -135.0°C) *)
+    rDewar1Temp             : REAL;             (* Target ~ -150.0 °C (Normal: < -135.0°C) *)
+    rDewar2Temp             : REAL;             (* Target ~ -150.0 °C (Normal: < -135.0°C) *)
 
     (* --- Discrete Telemetry: Door Contacts Published over OPC UA --- *)
     bDoor01_MainDoor        : BOOL := FALSE;    (* FALSE = Closed, TRUE = Open *)
@@ -25,8 +25,8 @@ VAR
     (* --- Discrete Clinical Alarm Outputs Published over OPC UA --- *)
     bMedFridgeAlarm         : BOOL := FALSE;    (* TRUE when Fridge > 8.5°C or < 2.0°C for > 2m *)
     bMedFreezerAlarm        : BOOL := FALSE;    (* TRUE when Freezer > -15.0°C for > 3m *)
-    bCryoTank1Alarm         : BOOL := FALSE;    (* TRUE when Cryo Tank 1 > -135.0°C for > 30s *)
-    bCryoTank2Alarm         : BOOL := FALSE;    (* TRUE when Cryo Tank 2 > -135.0°C for > 30s *)
+    bDewar1Alarm            : BOOL := FALSE;    (* TRUE when Dewar 1 > -135.0°C for > 30s *)
+    bDewar2Alarm            : BOOL := FALSE;    (* TRUE when Dewar 2 > -135.0°C for > 30s *)
     bDoor01_Alarm           : BOOL := FALSE;    (* TRUE when Main Door held open > 3m *)
     bDoor02_Alarm           : BOOL := FALSE;    (* TRUE when Cryo Door held open > 3m *)
     bIncubator01_Alarm      : BOOL := FALSE;    (* Incubator 01 Alarm Contact *)
@@ -35,14 +35,14 @@ VAR
     (* --- Discrete Pre-Alarm Pickup / Delay States Published over OPC UA --- *)
     bMedFridgeWarn          : BOOL := FALSE;    (* TRUE during excursion pickup delay *)
     bMedFreezerWarn         : BOOL := FALSE;    (* TRUE during freezer warm pickup delay *)
-    bCryoTank1Warn          : BOOL := FALSE;    (* TRUE during Cryo 1 warm pickup delay *)
-    bCryoTank2Warn          : BOOL := FALSE;    (* TRUE during Cryo 2 warm pickup delay *)
+    bDewar1Warn             : BOOL := FALSE;    (* TRUE during Dewar 1 warm pickup delay *)
+    bDewar2Warn             : BOOL := FALSE;    (* TRUE during Dewar 2 warm pickup delay *)
 
     (* --- Encapsulated Clinical Equipment Function Blocks --- *)
     fbFridge                : FB_MedFridge;
     fbFreezer               : FB_MedFreezer;
-    fbCryo1                 : FB_CryoTank;
-    fbCryo2                 : FB_CryoTank;
+    fbDewar1                : FB_Dewar;
+    fbDewar2                : FB_Dewar;
     fbIncubator1            : FB_Incubator;
     fbIncubator2            : FB_Incubator;
     fbDoor01                : FB_PickupDropout;
@@ -58,8 +58,8 @@ VAR
     (* Toggle these bits in CODESYS online monitoring to test alarms on demand *)
     bForceFridgeExcursion   : BOOL := FALSE;    (* Injects 9.5°C warm excursion into Refrigerator *)
     bForceFreezerExcursion  : BOOL := FALSE;    (* Injects -12.0°C warm excursion into Freezer *)
-    bForceCryo1Excursion    : BOOL := FALSE;    (* Injects -125.0°C critical boil-off into Cryo Tank 1 *)
-    bForceCryo2Excursion    : BOOL := FALSE;    (* Injects -125.0°C critical boil-off into Cryo Tank 2 *)
+    bForceDewar1Excursion   : BOOL := FALSE;    (* Injects -125.0°C critical boil-off into Dewar 1 *)
+    bForceDewar2Excursion   : BOOL := FALSE;    (* Injects -125.0°C critical boil-off into Dewar 2 *)
     bForceIncubator01Alarm  : BOOL := FALSE;    (* Forces Incubator 01 dry alarm contact *)
     bForceIncubator02Alarm  : BOOL := FALSE;    (* Forces Incubator 02 dry alarm contact *)
 END_VAR
@@ -103,23 +103,23 @@ rMedFreezerTemp  := fbFreezer.rProcessTemp;
 bMedFreezerAlarm := fbFreezer.bAlarm;
 bMedFreezerWarn  := fbFreezer.bWarn;
 
-// --- C. Cryogenic LN2 Tank 1 (< -135.0°C, 30s pickup, 10s dropout) ---
-fbCryo1(
+// --- C. Cryogenic LN2 Dewar 1 (< -135.0°C, 30s pickup, 10s dropout) ---
+fbDewar1(
     bSimMode        := bGlobalSimMode,
-    bForceExcursion := bForceCryo1Excursion
+    bForceExcursion := bForceDewar1Excursion
 );
-rCryoTank1Temp  := fbCryo1.rProcessTemp;
-bCryoTank1Alarm := fbCryo1.bAlarm;
-bCryoTank1Warn  := fbCryo1.bWarn;
+rDewar1Temp  := fbDewar1.rProcessTemp;
+bDewar1Alarm := fbDewar1.bAlarm;
+bDewar1Warn  := fbDewar1.bWarn;
 
-// --- D. Cryogenic LN2 Tank 2 (< -135.0°C, 30s pickup, 10s dropout) ---
-fbCryo2(
+// --- D. Cryogenic LN2 Dewar 2 (< -135.0°C, 30s pickup, 10s dropout) ---
+fbDewar2(
     bSimMode        := bGlobalSimMode,
-    bForceExcursion := bForceCryo2Excursion
+    bForceExcursion := bForceDewar2Excursion
 );
-rCryoTank2Temp  := fbCryo2.rProcessTemp;
-bCryoTank2Alarm := fbCryo2.bAlarm;
-bCryoTank2Warn  := fbCryo2.bWarn;
+rDewar2Temp  := fbDewar2.rProcessTemp;
+bDewar2Alarm := fbDewar2.bAlarm;
+bDewar2Warn  := fbDewar2.bWarn;
 
 // --- E. Embryology Incubator 01 (Dry contact with 15s debounce) ---
 fbIncubator1(

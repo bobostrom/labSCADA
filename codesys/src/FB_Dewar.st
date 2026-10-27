@@ -1,5 +1,5 @@
 (* ==============================================================================
-   FUNCTION BLOCK: FB_CryoTank
+   FUNCTION BLOCK: FB_Dewar
    DESCRIPTION: Encapsulated clinical monitoring block for Liquid Nitrogen (LN2)
                 cryogenic storage vessels (dewars / freezers).
                 Features:
@@ -8,7 +8,7 @@
                 - High threshold alarm with hysteresis & debounced pickup timing
                 - Direct physical terminal binding (rRawTemp)
    ============================================================================== *)
-FUNCTION_BLOCK FB_CryoTank
+FUNCTION_BLOCK FB_Dewar
 VAR_INPUT
     rRawTemp            : REAL := -150.0;   (* Physical sensor terminal value (e.g. WAGO 750-461) *)
     bSimMode            : BOOL := FALSE;    (* TRUE = Ignore terminal, use realistic virtual physics *)
@@ -68,3 +68,5 @@ bWarn      := fbAlarmEval.bPickup AND NOT fbAlarmEval.bAlarm;
 bHighTrip  := fbAlarmEval.bHighTrip;
 tElapsedPU := fbAlarmEval.tElapsedPU;
 tElapsedDO := fbAlarmEval.tElapsedDO;
+
+END_FUNCTION_BLOCK
