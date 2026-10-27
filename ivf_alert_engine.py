@@ -1324,14 +1324,18 @@ class ClinicalAlertHandler(http.server.BaseHTTPRequestHandler):
                 self.wfile.write(b"Markdown report not found.")
 
         elif parsed.path == "/favicon.ico":
-            asset_path = os.path.join(REPO_DIR, "notes", "assets", "favicon.ico")
+            logo_rel = CLINIC_LOGO.lstrip("/")
+            asset_path = os.path.join(REPO_DIR, logo_rel)
             if not os.path.exists(asset_path):
-                asset_path = os.path.join(REPO_DIR, "notes", "assets", "KOMDlogo.png")
+                asset_path = os.path.join(REPO_DIR, "assets", os.path.basename(CLINIC_LOGO))
+            if not os.path.exists(asset_path):
+                asset_path = os.path.join(REPO_DIR, "notes", "assets", "favicon.ico")
             if os.path.exists(asset_path):
                 with open(asset_path, "rb") as f:
                     content = f.read()
                 self.send_response(200)
-                self.send_header("Content-Type", "image/x-icon")
+                content_type = "image/x-icon" if asset_path.endswith(".ico") else "image/png"
+                self.send_header("Content-Type", content_type)
                 self.send_header("Cache-Control", "no-cache, must-revalidate")
                 self.send_header("Access-Control-Allow-Origin", "*")
                 self.end_headers()
