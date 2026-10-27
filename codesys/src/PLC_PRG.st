@@ -13,10 +13,10 @@ VAR
 
     (* --- Analog Telemetry: Published over OPC UA --- *)
     rLabAmbientTemp         : REAL := 25.0;     (* Target ~25.0 °C *)
-    rMedFridgeTemp          : REAL;             (* Target ~3.0 °C (Normal: 2.0°C to 8.0°C) *)
-    rMedFreezerTemp         : REAL;             (* Target ~ -20.0 °C (Normal: < -15.0°C) *)
-    rDewar1Temp             : REAL;             (* Target ~ -150.0 °C (Normal: < -135.0°C) *)
-    rDewar2Temp             : REAL;             (* Target ~ -150.0 °C (Normal: < -135.0°C) *)
+    rMedFridgeTemp          : REAL := 3.5;      (* Target ~3.0 °C (Normal: 2.0°C to 8.0°C) *)
+    rMedFreezerTemp         : REAL := -20.0;    (* Target ~ -20.0 °C (Normal: < -15.0°C) *)
+    rDewar1Temp             : REAL := -150.0;   (* Target ~ -150.0 °C (Normal: < -135.0°C) *)
+    rDewar2Temp             : REAL := -150.0;   (* Target ~ -150.0 °C (Normal: < -135.0°C) *)
 
     (* --- Discrete Telemetry: Door Contacts Published over OPC UA --- *)
     bDoor01_MainDoor        : BOOL := FALSE;    (* FALSE = Closed, TRUE = Open *)
@@ -87,6 +87,8 @@ END_IF;
 
 // --- A. Medical Refrigerator (2.0°C to 8.0°C, 2m pickup, 10s dropout) ---
 fbFridge(
+    rRawTemp        := 3.5,
+    rNominalTemp    := 3.5,
     bSimMode        := bGlobalSimMode,
     bForceExcursion := bForceFridgeExcursion
 );
@@ -96,6 +98,8 @@ bMedFridgeWarn  := fbFridge.bWarn;
 
 // --- B. Medical Freezer (< -15.0°C, 3m pickup, 10s dropout) ---
 fbFreezer(
+    rRawTemp        := -20.0,
+    rNominalTemp    := -20.0,
     bSimMode        := bGlobalSimMode,
     bForceExcursion := bForceFreezerExcursion
 );
@@ -105,6 +109,8 @@ bMedFreezerWarn  := fbFreezer.bWarn;
 
 // --- C. Cryogenic LN2 Dewar 1 (< -135.0°C, 30s pickup, 10s dropout) ---
 fbDewar1(
+    rRawTemp        := -150.0,
+    rNominalTemp    := -150.0,
     bSimMode        := bGlobalSimMode,
     bForceExcursion := bForceDewar1Excursion
 );
@@ -114,6 +120,8 @@ bDewar1Warn  := fbDewar1.bWarn;
 
 // --- D. Cryogenic LN2 Dewar 2 (< -135.0°C, 30s pickup, 10s dropout) ---
 fbDewar2(
+    rRawTemp        := -150.0,
+    rNominalTemp    := -150.0,
     bSimMode        := bGlobalSimMode,
     bForceExcursion := bForceDewar2Excursion
 );
