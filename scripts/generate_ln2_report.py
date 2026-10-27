@@ -49,9 +49,14 @@ def load_env_file(filepath):
         except Exception as e:
             print(f"Warning: could not load env file {filepath}: {e}")
 
-# Check system-wide config first, then local repo .env
+# Check system-wide config first, then local repo site.env / .env
+load_env_file("/etc/labscada/site.env")
 load_env_file("/etc/labscada/db.env")
+load_env_file(os.path.join(REPO_DIR, "site.env"))
 load_env_file(os.path.join(REPO_DIR, ".env"))
+
+CLINIC_NAME = os.environ.get("CLINIC_NAME", "Advanced Fertility of Alaska")
+CLINIC_SLUG = os.environ.get("CLINIC_SLUG", "komdivflab")
 
 # Database configuration
 PG_USER = os.environ.get("SCADA_PG_USER", os.environ.get("PGUSER", "postgres"))
@@ -315,7 +320,7 @@ def generate_sawtooth_chart(records, metrics, output_path, start_dt=None, end_dt
     ax.set_ylabel("Liquid Nitrogen Dipstick Level (cm)", fontsize=10.5, fontweight="bold", labelpad=8)
     tank_title = metrics.get("tank_id", "Cryo Tank 1")
     month_title = start_dt.strftime("%B %Y") if start_dt else ""
-    ax.set_title(f"{tank_title}: Liquid Nitrogen (LN2) Manual Dipstick Sawtooth Verification — {month_title}\nAdvanced Fertility of Alaska — Clinical Cryopreservation Suite",
+    ax.set_title(f"{tank_title}: Liquid Nitrogen (LN2) Manual Dipstick Sawtooth Verification — {month_title}\n{CLINIC_NAME} — Clinical Cryopreservation Suite",
                  fontsize=11.5, fontweight="bold", pad=10)
     
     ax.xaxis.set_major_locator(mdates.WeekdayLocator(byweekday=mdates.MO, interval=1))
@@ -369,7 +374,7 @@ def generate_markdown_report(records, metrics, chart_rel_path, output_md_path):
 > **Impending Vacuum Failure Incident Report:** During monitoring interval, calculated evaporation rate accelerated to **{metrics['avg_boiloff']:.2f} cm / day**, breaching the 27.0 cm critical safety floor ({metrics['min_level']:.1f} cm reached). In accordance with IVF Cryopreservation Emergency SOPs, manual refills were suspended, the chamber was quarantined, and all stored specimens were successfully relocated to backup dewar Cryo Tank 1. Tank 2 is isolated for vacuum refurbishment."""
 
     md = f"""# Liquid Nitrogen (LN2) Manual Dipstick Inspection & Compliance Report
-### Advanced Fertility of Alaska — IVF Cleanroom Suite
+### {CLINIC_NAME} — IVF Cleanroom Suite
 **Regulatory Standard:** CAP / CLIA / Joint Commission Cryogenic Storage Compliance  
 **Vessel Identifier:** `{tank_id}` ({subtitle})  
 **Reporting Interval:** {start_str} through {end_str}  
@@ -497,7 +502,7 @@ def generate_single_tank_html_sheet(records, metrics, chart_b64, logo_b64, month
             {logo_img_tag}
           </div>
           <div>
-            <h1 class="clinic-title">Advanced Fertility of Alaska</h1>
+            <h1 class="clinic-title">{CLINIC_NAME}</h1>
             <div class="doc-subtitle">Monthly Compliance Report Packet — {tank_id}</div>
             <div class="vessel-tag">{subtitle} &bull; Clinical Cleanroom Suite</div>
           </div>
@@ -606,7 +611,7 @@ def generate_single_tank_html_sheet(records, metrics, chart_b64, logo_b64, month
 
       <!-- Sheet Footer -->
       <div class="sheet-footer">
-        <span>Advanced Fertility of Alaska &bull; Cryogenic Specimen Compliance Audit</span>
+        <span>{CLINIC_NAME} &bull; Cryogenic Specimen Compliance Audit</span>
         <span>Page {page_num} of {total_pages} &bull; Powered by <strong>Lares Telemetry</strong></span>
       </div>
     </div>
@@ -808,7 +813,7 @@ def generate_alarms_audit_html_sheet(start_dt, end_dt, logo_b64, month_name_year
             {logo_img_tag}
           </div>
           <div>
-            <h1 class="clinic-title">Advanced Fertility of Alaska</h1>
+            <h1 class="clinic-title">{CLINIC_NAME}</h1>
             <div class="doc-subtitle">Facility Alarms, Excursions &amp; Quality Audit Sheet</div>
             <div class="vessel-tag">CAP / CLIA / Joint Commission Environmental QA &bull; Entire Cleanroom Suite</div>
           </div>
@@ -943,7 +948,7 @@ def generate_alarms_audit_html_sheet(start_dt, end_dt, logo_b64, month_name_year
 
       <!-- Sheet Footer -->
       <div class="sheet-footer">
-        <span>Advanced Fertility of Alaska &bull; Facility Alarms &amp; Environmental Quality Audit</span>
+        <span>{CLINIC_NAME} &bull; Facility Alarms &amp; Environmental Quality Audit</span>
         <span>Page {page_num} of {total_pages} &bull; Powered by <strong>Lares Telemetry</strong></span>
       </div>
     </div>
@@ -1009,7 +1014,7 @@ def generate_monthly_packet(month_str=None, output_html_path=None):
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Monthly Compliance Report Packet ({month_name_year}) — Advanced Fertility of Alaska</title>
+  <title>Monthly Compliance Report Packet ({month_name_year}) — {CLINIC_NAME}</title>
   <link rel="icon" type="image/x-icon" href="/favicon.ico?v=2">
   <link rel="icon" type="image/png" sizes="64x64" href="/assets/KOMDlogo.png?v=2">
   <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=2">

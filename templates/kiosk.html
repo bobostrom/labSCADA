@@ -3,11 +3,11 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Advanced Fertility of Alaska | Cleanroom Operations & SCADA Telemetry</title>
+  <title>{{ clinic_name }} | Cleanroom Operations & SCADA Telemetry</title>
   <link rel="icon" type="image/x-icon" href="/favicon.ico?v=2">
-  <link rel="icon" type="image/png" sizes="64x64" href="/assets/KOMDlogo.png?v=2">
+  <link rel="icon" type="image/png" sizes="64x64" href="{{ clinic_logo }}?v=2">
   <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=2">
-  <link rel="apple-touch-icon" href="/assets/KOMDlogo.png?v=2">
+  <link rel="apple-touch-icon" href="{{ clinic_logo }}?v=2">
   <style>
     :root {
       --bg-app: #03141f;                 /* Deep Alaskan Navy */
@@ -160,11 +160,11 @@
   <header>
     <div class="brand-identity">
       <div class="logo-badge">
-        <img src="/assets/KOMDlogo.png" alt="Advanced Fertility" class="brand-leaf-img">
+        <img src="{{ clinic_logo }}" alt="{{ clinic_name }}" class="brand-leaf-img">
       </div>
       <div>
         <h1 class="brand-title">Cleanroom Operations &amp; Cryogenic Monitoring</h1>
-        <div class="brand-sub">Advanced Fertility of Alaska</div>
+        <div class="brand-sub">{{ clinic_name }}</div>
       </div>
     </div>
 
@@ -525,7 +525,7 @@
 
   <!-- Global Application Footer -->
   <footer class="kiosk-footer">
-    <div>Advanced Fertility of Alaska &bull; Clinical SCADA Telemetry</div>
+    <div>{{ clinic_name }} &bull; Clinical SCADA Telemetry</div>
     <div>Powered by <strong>Lares Telemetry</strong></div>
   </footer>
 

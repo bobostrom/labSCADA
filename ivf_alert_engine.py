@@ -42,11 +42,6 @@ jinja_env = jinja2.Environment(
     autoescape=jinja2.select_autoescape(["html", "xml"])
 )
 
-def render_template(template_name, **context):
-    """Renders a Jinja2 template from the templates directory."""
-    template = jinja_env.get_template(template_name)
-    return template.render(**context)
-
 def load_env_file(filepath):
     """Loads key=value pairs from a file into os.environ if file exists."""
     if os.path.exists(filepath):
@@ -63,9 +58,29 @@ def load_env_file(filepath):
         except Exception as e:
             print(f"Warning: could not load env file {filepath}: {e}")
 
-# Check system-wide config first, then local repo .env
+# Check system-wide config first (/etc/labscada), then local repo site.env / .env
+load_env_file("/etc/labscada/site.env")
 load_env_file("/etc/labscada/db.env")
+load_env_file(os.path.join(REPO_DIR, "site.env"))
 load_env_file(os.path.join(REPO_DIR, ".env"))
+
+# Clinical Site Identity & Branding
+CLINIC_NAME   = os.environ.get("CLINIC_NAME", "Advanced Fertility of Alaska")
+CLINIC_SLUG   = os.environ.get("CLINIC_SLUG", "komdivflab")
+CLINIC_DOMAIN = os.environ.get("CLINIC_DOMAIN", "komdivflab.larestelemetry.com")
+CLINIC_LOGO   = os.environ.get("CLINIC_LOGO", "/assets/KOMDlogo.png")
+
+def render_template(template_name, **context):
+    """Renders a Jinja2 template with site-specific branding context."""
+    template = jinja_env.get_template(template_name)
+    base_context = {
+        "clinic_name": CLINIC_NAME,
+        "clinic_slug": CLINIC_SLUG,
+        "clinic_domain": CLINIC_DOMAIN,
+        "clinic_logo": CLINIC_LOGO,
+    }
+    base_context.update(context)
+    return template.render(**base_context)
 
 PG_USER = os.environ.get("SCADA_PG_USER", os.environ.get("PGUSER", "postgres"))
 PG_PASS = os.environ.get("SCADA_PG_PASS", os.environ.get("PGPASSWORD", "postgres"))
@@ -74,9 +89,9 @@ PG_PORT = os.environ.get("SCADA_PG_PORT", os.environ.get("PGPORT", "5432"))
 PG_DB   = os.environ.get("SCADA_PG_DB",   os.environ.get("PGDATABASE", "rapid_scada"))
 PG_SSLMODE = os.environ.get("SCADA_PG_SSLMODE", os.environ.get("PGSSLMODE", "prefer"))
 
-PUSHOVER_TOKEN = "a2wmo7ofxhhpo2vc2ykdkhtnte8nb5"
-PUSHOVER_GROUP = "gepqspoh98t69c7o223hwbg8ponwyq"
-PUSHOVER_PING_URL = "https://api.pushover.net/1/monitors/mm5z3n2shg9hjn2785oyu649ri92cxh/ping.json"
+PUSHOVER_TOKEN    = os.environ.get("PUSHOVER_TOKEN", "a2wmo7ofxhhpo2vc2ykdkhtnte8nb5")
+PUSHOVER_GROUP    = os.environ.get("PUSHOVER_GROUP", "gepqspoh98t69c7o223hwbg8ponwyq")
+PUSHOVER_PING_URL = os.environ.get("PUSHOVER_PING_URL", "https://api.pushover.net/1/monitors/mm5z3n2shg9hjn2785oyu649ri92cxh/ping.json")
 
 ESCALATION_TIMEOUT_SECONDS = 1800  # 30 minutes
 

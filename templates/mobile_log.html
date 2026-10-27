@@ -3,11 +3,11 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
-  <title>Advanced Fertility of Alaska | Cryo Tank LN2 Entry</title>
+  <title>{{ clinic_name }} | Cryo Tank LN2 Entry</title>
   <link rel="icon" type="image/x-icon" href="/favicon.ico?v=2">
-  <link rel="icon" type="image/png" sizes="64x64" href="/assets/KOMDlogo.png?v=2">
+  <link rel="icon" type="image/png" sizes="64x64" href="{{ clinic_logo }}?v=2">
   <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=2">
-  <link rel="apple-touch-icon" href="/assets/KOMDlogo.png?v=2">
+  <link rel="apple-touch-icon" href="{{ clinic_logo }}?v=2">
   <style>
     :root {
       --bg-app: #03141f;
@@ -112,10 +112,10 @@
     <div class="card">
       <div class="brand-bar">
         <div class="logo-wrap">
-          <img src="/assets/KOMDlogo.png" alt="Advanced Fertility" class="brand-leaf-mobile">
+          <img src="{{ clinic_logo }}" alt="{{ clinic_name }}" class="brand-leaf-mobile">
         </div>
         <h1 class="brand-title">Cryo Specimen LN2 Inspection</h1>
-        <div class="brand-sub">Advanced Fertility of Alaska</div>
+        <div class="brand-sub">{{ clinic_name }}</div>
       </div>
 
       <div id="formSection">
@@ -244,7 +244,7 @@
       </div>
 
       <div class="powered-footer">
-        Advanced Fertility of Alaska &bull; Powered by <strong>Lares Telemetry</strong>
+        {{ clinic_name }} &bull; Powered by <strong>Lares Telemetry</strong>
       </div>
     </div>
   </div>
