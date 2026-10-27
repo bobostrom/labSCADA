@@ -27,28 +27,6 @@ import matplotlib.dates as mdates
 from matplotlib.patches import Patch
 from matplotlib.lines import Line2D
 
-REPO_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-ASSETS_DIR = os.path.join(REPO_DIR, "assets")
-LOGO_PATH = os.path.join(ASSETS_DIR, "KOMDlogo.png")
-REPORT_MD_PATH = os.path.join(REPO_DIR, "notes", "ln2_dipstick_compliance_report.md")
-CHART_PNG_PATH = os.path.join(ASSETS_DIR, "ln2_sawtooth_chart.png")
-
-def load_env_file(filepath):
-    """Loads key=value pairs from a file into os.environ if file exists."""
-    if os.path.exists(filepath):
-        try:
-            with open(filepath, "r", encoding="utf-8") as f:
-                for line in f:
-                    line = line.strip()
-                    if line and not line.startswith("#") and "=" in line:
-                        k, v = line.split("=", 1)
-                        k = k.strip()
-                        v = v.strip().strip("'\"")
-                        if k and k not in os.environ:
-                            os.environ[k] = v
-        except Exception as e:
-            print(f"Warning: could not load env file {filepath}: {e}")
-
 # Check system-wide config first, then local repo site.env / .env
 load_env_file("/etc/labscada/site.env")
 load_env_file("/etc/labscada/db.env")
@@ -57,6 +35,15 @@ load_env_file(os.path.join(REPO_DIR, ".env"))
 
 CLINIC_NAME = os.environ.get("CLINIC_NAME", "Advanced Fertility of Alaska")
 CLINIC_SLUG = os.environ.get("CLINIC_SLUG", "komdivflab")
+CLINIC_LOGO = os.environ.get("CLINIC_LOGO", "/assets/KOMDlogo.png")
+
+logo_filename = os.path.basename(CLINIC_LOGO)
+LOGO_PATH = os.path.join(ASSETS_DIR, logo_filename)
+if not os.path.exists(LOGO_PATH):
+    LOGO_PATH = os.path.join(REPO_DIR, CLINIC_LOGO.lstrip("/"))
+
+REPORT_MD_PATH = os.path.join(REPO_DIR, "notes", "ln2_dipstick_compliance_report.md")
+CHART_PNG_PATH = os.path.join(ASSETS_DIR, "ln2_sawtooth_chart.png")
 
 # Database configuration
 PG_USER = os.environ.get("SCADA_PG_USER", os.environ.get("PGUSER", "postgres"))
@@ -490,7 +477,7 @@ def generate_single_tank_html_sheet(records, metrics, chart_b64, logo_b64, month
     else:
         rows_html = """<tr><td colspan="7" class="text-center" style="padding:18px; color:#64748b;">No manual dipstick entries recorded for this calendar month.</td></tr>"""
 
-    logo_img_tag = f'<img src="data:image/png;base64,{logo_b64}" alt="AFA Logo" class="header-logo">' if logo_b64 else ''
+    logo_img_tag = f'<img src="data:image/png;base64,{logo_b64}" alt="{CLINIC_NAME} Logo" class="header-logo">' if logo_b64 else ''
     sheet_anchor_id = f"sheet-{tank_id.lower().replace(' ', '-')}"
 
     sheet_html = f"""
@@ -802,7 +789,7 @@ def generate_alarms_audit_html_sheet(start_dt, end_dt, logo_b64, month_name_year
     else:
         holds_rows_html = """<tr><td colspan="6" class="text-center" style="padding:12px; color:#64748b;">No manual specimen retrieval holds initiated during this month.</td></tr>"""
 
-    logo_img_tag = f'<img src="data:image/png;base64,{logo_b64}" alt="AFA Logo" class="header-logo">' if logo_b64 else ''
+    logo_img_tag = f'<img src="data:image/png;base64,{logo_b64}" alt="{CLINIC_NAME} Logo" class="header-logo">' if logo_b64 else ''
 
     sheet_html = f"""
     <div class="sheet" id="sheet-facility-alarms">
@@ -1015,10 +1002,13 @@ def generate_monthly_packet(month_str=None, output_html_path=None):
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Monthly Compliance Report Packet ({month_name_year}) — {CLINIC_NAME}</title>
-  <link rel="icon" type="image/x-icon" href="/favicon.ico?v=2">
-  <link rel="icon" type="image/png" sizes="64x64" href="/assets/KOMDlogo.png?v=2">
-  <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=2">
-  <link rel="apple-touch-icon" href="/assets/KOMDlogo.png?v=2">
+  <link rel="icon" type="image/png" sizes="128x128" href="{CLINIC_LOGO}?v=3">
+  <link rel="icon" type="image/png" sizes="64x64" href="{CLINIC_LOGO}?v=3">
+  <link rel="shortcut icon" type="image/png" href="{CLINIC_LOGO}?v=3">
+  <link rel="apple-touch-icon" href="{CLINIC_LOGO}?v=3">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;800;900&display=swap" rel="stylesheet">
   <style>
     :root {{
       --primary: #0288d1;
@@ -1227,16 +1217,16 @@ def generate_monthly_packet(month_str=None, output_html_path=None):
       gap: 16px;
     }}
     .logo-circle-wrap {{
-      width: 52px;
-      height: 52px;
+      width: 54px;
+      height: 54px;
       border-radius: 50%;
-      background: #eef7f9;
-      border: 2px solid rgba(2, 136, 209, 0.4);
+      background: #00284b;
+      border: 2px solid rgba(255, 215, 0, 0.55);
       display: flex;
       align-items: center;
       justify-content: center;
       overflow: hidden;
-      padding: 2px;
+      padding: 4px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.15);
       flex-shrink: 0;
     }}
@@ -1247,10 +1237,11 @@ def generate_monthly_packet(month_str=None, output_html_path=None):
       border-radius: 50%;
     }}
     .clinic-title {{
-      font-size: 22px;
-      font-weight: 900;
+      font-family: 'Cinzel', Georgia, serif;
+      font-size: 21px;
+      font-weight: 800;
       color: #0f172a;
-      letter-spacing: -0.4px;
+      letter-spacing: 0.5px;
       margin: 0 0 2px 0;
     }}
     .doc-subtitle {{
