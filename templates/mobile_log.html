@@ -431,7 +431,7 @@
 
           // Update live readings for current active tank
           const r = data.readings || {};
-          if (activeTank === "Cryo Tank 1") {
+          if (activeTank === "Dewar 1" || activeTank === "Cryo Tank 1") {
             if (r[125] !== undefined) document.getElementById("dispTemp").innerText = r[125].toFixed(1) + "°C";
             if (r[107] !== undefined) document.getElementById("dispSensor").innerText = r[107].toFixed(1) + " cm";
           } else {

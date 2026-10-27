@@ -1302,7 +1302,7 @@
               lastRecordedLevels['Dewar 1'] = t1.level_cm;
               lastRecordedLevels['Cryo Tank 1'] = t1.level_cm;
             }
-            const lvl1 = t1.level_cm.toFixed(1);
+            const lvl1 = (typeof t1.level_cm === 'number') ? t1.level_cm.toFixed(1) : '--';
             const hrs1 = `${t1.hours_since.toFixed(1)}h ago (${t1.initials})`;
             const due1 = t1.detail || `Next: ${t1.next_check}`;
             const badgeTxt1 = t1.badge || 'ON SCHEDULE';
@@ -1340,6 +1340,7 @@
               lastRecordedLevels['Dewar 2'] = t2.level_cm;
               lastRecordedLevels['Cryo Tank 2'] = t2.level_cm;
             }
+            const lvl2 = (typeof t2.level_cm === 'number') ? t2.level_cm.toFixed(1) : '--';
             const hrs2 = `${t2.hours_since.toFixed(1)}h ago (${t2.initials})`;
             const due2 = t2.detail || `Next: ${t2.next_check}`;
             const badgeTxt2 = t2.badge || 'ON SCHEDULE';

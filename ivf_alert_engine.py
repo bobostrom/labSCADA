@@ -1539,6 +1539,12 @@ class ClinicalAlertHandler(http.server.BaseHTTPRequestHandler):
                 self.send_header("Content-Type", "application/json")
                 self.end_headers()
                 self.wfile.write(json.dumps({"error": "Invalid level_cm value"}).encode("utf-8"))
+            except Exception as e:
+                print(f"Error in /api/ln2_log: {e}")
+                self.send_response(500)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps({"error": f"Server error: {str(e)}"}).encode("utf-8"))
 
         elif parsed.path in ["/api/lab_mode", "/api/lab-mode"]:
             content_length = int(self.headers.get("Content-Length", 0))
