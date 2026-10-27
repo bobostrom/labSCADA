@@ -33,11 +33,32 @@ Once installed, access the system directly in your browser:
 
 ## Installation & Setup
 
+### 1. Prerequisites (For fresh Raspberry Pi OS / Debian Lite)
+On a minimal OS install, install `git` first:
+```bash
+sudo apt update && sudo apt install -y git
+```
+
+### 2. Clone the Repository
+```bash
+mkdir -p ~/Projects
+cd ~/Projects
+git clone https://github.com/bobostrom/labSCADA.git
+cd labSCADA
+```
+
+### 3. Run Automated Provisioner
 Run the automated installer script:
 
 ```bash
-chmod +x install_rapidscada.sh
+chmod +x install_rapidscada.sh deploy_site.sh
 ./install_rapidscada.sh
+```
+
+### 4. Activate Site Manifest
+Activate the target facility configuration (e.g. `afoa` for production or `demo` for bench):
+```bash
+./deploy_site.sh afoa
 ```
 
 The script automatically configures:
