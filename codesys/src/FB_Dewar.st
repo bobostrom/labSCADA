@@ -14,6 +14,7 @@ VAR_INPUT
     bSimMode            : BOOL := FALSE;    (* TRUE = Ignore terminal, use realistic virtual physics *)
     bForceExcursion     : BOOL := FALSE;    (* Injects critical excursion above -135°C in sim mode *)
     rNominalTemp        : REAL := -150.0;   (* Typical vapor phase operating temperature (°C) *)
+    rPhaseOffset        : REAL := 0.0;      (* Angular phase offset (radians) for multi-tank variation *)
     rHighTrip           : REAL := -135.0;   (* Critical specimen danger limit (°C) *)
     rHysteresis         : REAL := 5.0;      (* Reset deadband (°C) *)
     tPickupDelay        : TIME := T#30S;    (* Sustained warm excursion required to trip *)
@@ -42,10 +43,12 @@ IF bSimMode THEN
 
     IF bForceExcursion THEN
         // Boiling off / vacuum loss: temperature rises to -125.0 °C
-        rProcessTemp := -125.0 + 1.2 * COS(TO_REAL(iAngle) * 0.05);
+        rProcessTemp := -125.0 + 1.2 * COS(TO_REAL(iAngle) * 0.05 + rPhaseOffset);
     ELSE
-        // Healthy cryogenic vapor phase: smooth breathing around nominal
-        rProcessTemp := rNominalTemp + 0.8 * SIN(TO_REAL(iAngle) * 0.04);
+        // Healthy cryogenic vapor phase: multi-harmonic thermal breathing
+        rProcessTemp := rNominalTemp 
+                      + 0.7 * SIN(TO_REAL(iAngle) * 0.035 + rPhaseOffset)
+                      + 0.3 * COS(TO_REAL(iAngle) * 0.082 + (rPhaseOffset * 1.5));
     END_IF;
 ELSE
     // Read live physical probe from WAGO I/O terminal

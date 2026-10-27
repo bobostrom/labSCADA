@@ -109,8 +109,9 @@ bMedFreezerWarn  := fbFreezer.bWarn;
 
 // --- C. Cryogenic LN2 Dewar 1 (< -135.0°C, 30s pickup, 10s dropout) ---
 fbDewar1(
-    rRawTemp        := -150.0,
-    rNominalTemp    := -150.0,
+    rRawTemp        := -151.2,
+    rNominalTemp    := -151.2,
+    rPhaseOffset    := 0.0,
     bSimMode        := bGlobalSimMode,
     bForceExcursion := bForceDewar1Excursion
 );
@@ -120,8 +121,9 @@ bDewar1Warn  := fbDewar1.bWarn;
 
 // --- D. Cryogenic LN2 Dewar 2 (< -135.0°C, 30s pickup, 10s dropout) ---
 fbDewar2(
-    rRawTemp        := -150.0,
-    rNominalTemp    := -150.0,
+    rRawTemp        := -149.4,
+    rNominalTemp    := -149.4,
+    rPhaseOffset    := 2.3,
     bSimMode        := bGlobalSimMode,
     bForceExcursion := bForceDewar2Excursion
 );
