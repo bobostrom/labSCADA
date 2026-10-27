@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<OpcLineConfig>
+  <ConnectionOptions>
+    <ServerUrl>opc.tcp://afoa-plc:4840</ServerUrl>
+    <SecurityMode>None</SecurityMode>
+    <SecurityPolicy>None</SecurityPolicy>
+    <AuthenticationMode>Username</AuthenticationMode>
+    <Username>admin</Username>
+    <Password>B36BADF251C4B59A5E5A72B9E1574492</Password>
+  </ConnectionOptions>
+</OpcLineConfig>
