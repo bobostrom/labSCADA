@@ -1272,8 +1272,12 @@
             msgEl.style.color = '#00e676';
             msgEl.innerText = '✅ ' + d.message;
             lastRecordedLevels[currentTank] = levelVal;
-            updateLn2Status();
-            loadAlarms();
+            try {
+              updateLn2Status();
+              loadAlarms();
+            } catch (uiErr) {
+              console.warn('UI refresh warning:', uiErr);
+            }
             setTimeout(() => {
               closeLn2Modal();
               document.getElementById('ln2NotesInput').value = '';
@@ -1296,79 +1300,87 @@
           const tanks = data.tanks || {};
           
           // 1. Update Dewar 1
-          const t1 = tanks['Dewar 1'] || tanks['Cryo Tank 1'];
-          if (t1) {
-            if (typeof t1.level_cm === 'number') {
-              lastRecordedLevels['Dewar 1'] = t1.level_cm;
-              lastRecordedLevels['Cryo Tank 1'] = t1.level_cm;
+          try {
+            const t1 = tanks['Dewar 1'] || tanks['Cryo Tank 1'];
+            if (t1) {
+              if (typeof t1.level_cm === 'number') {
+                lastRecordedLevels['Dewar 1'] = t1.level_cm;
+                lastRecordedLevels['Cryo Tank 1'] = t1.level_cm;
+              }
+              const lvl1 = (typeof t1.level_cm === 'number') ? t1.level_cm.toFixed(1) : '--';
+              const hrs1 = (typeof t1.hours_since === 'number') ? `${t1.hours_since.toFixed(1)}h ago (${t1.initials})` : `-- (${t1.initials || '--'})`;
+              const due1 = t1.detail || `Next: ${t1.next_check || 'Scheduled'}`;
+              const badgeTxt1 = t1.badge || 'ON SCHEDULE';
+
+              // Main Card Elements
+              const el1 = document.getElementById('val-ln2-level-1');
+              if (el1) el1.innerText = lvl1;
+              const b1 = document.getElementById('badge-ln2-1');
+              if (b1) b1.innerText = badgeTxt1;
+              const sub1 = document.getElementById('sub-ln2-check-1');
+              if (sub1) sub1.innerText = hrs1;
+              const nextDue1 = document.getElementById('ln2-next-due-1');
+              if (nextDue1) nextDue1.innerText = due1;
+
+              // Subpage Detail Elements
+              const dEl1 = document.getElementById('detail-ln2-level-1');
+              if (dEl1) dEl1.innerText = lvl1;
+              const dB1 = document.getElementById('detail-badge-ln2-1');
+              if (dB1) dB1.innerText = badgeTxt1;
+              const dCheck1 = document.getElementById('detail-last-check-1');
+              if (dCheck1) dCheck1.innerText = `${lvl1} cm (${hrs1})`;
+              const dNext1 = document.getElementById('detail-next-check-1');
+              if (dNext1) dNext1.innerText = t1.next_check || '--';
+
+              const badgeClass1 = (t1.status === 'OVERDUE') ? 'status-badge status-alert' :
+                                 ((t1.status === 'DUE') ? 'status-badge status-warn' : 'status-badge status-normal');
+              if (b1) b1.className = badgeClass1;
+              if (dB1) dB1.className = badgeClass1;
             }
-            const lvl1 = (typeof t1.level_cm === 'number') ? t1.level_cm.toFixed(1) : '--';
-            const hrs1 = `${t1.hours_since.toFixed(1)}h ago (${t1.initials})`;
-            const due1 = t1.detail || `Next: ${t1.next_check}`;
-            const badgeTxt1 = t1.badge || 'ON SCHEDULE';
-
-            // Main Card Elements
-            const el1 = document.getElementById('val-ln2-level-1');
-            if (el1) el1.innerText = lvl1;
-            const b1 = document.getElementById('badge-ln2-1');
-            if (b1) b1.innerText = badgeTxt1;
-            const sub1 = document.getElementById('sub-ln2-check-1');
-            if (sub1) sub1.innerText = hrs1;
-            const nextDue1 = document.getElementById('ln2-next-due-1');
-            if (nextDue1) nextDue1.innerText = due1;
-
-            // Subpage Detail Elements
-            const dEl1 = document.getElementById('detail-ln2-level-1');
-            if (dEl1) dEl1.innerText = lvl1;
-            const dB1 = document.getElementById('detail-badge-ln2-1');
-            if (dB1) dB1.innerText = badgeTxt1;
-            const dCheck1 = document.getElementById('detail-last-check-1');
-            if (dCheck1) dCheck1.innerText = `${t1.level_cm.toFixed(1)} cm (${hrs1})`;
-            const dNext1 = document.getElementById('detail-next-check-1');
-            if (dNext1) dNext1.innerText = t1.next_check;
-
-            const badgeClass1 = (t1.status === 'OVERDUE') ? 'status-badge status-alert' :
-                               ((t1.status === 'DUE') ? 'status-badge status-warn' : 'status-badge status-normal');
-            if (b1) b1.className = badgeClass1;
-            if (dB1) dB1.className = badgeClass1;
+          } catch (e1) {
+            console.error('Error updating Dewar 1 UI:', e1);
           }
 
           // 2. Update Dewar 2
-          const t2 = tanks['Dewar 2'] || tanks['Cryo Tank 2'];
-          if (t2) {
-            if (typeof t2.level_cm === 'number') {
-              lastRecordedLevels['Dewar 2'] = t2.level_cm;
-              lastRecordedLevels['Cryo Tank 2'] = t2.level_cm;
+          try {
+            const t2 = tanks['Dewar 2'] || tanks['Cryo Tank 2'];
+            if (t2) {
+              if (typeof t2.level_cm === 'number') {
+                lastRecordedLevels['Dewar 2'] = t2.level_cm;
+                lastRecordedLevels['Cryo Tank 2'] = t2.level_cm;
+              }
+              const lvl2 = (typeof t2.level_cm === 'number') ? t2.level_cm.toFixed(1) : '--';
+              const hrs2 = (typeof t2.hours_since === 'number') ? `${t2.hours_since.toFixed(1)}h ago (${t2.initials})` : `-- (${t2.initials || '--'})`;
+              const due2 = t2.detail || `Next: ${t2.next_check || 'Scheduled'}`;
+              const badgeTxt2 = t2.badge || 'ON SCHEDULE';
+
+              // Main Card Elements
+              const el2 = document.getElementById('val-ln2-level-2');
+              if (el2) el2.innerText = lvl2;
+              const b2 = document.getElementById('badge-ln2-2');
+              if (b2) b2.innerText = badgeTxt2;
+              const sub2 = document.getElementById('sub-ln2-check-2');
+              if (sub2) sub2.innerText = hrs2;
+              const nextDue2 = document.getElementById('ln2-next-due-2');
+              if (nextDue2) nextDue2.innerText = due2;
+
+              // Subpage Detail Elements
+              const dEl2 = document.getElementById('detail-ln2-level-2');
+              if (dEl2) dEl2.innerText = lvl2;
+              const dB2 = document.getElementById('detail-badge-ln2-2');
+              if (dB2) dB2.innerText = badgeTxt2;
+              const dCheck2 = document.getElementById('detail-last-check-2');
+              if (dCheck2) dCheck2.innerText = `${lvl2} cm (${hrs2})`;
+              const dNext2 = document.getElementById('detail-next-check-2');
+              if (dNext2) dNext2.innerText = t2.next_check || '--';
+
+              const badgeClass2 = (t2.status === 'OVERDUE') ? 'status-badge status-alert' :
+                                 ((t2.status === 'DUE') ? 'status-badge status-warn' : 'status-badge status-normal');
+              if (b2) b2.className = badgeClass2;
+              if (dB2) dB2.className = badgeClass2;
             }
-            const lvl2 = (typeof t2.level_cm === 'number') ? t2.level_cm.toFixed(1) : '--';
-            const hrs2 = `${t2.hours_since.toFixed(1)}h ago (${t2.initials})`;
-            const due2 = t2.detail || `Next: ${t2.next_check}`;
-            const badgeTxt2 = t2.badge || 'ON SCHEDULE';
-
-            // Main Card Elements
-            const el2 = document.getElementById('val-ln2-level-2');
-            if (el2) el2.innerText = lvl2;
-            const b2 = document.getElementById('badge-ln2-2');
-            if (b2) b2.innerText = badgeTxt2;
-            const sub2 = document.getElementById('sub-ln2-check-2');
-            if (sub2) sub2.innerText = hrs2;
-            const nextDue2 = document.getElementById('ln2-next-due-2');
-            if (nextDue2) nextDue2.innerText = due2;
-
-            // Subpage Detail Elements
-            const dEl2 = document.getElementById('detail-ln2-level-2');
-            if (dEl2) dEl2.innerText = lvl2;
-            const dB2 = document.getElementById('detail-badge-ln2-2');
-            if (dB2) dB2.innerText = badgeTxt2;
-            const dCheck2 = document.getElementById('detail-last-check-2');
-            if (dCheck2) dCheck2.innerText = `${t2.level_cm.toFixed(1)} cm (${hrs2})`;
-            const dNext2 = document.getElementById('detail-next-check-2');
-            if (dNext2) dNext2.innerText = t2.next_check;
-
-            const badgeClass2 = (t2.status === 'OVERDUE') ? 'status-badge status-alert' :
-                               ((t2.status === 'DUE') ? 'status-badge status-warn' : 'status-badge status-normal');
-            if (b2) b2.className = badgeClass2;
-            if (dB2) dB2.className = badgeClass2;
+          } catch (e2) {
+            console.error('Error updating Dewar 2 UI:', e2);
           }
 
           // 3. Render History Table

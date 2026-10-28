@@ -1374,14 +1374,15 @@ class ClinicalAlertHandler(http.server.BaseHTTPRequestHandler):
             tank_param = params.get("tank", ["1"])[0]
             suffix = "tank2" if "2" in str(tank_param) else "tank1"
             tank_num = "2" if "2" in str(tank_param) else "1"
-            chart_path = os.path.join(REPO_DIR, "assets", f"ln2_sawtooth_cryo_tank_{tank_num}.png")
-            if not os.path.exists(chart_path):
-                chart_path = os.path.join(REPO_DIR, "assets", f"ln2_sawtooth_chart_{suffix}.png")
-            if not os.path.exists(chart_path):
-                chart_path = os.path.join(REPO_DIR, "assets", "ln2_sawtooth_chart.png")
-            if not os.path.exists(chart_path):
-                chart_path = os.path.join(REPO_DIR, "notes", "assets", f"ln2_sawtooth_cryo_tank_{tank_num}.png")
-            if os.path.exists(chart_path):
+            candidates = [
+                os.path.join(REPO_DIR, "assets", f"ln2_sawtooth_dewar_{tank_num}.png"),
+                os.path.join(REPO_DIR, "assets", f"ln2_sawtooth_cryo_tank_{tank_num}.png"),
+                os.path.join(REPO_DIR, "assets", f"ln2_sawtooth_chart_{suffix}.png"),
+                os.path.join(REPO_DIR, "assets", "ln2_sawtooth_chart.png"),
+                os.path.join(REPO_DIR, "notes", "assets", f"ln2_sawtooth_cryo_tank_{tank_num}.png"),
+            ]
+            chart_path = next((p for p in candidates if os.path.exists(p) and os.path.isfile(p)), None)
+            if chart_path:
                 with open(chart_path, "rb") as f:
                     content = f.read()
                 self.send_response(200)
@@ -1434,6 +1435,9 @@ class ClinicalAlertHandler(http.server.BaseHTTPRequestHandler):
             # Rich Cleanroom Kiosk Touchscreen View
             self.send_response(200)
             self.send_header("Content-Type", "text/html; charset=utf-8")
+            self.send_header("Cache-Control", "no-cache, no-store, must-revalidate")
+            self.send_header("Pragma", "no-cache")
+            self.send_header("Expires", "0")
             self.end_headers()
             html = render_template("kiosk.html")
             self.wfile.write(html.encode("utf-8"))
