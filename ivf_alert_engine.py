@@ -104,6 +104,9 @@ CHANNELS = {
     103: {"name": "Medical Freezer", "type": "freezer", "high": -15.0, "priority": 2},
     104: {"name": "Dewar 2", "type": "cryo", "high": -135.0, "priority": 2},
     125: {"name": "Dewar 1", "type": "cryo", "high": -135.0, "priority": 2},
+    105: {"name": "Dewar 3", "type": "cryo", "high": -135.0, "priority": 2},
+    106: {"name": "Dewar 4", "type": "cryo", "high": -135.0, "priority": 2},
+    107: {"name": "Dewar 5", "type": "cryo", "high": -135.0, "priority": 2},
     # Discrete alarm channels from CODESYS
     111: {"name": "Medical Fridge", "type": "discrete_alarm", "linked_analog": 102, "priority": 2},
     112: {"name": "Medical Freezer", "type": "discrete_alarm", "linked_analog": 103, "priority": 2},
@@ -119,6 +122,9 @@ CHANNELS = {
     122: {"name": "Cryo Lab Door", "type": "door_alarm", "priority": 2},
     123: {"name": "Incubator 01", "type": "incubator", "priority": 2},
     124: {"name": "Incubator 02", "type": "incubator", "priority": 2},
+    195: {"name": "Dewar 5", "type": "ln2_inspection", "schedule": "Mon, Wed, Fri by 5:00 PM", "priority": 1},
+    196: {"name": "Dewar 4", "type": "ln2_inspection", "schedule": "Mon, Wed, Fri by 5:00 PM", "priority": 1},
+    197: {"name": "Dewar 3", "type": "ln2_inspection", "schedule": "Mon, Wed, Fri by 5:00 PM", "priority": 1},
     198: {"name": "Dewar 2", "type": "ln2_inspection", "schedule": "Mon, Wed, Fri by 5:00 PM", "priority": 1},
     199: {"name": "Dewar 1", "type": "ln2_inspection", "schedule": "Mon, Wed, Fri by 5:00 PM", "priority": 1},
 }
@@ -959,8 +965,8 @@ def get_ln2_status():
                 "next_check": sched["next_check"]
             }
 
-    # Ensure both dewars have baseline representation
-    for expected_tank in ["Dewar 1", "Dewar 2"]:
+    # Ensure all 5 dewars have baseline representation
+    for expected_tank in ["Dewar 1", "Dewar 2", "Dewar 3", "Dewar 4", "Dewar 5"]:
         if expected_tank not in tanks:
             sched_def = evaluate_ln2_schedule(now, None)
             tanks[expected_tank] = {
@@ -1019,8 +1025,23 @@ def record_ln2_log(tank_id, level_cm, was_filled, frost_condition, initials, not
     rows = db_query(sql)
     log_id = int(rows[0][0]) if rows and rows[0] else 0
 
-    # Resolve overdue alarm for this specific dewar (199 for Dewar 1, 198 for Dewar 2)
-    alarm_cnl = 199 if ("1" in safe_tank) else 198
+    # Resolve overdue alarm for this specific dewar
+    dewar_alarm_map = {
+        "Dewar 1": 199,
+        "Dewar 2": 198,
+        "Dewar 3": 197,
+        "Dewar 4": 196,
+        "Dewar 5": 195,
+    }
+    alarm_cnl = dewar_alarm_map.get(safe_tank)
+    if not alarm_cnl:
+        for k, v in dewar_alarm_map.items():
+            if k[-1] in safe_tank:
+                alarm_cnl = v
+                break
+    if not alarm_cnl:
+        alarm_cnl = 199
+
     with state_lock:
         if alarm_cnl in active_alarms:
             resolve_alarm(alarm_cnl, final_val=level_cm)
@@ -1048,7 +1069,13 @@ def ln2_schedule_watcher():
         try:
             status_data = get_ln2_status()
             tanks = status_data.get("tanks", {})
-            tank_cnls = [("Dewar 1", 199), ("Dewar 2", 198)]
+            tank_cnls = [
+                ("Dewar 1", 199),
+                ("Dewar 2", 198),
+                ("Dewar 3", 197),
+                ("Dewar 4", 196),
+                ("Dewar 5", 195)
+            ]
             for tank_name, cnl_num in tank_cnls:
                 tank = tanks.get(tank_name)
                 if tank:
@@ -1097,39 +1124,76 @@ def render_print_placards_html(host, scheme="http"):
 
 def render_mobile_log_html(host, tank_param, readings):
     """Renders a responsive, mobile-first dipstick entry interface for staff scanning QR codes with their phone."""
-    is_tank2 = "2" in str(tank_param)
-    default_tank = "Dewar 2" if is_tank2 else "Dewar 1"
-    
-    t1_temp = readings.get(125, readings.get(113, -196.2))
-    t1_level = readings.get(199, 14.5)
-    t2_temp = readings.get(104, readings.get(114, -196.0))
-    t2_level = readings.get(198, 16.8)
+    t_str = str(tank_param).strip()
+    tank_num = 1
+    for digit in "12345":
+        if digit in t_str:
+            tank_num = int(digit)
+            break
+    default_tank = f"Dewar {tank_num}"
+
+    # Channel mappings for each dewar:
+    # Dewar 1: temp 125, level 199
+    # Dewar 2: temp 104, level 198
+    # Dewar 3: temp 105, level 197
+    # Dewar 4: temp 106, level 196
+    # Dewar 5: temp 107, level 195
+    dewar_meta = {
+        1: {"temp_cnl": 125, "level_cnl": 199, "default_level": 30.0},
+        2: {"temp_cnl": 104, "level_cnl": 198, "default_level": 30.0},
+        3: {"temp_cnl": 105, "level_cnl": 197, "default_level": 30.0},
+        4: {"temp_cnl": 106, "level_cnl": 196, "default_level": 30.0},
+        5: {"temp_cnl": 107, "level_cnl": 195, "default_level": 30.0},
+    }
 
     ln2_data = get_ln2_status()
-    t1_info = ln2_data.get("tanks", {}).get("Dewar 1", ln2_data.get("tanks", {}).get("Cryo Tank 1", {}))
-    t2_info = ln2_data.get("tanks", {}).get("Dewar 2", ln2_data.get("tanks", {}).get("Cryo Tank 2", {}))
+    tanks_dict = ln2_data.get("tanks", {})
 
-    t1_last_log = t1_info.get("level_cm", 28.0)
-    t2_last_log = t2_info.get("level_cm", 30.0)
+    tank_configs = {}
+    for i in range(1, 6):
+        d_name = f"Dewar {i}"
+        meta = dewar_meta[i]
+        t_temp = readings.get(meta["temp_cnl"], -150.0)
+        t_level = readings.get(meta["level_cnl"], meta["default_level"])
+        t_info = tanks_dict.get(d_name, {})
+        last_log = t_info.get("level_cm", meta["default_level"])
+        tank_configs[d_name] = {
+            "temp": f"{t_temp:.1f} °C",
+            "sensor": f"{t_level:.1f} cm",
+            "defaultVal": f"{last_log:.1f}",
+            "last_log": last_log,
+            "info": t_info,
+        }
 
-    selected_last_log = t2_last_log if is_tank2 else t1_last_log
-    init_level = f"{selected_last_log:.1f}"
-    disp_temp = f"{t2_temp if is_tank2 else t1_temp:.1f} °C"
-    disp_sensor = f"{t2_level if is_tank2 else t1_level:.1f} cm"
+    active_cfg = tank_configs.get(default_tank, tank_configs["Dewar 1"])
+    init_level = active_cfg["defaultVal"]
+    disp_temp = active_cfg["temp"]
+    disp_sensor = active_cfg["sensor"]
 
     return render_template(
         "mobile_log.html",
-        is_tank2=is_tank2,
         default_tank=default_tank,
+        active_tank_num=tank_num,
+        is_tank2=(tank_num == 2),
         disp_temp=disp_temp,
         disp_sensor=disp_sensor,
         init_level=init_level,
-        t1_temp_disp=f"{t1_temp:.1f} °C",
-        t1_level_disp=f"{t1_level:.1f} cm",
-        t1_default_val=f"{t1_last_log:.1f}",
-        t2_temp_disp=f"{t2_temp:.1f} °C",
-        t2_level_disp=f"{t2_level:.1f} cm",
-        t2_default_val=f"{t2_last_log:.1f}"
+        tank_configs=tank_configs,
+        t1_temp_disp=tank_configs["Dewar 1"]["temp"],
+        t1_level_disp=tank_configs["Dewar 1"]["sensor"],
+        t1_default_val=tank_configs["Dewar 1"]["defaultVal"],
+        t2_temp_disp=tank_configs["Dewar 2"]["temp"],
+        t2_level_disp=tank_configs["Dewar 2"]["sensor"],
+        t2_default_val=tank_configs["Dewar 2"]["defaultVal"],
+        t3_temp_disp=tank_configs["Dewar 3"]["temp"],
+        t3_level_disp=tank_configs["Dewar 3"]["sensor"],
+        t3_default_val=tank_configs["Dewar 3"]["defaultVal"],
+        t4_temp_disp=tank_configs["Dewar 4"]["temp"],
+        t4_level_disp=tank_configs["Dewar 4"]["sensor"],
+        t4_default_val=tank_configs["Dewar 4"]["defaultVal"],
+        t5_temp_disp=tank_configs["Dewar 5"]["temp"],
+        t5_level_disp=tank_configs["Dewar 5"]["sensor"],
+        t5_default_val=tank_configs["Dewar 5"]["defaultVal"],
     )
 
 
@@ -1372,13 +1436,13 @@ class ClinicalAlertHandler(http.server.BaseHTTPRequestHandler):
         elif parsed.path in ["/report/ln2/chart", "/assets/ln2_sawtooth_chart.png", "/notes/assets/ln2_sawtooth_chart.png"]:
             params = urllib.parse.parse_qs(parsed.query)
             tank_param = params.get("tank", ["1"])[0]
-            suffix = "tank2" if "2" in str(tank_param) else "tank1"
-            tank_num = "2" if "2" in str(tank_param) else "1"
+            tank_num = "".join([c for c in str(tank_param) if c.isdigit()]) or "1"
             candidates = [
                 os.path.join(REPO_DIR, "assets", f"ln2_sawtooth_dewar_{tank_num}.png"),
                 os.path.join(REPO_DIR, "assets", f"ln2_sawtooth_cryo_tank_{tank_num}.png"),
-                os.path.join(REPO_DIR, "assets", f"ln2_sawtooth_chart_{suffix}.png"),
+                os.path.join(REPO_DIR, "assets", f"ln2_sawtooth_chart_tank{tank_num}.png"),
                 os.path.join(REPO_DIR, "assets", "ln2_sawtooth_chart.png"),
+                os.path.join(REPO_DIR, "notes", "assets", f"ln2_sawtooth_dewar_{tank_num}.png"),
                 os.path.join(REPO_DIR, "notes", "assets", f"ln2_sawtooth_cryo_tank_{tank_num}.png"),
             ]
             chart_path = next((p for p in candidates if os.path.exists(p) and os.path.isfile(p)), None)

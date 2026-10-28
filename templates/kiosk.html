@@ -295,6 +295,105 @@
         </div>
       </div>
 
+      <!-- Dewar 3 -->
+      <div class="card" id="card-cryo3" style="border-top:3px solid #818cf8;">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+          <div>
+            <div class="card-title">Dewar 3</div>
+            <div class="card-val"><span id="val-cryo3">--</span><span class="card-unit">°C</span></div>
+          </div>
+          <span id="badge-cryo3" class="status-badge status-normal">NORMAL</span>
+        </div>
+        <div class="card-sub">
+          <span>Vapor Limit: &lt; -135.0°C</span>
+          <span style="font-size:11px; color:#8899a6;">Pt100 Analog</span>
+        </div>
+
+        <!-- Integrated Dipstick Sub-Panel -->
+        <div class="dipstick-subpanel" id="dip-subpanel-3">
+          <div class="dip-header">
+            <span style="font-size:11.5px; font-weight:700; color:#818cf8; text-transform:uppercase;">Manual Dipstick</span>
+            <span id="badge-ln2-3" class="status-badge status-normal">ON SCHEDULE</span>
+          </div>
+          <div class="dip-level-row">
+            <div><span class="dip-level" id="val-ln2-level-3">--</span><span style="color:#8899a6; font-size:12px;"> cm</span></div>
+            <span id="sub-ln2-check-3" style="font-size:12px; color:#8899a6;">--</span>
+          </div>
+          <div id="ln2-next-due-3" style="font-size:11px; color:#8899a6; margin-top:2px;">Next: Mon/Wed/Fri by 5:00 PM</div>
+          <div class="dip-actions">
+            <button class="btn-mini" onclick="openLn2ModalFor('Dewar 3')">🧊 Log Check</button>
+            <button class="btn-mini" id="btn-hold-cryo3" style="background:#0284c7;" onclick="toggleCryoHoldKiosk('Dewar 3')">⏱️ Mute (15m)</button>
+            <button class="btn-mini-subtle" onclick="switchTab('cryo')">Audit Trail →</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Dewar 4 -->
+      <div class="card" id="card-cryo4" style="border-top:3px solid #2dd4bf;">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+          <div>
+            <div class="card-title">Dewar 4</div>
+            <div class="card-val"><span id="val-cryo4">--</span><span class="card-unit">°C</span></div>
+          </div>
+          <span id="badge-cryo4" class="status-badge status-normal">NORMAL</span>
+        </div>
+        <div class="card-sub">
+          <span>Vapor Limit: &lt; -135.0°C</span>
+          <span style="font-size:11px; color:#8899a6;">Pt100 Analog</span>
+        </div>
+
+        <!-- Integrated Dipstick Sub-Panel -->
+        <div class="dipstick-subpanel" id="dip-subpanel-4">
+          <div class="dip-header">
+            <span style="font-size:11.5px; font-weight:700; color:#2dd4bf; text-transform:uppercase;">Manual Dipstick</span>
+            <span id="badge-ln2-4" class="status-badge status-normal">ON SCHEDULE</span>
+          </div>
+          <div class="dip-level-row">
+            <div><span class="dip-level" id="val-ln2-level-4">--</span><span style="color:#8899a6; font-size:12px;"> cm</span></div>
+            <span id="sub-ln2-check-4" style="font-size:12px; color:#8899a6;">--</span>
+          </div>
+          <div id="ln2-next-due-4" style="font-size:11px; color:#8899a6; margin-top:2px;">Next: Mon/Wed/Fri by 5:00 PM</div>
+          <div class="dip-actions">
+            <button class="btn-mini" onclick="openLn2ModalFor('Dewar 4')">🧊 Log Check</button>
+            <button class="btn-mini" id="btn-hold-cryo4" style="background:#0284c7;" onclick="toggleCryoHoldKiosk('Dewar 4')">⏱️ Mute (15m)</button>
+            <button class="btn-mini-subtle" onclick="switchTab('cryo')">Audit Trail →</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Dewar 5 -->
+      <div class="card" id="card-cryo5" style="border-top:3px solid #fbbf24;">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+          <div>
+            <div class="card-title">Dewar 5</div>
+            <div class="card-val"><span id="val-cryo5">--</span><span class="card-unit">°C</span></div>
+          </div>
+          <span id="badge-cryo5" class="status-badge status-normal">NORMAL</span>
+        </div>
+        <div class="card-sub">
+          <span>Vapor Limit: &lt; -135.0°C</span>
+          <span style="font-size:11px; color:#8899a6;">Pt100 Analog</span>
+        </div>
+
+        <!-- Integrated Dipstick Sub-Panel -->
+        <div class="dipstick-subpanel" id="dip-subpanel-5">
+          <div class="dip-header">
+            <span style="font-size:11.5px; font-weight:700; color:#fbbf24; text-transform:uppercase;">Manual Dipstick</span>
+            <span id="badge-ln2-5" class="status-badge status-normal">ON SCHEDULE</span>
+          </div>
+          <div class="dip-level-row">
+            <div><span class="dip-level" id="val-ln2-level-5">--</span><span style="color:#8899a6; font-size:12px;"> cm</span></div>
+            <span id="sub-ln2-check-5" style="font-size:12px; color:#8899a6;">--</span>
+          </div>
+          <div id="ln2-next-due-5" style="font-size:11px; color:#8899a6; margin-top:2px;">Next: Mon/Wed/Fri by 5:00 PM</div>
+          <div class="dip-actions">
+            <button class="btn-mini" onclick="openLn2ModalFor('Dewar 5')">🧊 Log Check</button>
+            <button class="btn-mini" id="btn-hold-cryo5" style="background:#0284c7;" onclick="toggleCryoHoldKiosk('Dewar 5')">⏱️ Mute (15m)</button>
+            <button class="btn-mini-subtle" onclick="switchTab('cryo')">Audit Trail →</button>
+          </div>
+        </div>
+      </div>
+
       <!-- Combined Medical Cold Storage (Fridge & Freezer) -->
       <div class="card" id="card-cold-storage" style="border-top:3px solid #00e676;">
         <div class="card-title">Medical Cold Storage</div>
@@ -495,6 +594,108 @@
         </div>
         <button class="btn" style="width:100%; background:#00b0ff; font-weight:800; margin-top:14px; padding:12px; border-radius:8px;" onclick="openLn2ModalFor('Dewar 2')">🧊 Log Dewar 2 Check</button>
       </div>
+
+      <!-- Tank 3 Detail -->
+      <div class="cryo-card-lg" style="border-top:4px solid #818cf8;">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+          <div>
+            <div style="font-size:13px; font-weight:700; color:#818cf8; text-transform:uppercase;">Dewar 3</div>
+            <div style="font-size:2.4rem; font-weight:800; font-family:monospace; color:#f0f4f8; margin-top:4px;">
+              <span id="detail-ln2-level-3">--</span><span style="font-size:1.2rem; color:#8899a6;"> cm</span>
+            </div>
+          </div>
+          <span id="detail-badge-ln2-3" class="status-badge status-normal">ON SCHEDULE</span>
+        </div>
+
+        <div class="metrics-row">
+          <div>
+            <div class="metric-label">Vapor Temp</div>
+            <div class="metric-val" style="color:#818cf8;"><span id="detail-cryo3-temp">--</span>°C</div>
+          </div>
+          <div>
+            <div class="metric-label">Boil-off Rate</div>
+            <div class="metric-val">~1.0 <span style="font-size:11px; color:#8899a6;">cm/d</span></div>
+          </div>
+          <div>
+            <div class="metric-label">Last Refill</div>
+            <div class="metric-val" style="font-size:0.95rem;" id="detail-refill-3">Oct 23</div>
+          </div>
+        </div>
+
+        <div style="font-size:12.5px; color:#8899a6; line-height:1.6;">
+          <div><b>Last Check:</b> <span id="detail-last-check-3">--</span></div>
+          <div><b>Schedule:</b> <span id="detail-next-check-3">Mon / Wed / Fri by 5:00 PM</span></div>
+        </div>
+        <button class="btn" style="width:100%; background:#818cf8; font-weight:800; margin-top:14px; padding:12px; border-radius:8px;" onclick="openLn2ModalFor('Dewar 3')">🧊 Log Dewar 3 Check</button>
+      </div>
+
+      <!-- Tank 4 Detail -->
+      <div class="cryo-card-lg" style="border-top:4px solid #2dd4bf;">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+          <div>
+            <div style="font-size:13px; font-weight:700; color:#2dd4bf; text-transform:uppercase;">Dewar 4</div>
+            <div style="font-size:2.4rem; font-weight:800; font-family:monospace; color:#f0f4f8; margin-top:4px;">
+              <span id="detail-ln2-level-4">--</span><span style="font-size:1.2rem; color:#8899a6;"> cm</span>
+            </div>
+          </div>
+          <span id="detail-badge-ln2-4" class="status-badge status-normal">ON SCHEDULE</span>
+        </div>
+
+        <div class="metrics-row">
+          <div>
+            <div class="metric-label">Vapor Temp</div>
+            <div class="metric-val" style="color:#2dd4bf;"><span id="detail-cryo4-temp">--</span>°C</div>
+          </div>
+          <div>
+            <div class="metric-label">Boil-off Rate</div>
+            <div class="metric-val">~1.0 <span style="font-size:11px; color:#8899a6;">cm/d</span></div>
+          </div>
+          <div>
+            <div class="metric-label">Last Refill</div>
+            <div class="metric-val" style="font-size:0.95rem;" id="detail-refill-4">Oct 23</div>
+          </div>
+        </div>
+
+        <div style="font-size:12.5px; color:#8899a6; line-height:1.6;">
+          <div><b>Last Check:</b> <span id="detail-last-check-4">--</span></div>
+          <div><b>Schedule:</b> <span id="detail-next-check-4">Mon / Wed / Fri by 5:00 PM</span></div>
+        </div>
+        <button class="btn" style="width:100%; background:#2dd4bf; color:#090d16; font-weight:800; margin-top:14px; padding:12px; border-radius:8px;" onclick="openLn2ModalFor('Dewar 4')">🧊 Log Dewar 4 Check</button>
+      </div>
+
+      <!-- Tank 5 Detail -->
+      <div class="cryo-card-lg" style="border-top:4px solid #fbbf24;">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+          <div>
+            <div style="font-size:13px; font-weight:700; color:#fbbf24; text-transform:uppercase;">Dewar 5</div>
+            <div style="font-size:2.4rem; font-weight:800; font-family:monospace; color:#f0f4f8; margin-top:4px;">
+              <span id="detail-ln2-level-5">--</span><span style="font-size:1.2rem; color:#8899a6;"> cm</span>
+            </div>
+          </div>
+          <span id="detail-badge-ln2-5" class="status-badge status-normal">ON SCHEDULE</span>
+        </div>
+
+        <div class="metrics-row">
+          <div>
+            <div class="metric-label">Vapor Temp</div>
+            <div class="metric-val" style="color:#fbbf24;"><span id="detail-cryo5-temp">--</span>°C</div>
+          </div>
+          <div>
+            <div class="metric-label">Boil-off Rate</div>
+            <div class="metric-val">~1.0 <span style="font-size:11px; color:#8899a6;">cm/d</span></div>
+          </div>
+          <div>
+            <div class="metric-label">Last Refill</div>
+            <div class="metric-val" style="font-size:0.95rem;" id="detail-refill-5">Oct 23</div>
+          </div>
+        </div>
+
+        <div style="font-size:12.5px; color:#8899a6; line-height:1.6;">
+          <div><b>Last Check:</b> <span id="detail-last-check-5">--</span></div>
+          <div><b>Schedule:</b> <span id="detail-next-check-5">Mon / Wed / Fri by 5:00 PM</span></div>
+        </div>
+        <button class="btn" style="width:100%; background:#fbbf24; color:#090d16; font-weight:800; margin-top:14px; padding:12px; border-radius:8px;" onclick="openLn2ModalFor('Dewar 5')">🧊 Log Dewar 5 Check</button>
+      </div>
     </div>
 
     <!-- Sawtooth Curves Showcase -->
@@ -505,8 +706,11 @@
           <p style="color:#8899a6; font-size:13px; margin:3px 0 0;">Visual confirmation of continuous boil-off rate and refill volume adherence.</p>
         </div>
         <div class="chips-row">
-          <div class="chip active" id="chip-chart-1" onclick="switchSawtooth(1)">Tank 1 (Embryos) Curve</div>
-          <div class="chip" id="chip-chart-2" onclick="switchSawtooth(2)">Tank 2 (Sperm) Curve</div>
+          <div class="chip active" id="chip-chart-1" onclick="switchSawtooth(1)">Dewar 1 Curve</div>
+          <div class="chip" id="chip-chart-2" onclick="switchSawtooth(2)">Dewar 2 Curve</div>
+          <div class="chip" id="chip-chart-3" onclick="switchSawtooth(3)">Dewar 3 Curve</div>
+          <div class="chip" id="chip-chart-4" onclick="switchSawtooth(4)">Dewar 4 Curve</div>
+          <div class="chip" id="chip-chart-5" onclick="switchSawtooth(5)">Dewar 5 Curve</div>
         </div>
       </div>
       <div class="chart-container">
@@ -603,6 +807,9 @@
         <div class="chips-row">
           <div class="chip active" id="chip-tank-1" onclick="selectTank('Dewar 1')">Dewar 1 (Embryos)</div>
           <div class="chip" id="chip-tank-2" onclick="selectTank('Dewar 2')">Dewar 2 (Sperm)</div>
+          <div class="chip" id="chip-tank-3" onclick="selectTank('Dewar 3')">Dewar 3</div>
+          <div class="chip" id="chip-tank-4" onclick="selectTank('Dewar 4')">Dewar 4</div>
+          <div class="chip" id="chip-tank-5" onclick="selectTank('Dewar 5')">Dewar 5</div>
         </div>
       </div>
 
@@ -699,8 +906,10 @@
 
     function switchSawtooth(tankNum) {
       document.getElementById('sawtoothImg').src = '/report/ln2/chart?tank=' + tankNum + '&t=' + Date.now();
-      document.getElementById('chip-chart-1').className = (tankNum === 1) ? 'chip active' : 'chip';
-      document.getElementById('chip-chart-2').className = (tankNum === 2) ? 'chip active' : 'chip';
+      for (let i = 1; i <= 5; i++) {
+        const chip = document.getElementById('chip-chart-' + i);
+        if (chip) chip.className = (tankNum === i) ? 'chip active' : 'chip';
+      }
     }
 
     // Telemetry & Alarm Updates
@@ -808,94 +1017,69 @@
             }
           }
 
-          // Cryo Tank 1 (Ch 125 Temp, Ch 113 PLC Alarm, Ch 117 PLC Warn Delay)
-          const b1 = document.getElementById('badge-cryo1');
-          const isAlarm1 = r[113] > 0;
-          const isWarn1 = !isAlarm1 && (r[117] > 0);
-          if (r[125] !== undefined) {
-            const cr1 = r[125];
-            document.getElementById('val-cryo1').innerText = cr1.toFixed(1);
-            const detailC1 = document.getElementById('detail-cryo1-temp');
-            if (detailC1) detailC1.innerText = cr1.toFixed(1);
+          // Monitored Dewars Configuration (Dewars 1-5)
+          const dewarConfigs = [
+            { id: 1, name: "Dewar 1", cnl: 125, alarmCnl: 113, warnCnl: 117, defaultColor: '#00e5ff' },
+            { id: 2, name: "Dewar 2", cnl: 104, alarmCnl: 114, warnCnl: 118, defaultColor: '#00b0ff' },
+            { id: 3, name: "Dewar 3", cnl: 105, alarmCnl: null, warnCnl: null, defaultColor: '#818cf8' },
+            { id: 4, name: "Dewar 4", cnl: 106, alarmCnl: null, warnCnl: null, defaultColor: '#2dd4bf' },
+            { id: 5, name: "Dewar 5", cnl: 107, alarmCnl: null, warnCnl: null, defaultColor: '#fbbf24' }
+          ];
 
-            if (isAlarm1) {
-              b1.innerText = 'CRITICAL';
-              b1.className = 'status-badge status-alert';
-            } else if (isWarn1) {
-              b1.innerText = 'DELAY';
-              b1.className = 'status-badge status-warn';
-            } else {
-              b1.innerText = 'NORMAL';
-              b1.className = 'status-badge status-normal';
-            }
-          }
-
-          // Cryo Tank 2 (Ch 104 Temp, Ch 114 PLC Alarm, Ch 118 PLC Warn Delay)
-          const b2 = document.getElementById('badge-cryo2');
-          const isAlarm2 = r[114] > 0;
-          const isWarn2 = !isAlarm2 && (r[118] > 0);
-          if (r[104] !== undefined) {
-            const cr2 = r[104];
-            document.getElementById('val-cryo2').innerText = cr2.toFixed(1);
-            const detailC2 = document.getElementById('detail-cryo2-temp');
-            if (detailC2) detailC2.innerText = cr2.toFixed(1);
-
-            if (isAlarm2) {
-              b2.innerText = 'CRITICAL';
-              b2.className = 'status-badge status-alert';
-            } else if (isWarn2) {
-              b2.innerText = 'DELAY';
-              b2.className = 'status-badge status-warn';
-            } else {
-              b2.innerText = 'NORMAL';
-              b2.className = 'status-badge status-normal';
-            }
-          }
-
-          // Cryo Holds Evaluation
           const holds = data.cryo_holds || {};
-          const hold1 = holds["Dewar 1"] || holds["Cryo Tank 1"] || holds["All Dewars"] || holds["All Cryo Tanks"] || holds["ALL"];
-          const hold2 = holds["Dewar 2"] || holds["Cryo Tank 2"] || holds["All Dewars"] || holds["All Cryo Tanks"] || holds["ALL"];
-          const btnH1 = document.getElementById('btn-hold-cryo1');
-          const btnH2 = document.getElementById('btn-hold-cryo2');
 
-          if (hold1 && hold1.remaining_seconds > 0) {
-            const m = Math.ceil(hold1.remaining_seconds / 60);
-            b1.innerText = `HOLD (${m}m)`;
-            b1.className = 'status-badge status-warn';
-            if (btnH1) {
-              btnH1.innerText = `🟡 Muted (${m}m)`;
-              btnH1.style.background = '#d97706';
-            }
-            const cardC1 = document.getElementById('card-cryo1');
-            if (cardC1 && !isAlarm1) cardC1.style.borderTopColor = '#f59e0b';
-          } else {
-            if (btnH1) {
-              btnH1.innerText = '⏱️ Mute (15m)';
-              btnH1.style.background = '#0284c7';
-            }
-            const cardC1 = document.getElementById('card-cryo1');
-            if (cardC1 && !isAlarm1 && !isWarn1) cardC1.style.borderTopColor = '#00e5ff';
-          }
+          dewarConfigs.forEach(cfg => {
+            const b = document.getElementById(`badge-cryo${cfg.id}`);
+            const valEl = document.getElementById(`val-cryo${cfg.id}`);
+            const detailEl = document.getElementById(`detail-cryo${cfg.id}-temp`);
+            const btnHold = document.getElementById(`btn-hold-cryo${cfg.id}`);
+            const cardEl = document.getElementById(`card-cryo${cfg.id}`);
 
-          if (hold2 && hold2.remaining_seconds > 0) {
-            const m = Math.ceil(hold2.remaining_seconds / 60);
-            b2.innerText = `HOLD (${m}m)`;
-            b2.className = 'status-badge status-warn';
-            if (btnH2) {
-              btnH2.innerText = `🟡 Muted (${m}m)`;
-              btnH2.style.background = '#d97706';
+            const tempVal = r[cfg.cnl];
+            const isAlarm = (cfg.alarmCnl && r[cfg.alarmCnl] > 0) || (tempVal !== undefined && tempVal > -135.0 && tempVal < 50.0);
+            const isWarn = !isAlarm && cfg.warnCnl && (r[cfg.warnCnl] > 0);
+
+            if (tempVal !== undefined && valEl) {
+              valEl.innerText = tempVal.toFixed(1);
             }
-            const cardC2 = document.getElementById('card-cryo2');
-            if (cardC2 && !isAlarm2) cardC2.style.borderTopColor = '#f59e0b';
-          } else {
-            if (btnH2) {
-              btnH2.innerText = '⏱️ Mute (15m)';
-              btnH2.style.background = '#0284c7';
+            if (tempVal !== undefined && detailEl) {
+              detailEl.innerText = tempVal.toFixed(1);
             }
-            const cardC2 = document.getElementById('card-cryo2');
-            if (cardC2 && !isAlarm2 && !isWarn2) cardC2.style.borderTopColor = '#00b0ff';
-          }
+
+            if (b) {
+              if (isAlarm) {
+                b.innerText = 'CRITICAL';
+                b.className = 'status-badge status-alert';
+              } else if (isWarn) {
+                b.innerText = 'DELAY';
+                b.className = 'status-badge status-warn';
+              } else {
+                b.innerText = 'NORMAL';
+                b.className = 'status-badge status-normal';
+              }
+            }
+
+            // Holds
+            const hold = holds[cfg.name] || (cfg.id === 1 ? holds["Cryo Tank 1"] : (cfg.id === 2 ? holds["Cryo Tank 2"] : null)) || holds["All Dewars"] || holds["All Cryo Tanks"] || holds["ALL"];
+            if (hold && hold.remaining_seconds > 0) {
+              const m = Math.ceil(hold.remaining_seconds / 60);
+              if (b) {
+                b.innerText = `HOLD (${m}m)`;
+                b.className = 'status-badge status-warn';
+              }
+              if (btnHold) {
+                btnHold.innerText = `🟡 Muted (${m}m)`;
+                btnHold.style.background = '#d97706';
+              }
+              if (cardEl && !isAlarm) cardEl.style.borderTopColor = '#f59e0b';
+            } else {
+              if (btnHold) {
+                btnHold.innerText = '⏱️ Mute (15m)';
+                btnHold.style.background = '#0284c7';
+              }
+              if (cardEl && !isAlarm && !isWarn) cardEl.style.borderTopColor = cfg.defaultColor;
+            }
+          });
 
           // Main Cleanroom Door (Ch 119 PLC Contact, Ch 121 PLC Alarm)
           let d1Alarm = (r[121] > 0);
@@ -1168,6 +1352,9 @@
     let lastRecordedLevels = {
       'Dewar 1': 28.0,
       'Dewar 2': 30.0,
+      'Dewar 3': 30.0,
+      'Dewar 4': 30.0,
+      'Dewar 5': 30.0,
       'Cryo Tank 1': 28.0,
       'Cryo Tank 2': 30.0
     };
@@ -1201,8 +1388,12 @@
 
     function selectTank(tank) {
       currentTank = tank;
-      document.getElementById('chip-tank-1').className = (tank === 'Dewar 1' || tank === 'Cryo Tank 1') ? 'chip active' : 'chip';
-      document.getElementById('chip-tank-2').className = (tank === 'Dewar 2' || tank === 'Cryo Tank 2') ? 'chip active' : 'chip';
+      for (let i = 1; i <= 5; i++) {
+        const chip = document.getElementById('chip-tank-' + i);
+        if (chip) {
+          chip.className = (tank === `Dewar ${i}` || (i === 1 && tank === 'Cryo Tank 1') || (i === 2 && tank === 'Cryo Tank 2')) ? 'chip active' : 'chip';
+        }
+      }
       syncModalLevelToCurrentTank();
     }
 
@@ -1299,88 +1490,50 @@
         .then(data => {
           const tanks = data.tanks || {};
           
-          // 1. Update Dewar 1
-          try {
-            const t1 = tanks['Dewar 1'] || tanks['Cryo Tank 1'];
-            if (t1) {
-              if (typeof t1.level_cm === 'number') {
-                lastRecordedLevels['Dewar 1'] = t1.level_cm;
-                lastRecordedLevels['Cryo Tank 1'] = t1.level_cm;
+          // Update Dewars 1 to 5
+          for (let i = 1; i <= 5; i++) {
+            try {
+              const dName = `Dewar ${i}`;
+              const t = tanks[dName] || (i === 1 ? tanks['Cryo Tank 1'] : (i === 2 ? tanks['Cryo Tank 2'] : null));
+              if (t) {
+                if (typeof t.level_cm === 'number') {
+                  lastRecordedLevels[dName] = t.level_cm;
+                  if (i === 1) lastRecordedLevels['Cryo Tank 1'] = t.level_cm;
+                  if (i === 2) lastRecordedLevels['Cryo Tank 2'] = t.level_cm;
+                }
+                const lvl = (typeof t.level_cm === 'number') ? t.level_cm.toFixed(1) : '--';
+                const hrs = (typeof t.hours_since === 'number') ? `${t.hours_since.toFixed(1)}h ago (${t.initials})` : `-- (${t.initials || '--'})`;
+                const due = t.detail || `Next: ${t.next_check || 'Scheduled'}`;
+                const badgeTxt = t.badge || 'ON SCHEDULE';
+
+                // Main Card Elements
+                const el = document.getElementById(`val-ln2-level-${i}`);
+                if (el) el.innerText = lvl;
+                const b = document.getElementById(`badge-ln2-${i}`);
+                if (b) b.innerText = badgeTxt;
+                const sub = document.getElementById(`sub-ln2-check-${i}`);
+                if (sub) sub.innerText = hrs;
+                const nextDue = document.getElementById(`ln2-next-due-${i}`);
+                if (nextDue) nextDue.innerText = due;
+
+                // Subpage Detail Elements
+                const dEl = document.getElementById(`detail-ln2-level-${i}`);
+                if (dEl) dEl.innerText = lvl;
+                const dB = document.getElementById(`detail-badge-ln2-${i}`);
+                if (dB) dB.innerText = badgeTxt;
+                const dCheck = document.getElementById(`detail-last-check-${i}`);
+                if (dCheck) dCheck.innerText = `${lvl} cm (${hrs})`;
+                const dNext = document.getElementById(`detail-next-check-${i}`);
+                if (dNext) dNext.innerText = t.next_check || '--';
+
+                const badgeClass = (t.status === 'OVERDUE') ? 'status-badge status-alert' :
+                                   ((t.status === 'DUE') ? 'status-badge status-warn' : 'status-badge status-normal');
+                if (b) b.className = badgeClass;
+                if (dB) dB.className = badgeClass;
               }
-              const lvl1 = (typeof t1.level_cm === 'number') ? t1.level_cm.toFixed(1) : '--';
-              const hrs1 = (typeof t1.hours_since === 'number') ? `${t1.hours_since.toFixed(1)}h ago (${t1.initials})` : `-- (${t1.initials || '--'})`;
-              const due1 = t1.detail || `Next: ${t1.next_check || 'Scheduled'}`;
-              const badgeTxt1 = t1.badge || 'ON SCHEDULE';
-
-              // Main Card Elements
-              const el1 = document.getElementById('val-ln2-level-1');
-              if (el1) el1.innerText = lvl1;
-              const b1 = document.getElementById('badge-ln2-1');
-              if (b1) b1.innerText = badgeTxt1;
-              const sub1 = document.getElementById('sub-ln2-check-1');
-              if (sub1) sub1.innerText = hrs1;
-              const nextDue1 = document.getElementById('ln2-next-due-1');
-              if (nextDue1) nextDue1.innerText = due1;
-
-              // Subpage Detail Elements
-              const dEl1 = document.getElementById('detail-ln2-level-1');
-              if (dEl1) dEl1.innerText = lvl1;
-              const dB1 = document.getElementById('detail-badge-ln2-1');
-              if (dB1) dB1.innerText = badgeTxt1;
-              const dCheck1 = document.getElementById('detail-last-check-1');
-              if (dCheck1) dCheck1.innerText = `${lvl1} cm (${hrs1})`;
-              const dNext1 = document.getElementById('detail-next-check-1');
-              if (dNext1) dNext1.innerText = t1.next_check || '--';
-
-              const badgeClass1 = (t1.status === 'OVERDUE') ? 'status-badge status-alert' :
-                                 ((t1.status === 'DUE') ? 'status-badge status-warn' : 'status-badge status-normal');
-              if (b1) b1.className = badgeClass1;
-              if (dB1) dB1.className = badgeClass1;
+            } catch (e) {
+              console.error(`Error updating Dewar ${i} UI:`, e);
             }
-          } catch (e1) {
-            console.error('Error updating Dewar 1 UI:', e1);
-          }
-
-          // 2. Update Dewar 2
-          try {
-            const t2 = tanks['Dewar 2'] || tanks['Cryo Tank 2'];
-            if (t2) {
-              if (typeof t2.level_cm === 'number') {
-                lastRecordedLevels['Dewar 2'] = t2.level_cm;
-                lastRecordedLevels['Cryo Tank 2'] = t2.level_cm;
-              }
-              const lvl2 = (typeof t2.level_cm === 'number') ? t2.level_cm.toFixed(1) : '--';
-              const hrs2 = (typeof t2.hours_since === 'number') ? `${t2.hours_since.toFixed(1)}h ago (${t2.initials})` : `-- (${t2.initials || '--'})`;
-              const due2 = t2.detail || `Next: ${t2.next_check || 'Scheduled'}`;
-              const badgeTxt2 = t2.badge || 'ON SCHEDULE';
-
-              // Main Card Elements
-              const el2 = document.getElementById('val-ln2-level-2');
-              if (el2) el2.innerText = lvl2;
-              const b2 = document.getElementById('badge-ln2-2');
-              if (b2) b2.innerText = badgeTxt2;
-              const sub2 = document.getElementById('sub-ln2-check-2');
-              if (sub2) sub2.innerText = hrs2;
-              const nextDue2 = document.getElementById('ln2-next-due-2');
-              if (nextDue2) nextDue2.innerText = due2;
-
-              // Subpage Detail Elements
-              const dEl2 = document.getElementById('detail-ln2-level-2');
-              if (dEl2) dEl2.innerText = lvl2;
-              const dB2 = document.getElementById('detail-badge-ln2-2');
-              if (dB2) dB2.innerText = badgeTxt2;
-              const dCheck2 = document.getElementById('detail-last-check-2');
-              if (dCheck2) dCheck2.innerText = `${lvl2} cm (${hrs2})`;
-              const dNext2 = document.getElementById('detail-next-check-2');
-              if (dNext2) dNext2.innerText = t2.next_check || '--';
-
-              const badgeClass2 = (t2.status === 'OVERDUE') ? 'status-badge status-alert' :
-                                 ((t2.status === 'DUE') ? 'status-badge status-warn' : 'status-badge status-normal');
-              if (b2) b2.className = badgeClass2;
-              if (dB2) dB2.className = badgeClass2;
-            }
-          } catch (e2) {
-            console.error('Error updating Dewar 2 UI:', e2);
           }
 
           // 3. Render History Table

@@ -88,7 +88,7 @@ def get_all_tank_ids():
             return tanks
     except Exception as e:
         print(f"Warning: could not query distinct tanks: {e}")
-    return ["Dewar 1", "Dewar 2"]
+    return ["Dewar 1", "Dewar 2", "Dewar 3", "Dewar 4", "Dewar 5"]
 
 
 def get_available_months():
@@ -693,6 +693,9 @@ def generate_alarms_audit_html_sheet(start_dt, end_dt, logo_b64, month_name_year
     equipment_specs = [
         ("Dewar 1 (Embryos)", "Vapor < -135.0°C • Frost Floor > 10 cm", "Dewar 1"),
         ("Dewar 2 (Sperm)", "Vapor < -135.0°C • Frost Floor > 10 cm", "Dewar 2"),
+        ("Dewar 3", "Vapor < -135.0°C • Frost Floor > 10 cm", "Dewar 3"),
+        ("Dewar 4", "Vapor < -135.0°C • Frost Floor > 10 cm", "Dewar 4"),
+        ("Dewar 5", "Vapor < -135.0°C • Frost Floor > 10 cm", "Dewar 5"),
         ("Medical Refrigerator", "2.0°C to 8.0°C (High Trip: 8.5°C)", "Medical Fridge"),
         ("Medical Freezer", "< -15.0°C (Compressor Target: -20°C)", "Medical Freezer"),
         ("Chamber Incubator 01", "Chamber Contact Normal (CO2/Temp In-Range)", "Incubator 01"),

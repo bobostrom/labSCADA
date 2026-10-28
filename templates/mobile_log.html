@@ -120,9 +120,12 @@
 
       <div id="formSection">
         <!-- Tank Switcher -->
-        <div class="tank-tabs">
-          <div class="tank-tab {% if not is_tank2 %}active-t1{% endif %}" id="tab-tank1" onclick="setTank('Dewar 1')">Dewar 1 (Embryos)</div>
-          <div class="tank-tab {% if is_tank2 %}active-t2{% endif %}" id="tab-tank2" onclick="setTank('Dewar 2')">Dewar 2 (Sperm)</div>
+        <div class="tank-tabs" style="display:flex; flex-wrap:wrap; gap:6px;">
+          <div class="tank-tab {% if active_tank_num == 1 %}active-t1{% endif %}" id="tab-tank1" onclick="setTank('Dewar 1')">Dewar 1</div>
+          <div class="tank-tab {% if active_tank_num == 2 %}active-t2{% endif %}" id="tab-tank2" onclick="setTank('Dewar 2')">Dewar 2</div>
+          <div class="tank-tab {% if active_tank_num == 3 %}active-t1{% endif %}" id="tab-tank3" onclick="setTank('Dewar 3')">Dewar 3</div>
+          <div class="tank-tab {% if active_tank_num == 4 %}active-t2{% endif %}" id="tab-tank4" onclick="setTank('Dewar 4')">Dewar 4</div>
+          <div class="tank-tab {% if active_tank_num == 5 %}active-t1{% endif %}" id="tab-tank5" onclick="setTank('Dewar 5')">Dewar 5</div>
         </div>
 
         <!-- Real-Time Telemetry Strip -->
@@ -257,20 +260,27 @@
     const tankData = {
       "Dewar 1": { temp: "{{ t1_temp_disp }}", sensor: "{{ t1_level_disp }}", defaultVal: "{{ t1_default_val }}" },
       "Dewar 2": { temp: "{{ t2_temp_disp }}", sensor: "{{ t2_level_disp }}", defaultVal: "{{ t2_default_val }}" },
+      "Dewar 3": { temp: "{{ t3_temp_disp }}", sensor: "{{ t3_level_disp }}", defaultVal: "{{ t3_default_val }}" },
+      "Dewar 4": { temp: "{{ t4_temp_disp }}", sensor: "{{ t4_level_disp }}", defaultVal: "{{ t4_default_val }}" },
+      "Dewar 5": { temp: "{{ t5_temp_disp }}", sensor: "{{ t5_level_disp }}", defaultVal: "{{ t5_default_val }}" },
       "Cryo Tank 1": { temp: "{{ t1_temp_disp }}", sensor: "{{ t1_level_disp }}", defaultVal: "{{ t1_default_val }}" },
       "Cryo Tank 2": { temp: "{{ t2_temp_disp }}", sensor: "{{ t2_level_disp }}", defaultVal: "{{ t2_default_val }}" }
     };
 
     function setTank(tank) {
       activeTank = tank;
-      const isT1 = (tank === "Dewar 1" || tank === "Cryo Tank 1");
-      document.getElementById("tab-tank1").className = isT1 ? "tank-tab active-t1" : "tank-tab";
-      document.getElementById("tab-tank2").className = isT1 ? "tank-tab" : "tank-tab active-t2";
+      for (let i = 1; i <= 5; i++) {
+        const tab = document.getElementById("tab-tank" + i);
+        if (tab) {
+          const isActive = (tank === `Dewar ${i}` || (i === 1 && tank === 'Cryo Tank 1') || (i === 2 && tank === 'Cryo Tank 2'));
+          tab.className = isActive ? (i % 2 === 1 ? "tank-tab active-t1" : "tank-tab active-t2") : "tank-tab";
+        }
+      }
       
       const d = tankData[tank] || {};
       document.getElementById("dispTemp").innerText = d.temp || "--";
       document.getElementById("dispSensor").innerText = d.sensor || "--";
-      document.getElementById("mobileLevel").value = d.defaultVal || "15.0";
+      document.getElementById("mobileLevel").value = d.defaultVal || "30.0";
       const hint = document.getElementById("mobileLastRecordedHint");
       if (hint && d.defaultVal) {
         hint.innerText = d.defaultVal + " cm";
@@ -369,9 +379,13 @@
     function resetForm() {
       document.getElementById("formSection").style.display = "block";
       document.getElementById("successSection").style.display = "none";
-      // Auto-toggle to the other tank for quick sequential checks
-      const nextTank = (activeTank === "Dewar 1" || activeTank === "Cryo Tank 1") ? "Dewar 2" : "Dewar 1";
-      setTank(nextTank);
+      // Auto-toggle to the next dewar for quick sequential checks
+      let currNum = 1;
+      for (let i = 1; i <= 5; i++) {
+        if (activeTank === `Dewar ${i}`) currNum = i;
+      }
+      const nextNum = (currNum % 5) + 1;
+      setTank(`Dewar ${nextNum}`);
     }
 
     // =========================================================================
