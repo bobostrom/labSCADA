@@ -111,3 +111,15 @@ When ready to connect Supabase:
    * Write a lightweight Python worker (or use PostgreSQL logical replication) on the Raspberry Pi that watches for new local rows and writes them to Supabase via its direct PostgreSQL connection string.
 5. **Test Multi-Tenant Dashboard:**
    * Build a lightweight web interface on `larestelemetry.com` that lets clinic directors sign in and view real-time charts powered by Supabase.
+
+---
+
+## 6. Long-Term Architectural Direction: Edge-First Cloud Mirroring
+
+* **Consensus (October 2026):**
+  * **Near-Term:** Keep current Raspberry Pi + Rapid SCADA + local PostgreSQL deployment running as-is. It is stable, verified, and meeting all clinic needs.
+  * **Long-Term:** Implement the **Edge-First Hybrid Mirroring Model**:
+    * **Local Edge Device (Pi, WAGO, or compact Industrial PC):** Operates on-premises to guarantee 100% offline survivability, immediate zero-latency cleanroom touchscreen response, and local siren/buzzer fail-safes during internet outages.
+    * **Central Cloud Host (Google Cloud Compute Engine / VPS):** Mirrors telemetry data, databases, and Rapid SCADA instances across all client facilities. Provides a unified pane-of-glass executive portal (`portal.larestelemetry.com`) for lab directors, cross-clinic reporting, and remote access.
+  * **Zero Lock-In:** Because the codebase is completely decoupled via environment variables (`db.env`, `site.env`) and uses standard PostgreSQL schemas, the transition to cloud mirroring can be enabled seamlessly when business growth demands it, with zero throwaway work.
+
