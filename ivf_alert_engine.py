@@ -345,7 +345,7 @@ def start_cryo_hold(equipment_name, duration_minutes=15, user="Lab Staff"):
     now = time.time()
     dur_min = max(1, min(120, int(duration_minutes)))
     exp = now + (dur_min * 60)
-    targets = ["Dewar 1", "Dewar 2"] if ("all" in equipment_name.lower()) else [equipment_name]
+    targets = ["Dewar 1", "Dewar 2", "Dewar 3", "Dewar 4", "Dewar 5"] if ("all" in equipment_name.lower()) else [equipment_name]
 
     for target in targets:
         safe_equip = target.replace("'", "''")
@@ -368,18 +368,24 @@ def start_cryo_hold(equipment_name, duration_minutes=15, user="Lab Staff"):
 
     # Resolve any currently active alarms on target units
     mute_cnls = []
+    dewar_mute_map = {
+        "Dewar 1": [113, 125],
+        "Dewar 2": [114, 104],
+        "Dewar 3": [105],
+        "Dewar 4": [106],
+        "Dewar 5": [107],
+    }
     for target in targets:
-        if "1" in target:
-            mute_cnls.extend([113, 125])
-        if "2" in target:
-            mute_cnls.extend([114, 104])
+        for d_key, cnls in dewar_mute_map.items():
+            if d_key in target or d_key[-1] in target:
+                mute_cnls.extend(cnls)
     for c in set(mute_cnls):
         resolve_alarm(c)
     return True
 
 def cancel_cryo_hold(equipment_name, user="Lab Staff"):
     """Cancels maintenance hold early and returns tank to live monitoring."""
-    targets = ["Dewar 1", "Dewar 2"] if ("all" in equipment_name.lower()) else [equipment_name]
+    targets = ["Dewar 1", "Dewar 2", "Dewar 3", "Dewar 4", "Dewar 5"] if ("all" in equipment_name.lower()) else [equipment_name]
     for target in targets:
         with state_lock:
             hold = active_cryo_holds.pop(target, None)
@@ -500,7 +506,7 @@ def trigger_alarm(cnl_num, equipment_name, alarm_type, excursion_val, priority=N
         priority = cfg.get("priority", 2)
 
     val_str = f"{excursion_val:.1f}°C" if excursion_val is not None else "TRIPPED"
-    if cnl_num in (198, 199) and excursion_val is not None:
+    if cnl_num in (195, 196, 197, 198, 199) and excursion_val is not None:
         val_str = f"{excursion_val:.1f}h since check"
 
     if priority == 2:
