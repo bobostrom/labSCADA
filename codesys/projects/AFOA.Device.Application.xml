@@ -1,0 +1,100 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Symbolconfiguration xmlns="http://www.3s-software.com/schemas/Symbolconfiguration.xsd">
+  <Header>
+    <Version>3.5.14.0</Version>
+    <SymbolConfigObject version="4.8.0.0" runtimeid="3.5.21.50" libversion="4.6.0.0" compiler="3.5.22.40" lmm="3.5.22.40" profile="CODESYS V3.5 SP22 Patch 4+" settings="SupportOPCUA, LayoutCalculator=OptimizedClientSideLayoutCalculator" />
+    <ProjectInfo name="AFOA" devicename="Device" appname="Application" />
+  </Header>
+  <TypeList>
+    <TypeSimple name="T_BOOL" size="1" swapsize="0" typeclass="Bool" iecname="BOOL" />
+    <TypeSimple name="T_INT" size="2" swapsize="2" typeclass="Int" iecname="INT" />
+    <TypeSimple name="T_REAL" size="4" swapsize="4" typeclass="Real" iecname="REAL" />
+    <TypeSimple name="T_TIME" size="4" swapsize="4" typeclass="Time" iecname="TIME" />
+    <TypeUserDef name="T_TON" size="16" nativesize="28" typeclass="Userdef" pouclass="FUNCTION_BLOCK" iecname="TON">
+      <UserDefElement iecname="IN" type="T_BOOL" byteoffset="0" vartype="VAR_INPUT" access="ReadWrite" />
+      <UserDefElement iecname="PT" type="T_TIME" byteoffset="4" vartype="VAR_INPUT" access="ReadWrite" />
+      <UserDefElement iecname="Q" type="T_BOOL" byteoffset="8" vartype="VAR_OUTPUT" access="ReadWrite" />
+      <UserDefElement iecname="ET" type="T_TIME" byteoffset="12" vartype="VAR_OUTPUT" access="ReadWrite" />
+    </TypeUserDef>
+    <TypeUserDef name="T_FB_PickupDropout" size="56" nativesize="84" typeclass="Userdef" pouclass="FUNCTION_BLOCK" iecname="FB_PickupDropout">
+      <UserDefElement iecname="IN" type="T_BOOL" byteoffset="0" vartype="VAR_INPUT" access="ReadWrite" />
+      <UserDefElement iecname="tPickupDelay" type="T_TIME" byteoffset="4" vartype="VAR_INPUT" access="ReadWrite" />
+      <UserDefElement iecname="tDropoutDelay" type="T_TIME" byteoffset="8" vartype="VAR_INPUT" access="ReadWrite" />
+      <UserDefElement iecname="Q" type="T_BOOL" byteoffset="12" vartype="VAR_OUTPUT" access="ReadWrite" />
+      <UserDefElement iecname="bPickup" type="T_BOOL" byteoffset="13" vartype="VAR_OUTPUT" access="ReadWrite" />
+      <UserDefElement iecname="tElapsedPU" type="T_TIME" byteoffset="16" vartype="VAR_OUTPUT" access="ReadWrite" />
+      <UserDefElement iecname="tElapsedDO" type="T_TIME" byteoffset="20" vartype="VAR_OUTPUT" access="ReadWrite" />
+      <UserDefElement iecname="tonPickup" type="T_TON" byteoffset="24" vartype="VAR" access="ReadWrite" />
+      <UserDefElement iecname="tonDropout" type="T_TON" byteoffset="40" vartype="VAR" access="ReadWrite" />
+    </TypeUserDef>
+    <TypeUserDef name="T_FB_AnalogAlarm" size="120" nativesize="152" typeclass="Userdef" pouclass="FUNCTION_BLOCK" iecname="FB_AnalogAlarm">
+      <UserDefElement iecname="rVal" type="T_REAL" byteoffset="0" vartype="VAR_INPUT" access="ReadWrite" />
+      <UserDefElement iecname="bEnableHigh" type="T_BOOL" byteoffset="4" vartype="VAR_INPUT" access="ReadWrite" />
+      <UserDefElement iecname="rHighPickup" type="T_REAL" byteoffset="8" vartype="VAR_INPUT" access="ReadWrite" />
+      <UserDefElement iecname="rHighDropout" type="T_REAL" byteoffset="12" vartype="VAR_INPUT" access="ReadWrite" />
+      <UserDefElement iecname="bEnableLow" type="T_BOOL" byteoffset="16" vartype="VAR_INPUT" access="ReadWrite" />
+      <UserDefElement iecname="rLowPickup" type="T_REAL" byteoffset="20" vartype="VAR_INPUT" access="ReadWrite" />
+      <UserDefElement iecname="rLowDropout" type="T_REAL" byteoffset="24" vartype="VAR_INPUT" access="ReadWrite" />
+      <UserDefElement iecname="rHysteresis" type="T_REAL" byteoffset="28" vartype="VAR_INPUT" access="ReadWrite" />
+      <UserDefElement iecname="tPickupDelay" type="T_TIME" byteoffset="32" vartype="VAR_INPUT" access="ReadWrite" />
+      <UserDefElement iecname="tDropoutDelay" type="T_TIME" byteoffset="36" vartype="VAR_INPUT" access="ReadWrite" />
+      <UserDefElement iecname="bAlarm" type="T_BOOL" byteoffset="40" vartype="VAR_OUTPUT" access="ReadWrite" />
+      <UserDefElement iecname="bPickup" type="T_BOOL" byteoffset="41" vartype="VAR_OUTPUT" access="ReadWrite" />
+      <UserDefElement iecname="bHighTrip" type="T_BOOL" byteoffset="42" vartype="VAR_OUTPUT" access="ReadWrite" />
+      <UserDefElement iecname="bLowTrip" type="T_BOOL" byteoffset="43" vartype="VAR_OUTPUT" access="ReadWrite" />
+      <UserDefElement iecname="tElapsedPU" type="T_TIME" byteoffset="44" vartype="VAR_OUTPUT" access="ReadWrite" />
+      <UserDefElement iecname="tElapsedDO" type="T_TIME" byteoffset="48" vartype="VAR_OUTPUT" access="ReadWrite" />
+      <UserDefElement iecname="rEffHighDO" type="T_REAL" byteoffset="52" vartype="VAR" access="ReadWrite" />
+      <UserDefElement iecname="rEffLowDO" type="T_REAL" byteoffset="56" vartype="VAR" access="ReadWrite" />
+      <UserDefElement iecname="bHighCondition" type="T_BOOL" byteoffset="60" vartype="VAR" access="ReadWrite" />
+      <UserDefElement iecname="bLowCondition" type="T_BOOL" byteoffset="61" vartype="VAR" access="ReadWrite" />
+      <UserDefElement iecname="fbTimer" type="T_FB_PickupDropout" byteoffset="64" vartype="VAR" access="ReadWrite" />
+    </TypeUserDef>
+    <TypeUserDef name="T_FB_Dewar" size="182" nativesize="232" typeclass="Userdef" pouclass="FUNCTION_BLOCK" iecname="FB_Dewar">
+      <UserDefElement iecname="rRawTemp" type="T_REAL" byteoffset="0" vartype="VAR_INPUT" access="ReadWrite" />
+      <UserDefElement iecname="bSimMode" type="T_BOOL" byteoffset="4" vartype="VAR_INPUT" access="ReadWrite" />
+      <UserDefElement iecname="bForceExcursion" type="T_BOOL" byteoffset="5" vartype="VAR_INPUT" access="ReadWrite" />
+      <UserDefElement iecname="rNominalTemp" type="T_REAL" byteoffset="8" vartype="VAR_INPUT" access="ReadWrite" />
+      <UserDefElement iecname="rHighTrip" type="T_REAL" byteoffset="12" vartype="VAR_INPUT" access="ReadWrite" />
+      <UserDefElement iecname="rHysteresis" type="T_REAL" byteoffset="16" vartype="VAR_INPUT" access="ReadWrite" />
+      <UserDefElement iecname="tPickupDelay" type="T_TIME" byteoffset="20" vartype="VAR_INPUT" access="ReadWrite" />
+      <UserDefElement iecname="tDropoutDelay" type="T_TIME" byteoffset="24" vartype="VAR_INPUT" access="ReadWrite" />
+      <UserDefElement iecname="rProcessTemp" type="T_REAL" byteoffset="28" vartype="VAR_OUTPUT" access="ReadWrite" />
+      <UserDefElement iecname="bAlarm" type="T_BOOL" byteoffset="32" vartype="VAR_OUTPUT" access="ReadWrite" />
+      <UserDefElement iecname="bWarn" type="T_BOOL" byteoffset="33" vartype="VAR_OUTPUT" access="ReadWrite" />
+      <UserDefElement iecname="bHighTrip" type="T_BOOL" byteoffset="34" vartype="VAR_OUTPUT" access="ReadWrite" />
+      <UserDefElement iecname="tElapsedPU" type="T_TIME" byteoffset="36" vartype="VAR_OUTPUT" access="ReadWrite" />
+      <UserDefElement iecname="tElapsedDO" type="T_TIME" byteoffset="40" vartype="VAR_OUTPUT" access="ReadWrite" />
+      <UserDefElement iecname="fbAlarmEval" type="T_FB_AnalogAlarm" byteoffset="44" vartype="VAR" access="ReadWrite" />
+      <UserDefElement iecname="tonSimTick" type="T_TON" byteoffset="164" vartype="VAR" access="ReadWrite" />
+      <UserDefElement iecname="iAngle" type="T_INT" byteoffset="180" vartype="VAR" access="ReadWrite" />
+    </TypeUserDef>
+  </TypeList>
+  <NodeList>
+    <Node name="Application">
+      <Node name="PLC_PRG">
+        <Node name="bDewar1Alarm" type="T_BOOL" access="ReadWrite" />
+        <Node name="bDewar1Warn" type="T_BOOL" access="ReadWrite" />
+        <Node name="bDewar2Alarm" type="T_BOOL" access="ReadWrite" />
+        <Node name="bDewar2Warn" type="T_BOOL" access="ReadWrite" />
+        <Node name="bDoor01_Alarm" type="T_BOOL" access="ReadWrite" />
+        <Node name="bDoor01_MainDoor" type="T_BOOL" access="ReadWrite" />
+        <Node name="bDoor02_Alarm" type="T_BOOL" access="ReadWrite" />
+        <Node name="bDoor02_CryoLabDoor" type="T_BOOL" access="ReadWrite" />
+        <Node name="bIncubator01_Alarm" type="T_BOOL" access="ReadWrite" />
+        <Node name="bIncubator02_Alarm" type="T_BOOL" access="ReadWrite" />
+        <Node name="bMedFreezerAlarm" type="T_BOOL" access="ReadWrite" />
+        <Node name="bMedFreezerWarn" type="T_BOOL" access="ReadWrite" />
+        <Node name="bMedFridgeAlarm" type="T_BOOL" access="ReadWrite" />
+        <Node name="bMedFridgeWarn" type="T_BOOL" access="ReadWrite" />
+        <Node name="fbDewar1" type="T_FB_Dewar" access="ReadWrite" />
+        <Node name="fbDewar2" type="T_FB_Dewar" access="ReadWrite" />
+        <Node name="rDewar1Temp" type="T_REAL" access="ReadWrite" />
+        <Node name="rDewar2Temp" type="T_REAL" access="ReadWrite" />
+        <Node name="rLabAmbientTemp" type="T_REAL" access="ReadWrite" />
+        <Node name="rMedFreezerTemp" type="T_REAL" access="ReadWrite" />
+        <Node name="rMedFridgeTemp" type="T_REAL" access="ReadWrite" />
+      </Node>
+    </Node>
+  </NodeList>
+</Symbolconfiguration>
