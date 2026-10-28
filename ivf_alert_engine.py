@@ -1632,9 +1632,9 @@ def main():
     t_ln2 = threading.Thread(target=ln2_schedule_watcher, daemon=True)
     t_ln2.start()
 
-    # Start HTTP server
-    http.server.HTTPServer.allow_reuse_address = True
-    server = http.server.HTTPServer(("0.0.0.0", PORT), ClinicalAlertHandler)
+    # Start Multi-Threaded HTTP server (prevents hung/slow requests from blocking the engine)
+    http.server.ThreadingHTTPServer.allow_reuse_address = True
+    server = http.server.ThreadingHTTPServer(("0.0.0.0", PORT), ClinicalAlertHandler)
     print(f"Connected to database at {PG_USER}@{PG_HOST}:{PG_PORT}/{PG_DB} (sslmode={PG_SSLMODE})")
     print(f"Ready. Listening for Kiosk / Web API calls on http://0.0.0.0:{PORT}")
     try:
