@@ -15,10 +15,13 @@ VAR
     bHeartbeat              : BOOL := FALSE;
 
     (* --- Analog Telemetry: Room Ambient Published over OPC UA --- *)
+    {attribute 'symbol' := 'read'}
     rLabAmbientTemp         : REAL := 25.0;     (* Target ~25.0 °C *)
 
     (* --- Discrete Telemetry: Physical Door Contacts Published over OPC UA --- *)
+    {attribute 'symbol' := 'read'}
     bDoor01_MainDoor        : BOOL := FALSE;    (* FALSE = Closed, TRUE = Open *)
+    {attribute 'symbol' := 'read'}
     bDoor02_CryoLabDoor     : BOOL := FALSE;    (* FALSE = Closed, TRUE = Open *)
 
     (* --- Encapsulated Clinical Equipment Function Blocks (Published over OPC UA) --- *)

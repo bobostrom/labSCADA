@@ -33,6 +33,17 @@
   <NodeList>
     <Node name="Application">
       <Node name="PLC_PRG">
+        <Node name="bDoor01_MainDoor" type="T_BOOL" access="Read" />
+        <Node name="bDoor02_CryoLabDoor" type="T_BOOL" access="Read" />
+        <Node name="bForceDewar1Excursion" type="T_BOOL" access="ReadWrite" />
+        <Node name="bForceDewar2Excursion" type="T_BOOL" access="ReadWrite" />
+        <Node name="bForceDewar3Excursion" type="T_BOOL" access="ReadWrite" />
+        <Node name="bForceDewar4Excursion" type="T_BOOL" access="ReadWrite" />
+        <Node name="bForceDewar5Excursion" type="T_BOOL" access="ReadWrite" />
+        <Node name="bForceFreezerExcursion" type="T_BOOL" access="ReadWrite" />
+        <Node name="bForceFridgeExcursion" type="T_BOOL" access="ReadWrite" />
+        <Node name="bForceIncubator01Alarm" type="T_BOOL" access="ReadWrite" />
+        <Node name="bForceIncubator02Alarm" type="T_BOOL" access="ReadWrite" />
         <Node name="fbDewar1" type="T_FB_Dewar" access="Read" />
         <Node name="fbDewar2" type="T_FB_Dewar" access="Read" />
         <Node name="fbDewar3" type="T_FB_Dewar" access="Read" />
@@ -44,6 +55,7 @@
         <Node name="fbFridge" type="T_FB_MedFridge" access="Read" />
         <Node name="fbIncubator1" type="T_FB_Incubator" access="Read" />
         <Node name="fbIncubator2" type="T_FB_Incubator" access="Read" />
+        <Node name="rLabAmbientTemp" type="T_REAL" access="Read" />
       </Node>
     </Node>
   </NodeList>
