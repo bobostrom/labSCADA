@@ -116,7 +116,7 @@ def write_plc_sim_bool(var_suffix, bool_val):
         finally:
             client.disconnect()
     except ImportError:
-        return False, "python3-opcua not installed on host; install with: sudo apt install python3-opcua"
+        return False, "opcua package not installed on host; install with: sudo pip3 install --break-system-packages opcua"
     except Exception as e:
         return False, str(e)
 
@@ -181,7 +181,7 @@ CHANNELS = {
 
 # In-memory tracking of active alarm state machine
 active_alarms = {}
-state_lock = threading.Lock()
+state_lock = threading.RLock()
 last_morning_sweep_date = ""
 
 
@@ -1098,9 +1098,7 @@ def record_ln2_log(tank_id, level_cm, was_filled, frost_condition, initials, not
     if not alarm_cnl:
         alarm_cnl = 199
 
-    with state_lock:
-        if alarm_cnl in active_alarms:
-            resolve_alarm(alarm_cnl, final_val=level_cm)
+    resolve_alarm(alarm_cnl, final_val=level_cm)
 
     # Determine next due date for notification
     status_info = get_ln2_status()
