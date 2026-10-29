@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
@@ -19,94 +20,524 @@
       --text-main: #f0f8ff;
       --text-muted: #8ba2b5;
     }
-    * { box-sizing: border-box; }
-    body { background: var(--bg-app); color: var(--text-main); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 14px; min-height: 100vh; }
-    .app-container { max-width: 480px; margin: 0 auto; }
 
-    .card { background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 16px; padding: 18px 20px; box-shadow: 0 8px 32px rgba(0,0,0,0.6); }
-    
-    .brand-bar { text-align: center; margin-bottom: 16px; }
-    .logo-wrap { background: #eef7f9; width: 48px; height: 48px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 8px; box-shadow: 0 3px 12px rgba(0,0,0,0.35); border: 2px solid rgba(97, 185, 231, 0.45); overflow: hidden; padding: 2px; }
-    .brand-leaf-mobile { width: 100%; height: 100%; display: block; object-fit: contain; border-radius: 50%; }
-    .brand-title { font-size: 19px; font-weight: 800; margin: 3px 0 2px; color: #fff; letter-spacing: -0.2px; }
-    .brand-sub { font-size: 12px; color: var(--text-muted); }
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      background: var(--bg-app);
+      color: var(--text-main);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      margin: 0;
+      padding: 14px;
+      min-height: 100vh;
+    }
+
+    .app-container {
+      max-width: 480px;
+      margin: 0 auto;
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 16px;
+      padding: 18px 20px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+    }
+
+    .brand-bar {
+      text-align: center;
+      margin-bottom: 16px;
+    }
+
+    .logo-wrap {
+      background: #eef7f9;
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 8px;
+      box-shadow: 0 3px 12px rgba(0, 0, 0, 0.35);
+      border: 2px solid rgba(97, 185, 231, 0.45);
+      overflow: hidden;
+      padding: 2px;
+    }
+
+    .brand-leaf-mobile {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: contain;
+      border-radius: 50%;
+    }
+
+    .brand-title {
+      font-size: 19px;
+      font-weight: 800;
+      margin: 3px 0 2px;
+      color: #fff;
+      letter-spacing: -0.2px;
+    }
+
+    .brand-sub {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
 
     /* Tank Switcher Tabs */
-    .tank-tabs { display: flex; gap: 6px; background: rgba(2, 18, 30, 0.85); padding: 4px; border-radius: 10px; margin-bottom: 16px; border: 1px solid var(--border-subtle); }
-    .tank-tab { flex: 1; text-align: center; padding: 10px 8px; font-size: 13px; font-weight: 700; border-radius: 8px; cursor: pointer; transition: all 0.15s; color: #94a3b8; user-select: none; }
-    .tank-tab.active-t1 { background: var(--brand-blue); color: #ffffff; font-weight: 800; box-shadow: 0 2px 10px rgba(3,126,171,0.45); }
-    .tank-tab.active-t2 { background: var(--brand-navy); color: #ffffff; font-weight: 800; box-shadow: 0 2px 10px rgba(2,60,82,0.45); }
+    .tank-tabs {
+      display: flex;
+      gap: 6px;
+      background: rgba(2, 18, 30, 0.85);
+      padding: 4px;
+      border-radius: 10px;
+      margin-bottom: 16px;
+      border: 1px solid var(--border-subtle);
+    }
+
+    .tank-tab {
+      flex: 1;
+      text-align: center;
+      padding: 10px 8px;
+      font-size: 13px;
+      font-weight: 700;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.15s;
+      color: #94a3b8;
+      user-select: none;
+    }
+
+    .tank-tab.active-t1 {
+      background: var(--brand-blue);
+      color: #ffffff;
+      font-weight: 800;
+      box-shadow: 0 2px 10px rgba(3, 126, 171, 0.45);
+    }
+
+    .tank-tab.active-t2 {
+      background: var(--brand-navy);
+      color: #ffffff;
+      font-weight: 800;
+      box-shadow: 0 2px 10px rgba(2, 60, 82, 0.45);
+    }
 
     /* Live Telemetry Banner */
-    .telemetry-strip { background: rgba(97,185,231,0.08); border: 1px solid var(--border-subtle); border-radius: 10px; padding: 10px 14px; margin-bottom: 18px; display: flex; justify-content: space-around; text-align: center; }
-    .telem-item { flex: 1; }
-    .telem-val { font-family: monospace; font-size: 17px; font-weight: 800; color: #fff; }
-    .telem-lbl { font-size: 10.5px; color: var(--brand-glacier); text-transform: uppercase; margin-top: 2px; letter-spacing: 0.5px; font-weight: 700; }
+    .telemetry-strip {
+      background: rgba(97, 185, 231, 0.08);
+      border: 1px solid var(--border-subtle);
+      border-radius: 10px;
+      padding: 10px 14px;
+      margin-bottom: 18px;
+      display: flex;
+      justify-content: space-around;
+      text-align: center;
+    }
+
+    .telem-item {
+      flex: 1;
+    }
+
+    .telem-val {
+      font-family: monospace;
+      font-size: 17px;
+      font-weight: 800;
+      color: #fff;
+    }
+
+    .telem-lbl {
+      font-size: 10.5px;
+      color: var(--brand-glacier);
+      text-transform: uppercase;
+      margin-top: 2px;
+      letter-spacing: 0.5px;
+      font-weight: 700;
+    }
 
     /* Form Elements */
-    .form-group { margin-bottom: 16px; }
-    .form-label { font-size: 12px; font-weight: 700; color: #cbd5e1; text-transform: uppercase; margin-bottom: 8px; display: block; letter-spacing: 0.5px; }
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-label {
+      font-size: 12px;
+      font-weight: 700;
+      color: #cbd5e1;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+      display: block;
+      letter-spacing: 0.5px;
+    }
 
     /* Compact Vertical Stepper */
-    .stepper-vert-box { display: flex; flex-direction: column; align-items: center; gap: 8px; margin: 6px auto 10px; width: 135px; }
-    .stepper-btn-row { display: flex; gap: 8px; width: 100%; }
-    .btn-step-vert { flex: 1; background: #1e293b; color: #f0f4f8; border: 1px solid rgba(255,255,255,0.18); border-radius: 8px; font-size: 14px; font-weight: 800; padding: 9px 0; cursor: pointer; text-align: center; transition: all 0.1s; user-select: none; }
-    .btn-step-vert.btn-plus { background: rgba(97,185,231,0.15); border-color: rgba(97,185,231,0.4); color: var(--brand-glacier); }
-    .btn-step-vert.btn-minus { background: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.3); color: #f87171; }
-    .btn-step-vert:active { transform: scale(0.95); opacity: 0.8; }
-    
-    .level-input-wrap { position: relative; width: 100%; display: flex; align-items: center; justify-content: center; }
-    .input-level-compact { width: 100%; text-align: center; font-family: monospace; font-size: 26px; font-weight: 900; background: #02121c; border: 2px solid var(--brand-glacier); color: var(--brand-glacier); border-radius: 10px; padding: 8px 30px 8px 12px; outline: none; -moz-appearance: textfield; appearance: textfield; }
+    .stepper-vert-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      margin: 6px auto 10px;
+      width: 135px;
+    }
+
+    .stepper-btn-row {
+      display: flex;
+      gap: 8px;
+      width: 100%;
+    }
+
+    .btn-step-vert {
+      flex: 1;
+      background: #1e293b;
+      color: #f0f4f8;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 800;
+      padding: 9px 0;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.1s;
+      user-select: none;
+    }
+
+    .btn-step-vert.btn-plus {
+      background: rgba(97, 185, 231, 0.15);
+      border-color: rgba(97, 185, 231, 0.4);
+      color: var(--brand-glacier);
+    }
+
+    .btn-step-vert.btn-minus {
+      background: rgba(239, 68, 68, 0.1);
+      border-color: rgba(239, 68, 68, 0.3);
+      color: #f87171;
+    }
+
+    .btn-step-vert:active {
+      transform: scale(0.95);
+      opacity: 0.8;
+    }
+
+    .level-input-wrap {
+      position: relative;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .input-level-compact {
+      width: 100%;
+      text-align: center;
+      font-family: monospace;
+      font-size: 26px;
+      font-weight: 900;
+      background: #02121c;
+      border: 2px solid var(--brand-glacier);
+      color: var(--brand-glacier);
+      border-radius: 10px;
+      padding: 8px 30px 8px 12px;
+      outline: none;
+      -moz-appearance: textfield;
+      appearance: textfield;
+    }
+
     .input-level-compact::-webkit-outer-spin-button,
-    .input-level-compact::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-    .level-cm-tag { position: absolute; right: 10px; color: #8899a6; font-size: 13px; font-weight: 800; pointer-events: none; }
+    .input-level-compact::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
 
-    .chips-row { display: flex; flex-wrap: wrap; gap: 6px; }
-    .chip { background: #1e293b; color: #94a3b8; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 8px 12px; font-size: 12.5px; font-weight: 700; cursor: pointer; user-select: none; }
-    .chip.active { background: var(--brand-blue); color: #ffffff; font-weight: 800; border-color: var(--brand-blue); }
-    
-    .chip-fill { flex: 1; text-align: center; padding: 10px 8px; }
-    .chip-fill.active { background: #10b981; color: #090d16; font-weight: 800; border-color: #10b981; }
-    .chip-fill.active-yes { background: #00b0ff; color: #090d16; font-weight: 800; border-color: #00b0ff; }
+    .level-cm-tag {
+      position: absolute;
+      right: 10px;
+      color: #8899a6;
+      font-size: 13px;
+      font-weight: 800;
+      pointer-events: none;
+    }
 
-    .text-input { width: 100%; background: #02121c; border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; padding: 11px 12px; color: #fff; font-size: 14px; outline: none; }
-    .text-input:focus { border-color: var(--brand-glacier); }
+    .chips-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
 
-    .btn-submit { width: 100%; background: #10b981; color: #090d16; border: none; border-radius: 12px; font-size: 16px; font-weight: 800; padding: 15px; cursor: pointer; box-shadow: 0 4px 18px rgba(16,185,129,0.35); margin-top: 6px; }
-    .btn-submit:active { transform: scale(0.98); }
+    .chip {
+      background: #1e293b;
+      color: #94a3b8;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: 12.5px;
+      font-weight: 700;
+      cursor: pointer;
+      user-select: none;
+    }
 
-    .powered-footer { text-align: center; margin-top: 18px; font-size: 11.5px; color: var(--text-muted); }
-    .powered-footer strong { color: var(--brand-glacier); }
+    .chip.active {
+      background: var(--brand-blue);
+      color: #ffffff;
+      font-weight: 800;
+      border-color: var(--brand-blue);
+    }
+
+    .chip-fill {
+      flex: 1;
+      text-align: center;
+      padding: 10px 8px;
+    }
+
+    .chip-fill.active {
+      background: #10b981;
+      color: #090d16;
+      font-weight: 800;
+      border-color: #10b981;
+    }
+
+    .chip-fill.active-yes {
+      background: #00b0ff;
+      color: #090d16;
+      font-weight: 800;
+      border-color: #00b0ff;
+    }
+
+    .text-input {
+      width: 100%;
+      background: #02121c;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 8px;
+      padding: 11px 12px;
+      color: #fff;
+      font-size: 14px;
+      outline: none;
+    }
+
+    .text-input:focus {
+      border-color: var(--brand-glacier);
+    }
+
+    .btn-submit {
+      width: 100%;
+      background: #10b981;
+      color: #090d16;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 800;
+      padding: 15px;
+      cursor: pointer;
+      box-shadow: 0 4px 18px rgba(16, 185, 129, 0.35);
+      margin-top: 6px;
+    }
+
+    .btn-submit:active {
+      transform: scale(0.98);
+    }
+
+    .powered-footer {
+      text-align: center;
+      margin-top: 18px;
+      font-size: 11.5px;
+      color: var(--text-muted);
+    }
+
+    .powered-footer strong {
+      color: var(--brand-glacier);
+    }
 
     /* Confirmation Card */
-    .success-card { display: none; text-align: center; padding: 24px 10px; }
-    .success-icon { font-size: 50px; margin-bottom: 12px; }
-    .success-title { font-size: 22px; font-weight: 900; color: #10b981; margin: 0 0 6px; }
-    .success-desc { font-size: 14px; color: #cbd5e1; margin: 0 0 18px; line-height: 1.5; }
-    .summary-box { background: #02121c; border: 1px solid var(--border-subtle); border-radius: 10px; padding: 14px; text-align: left; margin-bottom: 20px; font-size: 13px; line-height: 1.6; color: #94a3b8; }
-    .summary-box strong { color: #f0f4f8; }
-    .btn-reset { width: 100%; background: var(--brand-blue); color: #ffffff; border: none; border-radius: 10px; font-size: 15px; font-weight: 800; padding: 13px; cursor: pointer; }
+    .success-card {
+      display: none;
+      text-align: center;
+      padding: 24px 10px;
+    }
+
+    .success-icon {
+      font-size: 50px;
+      margin-bottom: 12px;
+    }
+
+    .success-title {
+      font-size: 22px;
+      font-weight: 900;
+      color: #10b981;
+      margin: 0 0 6px;
+    }
+
+    .success-desc {
+      font-size: 14px;
+      color: #cbd5e1;
+      margin: 0 0 18px;
+      line-height: 1.5;
+    }
+
+    .summary-box {
+      background: #02121c;
+      border: 1px solid var(--border-subtle);
+      border-radius: 10px;
+      padding: 14px;
+      text-align: left;
+      margin-bottom: 20px;
+      font-size: 13px;
+      line-height: 1.6;
+      color: #94a3b8;
+    }
+
+    .summary-box strong {
+      color: #f0f4f8;
+    }
+
+    .btn-reset {
+      width: 100%;
+      background: var(--brand-blue);
+      color: #ffffff;
+      border: none;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 800;
+      padding: 13px;
+      cursor: pointer;
+    }
 
     /* Specimen Retrieval & Alarm Hold Card */
-    .hold-card { margin-bottom: 16px; }
-    .btn-hold-mute { width: 100%; background: rgba(205, 163, 73, 0.12); border: 1px solid rgba(205, 163, 73, 0.35); border-radius: 10px; padding: 10px 14px; display: flex; align-items: center; gap: 12px; cursor: pointer; transition: all 0.15s; text-align: left; }
-    .btn-hold-mute:hover { background: rgba(205, 163, 73, 0.2); border-color: rgba(205, 163, 73, 0.55); }
-    .btn-hold-mute:active { transform: scale(0.98); }
-    .hold-icon { font-size: 24px; flex-shrink: 0; }
-    .hold-btn-title { color: #facc15; font-size: 13px; font-weight: 800; letter-spacing: -0.1px; }
-    .hold-btn-sub { color: #94a3b8; font-size: 11px; margin-top: 2px; }
+    .hold-card {
+      margin-bottom: 16px;
+    }
 
-    .hold-active-banner { background: linear-gradient(135deg, rgba(234, 88, 12, 0.22), rgba(205, 163, 73, 0.15)); border: 1.5px solid #f59e0b; border-radius: 10px; padding: 12px 14px; box-shadow: 0 0 16px rgba(245, 158, 11, 0.25); }
-    .hold-active-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
-    .hold-pulse-dot { width: 9px; height: 9px; background: #f59e0b; border-radius: 50%; box-shadow: 0 0 8px #f59e0b; animation: hold-pulse 1.2s infinite; flex-shrink: 0; }
-    @keyframes hold-pulse { 0% { opacity: 0.4; transform: scale(0.9); } 50% { opacity: 1; transform: scale(1.15); } 100% { opacity: 0.4; transform: scale(0.9); } }
-    .hold-active-title { color: #fbbf24; font-size: 12.5px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; flex: 1; }
-    .hold-countdown { font-family: monospace; font-size: 17px; font-weight: 900; color: #fff; background: rgba(0,0,0,0.45); padding: 2px 8px; border-radius: 6px; border: 1px solid rgba(251, 191, 36, 0.4); }
-    .hold-active-sub { font-size: 11.5px; color: #e2e8f0; margin-bottom: 10px; line-height: 1.35; }
-    .btn-hold-cancel { width: 100%; background: #0284c7; color: #fff; border: none; border-radius: 7px; padding: 8px; font-size: 12.5px; font-weight: 800; cursor: pointer; transition: all 0.15s; }
-    .btn-hold-cancel:hover { background: #0369a1; }
+    .btn-hold-mute {
+      width: 100%;
+      background: rgba(205, 163, 73, 0.12);
+      border: 1px solid rgba(205, 163, 73, 0.35);
+      border-radius: 10px;
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+      transition: all 0.15s;
+      text-align: left;
+    }
+
+    .btn-hold-mute:hover {
+      background: rgba(205, 163, 73, 0.2);
+      border-color: rgba(205, 163, 73, 0.55);
+    }
+
+    .btn-hold-mute:active {
+      transform: scale(0.98);
+    }
+
+    .hold-icon {
+      font-size: 24px;
+      flex-shrink: 0;
+    }
+
+    .hold-btn-title {
+      color: #facc15;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: -0.1px;
+    }
+
+    .hold-btn-sub {
+      color: #94a3b8;
+      font-size: 11px;
+      margin-top: 2px;
+    }
+
+    .hold-active-banner {
+      background: linear-gradient(135deg, rgba(234, 88, 12, 0.22), rgba(205, 163, 73, 0.15));
+      border: 1.5px solid #f59e0b;
+      border-radius: 10px;
+      padding: 12px 14px;
+      box-shadow: 0 0 16px rgba(245, 158, 11, 0.25);
+    }
+
+    .hold-active-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+
+    .hold-pulse-dot {
+      width: 9px;
+      height: 9px;
+      background: #f59e0b;
+      border-radius: 50%;
+      box-shadow: 0 0 8px #f59e0b;
+      animation: hold-pulse 1.2s infinite;
+      flex-shrink: 0;
+    }
+
+    @keyframes hold-pulse {
+      0% {
+        opacity: 0.4;
+        transform: scale(0.9);
+      }
+
+      50% {
+        opacity: 1;
+        transform: scale(1.15);
+      }
+
+      100% {
+        opacity: 0.4;
+        transform: scale(0.9);
+      }
+    }
+
+    .hold-active-title {
+      color: #fbbf24;
+      font-size: 12.5px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      flex: 1;
+    }
+
+    .hold-countdown {
+      font-family: monospace;
+      font-size: 17px;
+      font-weight: 900;
+      color: #fff;
+      background: rgba(0, 0, 0, 0.45);
+      padding: 2px 8px;
+      border-radius: 6px;
+      border: 1px solid rgba(251, 191, 36, 0.4);
+    }
+
+    .hold-active-sub {
+      font-size: 11.5px;
+      color: #e2e8f0;
+      margin-bottom: 10px;
+      line-height: 1.35;
+    }
+
+    .btn-hold-cancel {
+      width: 100%;
+      background: #0284c7;
+      color: #fff;
+      border: none;
+      border-radius: 7px;
+      padding: 8px;
+      font-size: 12.5px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-hold-cancel:hover {
+      background: #0369a1;
+    }
   </style>
 </head>
+
 <body>
   <div class="app-container">
     <div class="card">
@@ -121,11 +552,18 @@
       <div id="formSection">
         <!-- Tank Switcher -->
         <div class="tank-tabs" style="display:flex; flex-wrap:wrap; gap:6px;">
-          <div class="tank-tab {% if active_tank_num == 1 %}active-t1{% endif %}" id="tab-tank1" onclick="setTank('Dewar 1')">Dewar 1</div>
-          <div class="tank-tab {% if active_tank_num == 2 %}active-t2{% endif %}" id="tab-tank2" onclick="setTank('Dewar 2')">Dewar 2</div>
-          <div class="tank-tab {% if active_tank_num == 3 %}active-t1{% endif %}" id="tab-tank3" onclick="setTank('Dewar 3')">Dewar 3</div>
-          <div class="tank-tab {% if active_tank_num == 4 %}active-t2{% endif %}" id="tab-tank4" onclick="setTank('Dewar 4')">Dewar 4</div>
-          <div class="tank-tab {% if active_tank_num == 5 %}active-t1{% endif %}" id="tab-tank5" onclick="setTank('Dewar 5')">Dewar 5</div>
+          <div class="tank-tab {% if active_tank_num == 1 %}active-t1{% endif %}" id="tab-tank1"
+            onclick="setTank('Dewar 1')">Dewar 1</div>
+          <div class="tank-tab {% if active_tank_num == 2 %}active-t2{% endif %}" id="tab-tank2"
+            onclick="setTank('Dewar 2')">Dewar 2</div>
+          {% if dewar_count >= 3 %}
+          <div class="tank-tab {% if active_tank_num == 3 %}active-t1{% endif %}" id="tab-tank3"
+            onclick="setTank('Dewar 3')">Dewar 3</div>
+          <div class="tank-tab {% if active_tank_num == 4 %}active-t2{% endif %}" id="tab-tank4"
+            onclick="setTank('Dewar 4')">Dewar 4</div>
+          <div class="tank-tab {% if active_tank_num == 5 %}active-t1{% endif %}" id="tab-tank5"
+            onclick="setTank('Dewar 5')">Dewar 5</div>
+          {% endif %}
         </div>
 
         <!-- Real-Time Telemetry Strip -->
@@ -147,7 +585,8 @@
               <span class="hold-icon">⏱️</span>
               <div style="text-align:left;">
                 <div class="hold-btn-title">Mute Alarms for Retrieval / Inspection (15 min)</div>
-                <div class="hold-btn-sub">Silences vapor temp sirens during canister retrieval. Auto-resumes in 15m.</div>
+                <div class="hold-btn-sub">Silences vapor temp sirens during canister retrieval. Auto-resumes in 15m.
+                </div>
               </div>
             </button>
           </div>
@@ -189,7 +628,8 @@
             </div>
           </div>
           <div style="font-size:11.5px; color:#8899a6; margin-top:-2px;">
-            Previous check: <strong id="mobileLastRecordedHint" style="color:var(--brand-glacier);">{{ init_level }} cm</strong>
+            Previous check: <strong id="mobileLastRecordedHint" style="color:var(--brand-glacier);">{{ init_level }}
+              cm</strong>
           </div>
         </div>
 
@@ -213,7 +653,8 @@
             <div class="chip" onclick="setInit('RN')">RN</div>
             <div class="chip" onclick="setInit('Facilities')">Facilities</div>
           </div>
-          <input type="text" id="mobileInitials" class="text-input" placeholder="Type initials or name (e.g. BO, Sarah)" maxlength="24">
+          <input type="text" id="mobileInitials" class="text-input" placeholder="Type initials or name (e.g. BO, Sarah)"
+            maxlength="24">
         </div>
 
         <!-- Neck Seal Inspection -->
@@ -229,12 +670,15 @@
         <!-- Optional Notes -->
         <div class="form-group">
           <label class="form-label">Notes (Optional)</label>
-          <input type="text" id="mobileNotes" class="text-input" placeholder="Optional notes (e.g. topped off, frost checked)">
+          <input type="text" id="mobileNotes" class="text-input"
+            placeholder="Optional notes (e.g. topped off, frost checked)">
         </div>
 
-        <div id="submitErr" style="color:#ef4444; font-size:13px; font-weight:700; margin-bottom:10px; display:none;"></div>
+        <div id="submitErr" style="color:#ef4444; font-size:13px; font-weight:700; margin-bottom:10px; display:none;">
+        </div>
 
-        <button type="button" class="btn-submit" id="btnSubmit" onclick="submitMobileLog()">✅ Submit Dipstick Check</button>
+        <button type="button" class="btn-submit" id="btnSubmit" onclick="submitMobileLog()">✅ Submit Dipstick
+          Check</button>
       </div>
 
       <!-- Success Confirmation View -->
@@ -276,7 +720,7 @@
           tab.className = isActive ? (i % 2 === 1 ? "tank-tab active-t1" : "tank-tab active-t2") : "tank-tab";
         }
       }
-      
+
       const d = tankData[tank] || {};
       document.getElementById("dispTemp").innerText = d.temp || "--";
       document.getElementById("dispSensor").innerText = d.sensor || "--";
@@ -347,14 +791,14 @@
           notes: notesVal
         })
       })
-      .then(res => res.json())
-      .then(data => {
-        btn.disabled = false;
-        btn.innerText = "✅ Submit Dipstick Check";
-        if (data.success) {
-          document.getElementById("formSection").style.display = "none";
-          document.getElementById("successSection").style.display = "block";
-          document.getElementById("summaryBox").innerHTML = `
+        .then(res => res.json())
+        .then(data => {
+          btn.disabled = false;
+          btn.innerText = "✅ Submit Dipstick Check";
+          if (data.success) {
+            document.getElementById("formSection").style.display = "none";
+            document.getElementById("successSection").style.display = "block";
+            document.getElementById("summaryBox").innerHTML = `
             <div><strong>Tank:</strong> ${activeTank}</div>
             <div><strong>Dipstick Level:</strong> ${levelVal.toFixed(1)} cm</div>
             <div><strong>Topped Off:</strong> ${wasFilled ? 'Yes (Filled to Full)' : 'No (Level Check Only)'}</div>
@@ -363,28 +807,30 @@
             <div><strong>Pushover Alert:</strong> Dispatched to Lab Directors</div>
             <div><strong>Next Check Due:</strong> ${data.next_due || 'Next Mon/Wed/Fri by 5:00 PM'}</div>
           `;
-        } else {
-          errDiv.innerText = data.error || "Submission error. Please try again.";
+          } else {
+            errDiv.innerText = data.error || "Submission error. Please try again.";
+            errDiv.style.display = "block";
+          }
+        })
+        .catch(err => {
+          btn.disabled = false;
+          btn.innerText = "✅ Submit Dipstick Check";
+          errDiv.innerText = "Network error: " + err;
           errDiv.style.display = "block";
-        }
-      })
-      .catch(err => {
-        btn.disabled = false;
-        btn.innerText = "✅ Submit Dipstick Check";
-        errDiv.innerText = "Network error: " + err;
-        errDiv.style.display = "block";
-      });
+        });
     }
 
     function resetForm() {
       document.getElementById("formSection").style.display = "block";
       document.getElementById("successSection").style.display = "none";
       // Auto-toggle to the next dewar for quick sequential checks
-      let currNum = 1;
-      for (let i = 1; i <= 5; i++) {
+      const maxDewars = {{ dewar_count | default (5)
+    }};
+    let currNum = 1;
+      for (let i = 1; i <= maxDewars; i++) {
         if (activeTank === `Dewar ${i}`) currNum = i;
       }
-      const nextNum = (currNum % 5) + 1;
+      const nextNum = (currNum % maxDewars) + 1;
       setTank(`Dewar ${nextNum}`);
     }
 
@@ -428,11 +874,11 @@
           user: initVal
         })
       })
-      .then(res => res.json())
-      .then(d => {
-        syncTelemetry();
-      })
-      .catch(e => console.error("Hold toggle error:", e));
+        .then(res => res.json())
+        .then(d => {
+          syncTelemetry();
+        })
+        .catch(e => console.error("Hold toggle error:", e));
     }
 
     function syncTelemetry() {
@@ -474,10 +920,11 @@
 
     // Update hold card when switching tanks
     const originalSetTank = setTank;
-    setTank = function(tank) {
+    setTank = function (tank) {
       originalSetTank(tank);
       updateHoldCardUI();
     };
   </script>
 </body>
+
 </html>

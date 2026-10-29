@@ -71,6 +71,7 @@ CLINIC_DOMAIN = os.environ.get("CLINIC_DOMAIN", "komdivflab.larestelemetry.com")
 CLINIC_LOGO   = os.environ.get("CLINIC_LOGO", "/assets/KOMDlogo.png")
 PLC_OPC_URL   = os.environ.get("PLC_OPC_URL", "opc.tcp://demo-plc:4840")
 SIMULATION_MODE = os.environ.get("SIMULATION_MODE", "false").lower() in ("true", "1", "yes")
+DEWAR_COUNT   = int(os.environ.get("DEWAR_COUNT", "2" if CLINIC_SLUG == "demo" else "5"))
 
 # Map of demo fault-injection targets to CODESYS OPC UA variable suffixes
 SIM_TARGETS = {
@@ -128,6 +129,7 @@ def render_template(template_name, **context):
         "clinic_slug": CLINIC_SLUG,
         "clinic_domain": CLINIC_DOMAIN,
         "clinic_logo": CLINIC_LOGO,
+        "dewar_count": DEWAR_COUNT,
     }
     base_context.update(context)
     return template.render(**base_context)
@@ -1021,8 +1023,9 @@ def get_ln2_status():
                 "next_check": sched["next_check"]
             }
 
-    # Ensure all 5 dewars have baseline representation
-    for expected_tank in ["Dewar 1", "Dewar 2", "Dewar 3", "Dewar 4", "Dewar 5"]:
+    # Ensure configured dewars have baseline representation
+    expected_dewars = [f"Dewar {i}" for i in range(1, DEWAR_COUNT + 1)]
+    for expected_tank in expected_dewars:
         if expected_tank not in tanks:
             sched_def = evaluate_ln2_schedule(now, None)
             tanks[expected_tank] = {
@@ -1123,13 +1126,14 @@ def ln2_schedule_watcher():
         try:
             status_data = get_ln2_status()
             tanks = status_data.get("tanks", {})
-            tank_cnls = [
+            all_tank_cnls = [
                 ("Dewar 1", 199),
                 ("Dewar 2", 198),
                 ("Dewar 3", 197),
                 ("Dewar 4", 196),
                 ("Dewar 5", 195)
             ]
+            tank_cnls = all_tank_cnls[:DEWAR_COUNT]
             for tank_name, cnl_num in tank_cnls:
                 tank = tanks.get(tank_name)
                 if tank:

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -10,11 +11,15 @@
   <link rel="apple-touch-icon" href="{{ clinic_logo }}?v=3">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;800;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;800;900&family=Inter:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet">
   <style>
     :root {
-      --bg-app: #03141f;                 /* Deep Alaskan Navy */
-      --bg-card: rgba(4, 27, 43, 0.88);   /* Marine Blue Card */
+      --bg-app: #03141f;
+      /* Deep Alaskan Navy */
+      --bg-card: rgba(4, 27, 43, 0.88);
+      /* Marine Blue Card */
       --bg-card-sub: rgba(2, 18, 30, 0.85);
       --border-subtle: rgba(97, 185, 231, 0.18);
       --border-active: #037EAB;
@@ -25,139 +30,845 @@
       --brand-glacier: #61B9E7;
       --brand-gold: #CDA349;
     }
-    * { box-sizing:border-box; }
-    body { background:var(--bg-app); color:var(--text-main); font-family:'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding:20px 24px 40px; margin:0; }
-    
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      background: var(--bg-app);
+      color: var(--text-main);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      padding: 20px 24px 40px;
+      margin: 0;
+    }
+
     /* Top Header & Navigation */
-    header { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px; margin-bottom:20px; border-bottom:1px solid var(--border-subtle); padding-bottom:16px; }
-    .brand-identity { display:flex; align-items:center; gap:16px; }
-    .logo-badge { background:rgba(0, 40, 75, 0.65); width:54px; height:54px; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 3px 14px rgba(0,0,0,0.5); border:2px solid rgba(255, 215, 0, 0.55); overflow:hidden; padding:4px; flex-shrink:0; }
-    .brand-leaf-img { width:100%; height:100%; display:block; object-fit:contain; border-radius:50%; }
-    .brand-title { color:#ffffff; font-family:'Cinzel', Georgia, serif; font-size:1.35rem; font-weight:800; margin:0; letter-spacing:0.8px; }
-    .brand-sub { color:var(--text-muted); font-size:0.85rem; margin-top:4px; }
-    
-    .kiosk-footer { margin-top:40px; padding-top:16px; border-top:1px solid var(--border-subtle); display:flex; justify-content:space-between; align-items:center; color:var(--text-muted); font-size:12px; }
-    .kiosk-footer strong { color:var(--brand-glacier); }
-    
-    .nav-tabs { display:inline-flex; background:rgba(2, 22, 34, 0.9); padding:4px; border-radius:10px; border:1px solid var(--border-subtle); gap:4px; }
-    .nav-tab { background:transparent; color:#94a3b8; border:none; padding:10px 20px; border-radius:8px; font-size:14px; font-weight:700; cursor:pointer; transition:all 0.15s; }
-    .nav-tab:hover { color:#f8fafc; }
-    .nav-tab.active { background:var(--brand-blue); color:#ffffff; box-shadow:0 2px 12px rgba(3,126,171,0.5); font-weight:800; }
-    
-    .header-meta { display:flex; align-items:center; gap:14px; }
-    .badge-live { background:rgba(0,230,118,0.12); color:#00e676; border:1px solid rgba(0,230,118,0.4); padding:6px 14px; border-radius:100px; font-size:12px; font-weight:700; display:flex; align-items:center; gap:8px; }
-    .pulse-dot { width:8px; height:8px; background:#00e676; border-radius:50%; box-shadow:0 0 8px #00e676; animation:pulse 1.5s infinite; }
-    @keyframes pulse { 0% { opacity:0.4; } 50% { opacity:1; } 100% { opacity:0.4; } }
-    .clock-display { font-family:monospace; font-size:13px; color:var(--text-muted); font-weight:600; }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-bottom: 20px;
+      border-bottom: 1px solid var(--border-subtle);
+      padding-bottom: 16px;
+    }
+
+    .brand-identity {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .logo-badge {
+      background: rgba(0, 40, 75, 0.65);
+      width: 54px;
+      height: 54px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 3px 14px rgba(0, 0, 0, 0.5);
+      border: 2px solid rgba(255, 215, 0, 0.55);
+      overflow: hidden;
+      padding: 4px;
+      flex-shrink: 0;
+    }
+
+    .brand-leaf-img {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: contain;
+      border-radius: 50%;
+    }
+
+    .brand-title {
+      color: #ffffff;
+      font-family: 'Cinzel', Georgia, serif;
+      font-size: 1.35rem;
+      font-weight: 800;
+      margin: 0;
+      letter-spacing: 0.8px;
+    }
+
+    .brand-sub {
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      margin-top: 4px;
+    }
+
+    .kiosk-footer {
+      margin-top: 40px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border-subtle);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: var(--text-muted);
+      font-size: 12px;
+    }
+
+    .kiosk-footer strong {
+      color: var(--brand-glacier);
+    }
+
+    .nav-tabs {
+      display: inline-flex;
+      background: rgba(2, 22, 34, 0.9);
+      padding: 4px;
+      border-radius: 10px;
+      border: 1px solid var(--border-subtle);
+      gap: 4px;
+    }
+
+    .nav-tab {
+      background: transparent;
+      color: #94a3b8;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .nav-tab:hover {
+      color: #f8fafc;
+    }
+
+    .nav-tab.active {
+      background: var(--brand-blue);
+      color: #ffffff;
+      box-shadow: 0 2px 12px rgba(3, 126, 171, 0.5);
+      font-weight: 800;
+    }
+
+    .header-meta {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .badge-live {
+      background: rgba(0, 230, 118, 0.12);
+      color: #00e676;
+      border: 1px solid rgba(0, 230, 118, 0.4);
+      padding: 6px 14px;
+      border-radius: 100px;
+      font-size: 12px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .pulse-dot {
+      width: 8px;
+      height: 8px;
+      background: #00e676;
+      border-radius: 50%;
+      box-shadow: 0 0 8px #00e676;
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0% {
+        opacity: 0.4;
+      }
+
+      50% {
+        opacity: 1;
+      }
+
+      100% {
+        opacity: 0.4;
+      }
+    }
+
+    .clock-display {
+      font-family: monospace;
+      font-size: 13px;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
 
     /* Top Action Cards Grid (Main Page) */
-    .top-actions-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(360px, 1fr)); gap:16px; margin-bottom:20px; }
-    .action-banner { background:linear-gradient(135deg, rgba(4,27,43,0.95), rgba(2,36,56,0.85)); border:1px solid var(--border-subtle); border-radius:12px; padding:16px 20px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px; box-shadow:0 4px 20px rgba(0,0,0,0.35); }
-    .banner-qa { border-left:5px solid #00e676; border-color:rgba(0,230,118,0.3); }
-    .banner-reports { border-left:5px solid #0284c7; border-color:rgba(2,132,199,0.35); }
-    .banner-title { font-size:1.02rem; font-weight:700; color:#f0f4f8; margin:0 0 4px; display:flex; align-items:center; gap:10px; }
-    .banner-desc { font-size:12.5px; color:var(--text-muted); margin:0; line-height:1.4; }
-    
-    .btn-test { background:#00e676; color:#090d16; font-size:13.5px; font-weight:800; padding:10px 20px; border-radius:8px; cursor:pointer; border:none; box-shadow:0 4px 14px rgba(0,230,118,0.3); transition:all 0.15s; white-space:nowrap; }
-    .btn-test:hover { background:#00c853; transform:translateY(-1px); }
-    
-    .btn-report-hub { background:#0284c7; color:#ffffff; font-size:13.5px; font-weight:800; padding:10px 20px; border-radius:8px; text-decoration:none; display:inline-flex; align-items:center; gap:6px; box-shadow:0 4px 14px rgba(2,132,199,0.35); transition:all 0.15s; white-space:nowrap; }
-    .btn-report-hub:hover { background:#0369a1; transform:translateY(-1px); color:#ffffff; }
+    .top-actions-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .action-banner {
+      background: linear-gradient(135deg, rgba(4, 27, 43, 0.95), rgba(2, 36, 56, 0.85));
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      padding: 16px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 14px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+    }
+
+    .banner-qa {
+      border-left: 5px solid #00e676;
+      border-color: rgba(0, 230, 118, 0.3);
+    }
+
+    .banner-reports {
+      border-left: 5px solid #0284c7;
+      border-color: rgba(2, 132, 199, 0.35);
+    }
+
+    .banner-title {
+      font-size: 1.02rem;
+      font-weight: 700;
+      color: #f0f4f8;
+      margin: 0 0 4px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .banner-desc {
+      font-size: 12.5px;
+      color: var(--text-muted);
+      margin: 0;
+      line-height: 1.4;
+    }
+
+    .btn-test {
+      background: #00e676;
+      color: #090d16;
+      font-size: 13.5px;
+      font-weight: 800;
+      padding: 10px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      border: none;
+      box-shadow: 0 4px 14px rgba(0, 230, 118, 0.3);
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+
+    .btn-test:hover {
+      background: #00c853;
+      transform: translateY(-1px);
+    }
+
+    .btn-report-hub {
+      background: #0284c7;
+      color: #ffffff;
+      font-size: 13.5px;
+      font-weight: 800;
+      padding: 10px 20px;
+      border-radius: 8px;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 4px 14px rgba(2, 132, 199, 0.35);
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+
+    .btn-report-hub:hover {
+      background: #0369a1;
+      transform: translateY(-1px);
+      color: #ffffff;
+    }
 
     /* Telemetry Grid (Main Page) */
-    .grid-telemetry { display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:16px; margin-bottom:24px; }
-    .card { background:var(--bg-card); border:1px solid var(--border-subtle); border-radius:12px; padding:18px; position:relative; overflow:hidden; transition:transform 0.15s; }
-    .card-title { color:var(--brand-glacier); font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px; }
-    .card-val { font-size:2.2rem; font-weight:800; font-family:monospace; color:#ffffff; line-height:1.1; }
-    .card-unit { font-size:1.05rem; color:var(--text-muted); margin-left:3px; }
-    .card-sub { font-size:12px; color:var(--text-muted); margin-top:8px; display:flex; justify-content:space-between; align-items:center; }
-    
-    .status-badge { font-size:10px; font-weight:800; padding:2px 6px; border-radius:4px; text-transform:uppercase; letter-spacing:0.3px; white-space:nowrap; display:inline-block; }
-    .status-normal { background:rgba(0,230,118,0.15); color:#00e676; border:1px solid rgba(0,230,118,0.3); }
-    .status-warn { background:rgba(255,171,0,0.15); color:#ffab00; border:1px solid rgba(255,171,0,0.3); }
-    .status-alert { background:rgba(255,23,68,0.22); color:#ff1744; border:1px solid rgba(255,23,68,0.4); font-weight:800; animation:pulse-alert 1.5s infinite; }
-    @keyframes pulse-alert { 0% { opacity:0.8; } 50% { opacity:1; box-shadow:0 0 10px rgba(255,23,68,0.5); } 100% { opacity:0.8; } }
+    .grid-telemetry {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      padding: 18px;
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.15s;
+    }
+
+    .card-title {
+      color: var(--brand-glacier);
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+    }
+
+    .card-val {
+      font-size: 2.2rem;
+      font-weight: 800;
+      font-family: monospace;
+      color: #ffffff;
+      line-height: 1.1;
+    }
+
+    .card-unit {
+      font-size: 1.05rem;
+      color: var(--text-muted);
+      margin-left: 3px;
+    }
+
+    .card-sub {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .status-badge {
+      font-size: 10px;
+      font-weight: 800;
+      padding: 2px 6px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      white-space: nowrap;
+      display: inline-block;
+    }
+
+    .status-normal {
+      background: rgba(0, 230, 118, 0.15);
+      color: #00e676;
+      border: 1px solid rgba(0, 230, 118, 0.3);
+    }
+
+    .status-warn {
+      background: rgba(255, 171, 0, 0.15);
+      color: #ffab00;
+      border: 1px solid rgba(255, 171, 0, 0.3);
+    }
+
+    .status-alert {
+      background: rgba(255, 23, 68, 0.22);
+      color: #ff1744;
+      border: 1px solid rgba(255, 23, 68, 0.4);
+      font-weight: 800;
+      animation: pulse-alert 1.5s infinite;
+    }
+
+    @keyframes pulse-alert {
+      0% {
+        opacity: 0.8;
+      }
+
+      50% {
+        opacity: 1;
+        box-shadow: 0 0 10px rgba(255, 23, 68, 0.5);
+      }
+
+      100% {
+        opacity: 0.8;
+      }
+    }
 
     /* Integrated Dipstick Sub-Panel in Cryo Cards */
-    .dipstick-subpanel { background:var(--bg-card-sub); border:1px solid var(--border-subtle); border-radius:10px; padding:12px; margin-top:14px; }
-    .dip-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
-    .dip-level-row { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:4px; }
-    .dip-level { font-size:1.4rem; font-weight:800; font-family:monospace; color:var(--brand-glacier); }
-    .dip-actions { display:flex; gap:8px; margin-top:10px; }
-    .btn-mini { background:var(--brand-blue); color:#ffffff; border:none; padding:7px 12px; border-radius:6px; font-size:12px; font-weight:700; cursor:pointer; flex:1; text-align:center; }
-    .btn-mini:hover { background:var(--brand-navy); }
-    .btn-mini-subtle { background:transparent; color:var(--brand-glacier); border:1px solid var(--border-subtle); padding:6px 10px; border-radius:6px; font-size:12px; font-weight:600; cursor:pointer; text-decoration:none; }
-    .btn-mini-subtle:hover { background:rgba(97,185,231,0.12); }
+    .dipstick-subpanel {
+      background: var(--bg-card-sub);
+      border: 1px solid var(--border-subtle);
+      border-radius: 10px;
+      padding: 12px;
+      margin-top: 14px;
+    }
+
+    .dip-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+
+    .dip-level-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 4px;
+    }
+
+    .dip-level {
+      font-size: 1.4rem;
+      font-weight: 800;
+      font-family: monospace;
+      color: var(--brand-glacier);
+    }
+
+    .dip-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .btn-mini {
+      background: var(--brand-blue);
+      color: #ffffff;
+      border: none;
+      padding: 7px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      flex: 1;
+      text-align: center;
+    }
+
+    .btn-mini:hover {
+      background: var(--brand-navy);
+    }
+
+    .btn-mini-subtle {
+      background: transparent;
+      color: var(--brand-glacier);
+      border: 1px solid var(--border-subtle);
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+    }
+
+    .btn-mini-subtle:hover {
+      background: rgba(97, 185, 231, 0.12);
+    }
 
     /* Sub-Page Layout */
-    .subpage-header { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px; margin-bottom:20px; }
-    .subpage-title { color:#ffffff; font-size:1.45rem; font-weight:800; margin:0 0 4px; }
-    .subpage-desc { color:var(--text-muted); font-size:0.9rem; margin:0; }
-    .btn-report { text-decoration:none; display:inline-flex; align-items:center; gap:6px; background:#00897b; font-weight:700; padding:10px 16px; border-radius:8px; font-size:13px; color:#ffffff; box-shadow:0 4px 14px rgba(0,137,123,0.3); }
-    .btn-report:hover { background:#00796b; }
-    
+    .subpage-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .subpage-title {
+      color: #ffffff;
+      font-size: 1.45rem;
+      font-weight: 800;
+      margin: 0 0 4px;
+    }
+
+    .subpage-desc {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      margin: 0;
+    }
+
+    .btn-report {
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #00897b;
+      font-weight: 700;
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      color: #ffffff;
+      box-shadow: 0 4px 14px rgba(0, 137, 123, 0.3);
+    }
+
+    .btn-report:hover {
+      background: #00796b;
+    }
+
     /* Large Cryo Detail Cards */
-    .cryo-detail-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(320px, 1fr)); gap:18px; margin-bottom:24px; }
-    .cryo-card-lg { background:var(--bg-card); border:1px solid var(--border-subtle); border-radius:14px; padding:22px; position:relative; }
-    .metrics-row { display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; background:var(--bg-card-sub); padding:12px; border-radius:10px; margin:14px 0; border:1px solid var(--border-subtle); }
-    .metric-label { font-size:11px; color:var(--text-muted); text-transform:uppercase; font-weight:600; margin-bottom:4px; }
-    .metric-val { font-size:1.15rem; font-weight:800; font-family:monospace; color:#ffffff; }
+    .cryo-detail-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 18px;
+      margin-bottom: 24px;
+    }
+
+    .cryo-card-lg {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 14px;
+      padding: 22px;
+      position: relative;
+    }
+
+    .metrics-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      background: var(--bg-card-sub);
+      padding: 12px;
+      border-radius: 10px;
+      margin: 14px 0;
+      border: 1px solid var(--border-subtle);
+    }
+
+    .metric-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .metric-val {
+      font-size: 1.15rem;
+      font-weight: 800;
+      font-family: monospace;
+      color: #ffffff;
+    }
 
     /* Chart Showcase */
-    .chart-container { background:var(--bg-card-sub); border:1px solid var(--border-subtle); border-radius:12px; padding:16px; margin-top:14px; text-align:center; }
-    .chart-img { width:100%; max-height:420px; object-fit:contain; border-radius:8px; }
+    .chart-container {
+      background: var(--bg-card-sub);
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      padding: 16px;
+      margin-top: 14px;
+      text-align: center;
+    }
+
+    .chart-img {
+      width: 100%;
+      max-height: 420px;
+      object-fit: contain;
+      border-radius: 8px;
+    }
 
     /* Section Cards & Tables */
-    .section-card { background:var(--bg-card); border:1px solid var(--border-subtle); border-radius:12px; padding:20px; margin-bottom:20px; }
-    table { width:100%; border-collapse:collapse; margin-top:12px; }
-    th, td { padding:10px 14px; text-align:left; border-bottom:1px solid rgba(255,255,255,0.06); font-size:13.5px; }
-    th { color:var(--brand-glacier); text-transform:uppercase; font-size:11.5px; letter-spacing:0.5px; }
-    .btn { background:var(--brand-blue); color:white; border:none; padding:8px 16px; border-radius:6px; cursor:pointer; font-weight:600; }
-    .btn:hover { background:var(--brand-navy); }
+    .section-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+    }
+
+    th,
+    td {
+      padding: 10px 14px;
+      text-align: left;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      font-size: 13.5px;
+    }
+
+    th {
+      color: var(--brand-glacier);
+      text-transform: uppercase;
+      font-size: 11.5px;
+      letter-spacing: 0.5px;
+    }
+
+    .btn {
+      background: var(--brand-blue);
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .btn:hover {
+      background: var(--brand-navy);
+    }
 
     /* LN2 Modal & Glove-Friendly Stepper */
-    .modal-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(4,8,18,0.88); backdrop-filter:blur(6px); display:flex; justify-content:center; align-items:center; z-index:9999; }
-    .modal-box { background:#101726; border:1px solid rgba(0,229,255,0.35); border-radius:16px; padding:24px; max-width:540px; width:92%; box-shadow:0 16px 40px rgba(0,0,0,0.7); max-height:90vh; overflow-y:auto; }
-    .form-group { margin-bottom:16px; }
-    .form-label { display:block; font-size:12px; font-weight:700; color:#8899a6; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:8px; }
-    /* Compact Vertical Stepper for LN2 Level Input */
-    .stepper-vert-box { display:flex; flex-direction:column; align-items:center; gap:8px; margin:8px auto 10px; width:140px; }
-    .stepper-btn-row { display:flex; gap:8px; width:100%; }
-    .btn-stepper-vert { flex:1; background:#1e293b; color:#f0f4f8; border:1px solid rgba(255,255,255,0.18); border-radius:8px; font-weight:800; font-size:14px; padding:9px 0; cursor:pointer; text-align:center; user-select:none; transition:all 0.1s; }
-    .btn-stepper-vert.btn-plus { background:rgba(0,229,255,0.15); border-color:rgba(0,229,255,0.4); color:#00e5ff; }
-    .btn-stepper-vert.btn-plus:hover { background:rgba(0,229,255,0.25); }
-    .btn-stepper-vert.btn-minus { background:rgba(239,68,68,0.12); border-color:rgba(239,68,68,0.35); color:#f87171; }
-    .btn-stepper-vert.btn-minus:hover { background:rgba(239,68,68,0.22); }
-    .btn-stepper-vert:active { transform:scale(0.96); opacity:0.8; }
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(4, 8, 18, 0.88);
+      backdrop-filter: blur(6px);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+    }
 
-    .level-input-wrap { position:relative; width:100%; display:flex; align-items:center; justify-content:center; }
-    .input-level-compact { width:100%; text-align:center; font-family:monospace; font-size:28px; font-weight:900; background:#02121c; border:2px solid #00e5ff; color:#00e5ff; border-radius:10px; padding:8px 30px 8px 12px; outline:none; -moz-appearance:textfield; appearance:textfield; }
+    .modal-box {
+      background: #101726;
+      border: 1px solid rgba(0, 229, 255, 0.35);
+      border-radius: 16px;
+      padding: 24px;
+      max-width: 540px;
+      width: 92%;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.7);
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 12px;
+      font-weight: 700;
+      color: #8899a6;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+
+    /* Compact Vertical Stepper for LN2 Level Input */
+    .stepper-vert-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      margin: 8px auto 10px;
+      width: 140px;
+    }
+
+    .stepper-btn-row {
+      display: flex;
+      gap: 8px;
+      width: 100%;
+    }
+
+    .btn-stepper-vert {
+      flex: 1;
+      background: #1e293b;
+      color: #f0f4f8;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 8px;
+      font-weight: 800;
+      font-size: 14px;
+      padding: 9px 0;
+      cursor: pointer;
+      text-align: center;
+      user-select: none;
+      transition: all 0.1s;
+    }
+
+    .btn-stepper-vert.btn-plus {
+      background: rgba(0, 229, 255, 0.15);
+      border-color: rgba(0, 229, 255, 0.4);
+      color: #00e5ff;
+    }
+
+    .btn-stepper-vert.btn-plus:hover {
+      background: rgba(0, 229, 255, 0.25);
+    }
+
+    .btn-stepper-vert.btn-minus {
+      background: rgba(239, 68, 68, 0.12);
+      border-color: rgba(239, 68, 68, 0.35);
+      color: #f87171;
+    }
+
+    .btn-stepper-vert.btn-minus:hover {
+      background: rgba(239, 68, 68, 0.22);
+    }
+
+    .btn-stepper-vert:active {
+      transform: scale(0.96);
+      opacity: 0.8;
+    }
+
+    .level-input-wrap {
+      position: relative;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .input-level-compact {
+      width: 100%;
+      text-align: center;
+      font-family: monospace;
+      font-size: 28px;
+      font-weight: 900;
+      background: #02121c;
+      border: 2px solid #00e5ff;
+      color: #00e5ff;
+      border-radius: 10px;
+      padding: 8px 30px 8px 12px;
+      outline: none;
+      -moz-appearance: textfield;
+      appearance: textfield;
+    }
+
     .input-level-compact::-webkit-outer-spin-button,
-    .input-level-compact::-webkit-inner-spin-button { -webkit-appearance:none; margin:0; }
-    .level-cm-tag { position:absolute; right:10px; color:#8899a6; font-size:13px; font-weight:800; pointer-events:none; }
-    .chips-row { display:flex; flex-wrap:wrap; gap:8px; }
-    .chip { background:#1e293b; color:#cbd5e1; border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:10px 16px; font-size:14px; font-weight:600; cursor:pointer; user-select:none; transition:all 0.15s; }
-    .chip:hover { background:#283548; }
-    .chip.active { background:rgba(0,229,255,0.22); color:#00e5ff; border-color:#00e5ff; font-weight:700; box-shadow:0 0 10px rgba(0,229,255,0.2); }
-    .chip-fill { background:#1e293b; color:#cbd5e1; border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:12px 16px; font-size:14px; font-weight:600; cursor:pointer; flex:1; text-align:center; transition:all 0.15s; }
-    .chip-fill.active { background:rgba(0,230,118,0.2); color:#00e676; border-color:#00e676; font-weight:700; box-shadow:0 0 10px rgba(0,230,118,0.2); }
-    .text-input { width:100%; box-sizing:border-box; background:#090d16; border:1px solid rgba(255,255,255,0.15); border-radius:8px; color:#f0f4f8; font-size:14px; padding:10px 12px; }
-    .text-input:focus { outline:none; border-color:#00e5ff; }
+    .input-level-compact::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    .level-cm-tag {
+      position: absolute;
+      right: 10px;
+      color: #8899a6;
+      font-size: 13px;
+      font-weight: 800;
+      pointer-events: none;
+    }
+
+    .chips-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .chip {
+      background: #1e293b;
+      color: #cbd5e1;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 10px 16px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.15s;
+    }
+
+    .chip:hover {
+      background: #283548;
+    }
+
+    .chip.active {
+      background: rgba(0, 229, 255, 0.22);
+      color: #00e5ff;
+      border-color: #00e5ff;
+      font-weight: 700;
+      box-shadow: 0 0 10px rgba(0, 229, 255, 0.2);
+    }
+
+    .chip-fill {
+      background: #1e293b;
+      color: #cbd5e1;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 12px 16px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      flex: 1;
+      text-align: center;
+      transition: all 0.15s;
+    }
+
+    .chip-fill.active {
+      background: rgba(0, 230, 118, 0.2);
+      color: #00e676;
+      border-color: #00e676;
+      font-weight: 700;
+      box-shadow: 0 0 10px rgba(0, 230, 118, 0.2);
+    }
+
+    .text-input {
+      width: 100%;
+      box-sizing: border-box;
+      background: #090d16;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 8px;
+      color: #f0f4f8;
+      font-size: 14px;
+      padding: 10px 12px;
+    }
+
+    .text-input:focus {
+      outline: none;
+      border-color: #00e5ff;
+    }
 
     /* Session Mode Badge & Modal */
-    .badge-session { display:inline-flex; align-items:center; gap:8px; padding:6px 14px; border-radius:100px; font-size:12px; font-weight:800; letter-spacing:0.4px; cursor:pointer; user-select:none; transition:all 0.2s ease; }
-    .badge-session:hover { transform:translateY(-1px); filter:brightness(1.1); }
-    .badge-session.session-active { background:rgba(0,230,118,0.14); color:#00e676; border:1px solid rgba(0,230,118,0.45); }
-    .badge-session.session-active .session-dot { background:#00e676; box-shadow:0 0 8px #00e676; }
-    .badge-session.session-standby { background:rgba(245,158,11,0.15); color:#f59e0b; border:1px solid rgba(245,158,11,0.45); }
-    .badge-session.session-standby .session-dot { background:#f59e0b; box-shadow:0 0 8px #f59e0b; }
-    .session-dot { width:8px; height:8px; border-radius:50%; display:inline-block; }
+    .badge-session {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      border-radius: 100px;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.4px;
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.2s ease;
+    }
 
-    .session-mode-card { flex:1; background:#090d16; border:2px solid rgba(255,255,255,0.12); border-radius:10px; padding:14px; cursor:pointer; transition:all 0.15s; }
-    .session-mode-card:hover { border-color:rgba(97,185,231,0.5); }
-    .session-mode-card.active { background:rgba(3,126,171,0.22); border-color:#00e5ff; box-shadow:0 0 14px rgba(0,229,255,0.25); }
+    .badge-session:hover {
+      transform: translateY(-1px);
+      filter: brightness(1.1);
+    }
+
+    .badge-session.session-active {
+      background: rgba(0, 230, 118, 0.14);
+      color: #00e676;
+      border: 1px solid rgba(0, 230, 118, 0.45);
+    }
+
+    .badge-session.session-active .session-dot {
+      background: #00e676;
+      box-shadow: 0 0 8px #00e676;
+    }
+
+    .badge-session.session-standby {
+      background: rgba(245, 158, 11, 0.15);
+      color: #f59e0b;
+      border: 1px solid rgba(245, 158, 11, 0.45);
+    }
+
+    .badge-session.session-standby .session-dot {
+      background: #f59e0b;
+      box-shadow: 0 0 8px #f59e0b;
+    }
+
+    .session-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .session-mode-card {
+      flex: 1;
+      background: #090d16;
+      border: 2px solid rgba(255, 255, 255, 0.12);
+      border-radius: 10px;
+      padding: 14px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .session-mode-card:hover {
+      border-color: rgba(97, 185, 231, 0.5);
+    }
+
+    .session-mode-card.active {
+      background: rgba(3, 126, 171, 0.22);
+      border-color: #00e5ff;
+      box-shadow: 0 0 14px rgba(0, 229, 255, 0.25);
+    }
   </style>
 </head>
+
 <body>
   <!-- Top Global Header -->
   <header>
@@ -178,12 +889,15 @@
     </div>
 
     <div class="header-meta">
-      <div id="sessionModeChip" class="badge-session session-active" onclick="openSessionModal()" title="Click to view or switch clinical session mode">
+      <div id="sessionModeChip" class="badge-session session-active" onclick="openSessionModal()"
+        title="Click to view or switch clinical session mode">
         <span class="session-dot"></span>
         <span id="sessionModeLabel">CLINICAL IN-SESSION</span>
       </div>
       <div class="clock-display" id="liveClock">--:--:-- AKDT</div>
-      <div class="badge-live"><div class="pulse-dot"></div> Telemetry Live</div>
+      <div class="badge-live">
+        <div class="pulse-dot"></div> Telemetry Live
+      </div>
     </div>
   </header>
 
@@ -214,7 +928,9 @@
         <div style="flex:1; min-width:220px;">
           <div class="banner-title">
             <span>Clinical Compliance &amp; Regulatory Audits</span>
-            <span class="status-badge" style="background:rgba(2,132,199,0.18); color:#38bdf8; border:1px solid rgba(2,132,199,0.35); font-size:11px;">CAP / CLIA</span>
+            <span class="status-badge"
+              style="background:rgba(2,132,199,0.18); color:#38bdf8; border:1px solid rgba(2,132,199,0.35); font-size:11px;">CAP
+              / CLIA</span>
           </div>
           <p class="banner-desc">
             Multi-tank boil-off audit packets, calendar month picker, inspection tables, and director sign-offs.
@@ -246,17 +962,21 @@
         <!-- Integrated Dipstick Sub-Panel -->
         <div class="dipstick-subpanel" id="dip-subpanel-1">
           <div class="dip-header">
-            <span style="font-size:11.5px; font-weight:700; color:#00e5ff; text-transform:uppercase;">Manual Dipstick</span>
+            <span style="font-size:11.5px; font-weight:700; color:#00e5ff; text-transform:uppercase;">Manual
+              Dipstick</span>
             <span id="badge-ln2-1" class="status-badge status-normal">ON SCHEDULE</span>
           </div>
           <div class="dip-level-row">
-            <div><span class="dip-level" id="val-ln2-level-1">--</span><span style="color:#8899a6; font-size:12px;"> cm</span></div>
+            <div><span class="dip-level" id="val-ln2-level-1">--</span><span style="color:#8899a6; font-size:12px;">
+                cm</span></div>
             <span id="sub-ln2-check-1" style="font-size:12px; color:#8899a6;">--</span>
           </div>
-          <div id="ln2-next-due-1" style="font-size:11px; color:#8899a6; margin-top:2px;">Next: Mon/Wed/Fri by 5:00 PM</div>
+          <div id="ln2-next-due-1" style="font-size:11px; color:#8899a6; margin-top:2px;">Next: Mon/Wed/Fri by 5:00 PM
+          </div>
           <div class="dip-actions">
             <button class="btn-mini" onclick="openLn2ModalFor('Dewar 1')">🧊 Log Check</button>
-            <button class="btn-mini" id="btn-hold-cryo1" style="background:#0284c7;" onclick="toggleCryoHoldKiosk('Dewar 1')">⏱️ Mute (15m)</button>
+            <button class="btn-mini" id="btn-hold-cryo1" style="background:#0284c7;"
+              onclick="toggleCryoHoldKiosk('Dewar 1')">⏱️ Mute (15m)</button>
             <button class="btn-mini-subtle" onclick="switchTab('cryo')">Audit Trail →</button>
           </div>
         </div>
@@ -279,22 +999,27 @@
         <!-- Integrated Dipstick Sub-Panel -->
         <div class="dipstick-subpanel" id="dip-subpanel-2">
           <div class="dip-header">
-            <span style="font-size:11.5px; font-weight:700; color:#00b0ff; text-transform:uppercase;">Manual Dipstick</span>
+            <span style="font-size:11.5px; font-weight:700; color:#00b0ff; text-transform:uppercase;">Manual
+              Dipstick</span>
             <span id="badge-ln2-2" class="status-badge status-normal">ON SCHEDULE</span>
           </div>
           <div class="dip-level-row">
-            <div><span class="dip-level" id="val-ln2-level-2">--</span><span style="color:#8899a6; font-size:12px;"> cm</span></div>
+            <div><span class="dip-level" id="val-ln2-level-2">--</span><span style="color:#8899a6; font-size:12px;">
+                cm</span></div>
             <span id="sub-ln2-check-2" style="font-size:12px; color:#8899a6;">--</span>
           </div>
-          <div id="ln2-next-due-2" style="font-size:11px; color:#8899a6; margin-top:2px;">Next: Mon/Wed/Fri by 5:00 PM</div>
+          <div id="ln2-next-due-2" style="font-size:11px; color:#8899a6; margin-top:2px;">Next: Mon/Wed/Fri by 5:00 PM
+          </div>
           <div class="dip-actions">
             <button class="btn-mini" onclick="openLn2ModalFor('Dewar 2')">🧊 Log Check</button>
-            <button class="btn-mini" id="btn-hold-cryo2" style="background:#0284c7;" onclick="toggleCryoHoldKiosk('Dewar 2')">⏱️ Mute (15m)</button>
+            <button class="btn-mini" id="btn-hold-cryo2" style="background:#0284c7;"
+              onclick="toggleCryoHoldKiosk('Dewar 2')">⏱️ Mute (15m)</button>
             <button class="btn-mini-subtle" onclick="switchTab('cryo')">Audit Trail →</button>
           </div>
         </div>
       </div>
 
+      {% if dewar_count >= 3 %}
       <!-- Dewar 3 -->
       <div class="card" id="card-cryo3" style="border-top:3px solid #818cf8;">
         <div style="display:flex; justify-content:space-between; align-items:flex-start;">
@@ -312,17 +1037,21 @@
         <!-- Integrated Dipstick Sub-Panel -->
         <div class="dipstick-subpanel" id="dip-subpanel-3">
           <div class="dip-header">
-            <span style="font-size:11.5px; font-weight:700; color:#818cf8; text-transform:uppercase;">Manual Dipstick</span>
+            <span style="font-size:11.5px; font-weight:700; color:#818cf8; text-transform:uppercase;">Manual
+              Dipstick</span>
             <span id="badge-ln2-3" class="status-badge status-normal">ON SCHEDULE</span>
           </div>
           <div class="dip-level-row">
-            <div><span class="dip-level" id="val-ln2-level-3">--</span><span style="color:#8899a6; font-size:12px;"> cm</span></div>
+            <div><span class="dip-level" id="val-ln2-level-3">--</span><span style="color:#8899a6; font-size:12px;">
+                cm</span></div>
             <span id="sub-ln2-check-3" style="font-size:12px; color:#8899a6;">--</span>
           </div>
-          <div id="ln2-next-due-3" style="font-size:11px; color:#8899a6; margin-top:2px;">Next: Mon/Wed/Fri by 5:00 PM</div>
+          <div id="ln2-next-due-3" style="font-size:11px; color:#8899a6; margin-top:2px;">Next: Mon/Wed/Fri by 5:00 PM
+          </div>
           <div class="dip-actions">
             <button class="btn-mini" onclick="openLn2ModalFor('Dewar 3')">🧊 Log Check</button>
-            <button class="btn-mini" id="btn-hold-cryo3" style="background:#0284c7;" onclick="toggleCryoHoldKiosk('Dewar 3')">⏱️ Mute (15m)</button>
+            <button class="btn-mini" id="btn-hold-cryo3" style="background:#0284c7;"
+              onclick="toggleCryoHoldKiosk('Dewar 3')">⏱️ Mute (15m)</button>
             <button class="btn-mini-subtle" onclick="switchTab('cryo')">Audit Trail →</button>
           </div>
         </div>
@@ -345,17 +1074,21 @@
         <!-- Integrated Dipstick Sub-Panel -->
         <div class="dipstick-subpanel" id="dip-subpanel-4">
           <div class="dip-header">
-            <span style="font-size:11.5px; font-weight:700; color:#2dd4bf; text-transform:uppercase;">Manual Dipstick</span>
+            <span style="font-size:11.5px; font-weight:700; color:#2dd4bf; text-transform:uppercase;">Manual
+              Dipstick</span>
             <span id="badge-ln2-4" class="status-badge status-normal">ON SCHEDULE</span>
           </div>
           <div class="dip-level-row">
-            <div><span class="dip-level" id="val-ln2-level-4">--</span><span style="color:#8899a6; font-size:12px;"> cm</span></div>
+            <div><span class="dip-level" id="val-ln2-level-4">--</span><span style="color:#8899a6; font-size:12px;">
+                cm</span></div>
             <span id="sub-ln2-check-4" style="font-size:12px; color:#8899a6;">--</span>
           </div>
-          <div id="ln2-next-due-4" style="font-size:11px; color:#8899a6; margin-top:2px;">Next: Mon/Wed/Fri by 5:00 PM</div>
+          <div id="ln2-next-due-4" style="font-size:11px; color:#8899a6; margin-top:2px;">Next: Mon/Wed/Fri by 5:00 PM
+          </div>
           <div class="dip-actions">
             <button class="btn-mini" onclick="openLn2ModalFor('Dewar 4')">🧊 Log Check</button>
-            <button class="btn-mini" id="btn-hold-cryo4" style="background:#0284c7;" onclick="toggleCryoHoldKiosk('Dewar 4')">⏱️ Mute (15m)</button>
+            <button class="btn-mini" id="btn-hold-cryo4" style="background:#0284c7;"
+              onclick="toggleCryoHoldKiosk('Dewar 4')">⏱️ Mute (15m)</button>
             <button class="btn-mini-subtle" onclick="switchTab('cryo')">Audit Trail →</button>
           </div>
         </div>
@@ -378,47 +1111,60 @@
         <!-- Integrated Dipstick Sub-Panel -->
         <div class="dipstick-subpanel" id="dip-subpanel-5">
           <div class="dip-header">
-            <span style="font-size:11.5px; font-weight:700; color:#fbbf24; text-transform:uppercase;">Manual Dipstick</span>
+            <span style="font-size:11.5px; font-weight:700; color:#fbbf24; text-transform:uppercase;">Manual
+              Dipstick</span>
             <span id="badge-ln2-5" class="status-badge status-normal">ON SCHEDULE</span>
           </div>
           <div class="dip-level-row">
-            <div><span class="dip-level" id="val-ln2-level-5">--</span><span style="color:#8899a6; font-size:12px;"> cm</span></div>
+            <div><span class="dip-level" id="val-ln2-level-5">--</span><span style="color:#8899a6; font-size:12px;">
+                cm</span></div>
             <span id="sub-ln2-check-5" style="font-size:12px; color:#8899a6;">--</span>
           </div>
-          <div id="ln2-next-due-5" style="font-size:11px; color:#8899a6; margin-top:2px;">Next: Mon/Wed/Fri by 5:00 PM</div>
+          <div id="ln2-next-due-5" style="font-size:11px; color:#8899a6; margin-top:2px;">Next: Mon/Wed/Fri by 5:00 PM
+          </div>
           <div class="dip-actions">
             <button class="btn-mini" onclick="openLn2ModalFor('Dewar 5')">🧊 Log Check</button>
-            <button class="btn-mini" id="btn-hold-cryo5" style="background:#0284c7;" onclick="toggleCryoHoldKiosk('Dewar 5')">⏱️ Mute (15m)</button>
+            <button class="btn-mini" id="btn-hold-cryo5" style="background:#0284c7;"
+              onclick="toggleCryoHoldKiosk('Dewar 5')">⏱️ Mute (15m)</button>
             <button class="btn-mini-subtle" onclick="switchTab('cryo')">Audit Trail →</button>
           </div>
         </div>
       </div>
+      {% endif %}
 
       <!-- Combined Medical Cold Storage (Fridge & Freezer) -->
       <div class="card" id="card-cold-storage" style="border-top:3px solid #00e676;">
         <div class="card-title">Medical Cold Storage</div>
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:8px;">
           <!-- Fridge Section -->
-          <div style="background:rgba(9,13,22,0.65); padding:10px 10px; border-radius:8px; border:1px solid rgba(255,255,255,0.06); min-width:0; overflow:hidden;">
-            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:4px; margin-bottom:4px;">
+          <div
+            style="background:rgba(9,13,22,0.65); padding:10px 10px; border-radius:8px; border:1px solid rgba(255,255,255,0.06); min-width:0; overflow:hidden;">
+            <div
+              style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:4px; margin-bottom:4px;">
               <span style="font-size:11px; font-weight:700; color:#8899a6; text-transform:uppercase;">Fridge</span>
               <span id="badge-fridge" class="status-badge status-normal">NORMAL</span>
             </div>
             <div style="font-size:1.65rem; font-weight:800; font-family:monospace; color:#f0f4f8; line-height:1.1;">
               <span id="val-fridge">--</span><span class="card-unit">°C</span>
             </div>
-            <div style="font-size:11px; color:#8899a6; margin-top:5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Target: 2.0°C – 8.0°C</div>
+            <div
+              style="font-size:11px; color:#8899a6; margin-top:5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+              Target: 2.0°C – 8.0°C</div>
           </div>
           <!-- Freezer Section -->
-          <div style="background:rgba(9,13,22,0.65); padding:10px 10px; border-radius:8px; border:1px solid rgba(255,255,255,0.06); min-width:0; overflow:hidden;">
-            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:4px; margin-bottom:4px;">
+          <div
+            style="background:rgba(9,13,22,0.65); padding:10px 10px; border-radius:8px; border:1px solid rgba(255,255,255,0.06); min-width:0; overflow:hidden;">
+            <div
+              style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:4px; margin-bottom:4px;">
               <span style="font-size:11px; font-weight:700; color:#8899a6; text-transform:uppercase;">Freezer</span>
               <span id="badge-freezer" class="status-badge status-normal">NORMAL</span>
             </div>
             <div style="font-size:1.65rem; font-weight:800; font-family:monospace; color:#f0f4f8; line-height:1.1;">
               <span id="val-freezer">--</span><span class="card-unit">°C</span>
             </div>
-            <div style="font-size:11px; color:#8899a6; margin-top:5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Limit: &lt; -15.0°C</div>
+            <div
+              style="font-size:11px; color:#8899a6; margin-top:5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+              Limit: &lt; -15.0°C</div>
           </div>
         </div>
       </div>
@@ -438,26 +1184,36 @@
         <div class="card-title">Cleanroom Doors & Access</div>
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:8px;">
           <!-- Main Door Section -->
-          <div style="background:rgba(9,13,22,0.65); padding:10px 10px; border-radius:8px; border:1px solid rgba(255,255,255,0.06); min-width:0; overflow:hidden;">
-            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:4px; margin-bottom:4px;">
+          <div
+            style="background:rgba(9,13,22,0.65); padding:10px 10px; border-radius:8px; border:1px solid rgba(255,255,255,0.06); min-width:0; overflow:hidden;">
+            <div
+              style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:4px; margin-bottom:4px;">
               <span style="font-size:11px; font-weight:700; color:#8899a6; text-transform:uppercase;">Main Door</span>
               <span id="badge-door1" class="status-badge status-normal">SECURE</span>
             </div>
-            <div style="font-size:1.5rem; font-weight:800; font-family:monospace; color:#f0f4f8; margin-top:2px;" id="val-door1">
+            <div style="font-size:1.5rem; font-weight:800; font-family:monospace; color:#f0f4f8; margin-top:2px;"
+              id="val-door1">
               CLOSED
             </div>
-            <div style="font-size:11px; color:#8899a6; margin-top:5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Limit: Hold delay limit</div>
+            <div
+              style="font-size:11px; color:#8899a6; margin-top:5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+              Limit: Hold delay limit</div>
           </div>
           <!-- Cryo Door Section -->
-          <div style="background:rgba(9,13,22,0.65); padding:10px 10px; border-radius:8px; border:1px solid rgba(255,255,255,0.06); min-width:0; overflow:hidden;">
-            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:4px; margin-bottom:4px;">
+          <div
+            style="background:rgba(9,13,22,0.65); padding:10px 10px; border-radius:8px; border:1px solid rgba(255,255,255,0.06); min-width:0; overflow:hidden;">
+            <div
+              style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:4px; margin-bottom:4px;">
               <span style="font-size:11px; font-weight:700; color:#8899a6; text-transform:uppercase;">Cryo Door</span>
               <span id="badge-door2" class="status-badge status-normal">SECURE</span>
             </div>
-            <div style="font-size:1.5rem; font-weight:800; font-family:monospace; color:#f0f4f8; margin-top:2px;" id="val-door2">
+            <div style="font-size:1.5rem; font-weight:800; font-family:monospace; color:#f0f4f8; margin-top:2px;"
+              id="val-door2">
               CLOSED
             </div>
-            <div style="font-size:11px; color:#8899a6; margin-top:5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Limit: Hold delay limit</div>
+            <div
+              style="font-size:11px; color:#8899a6; margin-top:5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+              Limit: Hold delay limit</div>
           </div>
         </div>
       </div>
@@ -467,26 +1223,38 @@
         <div class="card-title">Chamber Incubators</div>
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:8px;">
           <!-- Incubator 01 Section -->
-          <div style="background:rgba(9,13,22,0.65); padding:10px 10px; border-radius:8px; border:1px solid rgba(255,255,255,0.06); min-width:0; overflow:hidden;">
-            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:4px; margin-bottom:4px;">
-              <span style="font-size:11px; font-weight:700; color:#8899a6; text-transform:uppercase;">Incubator 01</span>
+          <div
+            style="background:rgba(9,13,22,0.65); padding:10px 10px; border-radius:8px; border:1px solid rgba(255,255,255,0.06); min-width:0; overflow:hidden;">
+            <div
+              style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:4px; margin-bottom:4px;">
+              <span style="font-size:11px; font-weight:700; color:#8899a6; text-transform:uppercase;">Incubator
+                01</span>
               <span id="badge-incubator1" class="status-badge status-normal">CLEAR</span>
             </div>
-            <div style="font-size:1.5rem; font-weight:800; font-family:monospace; color:#f0f4f8; margin-top:2px;" id="val-incubator1">
+            <div style="font-size:1.5rem; font-weight:800; font-family:monospace; color:#f0f4f8; margin-top:2px;"
+              id="val-incubator1">
               NORMAL
             </div>
-            <div style="font-size:11px; color:#8899a6; margin-top:5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" id="sub-incubator1">Chamber A &bull; In-Range</div>
+            <div
+              style="font-size:11px; color:#8899a6; margin-top:5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"
+              id="sub-incubator1">Chamber A &bull; In-Range</div>
           </div>
           <!-- Incubator 02 Section -->
-          <div style="background:rgba(9,13,22,0.65); padding:10px 10px; border-radius:8px; border:1px solid rgba(255,255,255,0.06); min-width:0; overflow:hidden;">
-            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:4px; margin-bottom:4px;">
-              <span style="font-size:11px; font-weight:700; color:#8899a6; text-transform:uppercase;">Incubator 02</span>
+          <div
+            style="background:rgba(9,13,22,0.65); padding:10px 10px; border-radius:8px; border:1px solid rgba(255,255,255,0.06); min-width:0; overflow:hidden;">
+            <div
+              style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:4px; margin-bottom:4px;">
+              <span style="font-size:11px; font-weight:700; color:#8899a6; text-transform:uppercase;">Incubator
+                02</span>
               <span id="badge-incubator2" class="status-badge status-normal">CLEAR</span>
             </div>
-            <div style="font-size:1.5rem; font-weight:800; font-family:monospace; color:#f0f4f8; margin-top:2px;" id="val-incubator2">
+            <div style="font-size:1.5rem; font-weight:800; font-family:monospace; color:#f0f4f8; margin-top:2px;"
+              id="val-incubator2">
               NORMAL
             </div>
-            <div style="font-size:11px; color:#8899a6; margin-top:5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" id="sub-incubator2">Chamber B &bull; In-Range</div>
+            <div
+              style="font-size:11px; color:#8899a6; margin-top:5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"
+              id="sub-incubator2">Chamber B &bull; In-Range</div>
           </div>
         </div>
       </div>
@@ -494,14 +1262,20 @@
 
     <!-- 3. Bottom Section: Active Alarms & Clinical Audit Trail -->
     <div class="section-card">
-      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:8px;">
+      <div
+        style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:8px;">
         <div>
-          <h3 style="margin:0; font-size:1.15rem; color:#f0f4f8;" id="auditSectionTitle">Active Alarms &amp; Clinical Audit Trail</h3>
-          <p style="color:#8899a6; font-size:13px; margin:3px 0 0;" id="auditSectionDesc">Reverse chronological history. Tap Acknowledge to silence repeating sirens.</p>
+          <h3 style="margin:0; font-size:1.15rem; color:#f0f4f8;" id="auditSectionTitle">Active Alarms &amp; Clinical
+            Audit Trail</h3>
+          <p style="color:#8899a6; font-size:13px; margin:3px 0 0;" id="auditSectionDesc">Reverse chronological history.
+            Tap Acknowledge to silence repeating sirens.</p>
         </div>
-        <div style="display:flex; gap:6px; background:rgba(2,22,34,0.9); padding:3px; border-radius:8px; border:1px solid var(--border-subtle);">
-          <button type="button" class="nav-tab active" id="btnAuditAlarms" style="padding:6px 14px; font-size:12.5px;" onclick="switchAuditView('alarms')">🚨 Alarms &amp; Siren Log</button>
-          <button type="button" class="nav-tab" id="btnAuditDoors" style="padding:6px 14px; font-size:12.5px;" onclick="switchAuditView('doors')">🚪 Cleanroom Door Log</button>
+        <div
+          style="display:flex; gap:6px; background:rgba(2,22,34,0.9); padding:3px; border-radius:8px; border:1px solid var(--border-subtle);">
+          <button type="button" class="nav-tab active" id="btnAuditAlarms" style="padding:6px 14px; font-size:12.5px;"
+            onclick="switchAuditView('alarms')">🚨 Alarms &amp; Siren Log</button>
+          <button type="button" class="nav-tab" id="btnAuditDoors" style="padding:6px 14px; font-size:12.5px;"
+            onclick="switchAuditView('doors')">🚪 Cleanroom Door Log</button>
         </div>
       </div>
       <div id="alarmsTable" style="overflow-x:auto;">Loading alarms...</div>
@@ -517,11 +1291,15 @@
     <div class="subpage-header">
       <div>
         <h2 class="subpage-title">Liquid Nitrogen (LN2) Cryopreservation Suite</h2>
-        <p class="subpage-desc">Dual Tank Manual Dipstick Tracking, Boil-off Dynamics & Regulatory Audit Trail (CAP / CLIA / JCAHO)</p>
+        <p class="subpage-desc">Dual Tank Manual Dipstick Tracking, Boil-off Dynamics & Regulatory Audit Trail (CAP /
+          CLIA / JCAHO)</p>
       </div>
       <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
-        <a href="/print/qr" target="_blank" class="btn-report" style="border-color:#38bdf8; color:#38bdf8;">📱 Print Station QR Placard</a>
-        <button class="btn" style="background:#00e5ff; color:#090d16; font-size:14px; font-weight:800; padding:10px 18px; border-radius:8px; box-shadow:0 4px 14px rgba(0,229,255,0.3);" onclick="openLn2Modal()">🧊 Log Dipstick Check</button>
+        <a href="/print/qr" target="_blank" class="btn-report" style="border-color:#38bdf8; color:#38bdf8;">📱 Print
+          Station QR Placard</a>
+        <button class="btn"
+          style="background:#00e5ff; color:#090d16; font-size:14px; font-weight:800; padding:10px 18px; border-radius:8px; box-shadow:0 4px 14px rgba(0,229,255,0.3);"
+          onclick="openLn2Modal()">🧊 Log Dipstick Check</button>
       </div>
     </div>
 
@@ -531,7 +1309,8 @@
       <div class="cryo-card-lg" style="border-top:4px solid #00e5ff;">
         <div style="display:flex; justify-content:space-between; align-items:flex-start;">
           <div>
-            <div style="font-size:13px; font-weight:700; color:#00e5ff; text-transform:uppercase;">Dewar 1 (Embryos)</div>
+            <div style="font-size:13px; font-weight:700; color:#00e5ff; text-transform:uppercase;">Dewar 1 (Embryos)
+            </div>
             <div style="font-size:2.4rem; font-weight:800; font-family:monospace; color:#f0f4f8; margin-top:4px;">
               <span id="detail-ln2-level-1">--</span><span style="font-size:1.2rem; color:#8899a6;"> cm</span>
             </div>
@@ -558,7 +1337,9 @@
           <div><b>Last Check:</b> <span id="detail-last-check-1">--</span></div>
           <div><b>Schedule:</b> <span id="detail-next-check-1">Mon / Wed / Fri by 5:00 PM</span></div>
         </div>
-        <button class="btn" style="width:100%; background:#00b0ff; font-weight:800; margin-top:14px; padding:12px; border-radius:8px;" onclick="openLn2ModalFor('Dewar 1')">🧊 Log Dewar 1 Check</button>
+        <button class="btn"
+          style="width:100%; background:#00b0ff; font-weight:800; margin-top:14px; padding:12px; border-radius:8px;"
+          onclick="openLn2ModalFor('Dewar 1')">🧊 Log Dewar 1 Check</button>
       </div>
 
       <!-- Tank 2 Detail -->
@@ -592,9 +1373,12 @@
           <div><b>Last Check:</b> <span id="detail-last-check-2">--</span></div>
           <div><b>Schedule:</b> <span id="detail-next-check-2">Mon / Wed / Fri by 5:00 PM</span></div>
         </div>
-        <button class="btn" style="width:100%; background:#00b0ff; font-weight:800; margin-top:14px; padding:12px; border-radius:8px;" onclick="openLn2ModalFor('Dewar 2')">🧊 Log Dewar 2 Check</button>
+        <button class="btn"
+          style="width:100%; background:#00b0ff; font-weight:800; margin-top:14px; padding:12px; border-radius:8px;"
+          onclick="openLn2ModalFor('Dewar 2')">🧊 Log Dewar 2 Check</button>
       </div>
 
+      {% if dewar_count >= 3 %}
       <!-- Tank 3 Detail -->
       <div class="cryo-card-lg" style="border-top:4px solid #818cf8;">
         <div style="display:flex; justify-content:space-between; align-items:flex-start;">
@@ -626,7 +1410,9 @@
           <div><b>Last Check:</b> <span id="detail-last-check-3">--</span></div>
           <div><b>Schedule:</b> <span id="detail-next-check-3">Mon / Wed / Fri by 5:00 PM</span></div>
         </div>
-        <button class="btn" style="width:100%; background:#818cf8; font-weight:800; margin-top:14px; padding:12px; border-radius:8px;" onclick="openLn2ModalFor('Dewar 3')">🧊 Log Dewar 3 Check</button>
+        <button class="btn"
+          style="width:100%; background:#818cf8; font-weight:800; margin-top:14px; padding:12px; border-radius:8px;"
+          onclick="openLn2ModalFor('Dewar 3')">🧊 Log Dewar 3 Check</button>
       </div>
 
       <!-- Tank 4 Detail -->
@@ -660,7 +1446,9 @@
           <div><b>Last Check:</b> <span id="detail-last-check-4">--</span></div>
           <div><b>Schedule:</b> <span id="detail-next-check-4">Mon / Wed / Fri by 5:00 PM</span></div>
         </div>
-        <button class="btn" style="width:100%; background:#2dd4bf; color:#090d16; font-weight:800; margin-top:14px; padding:12px; border-radius:8px;" onclick="openLn2ModalFor('Dewar 4')">🧊 Log Dewar 4 Check</button>
+        <button class="btn"
+          style="width:100%; background:#2dd4bf; color:#090d16; font-weight:800; margin-top:14px; padding:12px; border-radius:8px;"
+          onclick="openLn2ModalFor('Dewar 4')">🧊 Log Dewar 4 Check</button>
       </div>
 
       <!-- Tank 5 Detail -->
@@ -694,23 +1482,31 @@
           <div><b>Last Check:</b> <span id="detail-last-check-5">--</span></div>
           <div><b>Schedule:</b> <span id="detail-next-check-5">Mon / Wed / Fri by 5:00 PM</span></div>
         </div>
-        <button class="btn" style="width:100%; background:#fbbf24; color:#090d16; font-weight:800; margin-top:14px; padding:12px; border-radius:8px;" onclick="openLn2ModalFor('Dewar 5')">🧊 Log Dewar 5 Check</button>
+        <button class="btn"
+          style="width:100%; background:#fbbf24; color:#090d16; font-weight:800; margin-top:14px; padding:12px; border-radius:8px;"
+          onclick="openLn2ModalFor('Dewar 5')">🧊 Log Dewar 5 Check</button>
       </div>
+      {% endif %}
     </div>
 
     <!-- Sawtooth Curves Showcase -->
     <div class="section-card">
-      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:12px;">
+      <div
+        style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:12px;">
         <div>
-          <h3 style="margin:0; font-size:1.15rem; color:#f0f4f8;">60-Day Liquid Nitrogen Level & Refill Sawtooth Curves</h3>
-          <p style="color:#8899a6; font-size:13px; margin:3px 0 0;">Visual confirmation of continuous boil-off rate and refill volume adherence.</p>
+          <h3 style="margin:0; font-size:1.15rem; color:#f0f4f8;">60-Day Liquid Nitrogen Level & Refill Sawtooth Curves
+          </h3>
+          <p style="color:#8899a6; font-size:13px; margin:3px 0 0;">Visual confirmation of continuous boil-off rate and
+            refill volume adherence.</p>
         </div>
         <div class="chips-row">
           <div class="chip active" id="chip-chart-1" onclick="switchSawtooth(1)">Dewar 1 Curve</div>
           <div class="chip" id="chip-chart-2" onclick="switchSawtooth(2)">Dewar 2 Curve</div>
+          {% if dewar_count >= 3 %}
           <div class="chip" id="chip-chart-3" onclick="switchSawtooth(3)">Dewar 3 Curve</div>
           <div class="chip" id="chip-chart-4" onclick="switchSawtooth(4)">Dewar 4 Curve</div>
           <div class="chip" id="chip-chart-5" onclick="switchSawtooth(5)">Dewar 5 Curve</div>
+          {% endif %}
         </div>
       </div>
       <div class="chart-container">
@@ -720,10 +1516,12 @@
 
     <!-- Full Liquid Nitrogen Audit Trail Table -->
     <div class="section-card">
-      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:10px;">
+      <div
+        style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:10px;">
         <div>
           <h3 style="margin:0; font-size:1.15rem; color:#f0f4f8;">Liquid Nitrogen Manual Dipstick Audit Trail</h3>
-          <p style="color:#8899a6; font-size:13px; margin:3px 0 0;">Complete regulatory history for level verification, manual refills, and seal inspections.</p>
+          <p style="color:#8899a6; font-size:13px; margin:3px 0 0;">Complete regulatory history for level verification,
+            manual refills, and seal inspections.</p>
         </div>
       </div>
       <div id="ln2HistoryTable">Loading inspection logs...</div>
@@ -737,25 +1535,30 @@
   </footer>
 
   <!-- Modal: Lab Operational Mode Selector -->
-  <div class="modal-overlay" id="sessionModal" style="display:none;" onclick="if(event.target===this) closeSessionModal()">
+  <div class="modal-overlay" id="sessionModal" style="display:none;"
+    onclick="if(event.target===this) closeSessionModal()">
     <div class="modal-box">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
         <h2 style="margin:0; font-size:1.35rem; color:#f0f4f8;">Lab Operational Mode</h2>
-        <button type="button" onclick="closeSessionModal()" style="background:transparent; border:none; color:#8899a6; font-size:22px; cursor:pointer;">&times;</button>
+        <button type="button" onclick="closeSessionModal()"
+          style="background:transparent; border:none; color:#8899a6; font-size:22px; cursor:pointer;">&times;</button>
       </div>
 
       <p style="color:#94a3b8; font-size:13px; margin:0 0 16px; line-height:1.45;">
-        The clinic cycles between quarterly clinical operating sessions (~2 weeks) and dormant standby periods. Select target mode:
+        The clinic cycles between quarterly clinical operating sessions (~2 weeks) and dormant standby periods. Select
+        target mode:
       </p>
 
       <div style="display:flex; gap:12px; margin-bottom:18px;">
         <div id="opt-mode-in" class="session-mode-card active" onclick="selectSessionMode('IN_SESSION')">
           <div style="font-size:16px; font-weight:800; color:#10b981; margin-bottom:4px;">🟢 In-Session Active</div>
-          <div style="font-size:12px; color:#cbd5e1; line-height:1.35;">Full clinical procedures. Incubator monitoring active. Cleanroom doors 3-min hold delay enabled.</div>
+          <div style="font-size:12px; color:#cbd5e1; line-height:1.35;">Full clinical procedures. Incubator monitoring
+            active. Cleanroom doors 3-min hold delay enabled.</div>
         </div>
         <div id="opt-mode-off" class="session-mode-card" onclick="selectSessionMode('OFF_SESSION')">
           <div style="font-size:16px; font-weight:800; color:#f59e0b; margin-bottom:4px;">⏸️ Off-Session Standby</div>
-          <div style="font-size:12px; color:#cbd5e1; line-height:1.35;">Lab dormant. Incubators powered off (alarms suppressed). Any cleanroom door opening alerts immediately.</div>
+          <div style="font-size:12px; color:#cbd5e1; line-height:1.35;">Lab dormant. Incubators powered off (alarms
+            suppressed). Any cleanroom door opening alerts immediately.</div>
         </div>
       </div>
 
@@ -769,20 +1572,26 @@
         <input type="text" id="sessionNotes" class="text-input" placeholder="e.g. Q4 Embryology Session start">
       </div>
 
-      <div id="sessionErr" style="color:#ef4444; font-size:12.5px; font-weight:700; margin-bottom:12px; display:none;"></div>
+      <div id="sessionErr" style="color:#ef4444; font-size:12.5px; font-weight:700; margin-bottom:12px; display:none;">
+      </div>
 
       <div style="display:flex; gap:10px; margin-top:20px;">
-        <button type="button" class="btn" style="flex:1; background:#1e293b;" onclick="closeSessionModal()">Cancel</button>
-        <button type="button" class="btn" style="flex:1; background:#00e676; color:#090d16; font-weight:800;" id="btnSaveSessionMode" onclick="saveSessionMode()">Confirm Mode Change</button>
+        <button type="button" class="btn" style="flex:1; background:#1e293b;"
+          onclick="closeSessionModal()">Cancel</button>
+        <button type="button" class="btn" style="flex:1; background:#00e676; color:#090d16; font-weight:800;"
+          id="btnSaveSessionMode" onclick="saveSessionMode()">Confirm Mode Change</button>
       </div>
 
       <!-- Historical Transition Audit Trail -->
       <div style="margin-top:22px; padding-top:16px; border-top:1px solid rgba(255,255,255,0.12);">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-          <span style="font-size:11.5px; font-weight:800; color:var(--brand-glacier); text-transform:uppercase; letter-spacing:0.5px;">Operational Mode Audit Trail</span>
+          <span
+            style="font-size:11.5px; font-weight:800; color:var(--brand-glacier); text-transform:uppercase; letter-spacing:0.5px;">Operational
+            Mode Audit Trail</span>
           <span style="font-size:11px; color:#8899a6;">Permanent PostgreSQL Record</span>
         </div>
-        <div id="sessionHistoryTable" style="max-height:190px; overflow-y:auto; border-radius:8px; border:1px solid rgba(255,255,255,0.06); background:#02121c;">
+        <div id="sessionHistoryTable"
+          style="max-height:190px; overflow-y:auto; border-radius:8px; border:1px solid rgba(255,255,255,0.06); background:#02121c;">
           Loading transition history...
         </div>
       </div>
@@ -797,9 +1606,12 @@
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px;">
         <div>
           <h2 style="margin:0; font-size:1.3rem; color:#00e5ff;">🧊 Record LN2 Dipstick Check</h2>
-          <div style="color:#8899a6; font-size:12px; margin-top:3px;">Mon / Wed / Fri Cleanroom Schedule (Due by 5:00 PM)</div>
+          <div style="color:#8899a6; font-size:12px; margin-top:3px;">Mon / Wed / Fri Cleanroom Schedule (Due by 5:00
+            PM)</div>
         </div>
-        <button type="button" class="btn" style="background:transparent; border:1px solid rgba(255,255,255,0.2); font-size:16px; padding:6px 12px;" onclick="closeLn2Modal()">✕</button>
+        <button type="button" class="btn"
+          style="background:transparent; border:1px solid rgba(255,255,255,0.2); font-size:16px; padding:6px 12px;"
+          onclick="closeLn2Modal()">✕</button>
       </div>
 
       <div class="form-group">
@@ -807,9 +1619,11 @@
         <div class="chips-row">
           <div class="chip active" id="chip-tank-1" onclick="selectTank('Dewar 1')">Dewar 1 (Embryos)</div>
           <div class="chip" id="chip-tank-2" onclick="selectTank('Dewar 2')">Dewar 2 (Sperm)</div>
+          {% if dewar_count >= 3 %}
           <div class="chip" id="chip-tank-3" onclick="selectTank('Dewar 3')">Dewar 3</div>
           <div class="chip" id="chip-tank-4" onclick="selectTank('Dewar 4')">Dewar 4</div>
           <div class="chip" id="chip-tank-5" onclick="selectTank('Dewar 5')">Dewar 5</div>
+          {% endif %}
         </div>
       </div>
 
@@ -867,14 +1681,17 @@
 
       <div class="form-group">
         <label class="form-label">Notes (Optional)</label>
-        <input type="text" id="ln2NotesInput" class="text-input" placeholder="Optional notes (e.g. routine top-off, inspected o-ring)">
+        <input type="text" id="ln2NotesInput" class="text-input"
+          placeholder="Optional notes (e.g. routine top-off, inspected o-ring)">
       </div>
 
       <div id="modalSubmitMsg" style="font-size:13px; font-weight:600; margin-bottom:12px;"></div>
 
       <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:18px;">
         <button type="button" class="btn" style="background:#334155;" onclick="closeLn2Modal()">Cancel</button>
-        <button type="button" class="btn" style="background:#00e5ff; color:#090d16; font-size:15px; font-weight:700; padding:10px 24px;" onclick="submitLn2Log()">✅ Submit Inspection</button>
+        <button type="button" class="btn"
+          style="background:#00e5ff; color:#090d16; font-size:15px; font-weight:700; padding:10px 24px;"
+          onclick="submitLn2Log()">✅ Submit Inspection</button>
       </div>
     </div>
   </div>
@@ -890,7 +1707,7 @@
       document.getElementById('view-cryo').style.display = isLive ? 'none' : 'block';
       document.getElementById('tab-live').className = isLive ? 'nav-tab active' : 'nav-tab';
       document.getElementById('tab-cryo').className = isLive ? 'nav-tab' : 'nav-tab active';
-      
+
       if (updateUrl) {
         const targetPath = isLive ? '/' : '/cryo';
         if (window.location.pathname !== targetPath) {
@@ -918,7 +1735,7 @@
         .then(r => r.json())
         .then(data => {
           const r = data.readings || {};
-          
+
           // Clock
           if (data.server_time) {
             const timeOnly = data.server_time.split(' ')[1] || '';
@@ -1257,14 +2074,14 @@
             return;
           }
           let h = '<table style="min-width:700px;"><thead><tr>' +
-                  '<th>Time</th>' +
-                  '<th>Equipment</th>' +
-                  '<th>Condition</th>' +
-                  '<th>Reading</th>' +
-                  '<th>Status</th>' +
-                  '<th>Acknowledged By</th>' +
-                  '<th>Action</th>' +
-                  '</tr></thead><tbody>';
+            '<th>Time</th>' +
+            '<th>Equipment</th>' +
+            '<th>Condition</th>' +
+            '<th>Reading</th>' +
+            '<th>Status</th>' +
+            '<th>Acknowledged By</th>' +
+            '<th>Action</th>' +
+            '</tr></thead><tbody>';
 
           rows.forEach(r => {
             let statusHtml = '';
@@ -1331,14 +2148,14 @@
             const timeDisp = r.triggered_at ? r.triggered_at.split('.')[0] : '-';
 
             h += `<tr ${rowStyle}>` +
-                 `<td>${timeDisp}</td>` +
-                 `<td><b>${r.equipment_name}</b></td>` +
-                 `<td>${r.alarm_type}</td>` +
-                 `<td>${valDisp}</td>` +
-                 `<td>${statusHtml}</td>` +
-                 `<td>${whoAckHtml}</td>` +
-                 `<td>${actHtml}</td>` +
-                 `</tr>`;
+              `<td>${timeDisp}</td>` +
+              `<td><b>${r.equipment_name}</b></td>` +
+              `<td>${r.alarm_type}</td>` +
+              `<td>${valDisp}</td>` +
+              `<td>${statusHtml}</td>` +
+              `<td>${whoAckHtml}</td>` +
+              `<td>${actHtml}</td>` +
+              `</tr>`;
           });
           h += '</tbody></table>';
           document.getElementById('alarmsTable').innerHTML = h;
@@ -1489,7 +2306,7 @@
         .then(r => r.json())
         .then(data => {
           const tanks = data.tanks || {};
-          
+
           // Update Dewars 1 to 5
           for (let i = 1; i <= 5; i++) {
             try {
@@ -1527,7 +2344,7 @@
                 if (dNext) dNext.innerText = t.next_check || '--';
 
                 const badgeClass = (t.status === 'OVERDUE') ? 'status-badge status-alert' :
-                                   ((t.status === 'DUE') ? 'status-badge status-warn' : 'status-badge status-normal');
+                  ((t.status === 'DUE') ? 'status-badge status-warn' : 'status-badge status-normal');
                 if (b) b.className = badgeClass;
                 if (dB) dB.className = badgeClass;
               }
@@ -1593,25 +2410,25 @@
             return;
           }
           let h = '<table style="width:100%; font-size:12px; margin:0;"><thead><tr>' +
-                  '<th style="padding:8px 10px;">Time</th>' +
-                  '<th style="padding:8px 10px;">Mode</th>' +
-                  '<th style="padding:8px 10px;">Staff</th>' +
-                  '<th style="padding:8px 10px;">Notes / Reason</th>' +
-                  '</tr></thead><tbody>';
+            '<th style="padding:8px 10px;">Time</th>' +
+            '<th style="padding:8px 10px;">Mode</th>' +
+            '<th style="padding:8px 10px;">Staff</th>' +
+            '<th style="padding:8px 10px;">Notes / Reason</th>' +
+            '</tr></thead><tbody>';
           history.forEach(row => {
             const timeStr = row.updated_at ? row.updated_at.split('.')[0] : '-';
             const isAct = (row.mode === 'IN_SESSION');
-            const badge = isAct 
+            const badge = isAct
               ? '<span style="color:#00e676; font-weight:800; font-size:11px;">🟢 IN-SESSION</span>'
               : '<span style="color:#f59e0b; font-weight:800; font-size:11px;">⏸️ OFF-SESSION</span>';
             const userStr = row.updated_by || 'Staff';
             const notesStr = row.notes ? row.notes : '<span style="color:#64748b;">-</span>';
             h += `<tr>` +
-                 `<td style="padding:8px 10px; font-family:monospace; color:#cbd5e1;">${timeStr}</td>` +
-                 `<td style="padding:8px 10px;">${badge}</td>` +
-                 `<td style="padding:8px 10px;"><b>${userStr}</b></td>` +
-                 `<td style="padding:8px 10px; color:#94a3b8;">${notesStr}</td>` +
-                 `</tr>`;
+              `<td style="padding:8px 10px; font-family:monospace; color:#cbd5e1;">${timeStr}</td>` +
+              `<td style="padding:8px 10px;">${badge}</td>` +
+              `<td style="padding:8px 10px;"><b>${userStr}</b></td>` +
+              `<td style="padding:8px 10px; color:#94a3b8;">${notesStr}</td>` +
+              `</tr>`;
           });
           h += '</tbody></table>';
           container.innerHTML = h;
@@ -1631,21 +2448,21 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ mode: selectedMode, user: u, notes: n })
       })
-      .then(r => r.json())
-      .then(d => {
-        btn.disabled = false;
-        btn.innerText = 'Confirm Mode Change';
-        loadSessionHistory();
-        updateTelemetry();
-        document.getElementById('sessionNotes').value = '';
-      })
-      .catch(e => {
-        btn.disabled = false;
-        btn.innerText = 'Confirm Mode Change';
-        const err = document.getElementById('sessionErr');
-        err.innerText = 'Error saving operational mode: ' + e;
-        err.style.display = 'block';
-      });
+        .then(r => r.json())
+        .then(d => {
+          btn.disabled = false;
+          btn.innerText = 'Confirm Mode Change';
+          loadSessionHistory();
+          updateTelemetry();
+          document.getElementById('sessionNotes').value = '';
+        })
+        .catch(e => {
+          btn.disabled = false;
+          btn.innerText = 'Confirm Mode Change';
+          const err = document.getElementById('sessionErr');
+          err.innerText = 'Error saving operational mode: ' + e;
+          err.style.display = 'block';
+        });
     }
 
     function toggleCryoHoldKiosk(tank) {
@@ -1713,13 +2530,13 @@
             return;
           }
           let h = '<table style="min-width:700px;"><thead><tr>' +
-                  '<th>Opened At</th>' +
-                  '<th>Door</th>' +
-                  '<th>Closed At</th>' +
-                  '<th>Duration</th>' +
-                  '<th>Session Mode</th>' +
-                  '<th>Alarm Tripped</th>' +
-                  '</tr></thead><tbody>';
+            '<th>Opened At</th>' +
+            '<th>Door</th>' +
+            '<th>Closed At</th>' +
+            '<th>Duration</th>' +
+            '<th>Session Mode</th>' +
+            '<th>Alarm Tripped</th>' +
+            '</tr></thead><tbody>';
 
           events.forEach(ev => {
             const openStr = ev.opened_at ? ev.opened_at.split('.')[0] : '-';
@@ -1733,22 +2550,22 @@
               durStr = '<span style="color:#ffab00;">In Progress</span>';
             }
 
-            const modeBadge = (ev.lab_mode === 'OFF_SESSION') 
+            const modeBadge = (ev.lab_mode === 'OFF_SESSION')
               ? '<span style="background:rgba(245,158,11,0.2); color:#f59e0b; padding:2px 7px; border-radius:4px; font-weight:700; font-size:11px;">OFF-SESSION</span>'
               : '<span style="background:rgba(0,230,118,0.15); color:#00e676; padding:2px 7px; border-radius:4px; font-weight:700; font-size:11px;">IN-SESSION</span>';
 
-            const alarmBadge = ev.alarm_tripped 
+            const alarmBadge = ev.alarm_tripped
               ? '<span class="status-badge status-alert">EXCURSION</span>'
               : '<span class="status-badge status-normal">SECURE</span>';
 
             h += `<tr>` +
-                 `<td>${openStr}</td>` +
-                 `<td><strong>${ev.door_name}</strong></td>` +
-                 `<td>${closeStr}</td>` +
-                 `<td style="font-family:monospace; font-weight:700;">${durStr}</td>` +
-                 `<td>${modeBadge}</td>` +
-                 `<td>${alarmBadge}</td>` +
-                 `</tr>`;
+              `<td>${openStr}</td>` +
+              `<td><strong>${ev.door_name}</strong></td>` +
+              `<td>${closeStr}</td>` +
+              `<td style="font-family:monospace; font-weight:700;">${durStr}</td>` +
+              `<td>${modeBadge}</td>` +
+              `<td>${alarmBadge}</td>` +
+              `</tr>`;
           });
           h += '</tbody></table>';
           container.innerHTML = h;
@@ -1769,4 +2586,5 @@
     updateLn2Status();
   </script>
 </body>
+
 </html>

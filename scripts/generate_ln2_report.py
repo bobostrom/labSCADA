@@ -74,7 +74,9 @@ PG_SSLMODE = os.environ.get("SCADA_PG_SSLMODE", os.environ.get("PGSSLMODE", "pre
 
 
 def get_all_tank_ids():
-    """Queries PostgreSQL for all distinct tank IDs present in the audit log."""
+    """Queries PostgreSQL for all distinct tank IDs present in the audit log, filtered by DEWAR_COUNT."""
+    dewar_count = int(os.environ.get("DEWAR_COUNT", "2" if os.environ.get("CLINIC_SLUG") == "demo" else "5"))
+    allowed = [f"Dewar {i}" for i in range(1, dewar_count + 1)]
     env = os.environ.copy()
     env["PGPASSWORD"] = PG_PASS
     if PG_SSLMODE:
@@ -83,12 +85,12 @@ def get_all_tank_ids():
     cmd = ["psql", "-h", PG_HOST, "-p", str(PG_PORT), "-U", PG_USER, "-d", PG_DB, "-t", "-A", "-c", sql]
     try:
         res = subprocess.run(cmd, env=env, capture_output=True, text=True, check=True)
-        tanks = [t.strip() for t in res.stdout.strip().split("\n") if t.strip()]
+        tanks = [t.strip() for t in res.stdout.strip().split("\n") if t.strip() in allowed]
         if tanks:
             return tanks
     except Exception as e:
         print(f"Warning: could not query distinct tanks: {e}")
-    return ["Dewar 1", "Dewar 2", "Dewar 3", "Dewar 4", "Dewar 5"]
+    return allowed
 
 
 def get_available_months():
@@ -690,12 +692,15 @@ def generate_alarms_audit_html_sheet(start_dt, end_dt, logo_b64, month_name_year
         qa_test_days.add(q[5][:10])
 
     # 2. Equipment-by-Equipment Summary
-    equipment_specs = [
+    dewar_count = int(os.environ.get("DEWAR_COUNT", "2" if os.environ.get("CLINIC_SLUG") == "demo" else "5"))
+    all_dewar_specs = [
         ("Dewar 1 (Embryos)", "Vapor < -135.0°C • Frost Floor > 10 cm", "Dewar 1"),
         ("Dewar 2 (Sperm)", "Vapor < -135.0°C • Frost Floor > 10 cm", "Dewar 2"),
         ("Dewar 3", "Vapor < -135.0°C • Frost Floor > 10 cm", "Dewar 3"),
         ("Dewar 4", "Vapor < -135.0°C • Frost Floor > 10 cm", "Dewar 4"),
         ("Dewar 5", "Vapor < -135.0°C • Frost Floor > 10 cm", "Dewar 5"),
+    ]
+    equipment_specs = all_dewar_specs[:dewar_count] + [
         ("Medical Refrigerator", "2.0°C to 8.0°C (High Trip: 8.5°C)", "Medical Fridge"),
         ("Medical Freezer", "< -15.0°C (Compressor Target: -20°C)", "Medical Freezer"),
         ("Chamber Incubator 01", "Chamber Contact Normal (CO2/Temp In-Range)", "Incubator 01"),
