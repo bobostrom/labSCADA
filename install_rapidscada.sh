@@ -22,7 +22,7 @@ echo "=== [2/8] Updating System & Installing Prerequisites ==="
 sudo apt update && sudo apt upgrade -y
 sudo apt install -y curl wget unzip tar libssl-dev libicu-dev nginx git \
     postgresql postgresql-contrib \
-    python3 python3-pip python3-jinja2 python3-psycopg2 python3-matplotlib python3-pil
+    python3 python3-pip python3-jinja2 python3-psycopg2 python3-matplotlib python3-pil python3-opcua
 
 echo "=== [3/8] Installing ASP.NET Core Runtime (.NET 10) ==="
 # Detect architecture (supports both Raspberry Pi ARM64 and WAGO x86_64)

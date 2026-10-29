@@ -15,8 +15,6 @@ VAR_INPUT
     {attribute 'symbol' := 'none'}
     bSimMode            : BOOL := FALSE;    (* TRUE = Ignore terminal, use virtual override *)
     {attribute 'symbol' := 'none'}
-    bForceAlarm         : BOOL := FALSE;    (* Forces alarm state during simulation *)
-    {attribute 'symbol' := 'none'}
     tPickupDelay        : TIME := T#15S;    (* Contact bounce suppression filter *)
     {attribute 'symbol' := 'none'}
     tDropoutDelay       : TIME := T#5S;     (* Recovery confirmation filter *)
@@ -32,6 +30,8 @@ VAR_OUTPUT
     tElapsedDO          : TIME := T#0S;
 END_VAR
 VAR
+    {attribute 'symbol' := 'readwrite'}
+    bForceAlarm         : BOOL := FALSE;    (* Forces alarm state during simulation *)
     {attribute 'symbol' := 'none'}
     fbFilter            : FB_PickupDropout;
 END_VAR

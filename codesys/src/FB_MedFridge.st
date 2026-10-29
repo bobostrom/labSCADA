@@ -15,8 +15,6 @@ VAR_INPUT
     {attribute 'symbol' := 'none'}
     bSimMode            : BOOL := FALSE;    (* TRUE = Ignore terminal, use realistic compressor physics *)
     {attribute 'symbol' := 'none'}
-    bForceExcursion     : BOOL := FALSE;    (* Injects warm excursion above 8.5°C *)
-    {attribute 'symbol' := 'none'}
     rNominalTemp        : REAL := 3.5;      (* Target operating point (°C) *)
     {attribute 'symbol' := 'none'}
     rHighTrip           : REAL := 8.5;      (* CAP excursion threshold (standard 8.0°C + 0.5 buffer) *)
@@ -46,6 +44,8 @@ VAR_OUTPUT
     tElapsedDO          : TIME := T#0S;
 END_VAR
 VAR
+    {attribute 'symbol' := 'readwrite'}
+    bForceExcursion     : BOOL := FALSE;    (* Injects warm excursion above 8.5°C in sim mode *)
     {attribute 'symbol' := 'none'}
     fbAlarmEval         : FB_AnalogAlarm;
     {attribute 'symbol' := 'none'}

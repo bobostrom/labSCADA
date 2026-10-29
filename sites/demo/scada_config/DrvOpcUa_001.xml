@@ -23,5 +23,14 @@
       <Item active="true" nodeID="ns=4;s=|var|CODESYS Control for Raspberry Pi 64 SL.Application.PLC_PRG.fbIncubator2.bAlarm" displayName="Incubator 02 Alarm" tagCode="IncubatorAlarm_02" dataType="System.Boolean" isArray="false" />
     </Subscription>
   </Subscriptions>
-  <Commands />
+  <Commands>
+    <Command nodeID="ns=4;s=|var|CODESYS Control for Raspberry Pi 64 SL.Application.PLC_PRG.fbFridge.bForceExcursion" displayName="Force Fridge Excursion" cmdCode="Sim_Fridge" dataType="System.Boolean" />
+    <Command nodeID="ns=4;s=|var|CODESYS Control for Raspberry Pi 64 SL.Application.PLC_PRG.fbFreezer.bForceExcursion" displayName="Force Freezer Excursion" cmdCode="Sim_Freezer" dataType="System.Boolean" />
+    <Command nodeID="ns=4;s=|var|CODESYS Control for Raspberry Pi 64 SL.Application.PLC_PRG.fbDewar1.bForceExcursion" displayName="Force Dewar 1 Excursion" cmdCode="Sim_Dewar1" dataType="System.Boolean" />
+    <Command nodeID="ns=4;s=|var|CODESYS Control for Raspberry Pi 64 SL.Application.PLC_PRG.fbDewar2.bForceExcursion" displayName="Force Dewar 2 Excursion" cmdCode="Sim_Dewar2" dataType="System.Boolean" />
+    <Command nodeID="ns=4;s=|var|CODESYS Control for Raspberry Pi 64 SL.Application.PLC_PRG.fbIncubator1.bForceAlarm" displayName="Force Incubator 1 Alarm" cmdCode="Sim_Inc1" dataType="System.Boolean" />
+    <Command nodeID="ns=4;s=|var|CODESYS Control for Raspberry Pi 64 SL.Application.PLC_PRG.fbIncubator2.bForceAlarm" displayName="Force Incubator 2 Alarm" cmdCode="Sim_Inc2" dataType="System.Boolean" />
+    <Command nodeID="ns=4;s=|var|CODESYS Control for Raspberry Pi 64 SL.Application.PLC_PRG.bDoor01_MainDoor" displayName="Force Main Door Open" cmdCode="Sim_Door1" dataType="System.Boolean" />
+    <Command nodeID="ns=4;s=|var|CODESYS Control for Raspberry Pi 64 SL.Application.PLC_PRG.bDoor02_CryoLabDoor" displayName="Force Cryo Door Open" cmdCode="Sim_Door2" dataType="System.Boolean" />
+  </Commands>
 </OpcDeviceConfig>

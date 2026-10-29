@@ -69,6 +69,56 @@ CLINIC_NAME   = os.environ.get("CLINIC_NAME", "Advanced Fertility of Alaska")
 CLINIC_SLUG   = os.environ.get("CLINIC_SLUG", "komdivflab")
 CLINIC_DOMAIN = os.environ.get("CLINIC_DOMAIN", "komdivflab.larestelemetry.com")
 CLINIC_LOGO   = os.environ.get("CLINIC_LOGO", "/assets/KOMDlogo.png")
+PLC_OPC_URL   = os.environ.get("PLC_OPC_URL", "opc.tcp://demo-plc:4840")
+SIMULATION_MODE = os.environ.get("SIMULATION_MODE", "false").lower() in ("true", "1", "yes")
+
+# Map of demo fault-injection targets to CODESYS OPC UA variable suffixes
+SIM_TARGETS = {
+    "fridge":  "PLC_PRG.fbFridge.bForceExcursion",
+    "freezer": "PLC_PRG.fbFreezer.bForceExcursion",
+    "dewar1":  "PLC_PRG.fbDewar1.bForceExcursion",
+    "dewar2":  "PLC_PRG.fbDewar2.bForceExcursion",
+    "dewar3":  "PLC_PRG.fbDewar3.bForceExcursion",
+    "dewar4":  "PLC_PRG.fbDewar4.bForceExcursion",
+    "dewar5":  "PLC_PRG.fbDewar5.bForceExcursion",
+    "inc1":    "PLC_PRG.fbIncubator1.bForceAlarm",
+    "inc2":    "PLC_PRG.fbIncubator2.bForceAlarm",
+    "door1":   "PLC_PRG.bDoor01_MainDoor",
+    "door2":   "PLC_PRG.bDoor02_CryoLabDoor",
+}
+sim_fault_states = {k: False for k in SIM_TARGETS}
+
+
+def write_plc_sim_bool(var_suffix, bool_val):
+    """Writes a boolean fault-injection flag to the CODESYS PLC via OPC UA (only in SIMULATION_MODE)."""
+    if not SIMULATION_MODE:
+        return False, "Simulation mode is disabled on this production site."
+
+    device_prefixes = [
+        "CODESYS Control for Raspberry Pi 64 SL.Application",
+        "WAGO 750-8212 PFC200 G2 2ETH RS.Application",
+    ]
+    try:
+        from opcua import Client, ua
+        client = Client(PLC_OPC_URL, timeout=4)
+        client.connect()
+        try:
+            for prefix in device_prefixes:
+                node_id = f"ns=4;s=|var|{prefix}.{var_suffix}"
+                try:
+                    node = client.get_node(node_id)
+                    dv = ua.DataValue(ua.Variant(bool(bool_val), ua.VariantType.Boolean))
+                    node.set_value(dv)
+                    return True, f"Wrote {bool_val} to {node_id}"
+                except Exception:
+                    continue
+            return False, f"Node {var_suffix} not found on {PLC_OPC_URL}"
+        finally:
+            client.disconnect()
+    except ImportError:
+        return False, "python3-opcua not installed on host; install with: sudo apt install python3-opcua"
+    except Exception as e:
+        return False, str(e)
 
 def render_template(template_name, **context):
     """Renders a Jinja2 template with site-specific branding context."""
@@ -1501,6 +1551,35 @@ class ClinicalAlertHandler(http.server.BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(svg_data.encode("utf-8"))
 
+        elif parsed.path in ["/sim", "/demo/sim"]:
+            if not SIMULATION_MODE:
+                self.send_response(404)
+                self.end_headers()
+                self.wfile.write(b"404 Not Found")
+                return
+            self.send_response(200)
+            self.send_header("Content-Type", "text/html; charset=utf-8")
+            self.send_header("Cache-Control", "no-cache, no-store, must-revalidate")
+            self.end_headers()
+            html = render_template("sim_control.html", plc_opc_url=PLC_OPC_URL)
+            self.wfile.write(html.encode("utf-8"))
+
+        elif parsed.path == "/api/sim/status":
+            if not SIMULATION_MODE:
+                self.send_response(404)
+                self.end_headers()
+                self.wfile.write(b"404 Not Found")
+                return
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.end_headers()
+            self.wfile.write(json.dumps({
+                "simulation_mode": SIMULATION_MODE,
+                "plc_opc_url": PLC_OPC_URL,
+                "faults": sim_fault_states
+            }).encode("utf-8"))
+
         else:
             # Rich Cleanroom Kiosk Touchscreen View
             self.send_response(200)
@@ -1684,6 +1763,47 @@ class ClinicalAlertHandler(http.server.BaseHTTPRequestHandler):
             self.send_header("Access-Control-Allow-Origin", "*")
             self.end_headers()
             self.wfile.write(json.dumps({"success": True, "tank": tank, "cancelled": True}).encode("utf-8"))
+
+        elif parsed.path == "/api/sim/toggle":
+            if not SIMULATION_MODE:
+                self.send_response(404)
+                self.end_headers()
+                self.wfile.write(b"404 Not Found")
+                return
+            content_length = int(self.headers.get("Content-Length", 0))
+            body_str = self.rfile.read(content_length).decode("utf-8") if content_length > 0 else "{}"
+            payload = json.loads(body_str) if body_str else {}
+            target = payload.get("target", "")
+            val = bool(payload.get("value", False))
+            if target not in SIM_TARGETS:
+                self.send_response(400)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps({"success": False, "error": f"Unknown target: {target}"}).encode("utf-8"))
+                return
+            ok, msg = write_plc_sim_bool(SIM_TARGETS[target], val)
+            if ok:
+                sim_fault_states[target] = val
+            self.send_response(200 if ok else 500)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.end_headers()
+            self.wfile.write(json.dumps({"success": ok, "target": target, "value": val, "message": msg}).encode("utf-8"))
+
+        elif parsed.path == "/api/sim/reset":
+            if not SIMULATION_MODE:
+                self.send_response(404)
+                self.end_headers()
+                self.wfile.write(b"404 Not Found")
+                return
+            for k, suffix in SIM_TARGETS.items():
+                write_plc_sim_bool(suffix, False)
+                sim_fault_states[k] = False
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.end_headers()
+            self.wfile.write(json.dumps({"success": True, "faults": sim_fault_states}).encode("utf-8"))
 
         else:
             self.send_response(404)

@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ clinic_name }} | Demo PLC Fault Injection Console</title>
+  <link rel="icon" type="image/png" href="{{ clinic_logo }}?v=3">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-app: #03141f;
+      --bg-card: rgba(4, 27, 43, 0.92);
+      --border-subtle: rgba(97, 185, 231, 0.22);
+      --text-main: #f0f8ff;
+      --text-muted: #8ba2b5;
+      --brand-blue: #037EAB;
+      --brand-glacier: #61B9E7;
+      --brand-gold: #CDA349;
+    }
+    * { box-sizing: border-box; }
+    body {
+      background: var(--bg-app);
+      color: var(--text-main);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      padding: 20px;
+      margin: 0 auto;
+      max-width: 960px;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 14px;
+      border-bottom: 1px solid var(--border-subtle);
+      padding-bottom: 16px;
+      margin-bottom: 20px;
+    }
+    .brand-row { display: flex; align-items: center; gap: 14px; }
+    .logo-badge {
+      width: 48px; height: 48px; border-radius: 50%;
+      background: rgba(0, 40, 75, 0.7);
+      border: 2px solid var(--brand-gold);
+      padding: 4px; display: flex; align-items: center; justify-content: center;
+    }
+    .logo-badge img { width: 100%; height: 100%; object-fit: contain; border-radius: 50%; }
+    h1 { font-family: 'Cinzel', serif; font-size: 1.25rem; margin: 0; color: #fff; }
+    .sub { color: var(--text-muted); font-size: 0.82rem; margin-top: 3px; }
+    .badge-sim {
+      background: rgba(255, 171, 0, 0.15);
+      color: #ffab00;
+      border: 1px solid rgba(255, 171, 0, 0.45);
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.4px;
+    }
+    .btn-back {
+      background: rgba(97, 185, 231, 0.12);
+      color: var(--brand-glacier);
+      border: 1px solid var(--border-subtle);
+      padding: 8px 14px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .btn-back:hover { background: rgba(97, 185, 231, 0.22); }
+    .banner-info {
+      background: linear-gradient(135deg, rgba(4, 27, 43, 0.95), rgba(2, 36, 56, 0.85));
+      border: 1px solid var(--border-subtle);
+      border-left: 4px solid var(--brand-gold);
+      border-radius: 10px;
+      padding: 14px 18px;
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .banner-info p { margin: 0; font-size: 13px; color: var(--text-muted); line-height: 1.45; }
+    .banner-info strong { color: #fff; }
+    .btn-reset-all {
+      background: #00c853;
+      color: #04141f;
+      border: none;
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-weight: 800;
+      font-size: 13px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .btn-reset-all:hover { background: #00e676; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 14px;
+    }
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 12px;
+      transition: all 0.15s;
+    }
+    .card.fault-active {
+      border-color: rgba(255, 23, 68, 0.65);
+      box-shadow: 0 0 18px rgba(255, 23, 68, 0.22);
+      background: rgba(45, 10, 22, 0.78);
+    }
+    .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+    .equip-name { font-size: 1rem; font-weight: 800; color: #fff; }
+    .equip-node { font-family: monospace; font-size: 11px; color: var(--text-muted); margin-top: 3px; word-break: break-all; }
+    .equip-desc { font-size: 12.5px; color: var(--text-muted); line-height: 1.4; }
+    .live-pill {
+      font-family: monospace;
+      font-size: 13px;
+      font-weight: 800;
+      padding: 4px 9px;
+      border-radius: 6px;
+      background: rgba(2, 18, 30, 0.9);
+      border: 1px solid var(--border-subtle);
+      color: var(--brand-glacier);
+      white-space: nowrap;
+    }
+    .toggle-btn {
+      width: 100%;
+      padding: 11px 14px;
+      border-radius: 8px;
+      font-size: 13.5px;
+      font-weight: 800;
+      cursor: pointer;
+      border: 1px solid rgba(255, 23, 68, 0.45);
+      background: rgba(255, 23, 68, 0.14);
+      color: #ff5252;
+      transition: all 0.15s;
+    }
+    .toggle-btn:hover { background: rgba(255, 23, 68, 0.26); }
+    .card.fault-active .toggle-btn {
+      background: #ff1744;
+      color: #ffffff;
+      border-color: #ff1744;
+    }
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: #023C52;
+      border: 1px solid var(--brand-glacier);
+      color: #fff;
+      padding: 12px 18px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 700;
+      display: none;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+      z-index: 999;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand-row">
+      <div class="logo-badge"><img src="{{ clinic_logo }}" alt="Logo"></div>
+      <div>
+        <h1>{{ clinic_name }} — PLC Fault Injector</h1>
+        <div class="sub">Direct CODESYS OPC UA Function Block Simulation Console (<code>{{ plc_opc_url }}</code>)</div>
+      </div>
+    </div>
+    <div style="display:flex; align-items:center; gap:10px;">
+      <span class="badge-sim">⚡ SIMULATION MODE ONLY</span>
+      <a href="/" class="btn-back">← Back to Kiosk</a>
+    </div>
+  </header>
+
+  <div class="banner-info">
+    <div>
+      <strong>Live Sales & Training Demo Controls</strong>
+      <p>Toggling a fault writes directly to the Function Block's internal <code>bForceExcursion</code> / <code>bForceAlarm</code> variable on the CODESYS PLC via OPC UA. Watch the pickup delay timer assert <code>bWarn</code> (Amber) before tripping <code>bAlarm</code> (Priority 2 Siren).</p>
+    </div>
+    <button class="btn-reset-all" onclick="resetAllFaults()">✓ Clear All Injected Faults</button>
+  </div>
+
+  <div class="grid" id="sim-grid"></div>
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const TARGETS = [
+      {
+        key: "fridge",
+        name: "Medical Refrigerator",
+        node: "PLC_PRG.fbFridge.bForceExcursion",
+        desc: "Simulates door left ajar / compressor failure: warms to +9.5°C (High > 8.5°C, 2m pickup delay).",
+        cnlTemp: 102, cnlWarn: 115, cnlAlarm: 111
+      },
+      {
+        key: "freezer",
+        name: "Medical Freezer",
+        node: "PLC_PRG.fbFreezer.bForceExcursion",
+        desc: "Simulates defrost stall / compressor failure: warms to -12.0°C (High > -15.0°C, 3m pickup delay).",
+        cnlTemp: 103, cnlWarn: 116, cnlAlarm: 112
+      },
+      {
+        key: "dewar1",
+        name: "Dewar 1 (Cryo LN2)",
+        node: "PLC_PRG.fbDewar1.bForceExcursion",
+        desc: "Simulates LN2 boil-off / vacuum loss: rises to -125.0°C (High > -135.0°C, 30s pickup delay).",
+        cnlTemp: 125, cnlWarn: 117, cnlAlarm: 113
+      },
+      {
+        key: "dewar2",
+        name: "Dewar 2 (Cryo LN2)",
+        node: "PLC_PRG.fbDewar2.bForceExcursion",
+        desc: "Simulates LN2 boil-off / vacuum loss: rises to -125.0°C (High > -135.0°C, 30s pickup delay).",
+        cnlTemp: 104, cnlWarn: 118, cnlAlarm: 114
+      },
+      {
+        key: "inc1",
+        name: "Incubator 01 Dry Contact",
+        node: "PLC_PRG.fbIncubator1.bForceAlarm",
+        desc: "Closes dry alarm contact on Embryology Incubator 01 (15s debounce filter).",
+        cnlAlarm: 123
+      },
+      {
+        key: "inc2",
+        name: "Incubator 02 Dry Contact",
+        node: "PLC_PRG.fbIncubator2.bForceAlarm",
+        desc: "Closes dry alarm contact on Embryology Incubator 02 (15s debounce filter).",
+        cnlAlarm: 124
+      },
+      {
+        key: "door1",
+        name: "Main Cleanroom Door Ajar",
+        node: "PLC_PRG.bDoor01_MainDoor",
+        desc: "Holds Main Cleanroom Door magnetic contact OPEN (trips door alarm after 3m pickup delay).",
+        cnlWarn: 119, cnlAlarm: 121
+      },
+      {
+        key: "door2",
+        name: "Cryo Lab Door Ajar",
+        node: "PLC_PRG.bDoor02_CryoLabDoor",
+        desc: "Holds Cryo Lab Door magnetic contact OPEN (trips door alarm after 3m pickup delay).",
+        cnlWarn: 120, cnlAlarm: 122
+      }
+    ];
+
+    let faultState = {};
+    let liveReadings = {};
+
+    function showToast(msg) {
+      const t = document.getElementById("toast");
+      t.textContent = msg;
+      t.style.display = "block";
+      setTimeout(() => { t.style.display = "none"; }, 3000);
+    }
+
+    function renderGrid() {
+      const grid = document.getElementById("sim-grid");
+      grid.innerHTML = TARGETS.map(t => {
+        const isFault = !!faultState[t.key];
+        let liveBadge = "";
+        if (t.cnlTemp && liveReadings[t.cnlTemp] !== undefined) {
+          liveBadge = `${liveReadings[t.cnlTemp].toFixed(1)} °C`;
+        } else if (t.cnlAlarm && liveReadings[t.cnlAlarm] !== undefined) {
+          liveBadge = liveReadings[t.cnlAlarm] > 0 ? "ALARM" : (t.cnlWarn && liveReadings[t.cnlWarn] > 0 ? "OPEN / WARN" : "NORMAL");
+        }
+        return `
+          <div class="card ${isFault ? 'fault-active' : ''}">
+            <div>
+              <div class="card-top">
+                <div>
+                  <div class="equip-name">${t.name}</div>
+                  <div class="equip-node">${t.node}</div>
+                </div>
+                ${liveBadge ? `<span class="live-pill">${liveBadge}</span>` : ''}
+              </div>
+              <p class="equip-desc" style="margin:10px 0 0;">${t.desc}</p>
+            </div>
+            <button class="toggle-btn" onclick="toggleFault('${t.key}', ${!isFault})">
+              ${isFault ? '🔴 FAULT INJECTED — Click to Restore Normal' : '⚡ Inject Excursion / Fault'}
+            </button>
+          </div>
+        `;
+      }).join("");
+    }
+
+    async function fetchState() {
+      try {
+        const [simRes, statusRes] = await Promise.all([
+          fetch("/api/sim/status"),
+          fetch("/api/status")
+        ]);
+        if (simRes.ok) {
+          const simData = await simRes.json();
+          faultState = simData.faults || {};
+        }
+        if (statusRes.ok) {
+          const stData = await statusRes.json();
+          liveReadings = stData.readings || {};
+        }
+        renderGrid();
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    async function toggleFault(targetKey, enable) {
+      try {
+        const res = await fetch("/api/sim/toggle", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ target: targetKey, value: enable })
+        });
+        const data = await res.json();
+        if (data.success) {
+          faultState[targetKey] = enable;
+          renderGrid();
+          showToast(`${targetKey.toUpperCase()}: ${enable ? 'Excursion Injected' : 'Restored to Normal'}`);
+        } else {
+          showToast(`Error: ${data.error || 'Failed to write to PLC'}`);
+        }
+      } catch (e) {
+        showToast("Network error communicating with simulator API");
+      }
+    }
+
+    async function resetAllFaults() {
+      try {
+        const res = await fetch("/api/sim/reset", { method: "POST" });
+        const data = await res.json();
+        if (data.success) {
+          faultState = {};
+          renderGrid();
+          showToast("All simulated faults cleared on PLC.");
+        }
+      } catch (e) {
+        showToast("Error clearing faults");
+      }
+    }
+
+    renderGrid();
+    fetchState();
+    setInterval(fetchState, 2000);
+  </script>
+</body>
+</html>
+

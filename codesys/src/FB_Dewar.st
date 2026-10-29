@@ -15,8 +15,6 @@ VAR_INPUT
     {attribute 'symbol' := 'none'}
     bSimMode            : BOOL := FALSE;    (* TRUE = Ignore terminal, use realistic virtual physics *)
     {attribute 'symbol' := 'none'}
-    bForceExcursion     : BOOL := FALSE;    (* Injects critical excursion above -135°C in sim mode *)
-    {attribute 'symbol' := 'none'}
     rNominalTemp        : REAL := -150.0;   (* Typical vapor phase operating temperature (°C) *)
     {attribute 'symbol' := 'none'}
     rHighTrip           : REAL := -135.0;   (* Critical specimen danger limit (°C) *)
@@ -42,6 +40,8 @@ VAR_OUTPUT
     tElapsedDO          : TIME := T#0S;     (* Time recovery has persisted *)
 END_VAR
 VAR
+    {attribute 'symbol' := 'readwrite'}
+    bForceExcursion     : BOOL := FALSE;    (* Injects critical excursion above -135°C in sim mode *)
     {attribute 'symbol' := 'none'}
     fbAlarmEval         : FB_AnalogAlarm;
     {attribute 'symbol' := 'none'}
