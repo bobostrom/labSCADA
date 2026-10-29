@@ -146,9 +146,9 @@
 
     /* Dual Tank Identification Badges */
     .tanks-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
       margin-bottom: 22px;
     }
 
@@ -160,11 +160,8 @@
       display: flex;
       align-items: center;
       gap: 14px;
-    }
-
-    .tank-badge-card.tank2 {
-      border-color: #2563eb;
-      background: #f8faff;
+      flex: 1;
+      min-width: 150px;
     }
 
     .tank-icon {
@@ -182,10 +179,6 @@
       text-transform: uppercase;
       letter-spacing: 0.8px;
       color: #0284c7;
-    }
-
-    .tank-badge-card.tank2 .tank-badge-tag {
-      color: #2563eb;
     }
 
     .tank-badge-name {
@@ -419,54 +412,18 @@
         <div class="station-subtitle">Liquid Nitrogen Specimen Storage</div>
       </div>
 
-      <!-- Adjacent Tanks Identification -->
-      <div class="tanks-row" style="display:flex; flex-wrap:wrap; gap:10px;">
-        <div class="tank-badge-card" style="flex:1; min-width:140px;">
-          <div class="tank-icon">🥚</div>
+      <!-- Configured Dewars Identification -->
+      <div class="tanks-row">
+        {% for d in equipment.dewars %}
+        <div class="tank-badge-card" style="border-color:{{ d.color | default('#0284c7') }};">
+          <div class="tank-icon">{{ d.icon | default('🧊') }}</div>
           <div class="tank-badge-info">
-            <div class="tank-badge-tag">Specimen Vessel 1</div>
-            <div class="tank-badge-name">DEWAR 1 (EMBRYOS)</div>
-            <div class="tank-badge-desc">Embryology Specimen Storage</div>
+            <div class="tank-badge-tag">Specimen Vessel {{ d.id }}</div>
+            <div class="tank-badge-name">{{ (d.label | default(d.name)) | upper }}</div>
+            <div class="tank-badge-desc">{{ d.desc | default('Cryopreservation Storage') }}</div>
           </div>
         </div>
-
-        <div class="tank-badge-card tank2" style="flex:1; min-width:140px;">
-          <div class="tank-icon">🧬</div>
-          <div class="tank-badge-info">
-            <div class="tank-badge-tag">Specimen Vessel 2</div>
-            <div class="tank-badge-name">DEWAR 2 (SPERM)</div>
-            <div class="tank-badge-desc">Andrology Specimen Storage</div>
-          </div>
-        </div>
-
-        {% if dewar_count >= 3 %}
-        <div class="tank-badge-card" style="flex:1; min-width:140px; border-color:#818cf8;">
-          <div class="tank-icon">🧊</div>
-          <div class="tank-badge-info">
-            <div class="tank-badge-tag">Specimen Vessel 3</div>
-            <div class="tank-badge-name" style="color:#818cf8;">DEWAR 3</div>
-            <div class="tank-badge-desc">Cryopreservation Storage</div>
-          </div>
-        </div>
-
-        <div class="tank-badge-card tank2" style="flex:1; min-width:140px; border-color:#2dd4bf;">
-          <div class="tank-icon">❄️</div>
-          <div class="tank-badge-info">
-            <div class="tank-badge-tag">Specimen Vessel 4</div>
-            <div class="tank-badge-name" style="color:#2dd4bf;">DEWAR 4</div>
-            <div class="tank-badge-desc">Cryopreservation Storage</div>
-          </div>
-        </div>
-
-        <div class="tank-badge-card" style="flex:1; min-width:140px; border-color:#fbbf24;">
-          <div class="tank-icon">⭐</div>
-          <div class="tank-badge-info">
-            <div class="tank-badge-tag">Specimen Vessel 5</div>
-            <div class="tank-badge-name" style="color:#fbbf24;">DEWAR 5</div>
-            <div class="tank-badge-desc">Cryopreservation Storage</div>
-          </div>
-        </div>
-        {% endif %}
+        {% endfor %}
       </div>
 
       <!-- Main Action & SOP -->
@@ -494,7 +451,7 @@
             <li><strong>Read Frost:</strong> Withdraw ruler, wave in air 3 seconds, and immediately read the frost line
               in <span class="step-highlight">centimeters (cm)</span>.</li>
             <li><strong>Scan QR:</strong> Open your smartphone camera and point at the code on the left.</li>
-            <li><strong>Select Dewar & Submit:</strong> Tap <strong>Dewar 1</strong> through <strong>Dewar 5</strong> at
+            <li><strong>Select Dewar &amp; Submit:</strong> Tap your target <strong>Dewar</strong> at
               the top of your phone screen. Enter the measured cm and your initials, then tap <strong>Submit</strong>.
             </li>
             <li><strong>Log Adjacent Dewars:</strong> On the confirmation screen, tap <span class="step-highlight">"Log

@@ -3,8 +3,8 @@
 # deploy_site.sh [site_name]
 # Activates a site manifest (e.g. 'afoa' or 'demo') on the local SCADA host:
 # 1. Validates sites/<site_name>/site.env exists
-# 2. Deploys to /etc/labscada/site.env
-# 3. Restarts ivf-alert-engine.service
+# 2. Deploys to /etc/labscada/site.env and /etc/labscada/equipment.json
+# 3. Restarts scadacomm6.service and ivf-alert-engine.service
 # ==============================================================================
 set -e
 
@@ -33,8 +33,17 @@ echo "-> Installing $SOURCE_ENV to /etc/labscada/site.env..."
 sudo cp "$SOURCE_ENV" /etc/labscada/site.env
 sudo chmod 644 /etc/labscada/site.env
 
-# Also keep a local site.env symlink or copy for local non-root development
+# Also keep a local site.env copy for local non-root development
 cp "$SOURCE_ENV" "$REPO_DIR/site.env"
+
+# Deploy site-specific equipment manifest (equipment.json)
+SOURCE_EQUIP="$SITE_DIR/equipment.json"
+if [ -f "$SOURCE_EQUIP" ]; then
+    echo "-> Installing $SOURCE_EQUIP to /etc/labscada/equipment.json..."
+    sudo cp "$SOURCE_EQUIP" /etc/labscada/equipment.json
+    sudo chmod 644 /etc/labscada/equipment.json
+    cp "$SOURCE_EQUIP" "$REPO_DIR/equipment.json"
+fi
 
 # Deploy site-specific Rapid SCADA configuration (e.g. WAGO vs Raspberry Pi OPC UA mappings)
 if [ -d "$SITE_DIR/scada_config" ]; then
@@ -56,4 +65,3 @@ else
 fi
 
 echo "=== Site Activation Complete: $SITE ==="
-

@@ -71,22 +71,61 @@ CLINIC_DOMAIN = os.environ.get("CLINIC_DOMAIN", "komdivflab.larestelemetry.com")
 CLINIC_LOGO   = os.environ.get("CLINIC_LOGO", "/assets/KOMDlogo.png")
 PLC_OPC_URL   = os.environ.get("PLC_OPC_URL", "opc.tcp://demo-plc:4840")
 SIMULATION_MODE = os.environ.get("SIMULATION_MODE", "false").lower() in ("true", "1", "yes")
-DEWAR_COUNT   = int(os.environ.get("DEWAR_COUNT", "2" if CLINIC_SLUG == "demo" else "5"))
 
-# Map of demo fault-injection targets to CODESYS OPC UA variable suffixes
-SIM_TARGETS = {
-    "fridge":  "PLC_PRG.fbFridge.bForceExcursion",
-    "freezer": "PLC_PRG.fbFreezer.bForceExcursion",
-    "dewar1":  "PLC_PRG.fbDewar1.bForceExcursion",
-    "dewar2":  "PLC_PRG.fbDewar2.bForceExcursion",
-    "dewar3":  "PLC_PRG.fbDewar3.bForceExcursion",
-    "dewar4":  "PLC_PRG.fbDewar4.bForceExcursion",
-    "dewar5":  "PLC_PRG.fbDewar5.bForceExcursion",
-    "inc1":    "PLC_PRG.fbIncubator1.bForceAlarm",
-    "inc2":    "PLC_PRG.fbIncubator2.bForceAlarm",
-    "door1":   "PLC_PRG.bDoor01_MainDoor",
-    "door2":   "PLC_PRG.bDoor02_CryoLabDoor",
-}
+
+def load_equipment_config():
+    """Loads per-site declarative equipment topology from equipment.json."""
+    site_folder = "demo" if CLINIC_SLUG == "demo" else ("afoa" if CLINIC_SLUG == "komdivflab" else CLINIC_SLUG)
+    candidates = [
+        "/etc/labscada/equipment.json",
+        os.path.join(REPO_DIR, "equipment.json"),
+        os.path.join(REPO_DIR, "sites", site_folder, "equipment.json"),
+        os.path.join(REPO_DIR, "sites", CLINIC_SLUG, "equipment.json"),
+        os.path.join(REPO_DIR, "sites", "afoa", "equipment.json"),
+    ]
+    raw = {}
+    for path in candidates:
+        if os.path.exists(path):
+            try:
+                with open(path, "r", encoding="utf-8") as f:
+                    raw = json.load(f)
+                print(f"Loaded equipment manifest from {path}")
+                break
+            except Exception as e:
+                print(f"Warning: failed to parse {path}: {e}")
+
+    cfg = {
+        "dewars": list(raw.get("dewars", [])),
+        "fridges": list(raw.get("fridges", [])),
+        "freezers": list(raw.get("freezers", [])),
+        "incubators": list(raw.get("incubators", [])),
+        "doors": list(raw.get("doors", [])),
+        "ambient": list(raw.get("ambient", [])),
+    }
+    return cfg
+
+
+EQUIPMENT_CONFIG = load_equipment_config()
+DEWAR_COUNT = len(EQUIPMENT_CONFIG["dewars"])
+
+# Dynamically build map of demo fault-injection targets to CODESYS OPC UA variable suffixes
+SIM_TARGETS = {}
+for _f in EQUIPMENT_CONFIG["fridges"]:
+    if _f.get("key") and _f.get("plc_fb"):
+        SIM_TARGETS[_f["key"]] = f"PLC_PRG.{_f['plc_fb']}.bForceExcursion"
+for _fz in EQUIPMENT_CONFIG["freezers"]:
+    if _fz.get("key") and _fz.get("plc_fb"):
+        SIM_TARGETS[_fz["key"]] = f"PLC_PRG.{_fz['plc_fb']}.bForceExcursion"
+for _d in EQUIPMENT_CONFIG["dewars"]:
+    if _d.get("key") and _d.get("plc_fb"):
+        SIM_TARGETS[_d["key"]] = f"PLC_PRG.{_d['plc_fb']}.bForceExcursion"
+for _inc in EQUIPMENT_CONFIG["incubators"]:
+    if _inc.get("key") and _inc.get("plc_fb"):
+        SIM_TARGETS[_inc["key"]] = f"PLC_PRG.{_inc['plc_fb']}.bForceAlarm"
+for _dr in EQUIPMENT_CONFIG["doors"]:
+    if _dr.get("key") and _dr.get("plc_var"):
+        SIM_TARGETS[_dr["key"]] = f"PLC_PRG.{_dr['plc_var']}"
+
 sim_fault_states = {k: False for k in SIM_TARGETS}
 
 
@@ -122,7 +161,7 @@ def write_plc_sim_bool(var_suffix, bool_val):
         return False, str(e)
 
 def render_template(template_name, **context):
-    """Renders a Jinja2 template with site-specific branding context."""
+    """Renders a Jinja2 template with site-specific branding and equipment topology context."""
     template = jinja_env.get_template(template_name)
     base_context = {
         "clinic_name": CLINIC_NAME,
@@ -130,6 +169,8 @@ def render_template(template_name, **context):
         "clinic_domain": CLINIC_DOMAIN,
         "clinic_logo": CLINIC_LOGO,
         "dewar_count": DEWAR_COUNT,
+        "equipment": EQUIPMENT_CONFIG,
+        "equipment_json": json.dumps(EQUIPMENT_CONFIG),
     }
     base_context.update(context)
     return template.render(**base_context)
@@ -147,39 +188,121 @@ PUSHOVER_PING_URL = os.environ.get("PUSHOVER_PING_URL", "https://api.pushover.ne
 
 ESCALATION_TIMEOUT_SECONDS = 1800  # 30 minutes
 
-# Monitored equipment definitions with explicit alarm priorities:
-# Priority 2: Critical Specimen Life-Safety (Repeating siren, 30m escalation)
-# Priority 1: Operational & Compliance Warnings (One-shot notice, 8:00 AM morning sweep, no siren)
-CHANNELS = {
-    101: {"name": "Lab Ambient", "type": "ambient", "low": 20.0, "high": 27.0, "priority": 1},
-    102: {"name": "Medical Fridge", "type": "fridge", "low": 2.0, "high": 8.0, "priority": 2},
-    103: {"name": "Medical Freezer", "type": "freezer", "high": -15.0, "priority": 2},
-    104: {"name": "Dewar 2", "type": "cryo", "high": -135.0, "priority": 2},
-    125: {"name": "Dewar 1", "type": "cryo", "high": -135.0, "priority": 2},
-    105: {"name": "Dewar 3", "type": "cryo", "high": -135.0, "priority": 2},
-    106: {"name": "Dewar 4", "type": "cryo", "high": -135.0, "priority": 2},
-    107: {"name": "Dewar 5", "type": "cryo", "high": -135.0, "priority": 2},
-    # Discrete alarm channels from CODESYS
-    111: {"name": "Medical Fridge", "type": "discrete_alarm", "linked_analog": 102, "priority": 2},
-    112: {"name": "Medical Freezer", "type": "discrete_alarm", "linked_analog": 103, "priority": 2},
-    113: {"name": "Dewar 1", "type": "discrete_alarm", "linked_analog": 125, "priority": 2},
-    114: {"name": "Dewar 2", "type": "discrete_alarm", "linked_analog": 104, "priority": 2},
-    115: {"name": "Medical Fridge Warning", "type": "warning_delay", "linked_analog": 102, "priority": 0},
-    116: {"name": "Medical Freezer Warning", "type": "warning_delay", "linked_analog": 103, "priority": 0},
-    117: {"name": "Dewar 1 Warning", "type": "warning_delay", "linked_analog": 125, "priority": 0},
-    118: {"name": "Dewar 2 Warning", "type": "warning_delay", "linked_analog": 104, "priority": 0},
-    119: {"name": "Main Cleanroom Door Contact", "type": "door_contact", "priority": 0},
-    120: {"name": "Cryo Lab Door Contact", "type": "door_contact", "priority": 0},
-    121: {"name": "Main Cleanroom Door", "type": "door_alarm", "priority": 2},
-    122: {"name": "Cryo Lab Door", "type": "door_alarm", "priority": 2},
-    123: {"name": "Incubator 01", "type": "incubator", "priority": 2},
-    124: {"name": "Incubator 02", "type": "incubator", "priority": 2},
-    195: {"name": "Dewar 5", "type": "ln2_inspection", "schedule": "Mon, Wed, Fri by 5:00 PM", "priority": 1},
-    196: {"name": "Dewar 4", "type": "ln2_inspection", "schedule": "Mon, Wed, Fri by 5:00 PM", "priority": 1},
-    197: {"name": "Dewar 3", "type": "ln2_inspection", "schedule": "Mon, Wed, Fri by 5:00 PM", "priority": 1},
-    198: {"name": "Dewar 2", "type": "ln2_inspection", "schedule": "Mon, Wed, Fri by 5:00 PM", "priority": 1},
-    199: {"name": "Dewar 1", "type": "ln2_inspection", "schedule": "Mon, Wed, Fri by 5:00 PM", "priority": 1},
-}
+
+def build_channels_from_equipment(eq):
+    """Dynamically builds the CHANNELS lookup dict from the equipment configuration."""
+    cnls = {}
+    for a in eq.get("ambient", []):
+        if a.get("temp_cnl"):
+            cnls[int(a["temp_cnl"])] = {
+                "name": a["name"],
+                "type": "ambient",
+                "low": a.get("low_limit", 20.0),
+                "high": a.get("high_limit", 27.0),
+                "priority": 1,
+            }
+    for f in eq.get("fridges", []):
+        t_cnl = int(f["temp_cnl"]) if f.get("temp_cnl") else None
+        if t_cnl:
+            cnls[t_cnl] = {
+                "name": f["name"],
+                "type": "fridge",
+                "low": f.get("low_limit", 2.0),
+                "high": f.get("high_limit", 8.0),
+                "priority": 2,
+            }
+        if f.get("alarm_cnl"):
+            cnls[int(f["alarm_cnl"])] = {
+                "name": f["name"],
+                "type": "discrete_alarm",
+                "linked_analog": t_cnl,
+                "priority": 2,
+            }
+        if f.get("warn_cnl"):
+            cnls[int(f["warn_cnl"])] = {
+                "name": f"{f['name']} Warning",
+                "type": "warning_delay",
+                "linked_analog": t_cnl,
+                "priority": 0,
+            }
+    for fz in eq.get("freezers", []):
+        t_cnl = int(fz["temp_cnl"]) if fz.get("temp_cnl") else None
+        if t_cnl:
+            cnls[t_cnl] = {
+                "name": fz["name"],
+                "type": "freezer",
+                "high": fz.get("high_limit", -15.0),
+                "priority": 2,
+            }
+        if fz.get("alarm_cnl"):
+            cnls[int(fz["alarm_cnl"])] = {
+                "name": fz["name"],
+                "type": "discrete_alarm",
+                "linked_analog": t_cnl,
+                "priority": 2,
+            }
+        if fz.get("warn_cnl"):
+            cnls[int(fz["warn_cnl"])] = {
+                "name": f"{fz['name']} Warning",
+                "type": "warning_delay",
+                "linked_analog": t_cnl,
+                "priority": 0,
+            }
+    for d in eq.get("dewars", []):
+        t_cnl = int(d["temp_cnl"]) if d.get("temp_cnl") else None
+        if t_cnl:
+            cnls[t_cnl] = {
+                "name": d["name"],
+                "type": "cryo",
+                "high": d.get("high_limit", -135.0),
+                "priority": 2,
+            }
+        if d.get("alarm_cnl"):
+            cnls[int(d["alarm_cnl"])] = {
+                "name": d["name"],
+                "type": "discrete_alarm",
+                "linked_analog": t_cnl,
+                "priority": 2,
+            }
+        if d.get("warn_cnl"):
+            cnls[int(d["warn_cnl"])] = {
+                "name": f"{d['name']} Warning",
+                "type": "warning_delay",
+                "linked_analog": t_cnl,
+                "priority": 0,
+            }
+        if d.get("ln2_cnl"):
+            cnls[int(d["ln2_cnl"])] = {
+                "name": d["name"],
+                "type": "ln2_inspection",
+                "schedule": "Mon, Wed, Fri by 5:00 PM",
+                "priority": 1,
+            }
+    for dr in eq.get("doors", []):
+        if dr.get("contact_cnl"):
+            cnls[int(dr["contact_cnl"])] = {
+                "name": f"{dr['name']} Contact",
+                "type": "door_contact",
+                "priority": 0,
+            }
+        if dr.get("alarm_cnl"):
+            cnls[int(dr["alarm_cnl"])] = {
+                "name": dr["name"],
+                "type": "door_alarm",
+                "priority": 2,
+            }
+    for inc in eq.get("incubators", []):
+        if inc.get("alarm_cnl"):
+            cnls[int(inc["alarm_cnl"])] = {
+                "name": inc["name"],
+                "type": "incubator",
+                "priority": 2,
+            }
+    return cnls
+
+
+CHANNELS = build_channels_from_equipment(EQUIPMENT_CONFIG)
+LN2_INSPECTION_CNLS = {int(d["ln2_cnl"]) for d in EQUIPMENT_CONFIG["dewars"] if d.get("ln2_cnl")}
 
 # In-memory tracking of active alarm state machine
 active_alarms = {}
@@ -294,10 +417,18 @@ def set_lab_mode(new_mode, user="Lab Staff", notes=""):
     return safe_mode
 
 
-# Door Event State Tracking
+# Door Event State Tracking (dynamically built from EQUIPMENT_CONFIG["doors"])
 door_event_states = {
-    119: {"name": "Main Cleanroom Door", "alarm_cnl": 121, "is_open": False, "opened_at": None, "event_id": None, "alarm_tripped": False},
-    120: {"name": "Cryo Lab Door", "alarm_cnl": 122, "is_open": False, "opened_at": None, "event_id": None, "alarm_tripped": False}
+    int(dr["contact_cnl"]): {
+        "name": dr["name"],
+        "alarm_cnl": int(dr["alarm_cnl"]) if dr.get("alarm_cnl") else None,
+        "is_open": False,
+        "opened_at": None,
+        "event_id": None,
+        "alarm_tripped": False,
+    }
+    for dr in EQUIPMENT_CONFIG["doors"]
+    if dr.get("contact_cnl")
 }
 
 def track_door_events(readings, current_mode):
@@ -305,7 +436,7 @@ def track_door_events(readings, current_mode):
     now = time.time()
     for contact_cnl, st in door_event_states.items():
         is_now_open = (readings.get(contact_cnl, 0) > 0)
-        is_now_alarm = (readings.get(st["alarm_cnl"], 0) > 0)
+        is_now_alarm = (readings.get(st["alarm_cnl"], 0) > 0) if st.get("alarm_cnl") else False
         door_name = st["name"]
 
         if is_now_open and not st["is_open"]:
@@ -357,7 +488,6 @@ def track_door_events(readings, current_mode):
 
 
 # Cryo Maintenance / Retrieval Hold State
-# { "Cryo Tank 1": {"expires_at": float, "started_at": float, "user": str, "db_id": int} }
 active_cryo_holds = {}
 
 def is_cryo_hold_active(equipment_name):
@@ -397,7 +527,8 @@ def start_cryo_hold(equipment_name, duration_minutes=15, user="Lab Staff"):
     now = time.time()
     dur_min = max(1, min(120, int(duration_minutes)))
     exp = now + (dur_min * 60)
-    targets = ["Dewar 1", "Dewar 2", "Dewar 3", "Dewar 4", "Dewar 5"] if ("all" in equipment_name.lower()) else [equipment_name]
+    all_dewar_names = [d["name"] for d in EQUIPMENT_CONFIG["dewars"]]
+    targets = all_dewar_names if ("all" in equipment_name.lower()) else [equipment_name]
 
     for target in targets:
         safe_equip = target.replace("'", "''")
@@ -421,15 +552,12 @@ def start_cryo_hold(equipment_name, duration_minutes=15, user="Lab Staff"):
     # Resolve any currently active alarms on target units
     mute_cnls = []
     dewar_mute_map = {
-        "Dewar 1": [113, 125],
-        "Dewar 2": [114, 104],
-        "Dewar 3": [105],
-        "Dewar 4": [106],
-        "Dewar 5": [107],
+        d["name"]: [int(c) for c in (d.get("alarm_cnl"), d.get("temp_cnl")) if c]
+        for d in EQUIPMENT_CONFIG["dewars"]
     }
     for target in targets:
         for d_key, cnls in dewar_mute_map.items():
-            if d_key in target or d_key[-1] in target:
+            if d_key in target or str(d_key[-1]) in target:
                 mute_cnls.extend(cnls)
     for c in set(mute_cnls):
         resolve_alarm(c)
@@ -437,14 +565,14 @@ def start_cryo_hold(equipment_name, duration_minutes=15, user="Lab Staff"):
 
 def cancel_cryo_hold(equipment_name, user="Lab Staff"):
     """Cancels maintenance hold early and returns tank to live monitoring."""
-    targets = ["Dewar 1", "Dewar 2", "Dewar 3", "Dewar 4", "Dewar 5"] if ("all" in equipment_name.lower()) else [equipment_name]
+    all_dewar_names = [d["name"] for d in EQUIPMENT_CONFIG["dewars"]]
+    targets = all_dewar_names if ("all" in equipment_name.lower()) else [equipment_name]
     for target in targets:
         with state_lock:
             hold = active_cryo_holds.pop(target, None)
         if hold and hold.get("db_id"):
             db_execute(f"UPDATE mod_arc_postgre_sql.cryo_maintenance_holds SET ended_at = NOW(), cancelled_early = TRUE WHERE id = {hold['db_id']};")
     return True
-
 
 
 # ==============================================================================
@@ -558,7 +686,7 @@ def trigger_alarm(cnl_num, equipment_name, alarm_type, excursion_val, priority=N
         priority = cfg.get("priority", 2)
 
     val_str = f"{excursion_val:.1f}°C" if excursion_val is not None else "TRIPPED"
-    if cnl_num in (195, 196, 197, 198, 199) and excursion_val is not None:
+    if cnl_num in LN2_INSPECTION_CNLS and excursion_val is not None:
         val_str = f"{excursion_val:.1f}h since check"
 
     if priority == 2:
@@ -651,7 +779,7 @@ def resolve_alarm(cnl_num, final_val=None):
     db_execute(sql)
 
     # Send Priority 0 "RECOVERED" notification with chime
-    val_disp = f"({final_val:.1f} cm)" if (cnl_num in (198, 199) and final_val is not None) else (f"({final_val:.1f}°C)" if final_val is not None else "")
+    val_disp = f"({final_val:.1f} cm)" if (cnl_num in LN2_INSPECTION_CNLS and final_val is not None) else (f"({final_val:.1f}°C)" if final_val is not None else "")
     send_pushover_alert(
         title=f"🟢 RECOVERED: {equip} Normal",
         message=f"{equip} has returned to safe operational range {val_disp}. Duration: {duration_str}. Siren will continue repeating until acknowledged on phone or kiosk.",
@@ -724,85 +852,99 @@ def acknowledge_alarm(alarm_id, acknowledged_by="Lab Kiosk", user_token="local_k
 # BACKGROUND SCAN & ESCALATION WORKERS
 # ==============================================================================
 def telemetry_scan_worker():
-    """Continuously evaluates channel readings against alarm states."""
+    """Continuously evaluates channel readings against alarm states based on EQUIPMENT_CONFIG."""
     while True:
         try:
             readings = get_current_channel_values()
-            now = time.time()
             current_mode = get_current_lab_mode()
 
             # Track door open/close transitions and duration in database
             track_door_events(readings, current_mode)
 
-            # 1. Evaluate Discrete Alarm Bits from CODESYS (Channels 111-114, 121-124)
-            discrete_evals = [
-                (111, "Medical Fridge", "Temperature Excursion"),
-                (112, "Medical Freezer", "Temperature Excursion"),
-                (113, "Dewar 1", "Liquid Nitrogen Excursion"),
-                (114, "Dewar 2", "Liquid Nitrogen Excursion"),
-                (121, "Main Cleanroom Door", "Door Held Open > 3m"),
-                (122, "Cryo Lab Door", "Door Held Open > 3m"),
-                (123, "Incubator 01", "Chamber Alarm Contact"),
-                (124, "Incubator 02", "Chamber Alarm Contact"),
-            ]
+            # 1. Fridges (Discrete alarm or analog limit fallback)
+            for f in EQUIPMENT_CONFIG["fridges"]:
+                equip = f["name"]
+                t_cnl = int(f["temp_cnl"]) if f.get("temp_cnl") else None
+                a_cnl = int(f["alarm_cnl"]) if f.get("alarm_cnl") else None
+                analog_val = readings.get(t_cnl) if t_cnl else None
+                low_lim = f.get("low_limit", 2.0)
+                high_lim = f.get("high_limit", 8.5)
 
-            for cnl, equip, alarm_type in discrete_evals:
-                if cnl in readings:
-                    val = readings[cnl]
-                    linked = CHANNELS.get(cnl, {}).get("linked_analog")
-                    analog_val = readings.get(linked) if linked else None
-
-                    # Suppress Incubators if Off-Session
-                    if cnl in (123, 124) and current_mode == "OFF_SESSION":
-                        resolve_alarm(cnl, analog_val)
-                        continue
-
-                    # Suppress Dewar if in manual Maintenance / Retrieval Hold
-                    if cnl in (113, 114) and is_cryo_hold_active(equip):
-                        resolve_alarm(cnl, analog_val)
-                        continue
-
-                    if val > 0:
-                        # Discrete alarm bit is HIGH
-                        trigger_alarm(cnl, equip, alarm_type, analog_val)
+                if a_cnl and a_cnl in readings:
+                    if readings[a_cnl] > 0:
+                        trigger_alarm(a_cnl, equip, "Temperature Excursion", analog_val)
                     else:
-                        # Discrete alarm bit is LOW
-                        resolve_alarm(cnl, analog_val)
+                        resolve_alarm(a_cnl, analog_val)
+                elif t_cnl and t_cnl in readings:
+                    if analog_val > high_lim or analog_val < low_lim:
+                        trigger_alarm(t_cnl, equip, "Temperature Excursion", analog_val)
+                    elif (low_lim + 0.5) <= analog_val <= (high_lim - 1.0):
+                        resolve_alarm(t_cnl, analog_val)
 
-            # 2. Evaluate Analog Limit Fallbacks (If discrete alarm channels not present)
-            # Med Fridge (Cnl 102)
-            if 102 in readings and 111 not in readings:
-                f_temp = readings[102]
-                if f_temp > 8.5 or f_temp < 2.0:
-                    trigger_alarm(102, "Medical Fridge", "Temperature Excursion", f_temp)
-                elif f_temp <= 7.5 and f_temp >= 2.5:
-                    resolve_alarm(102, f_temp)
+            # 2. Freezers (Discrete alarm or analog limit fallback)
+            for fz in EQUIPMENT_CONFIG["freezers"]:
+                equip = fz["name"]
+                t_cnl = int(fz["temp_cnl"]) if fz.get("temp_cnl") else None
+                a_cnl = int(fz["alarm_cnl"]) if fz.get("alarm_cnl") else None
+                analog_val = readings.get(t_cnl) if t_cnl else None
+                high_lim = fz.get("high_limit", -15.0)
 
-            # Med Freezer (Cnl 103)
-            if 103 in readings and 112 not in readings:
-                fz_temp = readings[103]
-                if fz_temp > -15.0:
-                    trigger_alarm(103, "Medical Freezer", "Temperature Excursion", fz_temp)
-                elif fz_temp <= -16.5:
-                    resolve_alarm(103, fz_temp)
+                if a_cnl and a_cnl in readings:
+                    if readings[a_cnl] > 0:
+                        trigger_alarm(a_cnl, equip, "Temperature Excursion", analog_val)
+                    else:
+                        resolve_alarm(a_cnl, analog_val)
+                elif t_cnl and t_cnl in readings:
+                    if analog_val > high_lim:
+                        trigger_alarm(t_cnl, equip, "Temperature Excursion", analog_val)
+                    elif analog_val <= (high_lim - 1.5):
+                        resolve_alarm(t_cnl, analog_val)
 
-            # Dewar 1 (Cnl 125)
-            if 125 in readings and 113 not in readings:
-                c_temp = readings[125]
-                if not is_cryo_hold_active("Dewar 1") and not is_cryo_hold_active("Cryo Tank 1"):
-                    if c_temp > -135.0:
-                        trigger_alarm(125, "Dewar 1", "Liquid Nitrogen Excursion", c_temp)
-                    elif c_temp <= -140.0:
-                        resolve_alarm(125, c_temp)
+            # 3. Dewars (Discrete alarm or analog limit fallback, respecting Cryo Hold)
+            for d in EQUIPMENT_CONFIG["dewars"]:
+                equip = d["name"]
+                t_cnl = int(d["temp_cnl"]) if d.get("temp_cnl") else None
+                a_cnl = int(d["alarm_cnl"]) if d.get("alarm_cnl") else None
+                analog_val = readings.get(t_cnl) if t_cnl else None
+                high_lim = d.get("high_limit", -135.0)
+                in_hold = is_cryo_hold_active(equip) or is_cryo_hold_active(f"Cryo Tank {d.get('id')}")
 
-            # Dewar 2 (Cnl 104)
-            if 104 in readings and 114 not in readings:
-                c2_temp = readings[104]
-                if not is_cryo_hold_active("Dewar 2") and not is_cryo_hold_active("Cryo Tank 2"):
-                    if c2_temp > -135.0:
-                        trigger_alarm(104, "Dewar 2", "Liquid Nitrogen Excursion", c2_temp)
-                    elif c2_temp <= -140.0:
-                        resolve_alarm(104, c2_temp)
+                if a_cnl and a_cnl in readings:
+                    if in_hold:
+                        resolve_alarm(a_cnl, analog_val)
+                    elif readings[a_cnl] > 0:
+                        trigger_alarm(a_cnl, equip, "Liquid Nitrogen Excursion", analog_val)
+                    else:
+                        resolve_alarm(a_cnl, analog_val)
+                elif t_cnl and t_cnl in readings:
+                    if in_hold:
+                        resolve_alarm(t_cnl, analog_val)
+                    elif analog_val > high_lim:
+                        trigger_alarm(t_cnl, equip, "Liquid Nitrogen Excursion", analog_val)
+                    elif analog_val <= (high_lim - 5.0):
+                        resolve_alarm(t_cnl, analog_val)
+
+            # 4. Doors (Discrete alarm)
+            for dr in EQUIPMENT_CONFIG["doors"]:
+                equip = dr["name"]
+                a_cnl = int(dr["alarm_cnl"]) if dr.get("alarm_cnl") else None
+                if a_cnl and a_cnl in readings:
+                    if readings[a_cnl] > 0:
+                        trigger_alarm(a_cnl, equip, "Door Held Open > 3m", None)
+                    else:
+                        resolve_alarm(a_cnl, None)
+
+            # 5. Incubators (Discrete alarm, suppressed when OFF_SESSION)
+            for inc in EQUIPMENT_CONFIG["incubators"]:
+                equip = inc["name"]
+                a_cnl = int(inc["alarm_cnl"]) if inc.get("alarm_cnl") else None
+                if a_cnl and a_cnl in readings:
+                    if current_mode == "OFF_SESSION":
+                        resolve_alarm(a_cnl, None)
+                    elif readings[a_cnl] > 0:
+                        trigger_alarm(a_cnl, equip, "Chamber Alarm Contact", None)
+                    else:
+                        resolve_alarm(a_cnl, None)
 
         except Exception as e:
             print(f"Scan loop error: {e}")
@@ -971,7 +1113,10 @@ def evaluate_ln2_schedule(now, last_log_time, initials="--", level_cm=0.0):
 
 
 def get_ln2_status():
-    """Returns latest inspection status and recent logs for all cryo tanks based on Mon/Wed/Fri 5pm schedule."""
+    """Returns latest inspection status and recent logs for configured cryo tanks based on Mon/Wed/Fri 5pm schedule."""
+    if not EQUIPMENT_CONFIG["dewars"]:
+        return {"tanks": {}, "history": []}
+
     sql = """
     SELECT DISTINCT ON (tank_id) 
         tank_id, level_cm, was_filled, frost_condition, initials, notes, 
@@ -983,6 +1128,8 @@ def get_ln2_status():
     rows = db_query(sql)
     tanks = {}
     now = datetime.now()
+    configured_names = {d["name"] for d in EQUIPMENT_CONFIG["dewars"]}
+
     for r in rows:
         if len(r) >= 8:
             t_id = r[0]
@@ -990,6 +1137,8 @@ def get_ln2_status():
                 t_id = "Dewar 1"
             elif t_id == "Cryo Tank 2":
                 t_id = "Dewar 2"
+            if t_id not in configured_names:
+                continue
             lvl = float(r[1]) if r[1] else 0.0
             filled = (r[2] == "t")
             frost = r[3]
@@ -1024,8 +1173,8 @@ def get_ln2_status():
             }
 
     # Ensure configured dewars have baseline representation
-    expected_dewars = [f"Dewar {i}" for i in range(1, DEWAR_COUNT + 1)]
-    for expected_tank in expected_dewars:
+    for d in EQUIPMENT_CONFIG["dewars"]:
+        expected_tank = d["name"]
         if expected_tank not in tanks:
             sched_def = evaluate_ln2_schedule(now, None)
             tanks[expected_tank] = {
@@ -1086,22 +1235,18 @@ def record_ln2_log(tank_id, level_cm, was_filled, frost_condition, initials, not
 
     # Resolve overdue alarm for this specific dewar
     dewar_alarm_map = {
-        "Dewar 1": 199,
-        "Dewar 2": 198,
-        "Dewar 3": 197,
-        "Dewar 4": 196,
-        "Dewar 5": 195,
+        d["name"]: int(d["ln2_cnl"])
+        for d in EQUIPMENT_CONFIG["dewars"]
+        if d.get("ln2_cnl")
     }
     alarm_cnl = dewar_alarm_map.get(safe_tank)
     if not alarm_cnl:
         for k, v in dewar_alarm_map.items():
-            if k[-1] in safe_tank:
+            if str(k[-1]) in safe_tank:
                 alarm_cnl = v
                 break
-    if not alarm_cnl:
-        alarm_cnl = 199
-
-    resolve_alarm(alarm_cnl, final_val=level_cm)
+    if alarm_cnl:
+        resolve_alarm(alarm_cnl, final_val=level_cm)
 
     # Determine next due date for notification
     status_info = get_ln2_status()
@@ -1124,37 +1269,34 @@ def ln2_schedule_watcher():
     """Background loop verifying that LN2 dewars are inspected per Mon/Wed/Fri 5:00 PM schedule."""
     while True:
         try:
-            status_data = get_ln2_status()
-            tanks = status_data.get("tanks", {})
-            all_tank_cnls = [
-                ("Dewar 1", 199),
-                ("Dewar 2", 198),
-                ("Dewar 3", 197),
-                ("Dewar 4", 196),
-                ("Dewar 5", 195)
-            ]
-            tank_cnls = all_tank_cnls[:DEWAR_COUNT]
-            for tank_name, cnl_num in tank_cnls:
-                tank = tanks.get(tank_name)
-                if tank:
-                    status = tank.get("status")
-                    detail = tank.get("detail", f"{tank_name} Manual Check Overdue")
-                    if status == "OVERDUE":
-                        with state_lock:
-                            already_active = cnl_num in active_alarms
-                        if not already_active:
-                            print(f"[{datetime.now().strftime('%T')}] LN2 INSPECTION OVERDUE: {tank_name} ({detail})")
-                            trigger_alarm(
-                                cnl_num=cnl_num,
-                                equipment_name=tank_name,
-                                alarm_type=detail,
-                                excursion_val=round(tank.get("hours_since", 0.0), 1),
-                                priority=1
-                            )
-                    else:
-                        with state_lock:
-                            if cnl_num in active_alarms:
-                                resolve_alarm(cnl_num, final_val=tank["level_cm"])
+            if EQUIPMENT_CONFIG["dewars"]:
+                status_data = get_ln2_status()
+                tanks = status_data.get("tanks", {})
+                for d in EQUIPMENT_CONFIG["dewars"]:
+                    if not d.get("ln2_cnl"):
+                        continue
+                    tank_name = d["name"]
+                    cnl_num = int(d["ln2_cnl"])
+                    tank = tanks.get(tank_name)
+                    if tank:
+                        status = tank.get("status")
+                        detail = tank.get("detail", f"{tank_name} Manual Check Overdue")
+                        if status == "OVERDUE":
+                            with state_lock:
+                                already_active = cnl_num in active_alarms
+                            if not already_active:
+                                print(f"[{datetime.now().strftime('%T')}] LN2 INSPECTION OVERDUE: {tank_name} ({detail})")
+                                trigger_alarm(
+                                    cnl_num=cnl_num,
+                                    equipment_name=tank_name,
+                                    alarm_type=detail,
+                                    excursion_val=round(tank.get("hours_since", 0.0), 1),
+                                    priority=1
+                                )
+                        else:
+                            with state_lock:
+                                if cnl_num in active_alarms:
+                                    resolve_alarm(cnl_num, final_val=tank["level_cm"])
         except Exception as e:
             print(f"LN2 schedule watcher error: {e}")
         time.sleep(60.0)
@@ -1174,7 +1316,7 @@ def generate_qr_svg(url, box_size=8):
 
 
 def render_print_placards_html(host, scheme="http"):
-    """Generates a high-resolution, printable 8.5x11 single station placard with a vector QR code for both dewars."""
+    """Generates a high-resolution, printable 8.5x11 single station placard with a vector QR code for configured dewars."""
     station_url = f"{scheme}://{host}/log"
     qr_svg = generate_qr_svg(station_url, box_size=9)
     return render_template("station_placard.html", station_url=station_url, qr_svg=qr_svg)
@@ -1182,40 +1324,47 @@ def render_print_placards_html(host, scheme="http"):
 
 def render_mobile_log_html(host, tank_param, readings):
     """Renders a responsive, mobile-first dipstick entry interface for staff scanning QR codes with their phone."""
-    t_str = str(tank_param).strip()
-    tank_num = 1
-    for digit in "12345":
-        if digit in t_str:
-            tank_num = int(digit)
-            break
-    default_tank = f"Dewar {tank_num}"
+    dewars = EQUIPMENT_CONFIG["dewars"]
+    if not dewars:
+        return render_template(
+            "mobile_log.html",
+            default_tank="None",
+            active_tank_num=0,
+            disp_temp="--",
+            disp_sensor="--",
+            init_level="30.0",
+            tank_configs={},
+            tank_configs_json="{}",
+        )
 
-    # Channel mappings for each dewar:
-    # Dewar 1: temp 125, level 199
-    # Dewar 2: temp 104, level 198
-    # Dewar 3: temp 105, level 197
-    # Dewar 4: temp 106, level 196
-    # Dewar 5: temp 107, level 195
-    dewar_meta = {
-        1: {"temp_cnl": 125, "level_cnl": 199, "default_level": 30.0},
-        2: {"temp_cnl": 104, "level_cnl": 198, "default_level": 30.0},
-        3: {"temp_cnl": 105, "level_cnl": 197, "default_level": 30.0},
-        4: {"temp_cnl": 106, "level_cnl": 196, "default_level": 30.0},
-        5: {"temp_cnl": 107, "level_cnl": 195, "default_level": 30.0},
-    }
+    t_str = str(tank_param).strip()
+    first_id = int(dewars[0]["id"])
+    tank_num = first_id
+    for d in dewars:
+        if str(d["id"]) in t_str or d["name"].lower() == t_str.lower():
+            tank_num = int(d["id"])
+            break
 
     ln2_data = get_ln2_status()
     tanks_dict = ln2_data.get("tanks", {})
 
     tank_configs = {}
-    for i in range(1, 6):
-        d_name = f"Dewar {i}"
-        meta = dewar_meta[i]
-        t_temp = readings.get(meta["temp_cnl"], -150.0)
-        t_level = readings.get(meta["level_cnl"], meta["default_level"])
+    default_tank = dewars[0]["name"]
+    for d in dewars:
+        d_name = d["name"]
+        if int(d["id"]) == tank_num:
+            default_tank = d_name
+        t_cnl = int(d["temp_cnl"]) if d.get("temp_cnl") else None
+        l_cnl = int(d["ln2_cnl"]) if d.get("ln2_cnl") else None
+        t_temp = readings.get(t_cnl, -196.0) if t_cnl else -196.0
+        t_level = readings.get(l_cnl, 30.0) if l_cnl else 30.0
         t_info = tanks_dict.get(d_name, {})
-        last_log = t_info.get("level_cm", meta["default_level"])
+        last_log = t_info.get("level_cm", 30.0) or 30.0
         tank_configs[d_name] = {
+            "id": int(d["id"]),
+            "name": d_name,
+            "subtitle": d.get("subtitle", ""),
+            "icon": d.get("icon", "🧊"),
             "temp": f"{t_temp:.1f} °C",
             "sensor": f"{t_level:.1f} cm",
             "defaultVal": f"{last_log:.1f}",
@@ -1223,7 +1372,7 @@ def render_mobile_log_html(host, tank_param, readings):
             "info": t_info,
         }
 
-    active_cfg = tank_configs.get(default_tank, tank_configs["Dewar 1"])
+    active_cfg = tank_configs.get(default_tank, next(iter(tank_configs.values())))
     init_level = active_cfg["defaultVal"]
     disp_temp = active_cfg["temp"]
     disp_sensor = active_cfg["sensor"]
@@ -1232,26 +1381,11 @@ def render_mobile_log_html(host, tank_param, readings):
         "mobile_log.html",
         default_tank=default_tank,
         active_tank_num=tank_num,
-        is_tank2=(tank_num == 2),
         disp_temp=disp_temp,
         disp_sensor=disp_sensor,
         init_level=init_level,
         tank_configs=tank_configs,
-        t1_temp_disp=tank_configs["Dewar 1"]["temp"],
-        t1_level_disp=tank_configs["Dewar 1"]["sensor"],
-        t1_default_val=tank_configs["Dewar 1"]["defaultVal"],
-        t2_temp_disp=tank_configs["Dewar 2"]["temp"],
-        t2_level_disp=tank_configs["Dewar 2"]["sensor"],
-        t2_default_val=tank_configs["Dewar 2"]["defaultVal"],
-        t3_temp_disp=tank_configs["Dewar 3"]["temp"],
-        t3_level_disp=tank_configs["Dewar 3"]["sensor"],
-        t3_default_val=tank_configs["Dewar 3"]["defaultVal"],
-        t4_temp_disp=tank_configs["Dewar 4"]["temp"],
-        t4_level_disp=tank_configs["Dewar 4"]["sensor"],
-        t4_default_val=tank_configs["Dewar 4"]["defaultVal"],
-        t5_temp_disp=tank_configs["Dewar 5"]["temp"],
-        t5_level_disp=tank_configs["Dewar 5"]["sensor"],
-        t5_default_val=tank_configs["Dewar 5"]["defaultVal"],
+        tank_configs_json=json.dumps(tank_configs),
     )
 
 
@@ -1290,7 +1424,8 @@ class ClinicalAlertHandler(http.server.BaseHTTPRequestHandler):
                 "readings": readings,
                 "last_qa": last_qa,
                 "lab_mode": get_current_lab_mode(),
-                "cryo_holds": get_active_cryo_holds()
+                "cryo_holds": get_active_cryo_holds(),
+                "equipment": EQUIPMENT_CONFIG,
             }
             self.send_response(200)
             self.send_header("Content-Type", "application/json")
@@ -1579,7 +1714,8 @@ class ClinicalAlertHandler(http.server.BaseHTTPRequestHandler):
             self.wfile.write(json.dumps({
                 "simulation_mode": SIMULATION_MODE,
                 "plc_opc_url": PLC_OPC_URL,
-                "faults": sim_fault_states
+                "faults": sim_fault_states,
+                "equipment": EQUIPMENT_CONFIG,
             }).encode("utf-8"))
 
         else:
@@ -1652,7 +1788,8 @@ class ClinicalAlertHandler(http.server.BaseHTTPRequestHandler):
                     raw_qs = urllib.parse.parse_qs(body_str)
                     payload = {k: v[0] for k, v in raw_qs.items()}
 
-            tank_id = payload.get("tank_id") or params.get("tank_id", ["Cryo Tank 1"])[0]
+            default_dewar_name = EQUIPMENT_CONFIG["dewars"][0]["name"] if EQUIPMENT_CONFIG["dewars"] else "Dewar 1"
+            tank_id = payload.get("tank_id") or params.get("tank_id", [default_dewar_name])[0]
             level_str = payload.get("level_cm") or params.get("level_cm", [None])[0]
             was_filled_val = payload.get("was_filled") or params.get("was_filled", ["false"])[0]
             was_filled = str(was_filled_val).lower() in ("true", "1", "yes", "t")
@@ -1734,7 +1871,8 @@ class ClinicalAlertHandler(http.server.BaseHTTPRequestHandler):
                     raw_qs = urllib.parse.parse_qs(body_str)
                     payload = {k: v[0] for k, v in raw_qs.items()}
 
-            tank = payload.get("tank") or payload.get("tank_id") or "Cryo Tank 1"
+            default_dewar_name = EQUIPMENT_CONFIG["dewars"][0]["name"] if EQUIPMENT_CONFIG["dewars"] else "Dewar 1"
+            tank = payload.get("tank") or payload.get("tank_id") or default_dewar_name
             dur = payload.get("duration_minutes") or payload.get("duration") or 15
             user = payload.get("user") or payload.get("initials") or "Lab Staff"
             start_cryo_hold(tank, duration_minutes=int(dur), user=user)
@@ -1756,7 +1894,8 @@ class ClinicalAlertHandler(http.server.BaseHTTPRequestHandler):
                     raw_qs = urllib.parse.parse_qs(body_str)
                     payload = {k: v[0] for k, v in raw_qs.items()}
 
-            tank = payload.get("tank") or payload.get("tank_id") or "Cryo Tank 1"
+            default_dewar_name = EQUIPMENT_CONFIG["dewars"][0]["name"] if EQUIPMENT_CONFIG["dewars"] else "Dewar 1"
+            tank = payload.get("tank") or payload.get("tank_id") or default_dewar_name
             user = payload.get("user") or "Lab Staff"
             cancel_cryo_hold(tank, user=user)
 

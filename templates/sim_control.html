@@ -182,7 +182,7 @@
 
   <div class="banner-info">
     <div>
-      <strong>Live Sales & Training Demo Controls</strong>
+      <strong>Live Sales &amp; Training Demo Controls</strong>
       <p>Toggling a fault writes directly to the Function Block's internal <code>bForceExcursion</code> / <code>bForceAlarm</code> variable on the CODESYS PLC via OPC UA. Watch the pickup delay timer assert <code>bWarn</code> (Amber) before tripping <code>bAlarm</code> (Priority 2 Siren).</p>
     </div>
     <button class="btn-reset-all" onclick="resetAllFaults()">✓ Clear All Injected Faults</button>
@@ -192,65 +192,69 @@
   <div class="toast" id="toast"></div>
 
   <script>
-    const TARGETS = [
-      {
-        key: "fridge",
-        name: "Medical Refrigerator",
-        node: "PLC_PRG.fbFridge.bForceExcursion",
-        desc: "Simulates door left ajar / compressor failure: warms to +9.5°C (High > 8.5°C, 2m pickup delay).",
-        cnlTemp: 102, cnlWarn: 115, cnlAlarm: 111
-      },
-      {
-        key: "freezer",
-        name: "Medical Freezer",
-        node: "PLC_PRG.fbFreezer.bForceExcursion",
-        desc: "Simulates defrost stall / compressor failure: warms to -12.0°C (High > -15.0°C, 3m pickup delay).",
-        cnlTemp: 103, cnlWarn: 116, cnlAlarm: 112
-      },
-      {
-        key: "dewar1",
-        name: "Dewar 1 (Cryo LN2)",
-        node: "PLC_PRG.fbDewar1.bForceExcursion",
-        desc: "Simulates LN2 boil-off / vacuum loss: rises to -125.0°C (High > -135.0°C, 30s pickup delay).",
-        cnlTemp: 125, cnlWarn: 117, cnlAlarm: 113
-      },
-      {
-        key: "dewar2",
-        name: "Dewar 2 (Cryo LN2)",
-        node: "PLC_PRG.fbDewar2.bForceExcursion",
-        desc: "Simulates LN2 boil-off / vacuum loss: rises to -125.0°C (High > -135.0°C, 30s pickup delay).",
-        cnlTemp: 104, cnlWarn: 118, cnlAlarm: 114
-      },
-      {
-        key: "inc1",
-        name: "Incubator 01 Dry Contact",
-        node: "PLC_PRG.fbIncubator1.bForceAlarm",
-        desc: "Closes dry alarm contact on Embryology Incubator 01 (15s debounce filter).",
-        cnlAlarm: 123
-      },
-      {
-        key: "inc2",
-        name: "Incubator 02 Dry Contact",
-        node: "PLC_PRG.fbIncubator2.bForceAlarm",
-        desc: "Closes dry alarm contact on Embryology Incubator 02 (15s debounce filter).",
-        cnlAlarm: 124
-      },
-      {
-        key: "door1",
-        name: "Main Cleanroom Door Ajar",
-        node: "PLC_PRG.bDoor01_MainDoor",
-        desc: "Holds Main Cleanroom Door magnetic contact OPEN (trips door alarm after 3m pickup delay).",
-        cnlWarn: 119, cnlAlarm: 121
-      },
-      {
-        key: "door2",
-        name: "Cryo Lab Door Ajar",
-        node: "PLC_PRG.bDoor02_CryoLabDoor",
-        desc: "Holds Cryo Lab Door magnetic contact OPEN (trips door alarm after 3m pickup delay).",
-        cnlWarn: 120, cnlAlarm: 122
-      }
-    ];
+    const EQUIPMENT = {{ equipment_json | safe }};
 
+    function buildSimTargets() {
+      const targets = [];
+      (EQUIPMENT.fridges || []).forEach(f => {
+        if (f.plc_fb) {
+          targets.push({
+            key: f.key,
+            name: f.name,
+            node: `PLC_PRG.${f.plc_fb}.bForceExcursion`,
+            desc: `Simulates door left ajar / compressor failure: warms to +9.5°C (High > ${f.high_limit || 8.5}°C, 2m pickup delay).`,
+            cnlTemp: f.temp_cnl, cnlWarn: f.warn_cnl, cnlAlarm: f.alarm_cnl
+          });
+        }
+      });
+      (EQUIPMENT.freezers || []).forEach(fz => {
+        if (fz.plc_fb) {
+          targets.push({
+            key: fz.key,
+            name: fz.name,
+            node: `PLC_PRG.${fz.plc_fb}.bForceExcursion`,
+            desc: `Simulates defrost stall / compressor failure: warms to -12.0°C (High > ${fz.high_limit || -15.0}°C, 3m pickup delay).`,
+            cnlTemp: fz.temp_cnl, cnlWarn: fz.warn_cnl, cnlAlarm: fz.alarm_cnl
+          });
+        }
+      });
+      (EQUIPMENT.dewars || []).forEach(d => {
+        if (d.plc_fb) {
+          targets.push({
+            key: d.key,
+            name: `${d.label || d.name} (Cryo LN2)`,
+            node: `PLC_PRG.${d.plc_fb}.bForceExcursion`,
+            desc: `Simulates LN2 boil-off / vacuum loss: rises to -125.0°C (High > ${d.high_limit || -135.0}°C, 30s pickup delay).`,
+            cnlTemp: d.temp_cnl, cnlWarn: d.warn_cnl, cnlAlarm: d.alarm_cnl
+          });
+        }
+      });
+      (EQUIPMENT.incubators || []).forEach(inc => {
+        if (inc.plc_fb) {
+          targets.push({
+            key: inc.key,
+            name: `${inc.name} Dry Contact`,
+            node: `PLC_PRG.${inc.plc_fb}.bForceAlarm`,
+            desc: `Closes dry alarm contact on ${inc.name} (15s debounce filter).`,
+            cnlAlarm: inc.alarm_cnl
+          });
+        }
+      });
+      (EQUIPMENT.doors || []).forEach(dr => {
+        if (dr.plc_var) {
+          targets.push({
+            key: dr.key,
+            name: `${dr.name} Ajar`,
+            node: `PLC_PRG.${dr.plc_var}`,
+            desc: `Holds ${dr.name} magnetic contact OPEN (trips door alarm after 3m pickup delay).`,
+            cnlWarn: dr.contact_cnl, cnlAlarm: dr.alarm_cnl
+          });
+        }
+      });
+      return targets;
+    }
+
+    const TARGETS = buildSimTargets();
     let faultState = {};
     let liveReadings = {};
 
@@ -351,4 +355,3 @@
   </script>
 </body>
 </html>
-

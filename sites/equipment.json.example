@@ -1,0 +1,100 @@
+{
+  "_comment": "Declarative per-site equipment topology. Any array can contain 0 to N items. Empty arrays ([]) automatically hide their UI cards, tabs, and alarm monitors.",
+  "dewars": [
+    {
+      "id": 1,
+      "key": "dewar1",
+      "name": "Dewar 1",
+      "label": "Dewar 1 (Embryos)",
+      "subtitle": "Embryos",
+      "desc": "Embryology Specimen Storage",
+      "icon": "🥚",
+      "color": "#00e5ff",
+      "plc_fb": "fbDewar1",
+      "temp_cnl": 125,
+      "alarm_cnl": 113,
+      "warn_cnl": 117,
+      "ln2_cnl": 199,
+      "high_limit": -135.0
+    },
+    {
+      "id": 2,
+      "key": "dewar2",
+      "name": "Dewar 2",
+      "label": "Dewar 2 (Sperm)",
+      "subtitle": "Sperm",
+      "desc": "Andrology Specimen Storage",
+      "icon": "🧬",
+      "color": "#00b0ff",
+      "plc_fb": "fbDewar2",
+      "temp_cnl": 104,
+      "alarm_cnl": 114,
+      "warn_cnl": 118,
+      "ln2_cnl": 198,
+      "high_limit": -135.0
+    }
+  ],
+  "fridges": [
+    {
+      "id": 1,
+      "key": "fridge",
+      "name": "Medical Fridge",
+      "short_name": "Fridge",
+      "target_label": "Target: 2.0°C – 8.0°C",
+      "plc_fb": "fbFridge",
+      "temp_cnl": 102,
+      "alarm_cnl": 111,
+      "warn_cnl": 115,
+      "low_limit": 2.0,
+      "high_limit": 8.5
+    }
+  ],
+  "freezers": [
+    {
+      "id": 1,
+      "key": "freezer",
+      "name": "Medical Freezer",
+      "short_name": "Freezer",
+      "target_label": "Limit: < -15.0°C",
+      "plc_fb": "fbFreezer",
+      "temp_cnl": 103,
+      "alarm_cnl": 112,
+      "warn_cnl": 116,
+      "high_limit": -15.0
+    }
+  ],
+  "incubators": [
+    {
+      "id": 1,
+      "key": "inc1",
+      "name": "Incubator 01",
+      "subtitle": "Chamber A • In-Range",
+      "plc_fb": "fbIncubator1",
+      "alarm_cnl": 123
+    }
+  ],
+  "doors": [
+    {
+      "id": 1,
+      "key": "door1",
+      "name": "Main Cleanroom Door",
+      "short_name": "Main Door",
+      "plc_var": "bDoor01_MainDoor",
+      "plc_fb": "fbDoor01",
+      "contact_cnl": 119,
+      "alarm_cnl": 121
+    }
+  ],
+  "ambient": [
+    {
+      "id": 1,
+      "key": "ambient",
+      "name": "Cleanroom Ambient",
+      "target_label": "Comfort Target: ~25.0°C",
+      "plc_var": "rLabAmbientTemp",
+      "temp_cnl": 101,
+      "low_limit": 20.0,
+      "high_limit": 27.0
+    }
+  ]
+}
