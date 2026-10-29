@@ -3,24 +3,24 @@
   <Subscriptions>
     <Subscription active="true" displayName="IVF_Telemetry" publishingInterval="1000">
       <Item active="true" nodeID="ns=4;s=|var|CODESYS Control for Raspberry Pi 64 SL.Application.PLC_PRG.rLabAmbientTemp" displayName="Lab Ambient Temp" tagCode="Temperature_01" dataType="System.Double" isArray="false" />
-      <Item active="true" nodeID="ns=4;s=|var|CODESYS Control for Raspberry Pi 64 SL.Application.PLC_PRG.rMedFridgeTemp" displayName="Medical Fridge" tagCode="Temperature_02" dataType="System.Double" isArray="false" />
-      <Item active="true" nodeID="ns=4;s=|var|CODESYS Control for Raspberry Pi 64 SL.Application.PLC_PRG.rMedFreezerTemp" displayName="Medical Freezer" tagCode="Temperature_03" dataType="System.Double" isArray="false" />
-      <Item active="true" nodeID="ns=4;s=|var|CODESYS Control for Raspberry Pi 64 SL.Application.PLC_PRG.rDewar1Temp" displayName="Dewar 1" tagCode="TC_Temperature" dataType="System.Double" isArray="false" />
-      <Item active="true" nodeID="ns=4;s=|var|CODESYS Control for Raspberry Pi 64 SL.Application.PLC_PRG.rDewar2Temp" displayName="Dewar 2" tagCode="Temperature_04" dataType="System.Double" isArray="false" />
-      <Item active="true" nodeID="ns=4;s=|var|CODESYS Control for Raspberry Pi 64 SL.Application.PLC_PRG.bMedFridgeAlarm" displayName="Medical Fridge Alarm" tagCode="SensorStatus_01" dataType="System.Boolean" isArray="false" />
-      <Item active="true" nodeID="ns=4;s=|var|CODESYS Control for Raspberry Pi 64 SL.Application.PLC_PRG.bMedFreezerAlarm" displayName="Medical Freezer Alarm" tagCode="SensorStatus_02" dataType="System.Boolean" isArray="false" />
-      <Item active="true" nodeID="ns=4;s=|var|CODESYS Control for Raspberry Pi 64 SL.Application.PLC_PRG.bDewar1Alarm" displayName="Dewar 1 Alarm" tagCode="SensorStatus_03" dataType="System.Boolean" isArray="false" />
-      <Item active="true" nodeID="ns=4;s=|var|CODESYS Control for Raspberry Pi 64 SL.Application.PLC_PRG.bDewar2Alarm" displayName="Dewar 2 Alarm" tagCode="SensorStatus_04" dataType="System.Boolean" isArray="false" />
-      <Item active="true" nodeID="ns=4;s=|var|CODESYS Control for Raspberry Pi 64 SL.Application.PLC_PRG.bMedFridgeWarn" displayName="Medical Fridge Warn" tagCode="SensorStatus_05" dataType="System.Boolean" isArray="false" />
-      <Item active="true" nodeID="ns=4;s=|var|CODESYS Control for Raspberry Pi 64 SL.Application.PLC_PRG.bMedFreezerWarn" displayName="Medical Freezer Warn" tagCode="SensorStatus_06" dataType="System.Boolean" isArray="false" />
-      <Item active="true" nodeID="ns=4;s=|var|CODESYS Control for Raspberry Pi 64 SL.Application.PLC_PRG.bDewar1Warn" displayName="Dewar 1 Warn" tagCode="SensorStatus_07" dataType="System.Boolean" isArray="false" />
-      <Item active="true" nodeID="ns=4;s=|var|CODESYS Control for Raspberry Pi 64 SL.Application.PLC_PRG.bDewar2Warn" displayName="Dewar 2 Warn" tagCode="SensorStatus_08" dataType="System.Boolean" isArray="false" />
+      <Item active="true" nodeID="ns=4;s=|var|CODESYS Control for Raspberry Pi 64 SL.Application.PLC_PRG.fbFridge.rProcessTemp" displayName="Medical Fridge" tagCode="Temperature_02" dataType="System.Double" isArray="false" />
+      <Item active="true" nodeID="ns=4;s=|var|CODESYS Control for Raspberry Pi 64 SL.Application.PLC_PRG.fbFreezer.rProcessTemp" displayName="Medical Freezer" tagCode="Temperature_03" dataType="System.Double" isArray="false" />
+      <Item active="true" nodeID="ns=4;s=|var|CODESYS Control for Raspberry Pi 64 SL.Application.PLC_PRG.fbDewar1.rProcessTemp" displayName="Dewar 1" tagCode="TC_Temperature" dataType="System.Double" isArray="false" />
+      <Item active="true" nodeID="ns=4;s=|var|CODESYS Control for Raspberry Pi 64 SL.Application.PLC_PRG.fbDewar2.rProcessTemp" displayName="Dewar 2" tagCode="Temperature_04" dataType="System.Double" isArray="false" />
+      <Item active="true" nodeID="ns=4;s=|var|CODESYS Control for Raspberry Pi 64 SL.Application.PLC_PRG.fbFridge.bAlarm" displayName="Medical Fridge Alarm" tagCode="SensorStatus_01" dataType="System.Boolean" isArray="false" />
+      <Item active="true" nodeID="ns=4;s=|var|CODESYS Control for Raspberry Pi 64 SL.Application.PLC_PRG.fbFreezer.bAlarm" displayName="Medical Freezer Alarm" tagCode="SensorStatus_02" dataType="System.Boolean" isArray="false" />
+      <Item active="true" nodeID="ns=4;s=|var|CODESYS Control for Raspberry Pi 64 SL.Application.PLC_PRG.fbDewar1.bAlarm" displayName="Dewar 1 Alarm" tagCode="SensorStatus_03" dataType="System.Boolean" isArray="false" />
+      <Item active="true" nodeID="ns=4;s=|var|CODESYS Control for Raspberry Pi 64 SL.Application.PLC_PRG.fbDewar2.bAlarm" displayName="Dewar 2 Alarm" tagCode="SensorStatus_04" dataType="System.Boolean" isArray="false" />
+      <Item active="true" nodeID="ns=4;s=|var|CODESYS Control for Raspberry Pi 64 SL.Application.PLC_PRG.fbFridge.bWarn" displayName="Medical Fridge Warn" tagCode="SensorStatus_05" dataType="System.Boolean" isArray="false" />
+      <Item active="true" nodeID="ns=4;s=|var|CODESYS Control for Raspberry Pi 64 SL.Application.PLC_PRG.fbFreezer.bWarn" displayName="Medical Freezer Warn" tagCode="SensorStatus_06" dataType="System.Boolean" isArray="false" />
+      <Item active="true" nodeID="ns=4;s=|var|CODESYS Control for Raspberry Pi 64 SL.Application.PLC_PRG.fbDewar1.bWarn" displayName="Dewar 1 Warn" tagCode="SensorStatus_07" dataType="System.Boolean" isArray="false" />
+      <Item active="true" nodeID="ns=4;s=|var|CODESYS Control for Raspberry Pi 64 SL.Application.PLC_PRG.fbDewar2.bWarn" displayName="Dewar 2 Warn" tagCode="SensorStatus_08" dataType="System.Boolean" isArray="false" />
       <Item active="true" nodeID="ns=4;s=|var|CODESYS Control for Raspberry Pi 64 SL.Application.PLC_PRG.bDoor01_MainDoor" displayName="Main Door Contact" tagCode="SensorStatus_09" dataType="System.Boolean" isArray="false" />
       <Item active="true" nodeID="ns=4;s=|var|CODESYS Control for Raspberry Pi 64 SL.Application.PLC_PRG.bDoor02_CryoLabDoor" displayName="Cryo Lab Door Contact" tagCode="SensorStatus_10" dataType="System.Boolean" isArray="false" />
-      <Item active="true" nodeID="ns=4;s=|var|CODESYS Control for Raspberry Pi 64 SL.Application.PLC_PRG.bDoor01_Alarm" displayName="Main Cleanroom Door Alarm" tagCode="DoorOpen_01" dataType="System.Boolean" isArray="false" />
-      <Item active="true" nodeID="ns=4;s=|var|CODESYS Control for Raspberry Pi 64 SL.Application.PLC_PRG.bDoor02_Alarm" displayName="Cryo Lab Door Alarm" tagCode="DoorOpen_02" dataType="System.Boolean" isArray="false" />
-      <Item active="true" nodeID="ns=4;s=|var|CODESYS Control for Raspberry Pi 64 SL.Application.PLC_PRG.bIncubator01_Alarm" displayName="Incubator 01 Alarm" tagCode="IncubatorAlarm_01" dataType="System.Boolean" isArray="false" />
-      <Item active="true" nodeID="ns=4;s=|var|CODESYS Control for Raspberry Pi 64 SL.Application.PLC_PRG.bIncubator02_Alarm" displayName="Incubator 02 Alarm" tagCode="IncubatorAlarm_02" dataType="System.Boolean" isArray="false" />
+      <Item active="true" nodeID="ns=4;s=|var|CODESYS Control for Raspberry Pi 64 SL.Application.PLC_PRG.fbDoor01.Q" displayName="Main Cleanroom Door Alarm" tagCode="DoorOpen_01" dataType="System.Boolean" isArray="false" />
+      <Item active="true" nodeID="ns=4;s=|var|CODESYS Control for Raspberry Pi 64 SL.Application.PLC_PRG.fbDoor02.Q" displayName="Cryo Lab Door Alarm" tagCode="DoorOpen_02" dataType="System.Boolean" isArray="false" />
+      <Item active="true" nodeID="ns=4;s=|var|CODESYS Control for Raspberry Pi 64 SL.Application.PLC_PRG.fbIncubator1.bAlarm" displayName="Incubator 01 Alarm" tagCode="IncubatorAlarm_01" dataType="System.Boolean" isArray="false" />
+      <Item active="true" nodeID="ns=4;s=|var|CODESYS Control for Raspberry Pi 64 SL.Application.PLC_PRG.fbIncubator2.bAlarm" displayName="Incubator 02 Alarm" tagCode="IncubatorAlarm_02" dataType="System.Boolean" isArray="false" />
     </Subscription>
   </Subscriptions>
   <Commands />

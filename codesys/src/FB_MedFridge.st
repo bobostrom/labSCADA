@@ -10,28 +10,47 @@
    ============================================================================== *)
 FUNCTION_BLOCK FB_MedFridge
 VAR_INPUT
+    {attribute 'symbol' := 'none'}
     rRawTemp            : REAL := 3.5;      (* Physical sensor terminal value *)
+    {attribute 'symbol' := 'none'}
     bSimMode            : BOOL := FALSE;    (* TRUE = Ignore terminal, use realistic compressor physics *)
+    {attribute 'symbol' := 'none'}
     bForceExcursion     : BOOL := FALSE;    (* Injects warm excursion above 8.5°C *)
+    {attribute 'symbol' := 'none'}
     rNominalTemp        : REAL := 3.5;      (* Target operating point (°C) *)
+    {attribute 'symbol' := 'none'}
     rHighTrip           : REAL := 8.5;      (* CAP excursion threshold (standard 8.0°C + 0.5 buffer) *)
+    {attribute 'symbol' := 'none'}
     rLowTrip            : REAL := 2.0;      (* Freezing prevention threshold *)
+    {attribute 'symbol' := 'none'}
     rHysteresis         : REAL := 0.5;      (* Anti-chatter deadband (°C) *)
+    {attribute 'symbol' := 'none'}
     tPickupDelay        : TIME := T#2M;     (* 2-minute sustained delay to suppress door-opening noise *)
+    {attribute 'symbol' := 'none'}
     tDropoutDelay       : TIME := T#10S;    (* 10-second clean recovery required to reset *)
 END_VAR
 VAR_OUTPUT
+    {attribute 'symbol' := 'read'}
     rProcessTemp        : REAL;             (* Published process temperature to SCADA & DB *)
+    {attribute 'symbol' := 'read'}
     bAlarm              : BOOL := FALSE;    (* Priority 2 Emergency Alarm flag *)
+    {attribute 'symbol' := 'read'}
     bWarn               : BOOL := FALSE;    (* Pre-alarm pickup delay warning flag *)
+    {attribute 'symbol' := 'none'}
     bHighTrip           : BOOL := FALSE;
+    {attribute 'symbol' := 'none'}
     bLowTrip            : BOOL := FALSE;
+    {attribute 'symbol' := 'none'}
     tElapsedPU          : TIME := T#0S;
+    {attribute 'symbol' := 'none'}
     tElapsedDO          : TIME := T#0S;
 END_VAR
 VAR
+    {attribute 'symbol' := 'none'}
     fbAlarmEval         : FB_AnalogAlarm;
+    {attribute 'symbol' := 'none'}
     tonSimTick          : TON;
+    {attribute 'symbol' := 'none'}
     iAngle              : INT := 0;
 END_VAR
 

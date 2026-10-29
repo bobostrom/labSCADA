@@ -14,30 +14,51 @@
    ============================================================================== *)
 FUNCTION_BLOCK FB_AnalogAlarm
 VAR_INPUT
+    {attribute 'symbol' := 'none'}
 	rVal            : REAL;             (* Analog process value to monitor (e.g. Temperature) *)
+    {attribute 'symbol' := 'none'}
     bEnableHigh     : BOOL := TRUE;     (* Enable High Alarm monitoring *)
+    {attribute 'symbol' := 'none'}
     rHighPickup     : REAL := 0.0;      (* High trip pickup threshold *)
+    {attribute 'symbol' := 'none'}
     rHighDropout    : REAL := 0.0;      (* High trip reset threshold (or leave 0.0 and use rHysteresis) *)
+    {attribute 'symbol' := 'none'}
     bEnableLow      : BOOL := FALSE;    (* Enable Low Alarm monitoring *)
+    {attribute 'symbol' := 'none'}
     rLowPickup      : REAL := 0.0;      (* Low trip pickup threshold *)
+    {attribute 'symbol' := 'none'}
     rLowDropout     : REAL := 0.0;      (* Low trip reset threshold (or leave 0.0 and use rHysteresis) *)
+    {attribute 'symbol' := 'none'}
     rHysteresis     : REAL := 0.0;      (* Optional deadband offset applied if Dropout not explicitly set *)
+    {attribute 'symbol' := 'none'}
     tPickupDelay    : TIME := T#0S;     (* Time excursion must persist before alarm asserts *)
+    {attribute 'symbol' := 'none'}
     tDropoutDelay   : TIME := T#0S;     (* Time normal state must persist before alarm clears *)
 END_VAR
 VAR_OUTPUT
+    {attribute 'symbol' := 'read'}
 	bAlarm          : BOOL := FALSE;    (* Filtered alarm output (Active Alarm) *)
+    {attribute 'symbol' := 'read'}
     bPickup         : BOOL := FALSE;    (* Instantaneous pickup status (pre-timer) *)
+    {attribute 'symbol' := 'none'}
     bHighTrip       : BOOL := FALSE;    (* TRUE if High Alarm condition caused/maintains trip *)
+    {attribute 'symbol' := 'none'}
     bLowTrip        : BOOL := FALSE;    (* TRUE if Low Alarm condition caused/maintains trip *)
+    {attribute 'symbol' := 'none'}
     tElapsedPU      : TIME := T#0S;     (* Current elapsed pickup timer *)
+    {attribute 'symbol' := 'none'}
     tElapsedDO      : TIME := T#0S;     (* Current elapsed dropout timer *)
 END_VAR
 VAR
+    {attribute 'symbol' := 'none'}
 	rEffHighDO      : REAL;
+    {attribute 'symbol' := 'none'}
     rEffLowDO       : REAL;
+    {attribute 'symbol' := 'none'}
     bHighCondition  : BOOL := FALSE;
+    {attribute 'symbol' := 'none'}
     bLowCondition   : BOOL := FALSE;
+    {attribute 'symbol' := 'none'}
     fbTimer         : FB_PickupDropout;
 END_VAR
 

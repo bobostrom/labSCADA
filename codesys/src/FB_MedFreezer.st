@@ -10,26 +10,43 @@
    ============================================================================== *)
 FUNCTION_BLOCK FB_MedFreezer
 VAR_INPUT
+    {attribute 'symbol' := 'none'}
     rRawTemp            : REAL := -20.0;    (* Physical sensor terminal value *)
+    {attribute 'symbol' := 'none'}
     bSimMode            : BOOL := FALSE;    (* TRUE = Ignore terminal, use realistic compressor physics *)
+    {attribute 'symbol' := 'none'}
     bForceExcursion     : BOOL := FALSE;    (* Injects warm excursion above -15.0°C *)
+    {attribute 'symbol' := 'none'}
     rNominalTemp        : REAL := -20.0;    (* Target operating point (°C) *)
+    {attribute 'symbol' := 'none'}
     rHighTrip           : REAL := -15.0;    (* Warm alarm threshold (°C) *)
+    {attribute 'symbol' := 'none'}
     rHysteresis         : REAL := 1.5;      (* Anti-chatter deadband (°C) *)
+    {attribute 'symbol' := 'none'}
     tPickupDelay        : TIME := T#3M;     (* 3-minute sustained delay to suppress defrost cycles *)
+    {attribute 'symbol' := 'none'}
     tDropoutDelay       : TIME := T#10S;    (* 10-second clean recovery required to reset *)
 END_VAR
 VAR_OUTPUT
+    {attribute 'symbol' := 'read'}
     rProcessTemp        : REAL;             (* Published process temperature to SCADA & DB *)
+    {attribute 'symbol' := 'read'}
     bAlarm              : BOOL := FALSE;    (* Priority 2 Emergency Alarm flag *)
+    {attribute 'symbol' := 'read'}
     bWarn               : BOOL := FALSE;    (* Pre-alarm pickup delay warning flag *)
+    {attribute 'symbol' := 'none'}
     bHighTrip           : BOOL := FALSE;
+    {attribute 'symbol' := 'none'}
     tElapsedPU          : TIME := T#0S;
+    {attribute 'symbol' := 'none'}
     tElapsedDO          : TIME := T#0S;
 END_VAR
 VAR
+    {attribute 'symbol' := 'none'}
     fbAlarmEval         : FB_AnalogAlarm;
+    {attribute 'symbol' := 'none'}
     tonSimTick          : TON;
+    {attribute 'symbol' := 'none'}
     iAngle              : INT := 0;
 END_VAR
 

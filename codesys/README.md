@@ -191,39 +191,24 @@ To maintain version history:
 
 1. **OPC UA Server Setup in CODESYS:**
    - Add **Symbol Configuration** under the Application.
-   - Check the variables:
-     * **Analog Temperatures:**
+   - Check the top-level equipment Function Blocks and discrete contacts:
+     * **Direct Variables:**
        - `PLC_PRG.rLabAmbientTemp` (~25°C)
-       - `PLC_PRG.rMedFridgeTemp` (~3°C)
-       - `PLC_PRG.rMedFreezerTemp` (~ -20°C)
-       - `PLC_PRG.rCryoTankTemp` (~ -150°C)
-     * **Discrete Physical Contacts:**
        - `PLC_PRG.bDoor01_MainDoor` (BOOL: False=Closed, True=Open)
        - `PLC_PRG.bDoor02_CryoLabDoor` (BOOL: False=Closed, True=Open)
-       - `PLC_PRG.bLedOutput` (Heartbeat BOOL)
-     * **Discrete Warning / Pickup Delay States (Single Source of Truth):**
-       - `PLC_PRG.bMedFridgeWarn` (BOOL: Active during Fridge excursion pickup delay)
-       - `PLC_PRG.bMedFreezerWarn` (BOOL: Active during Freezer warm pickup delay)
-       - `PLC_PRG.bCryoTank1Warn` (BOOL: Active during Cryo 1 warm pickup delay)
-       - `PLC_PRG.bCryoTank2Warn` (BOOL: Active during Cryo 2 warm pickup delay)
-     * **Evaluated Clinical Alarms (Hysteresis & On-Delay Filtered):**
-       - `PLC_PRG.bMedFridgeAlarm` (BOOL: High >8.5°C / Low <2.0°C, 2m delay)
-       - `PLC_PRG.bMedFreezerAlarm` (BOOL: High >-15.0°C, 3m delay)
-       - `PLC_PRG.bCryoTank1Alarm` (BOOL: High >-135.0°C, 30s delay)
-       - `PLC_PRG.bCryoTank2Alarm` (BOOL: High >-135.0°C, 30s delay)
-       - `PLC_PRG.bDoor01_Alarm` (BOOL: Open > 3m delay)
-       - `PLC_PRG.bDoor02_Alarm` (BOOL: Open > 3m delay)
-       - `PLC_PRG.bIncubator01_Alarm` (BOOL: Contact Alarm)
-       - `PLC_PRG.bIncubator02_Alarm` (BOOL: Contact Alarm)
+       - `PLC_PRG.bHeartbeat` (Heartbeat BOOL)
+     * **Encapsulated Equipment Function Blocks (exposing `.rProcessTemp`, `.bAlarm`, `.bWarn`, etc. directly):**
+       - `PLC_PRG.fbFridge` (`FB_MedFridge`: `.rProcessTemp`, `.bAlarm`, `.bWarn`)
+       - `PLC_PRG.fbFreezer` (`FB_MedFreezer`: `.rProcessTemp`, `.bAlarm`, `.bWarn`)
+       - `PLC_PRG.fbDewar1` .. `PLC_PRG.fbDewar5` (`FB_Dewar`: `.rProcessTemp`, `.bAlarm`, `.bWarn`)
+       - `PLC_PRG.fbIncubator1` & `PLC_PRG.fbIncubator2` (`FB_Incubator`: `.bAlarm`)
+       - `PLC_PRG.fbDoor01` & `PLC_PRG.fbDoor02` (`FB_PickupDropout`: `.Q`)
      * **Testing & Fault-Injection Switches (For Instant Simulation):**
        - `PLC_PRG.bForceFridgeExcursion` (Forces fridge to 9.5°C)
        - `PLC_PRG.bForceFreezerExcursion` (Forces freezer to -12.0°C)
-       - `PLC_PRG.bForceCryoExcursion` (Forces cryo tank to -125.0°C)
-       - `PLC_PRG.bForceDoor01Ajar` (Forces Main Door open)
-       - `PLC_PRG.bForceDoor02Ajar` (Forces Cryo Door open)
-       - `PLC_PRG.bForceIncubator01Alarm` (Forces Incubator 01 alarm contact)
-       - `PLC_PRG.bForceIncubator02Alarm` (Forces Incubator 02 alarm contact)
-   - The embedded OPC UA server publishes these nodes on port `4840`.
+       - `PLC_PRG.bForceDewar1Excursion` .. `PLC_PRG.bForceDewar5Excursion` (Forces dewar to -125.0°C)
+       - `PLC_PRG.bForceIncubator01Alarm` & `PLC_PRG.bForceIncubator02Alarm` (Forces Incubator alarm contact)
+   - Internal state variables inside each Function Block use `{attribute 'symbol' := 'none'}` so only clean `VAR_INPUT` and `VAR_OUTPUT` pins are published over OPC UA on port `4840`.
 2. **Rapid SCADA Integration:**
    - Configure Rapid SCADA's `DrvOpcUa` to connect to `opc.tcp://codesyspi02.local:4840`.
    - Map OPC UA tags directly to Rapid SCADA channels.

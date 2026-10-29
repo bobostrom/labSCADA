@@ -17,18 +17,27 @@
    ============================================================================== *)
 FUNCTION_BLOCK FB_PickupDropout
 VAR_INPUT
+    {attribute 'symbol' := 'none'}
 	IN              : BOOL;             (* Input signal to evaluate *)
+    {attribute 'symbol' := 'none'}
     tPickupDelay    : TIME := T#0S;     (* Time IN must be sustained TRUE before Q asserts *)
+    {attribute 'symbol' := 'none'}
     tDropoutDelay   : TIME := T#0S;     (* Time IN must be sustained FALSE before Q deasserts *)
 END_VAR
 VAR_OUTPUT
+    {attribute 'symbol' := 'read'}
 	Q               : BOOL := FALSE;    (* Filtered output state *)
+    {attribute 'symbol' := 'none'}
     bPickup         : BOOL := FALSE;    (* Raw instantaneous input status (unfiltered) *)
+    {attribute 'symbol' := 'none'}
     tElapsedPU      : TIME := T#0S;     (* Elapsed pickup timer *)
+    {attribute 'symbol' := 'none'}
     tElapsedDO      : TIME := T#0S;     (* Elapsed dropout timer *)
 END_VAR
 VAR
+    {attribute 'symbol' := 'none'}
 	tonPickup       : TON;
+    {attribute 'symbol' := 'none'}
     tonDropout      : TON;
 END_VAR
 

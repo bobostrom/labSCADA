@@ -10,19 +10,29 @@
    ============================================================================== *)
 FUNCTION_BLOCK FB_Incubator
 VAR_INPUT
+    {attribute 'symbol' := 'none'}
     bRawContact         : BOOL := FALSE;    (* Physical input terminal (FALSE = Normal, TRUE = Alarm) *)
+    {attribute 'symbol' := 'none'}
     bSimMode            : BOOL := FALSE;    (* TRUE = Ignore terminal, use virtual override *)
+    {attribute 'symbol' := 'none'}
     bForceAlarm         : BOOL := FALSE;    (* Forces alarm state during simulation *)
+    {attribute 'symbol' := 'none'}
     tPickupDelay        : TIME := T#15S;    (* Contact bounce suppression filter *)
+    {attribute 'symbol' := 'none'}
     tDropoutDelay       : TIME := T#5S;     (* Recovery confirmation filter *)
 END_VAR
 VAR_OUTPUT
+    {attribute 'symbol' := 'read'}
     bAlarm              : BOOL := FALSE;    (* Filtered Priority 2 Alarm output to SCADA *)
+    {attribute 'symbol' := 'none'}
     bInstantContact     : BOOL := FALSE;    (* Unfiltered raw contact status *)
+    {attribute 'symbol' := 'none'}
     tElapsedPU          : TIME := T#0S;
+    {attribute 'symbol' := 'none'}
     tElapsedDO          : TIME := T#0S;
 END_VAR
 VAR
+    {attribute 'symbol' := 'none'}
     fbFilter            : FB_PickupDropout;
 END_VAR
 

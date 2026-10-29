@@ -10,26 +10,43 @@
    ============================================================================== *)
 FUNCTION_BLOCK FB_Dewar
 VAR_INPUT
+    {attribute 'symbol' := 'none'}
     rRawTemp            : REAL := -150.0;   (* Physical sensor terminal value (e.g. WAGO 750-461) *)
+    {attribute 'symbol' := 'none'}
     bSimMode            : BOOL := FALSE;    (* TRUE = Ignore terminal, use realistic virtual physics *)
+    {attribute 'symbol' := 'none'}
     bForceExcursion     : BOOL := FALSE;    (* Injects critical excursion above -135°C in sim mode *)
+    {attribute 'symbol' := 'none'}
     rNominalTemp        : REAL := -150.0;   (* Typical vapor phase operating temperature (°C) *)
+    {attribute 'symbol' := 'none'}
     rHighTrip           : REAL := -135.0;   (* Critical specimen danger limit (°C) *)
+    {attribute 'symbol' := 'none'}
     rHysteresis         : REAL := 5.0;      (* Reset deadband (°C) *)
+    {attribute 'symbol' := 'none'}
     tPickupDelay        : TIME := T#30S;    (* Sustained warm excursion required to trip *)
+    {attribute 'symbol' := 'none'}
     tDropoutDelay       : TIME := T#10S;    (* Clean fill required to reset *)
 END_VAR
 VAR_OUTPUT
+    {attribute 'symbol' := 'read'}
     rProcessTemp        : REAL;             (* Published process temperature to SCADA & DB *)
+    {attribute 'symbol' := 'read'}
     bAlarm              : BOOL := FALSE;    (* Priority 2 Emergency Alarm flag *)
+    {attribute 'symbol' := 'read'}
     bWarn               : BOOL := FALSE;    (* Pre-alarm pickup delay warning flag *)
+    {attribute 'symbol' := 'none'}
     bHighTrip           : BOOL := FALSE;    (* Instantaneous excursion indicator *)
+    {attribute 'symbol' := 'none'}
     tElapsedPU          : TIME := T#0S;     (* Time excursion has persisted *)
+    {attribute 'symbol' := 'none'}
     tElapsedDO          : TIME := T#0S;     (* Time recovery has persisted *)
 END_VAR
 VAR
+    {attribute 'symbol' := 'none'}
     fbAlarmEval         : FB_AnalogAlarm;
+    {attribute 'symbol' := 'none'}
     tonSimTick          : TON;
+    {attribute 'symbol' := 'none'}
     iAngle              : INT := 0;
 END_VAR
 
