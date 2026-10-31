@@ -10,17 +10,19 @@
 
 | Device Name | Device Model | MAC Address | Bench IP (`.lan`) | Lab Domain (`.labmon`) | Primary Roles / Services |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **`plc0000`** | **WAGO PFC200 (750-8212)** | `00:30:DE:7C:EF:9A` | `192.168.10.139` | `plc0000.labmon` | Primary PLC, K-Bus I/O, CODESYS V3.5, OPC UA Server (:4840), WBM (:443) |
-| **`scadapi02`** | **Raspberry Pi 4 (8GB)** | `88:A2:9E:12:0E:1D` (Wi-Fi)<br>`88:A2:9E:12:0E:1C` (Eth) | `192.168.10.133` | `scadapi02.labmon` | Rapid SCADA 6.x, PostgreSQL 17, Grafana, IVF Alert Engine (:8080), LN2 Kiosk |
+| **`afoa-plc`** (`plc0000`) | **WAGO PFC200 (750-8212)** | `00:30:DE:7C:EF:9A` | `192.168.10.139` | `afoa-plc.labmon` (`192.168.88.253`) | Primary PLC, K-Bus I/O, CODESYS V3.5, OPC UA Server (:4840), WBM (:443) |
+| **`afoa-scada`** (`scadapi02`)| **Raspberry Pi 4 (8GB)** | `88:A2:9E:12:0E:1D` (Wi-Fi)<br>`88:A2:9E:12:0E:1C` (Eth)<br>`2C:CF:67:ED:38:CF` (AFOA) | `192.168.10.133` | `afoa-scada.labmon` (`192.168.88.252`) | Rapid SCADA 6.x, PostgreSQL 17, Grafana, IVF Alert Engine (:8080), LN2 Kiosk |
+| **`afoa-node00`** (Pod 3B) | **WAGO Coupler (750-341)** | `00:30:DE:02:7B:71` | `192.168.10.130` | `afoa-node00.labmon` (`192.168.88.251`) | Modbus TCP Fieldbus Coupler for Dewar 02 Pt100 RTD Slice (:502, :80) |
+| **`bobslaptop`** | **Technician Laptop** | *Per Adapter* | `192.168.10.x` | `bobslaptop.labmon` (`192.168.88.254`) | Engineering Workstation, CODESYS V3.5 IDE, WAGO Ethernet Settings |
 | **`codesyspi02`** | **Raspberry Pi 4 (4GB)** | `DC:A6:32:6F:3F:B4` (Wi-Fi)<br>`DC:A6:32:6F:3F:B3` (Eth) | `192.168.10.135` | `codesyspi02.labmon` | Secondary / Development CODESYS SoftPLC, OPC UA Server (:4840) |
-| **`router`** | **MikroTik RouterOS** | *Per WAN/LAN* | `192.168.10.1` | Gateway Router | DHCP Server, DNS Server (`IP -> DNS -> Static`), Firewall |
+| **`router`** | **MikroTik RouterOS** | *Per WAN/LAN* | `192.168.10.1` | Gateway Router (`192.168.88.1`) | Static DNS Server (`.labmon`), DHCP Server (`bootp-support=static`), Firewall |
 
 ---
 
 ## 2. Credentials & Service Accounts
 
-### A. WAGO PFC200 Controller (`plc0000`)
-* **Host / Device:** `plc0000` (IP: `192.168.10.139`)
+### A. WAGO PFC200 Controller (`afoa-plc` / `plc0000`)
+* **Host / Device:** `afoa-plc.labmon` (IP: `192.168.88.253`)
 * **Operating System:** WAGO Embedded Real-Time Linux (Firmware 24+)
 * **User Accounts:**
   * **`root`** (Linux Superuser / Console / SSH):
@@ -32,7 +34,7 @@
     - **Purpose:** Secure automated OPC UA client sessions (`SignAndEncrypt` / `Basic256Sha256`)
   * **`admin`** (Web-Based Management WBM / Factory Admin / OPC UA):
     - **Password:** `labMon@2026`
-    - **Access:** WBM Web GUI (`https://plc0000/` or `https://192.168.10.139/`), SSH, and OPC UA client authentication
+    - **Access:** WBM Web GUI (`https://afoa-plc.labmon/` or `https://192.168.88.253/`), SSH, and OPC UA client authentication
 * **Active Network Ports:**
   * `443/TCP`: WAGO Web-Based Management (HTTPS WBM)
   * `22/TCP`: Secure Shell (SSH)
@@ -41,8 +43,25 @@
 
 ---
 
-### B. SCADA Server & Database (`scadapi02`)
-* **Host:** `scadapi02` (IP: `192.168.10.133`)
+### B. WAGO 750-341 Ethernet Fieldbus Coupler (`afoa-node00` / Pod 3B)
+* **Host / Device:** `afoa-node00.labmon` (IP: `192.168.88.251`)
+* **Device Role:** Modbus TCP Fieldbus Coupler for Dewar 02 RTD Slice (`750-461`)
+* **MAC Address:** `00:30:DE:02:7B:71`
+* **Network Assignment:** Static IP assigned in flash (`192.168.88.251`, Mask `255.255.255.0`, Gateway `192.168.88.1`)
+* **MikroTik Router Configuration:** DHCP Server `bootp-support=static` with pre-assigned static lease.
+* **User Accounts & Authentication Constraints:**
+  * **`admin`**: Factory default `wago` (Kept as default to avoid firmware lockouts)
+  * **`user`**: Factory default `user`
+  * > [!IMPORTANT]
+  * > **Firmware Limitations:** The 750-341 has an 8-character limit and does NOT support special characters (such as `@`, `!`, `#`). Using symbols corrupts HTTP Basic Authentication and permanently locks the web interface. Always use alphanumeric passwords under 8 characters or maintain the industrial default `wago`.
+* **Active Network Ports:**
+  * `80/TCP`: WAGO Web-Based Management (`http://192.168.88.251/`)
+  * `502/TCP`: Modbus TCP Server (K-Bus register access)
+
+---
+
+### C. SCADA Server & Database (`afoa-scada` / `scadapi02`)
+* **Host:** `afoa-scada.labmon` (IP: `192.168.88.252`)
 * **Operating System:** Debian Linux (arm64)
 * **Linux Host User:**
   * **Username:** `bobostrom`
@@ -55,13 +74,13 @@
   * **Admin Webstation User:** `admin` / `scada` (Port 10000 / 10008)
   * **Admin Service User:** `ScadaAdmin`
 * **IVF Clinical Alert Engine & LN2 Kiosk:**
-  * **URL:** `http://scadapi02:8080/`
+  * **URL:** `http://afoa-scada.labmon:8080/`
   * **Daemon Service:** `ivf-alert-engine.service`
   * **Pushover Emergency Sirens:** Priority 2 (Clinical Excursions), Priority 0 (Daily QA Test)
 
 ---
 
-### C. Raspberry Pi CODESYS Development PLC (`codesyspi02`)
+### D. Raspberry Pi CODESYS Development PLC (`codesyspi02`)
 * **Host:** `codesyspi02` (IP: `192.168.10.135`)
 * **Operating System:** Raspberry Pi OS Linux (arm64)
 * **Linux Host User:**
@@ -78,13 +97,13 @@
 
 ## 3. Rapid SCADA OPC UA Driver Configuration Reference
 
-Inside [scada_config/ScadaComm/DrvOpcUa_line001.xml](file:///home/bobostrom/Projects/labSCADA/scada_config/ScadaComm/DrvOpcUa_line001.xml) and `/opt/scada/ScadaComm/Config/DrvOpcUa_line001.xml`:
+Inside [sites/afoa/scada_config/DrvOpcUa_line001.xml](file:///c:/Projects/labSCADA/sites/afoa/scada_config/DrvOpcUa_line001.xml) and `/opt/scada/ScadaComm/Config/DrvOpcUa_line001.xml`:
 
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
 <OpcLineConfig>
   <ConnectionOptions>
-    <ServerUrl>opc.tcp://plc0000:4840</ServerUrl>
+    <ServerUrl>opc.tcp://afoa-plc.labmon:4840</ServerUrl>
     <SecurityMode>None</SecurityMode>
     <SecurityPolicy>None</SecurityPolicy>
     <AuthenticationMode>Username</AuthenticationMode>
@@ -101,7 +120,7 @@ Unlike generic soft-PLCs, the embedded CODESYS runtime on the WAGO 750-8212 publ
 * **Prefix:** `ns=4;s=|var|WAGO 750-8212 PFC200 G2 2ETH RS.Application.PLC_PRG.`
 * **Example:** `ns=4;s=|var|WAGO 750-8212 PFC200 G2 2ETH RS.Application.PLC_PRG.rLabAmbientTemp`
 
-Configured in [scada_config/ScadaComm/DrvOpcUa_001.xml](file:///home/bobostrom/Projects/labSCADA/scada_config/ScadaComm/DrvOpcUa_001.xml) and `/opt/scada/ScadaComm/Config/DrvOpcUa_001.xml`.
+Configured in [sites/afoa/scada_config/DrvOpcUa_001.xml](file:///c:/Projects/labSCADA/sites/afoa/scada_config/DrvOpcUa_001.xml) and `/opt/scada/ScadaComm/Config/DrvOpcUa_001.xml`.
 
 ---
 
@@ -120,10 +139,10 @@ echo cycleB0b | sudo -S systemctl restart scadacomm6
 ### Query Live Telemetry Values from PostgreSQL:
 ```bash
 PGPASSWORD=postgres psql -h localhost -U postgres -d rapid_scada -c \
-  "SELECT cnl_num, time_stamp, val, stat FROM mod_arc_postgre_sql.curcopy_current WHERE cnl_num IN (101, 102, 103, 125);"
+  "SELECT cnl_num, time_stamp, val, stat FROM mod_arc_postgre_sql.curcopy_current WHERE cnl_num IN (101, 102, 103, 104, 125);"
 ```
 
 ### Test Clinical Alert Engine Status:
 ```bash
-curl -s http://127.0.0.1:8080/api/status | jq .
+curl -s http://afoa-scada.labmon:8080/api/status | jq .
 ```
