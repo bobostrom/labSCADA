@@ -105,3 +105,4 @@ For completeness, here is the exact active configuration currently working on th
    * If the device did not send a hostname, enter it in the **Host Name** field (or **Comment** field).
 5. Click **OK**.
 6. Open **IP** $\rightarrow$ **DNS** $\rightarrow$ **Static** tab: you will see the entry created automatically with comment `DHCP Dynamic Lease`!
+

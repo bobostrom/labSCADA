@@ -9,7 +9,7 @@
 
 ## 1. Problem Statement & Threat Model
 
-In the initial development and bench-testing phase of Lares Telemetry, site manifests (`sites/demo/` and `sites/afoa/`) reside in the same repository (`labSCADA`). This enabled rapid prototyping, synchronized testing, and seamless continuous integration across multiple test hosts (`demo-scada` and `afoa-scada`).
+In the initial development and bench-testing phase of Lares Telemetry, site manifests (`sites/demo/` and `sites/afoa/`) reside in the same repository (`labSCADA`). This enabled rapid prototyping, synchronized testing, and seamless continuous integration across multiple test hosts (`demo-scada` and `afoa-scada.labmon`).
 
 However, as Lares Telemetry transitions to commercial multi-client deployments:
 - **Physical Custody:** SCADA host appliances (Raspberry Pi 4 / CM4) physically reside on customer premises (e.g., inside IVF lab equipment racks, cleanrooms, or IT closets).

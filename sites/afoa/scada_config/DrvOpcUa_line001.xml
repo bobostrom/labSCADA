@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <OpcLineConfig>
   <ConnectionOptions>
-    <ServerUrl>opc.tcp://afoa-plc:4840</ServerUrl>
+    <ServerUrl>opc.tcp://afoa-plc.labmon:4840</ServerUrl>
     <SecurityMode>None</SecurityMode>
     <SecurityPolicy>None</SecurityPolicy>
     <AuthenticationMode>Username</AuthenticationMode>
