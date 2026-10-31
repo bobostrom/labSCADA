@@ -1,5 +1,7 @@
 [Unit]
 Description=Rapid SCADA Communicator
+After=network.target scadaserver6.service
+Wants=scadaserver6.service
 
 [Service]
 Type=notify
