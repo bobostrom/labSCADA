@@ -168,7 +168,7 @@
       "key": "door1",
       "name": "Main Cleanroom Door",
       "short_name": "Main Door",
-      "plc_var": "bDoor01_MainDoor",
+      "plc_var": "bDoor01",
       "plc_fb": "fbDoor01",
       "contact_cnl": 119,
       "alarm_cnl": 121
@@ -178,7 +178,7 @@
       "key": "door2",
       "name": "Procedure Room Door",
       "short_name": "Procedure Room",
-      "plc_var": "bDoor02_CryoLabDoor",
+      "plc_var": "bDoor02",
       "plc_fb": "fbDoor02",
       "contact_cnl": 120,
       "alarm_cnl": 122

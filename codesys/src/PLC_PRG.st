@@ -22,9 +22,9 @@ VAR
 
     (* --- Discrete Telemetry: Physical Door Contacts Published over OPC UA --- *)
     {attribute 'symbol' := 'readwrite'}
-    bDoor01_MainDoor        : BOOL := FALSE;    (* FALSE = Closed, TRUE = Open *)
+    bDoor01                 : BOOL := FALSE;    (* FALSE = Closed, TRUE = Open *)
     {attribute 'symbol' := 'readwrite'}
-    bDoor02_CryoLabDoor     : BOOL := FALSE;    (* FALSE = Closed, TRUE = Open *)
+    bDoor02                 : BOOL := FALSE;    (* FALSE = Closed, TRUE = Open *)
 
     (* --- Discrete Hardware Inputs (Mapped from afoa-node00 750-341 via Modbus TCP) --- *)
     {attribute 'symbol' := 'none'}
@@ -144,15 +144,15 @@ fbIncubator2(
     bSimMode    := bGlobalSimMode
 );
 
-// --- E. Cleanroom Main & Cryo Lab Doors (3-minute open timer) ---
+// --- E. Facility Doors 01 & 02 (3-minute open timer) ---
 fbDoor01(
-    IN            := bDoor01_MainDoor,
+    IN            := bDoor01,
     tPickupDelay  := T#3M,
     tDropoutDelay := T#5S
 );
 
 fbDoor02(
-    IN            := bDoor02_CryoLabDoor,
+    IN            := bDoor02,
     tPickupDelay  := T#3M,
     tDropoutDelay := T#5S
 );
