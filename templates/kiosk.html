@@ -1523,6 +1523,7 @@
 
     // Incubator Modal & Multi-Zone Simulation State
     let lastReadings = {};
+    let lastCabinetState = {};
     let currentModalIncKey = null;
     let simulatedChamberOffsets = {};
 
@@ -1613,6 +1614,27 @@
         if (badge) {
           badge.innerText = 'CLEAR';
           badge.className = 'status-badge status-normal';
+        }
+      }
+
+      // Cabinet Supervision in Modal
+      const cabDot = document.getElementById('incModalCabDot');
+      const cabStatus = document.getElementById('incModalCabStatus');
+      if (cabStatus) {
+        if (lastCabinetState && lastCabinetState.is_open) {
+          if (cabDot) cabDot.style.background = '#ffab00';
+          cabStatus.innerText = 'DOOR OPEN (Alarms Muted)';
+          cabStatus.style.color = '#ffab00';
+        } else if (lastCabinetState && lastCabinetState.mute_active && lastCabinetState.grace_remaining_sec > 0) {
+          if (cabDot) cabDot.style.background = '#38bdf8';
+          const m = Math.floor(lastCabinetState.grace_remaining_sec / 60);
+          const s = String(lastCabinetState.grace_remaining_sec % 60).padStart(2, '0');
+          cabStatus.innerText = `RECOVERY GRACE (${m}:${s})`;
+          cabStatus.style.color = '#38bdf8';
+        } else {
+          if (cabDot) cabDot.style.background = '#10b981';
+          cabStatus.innerText = 'DOOR CLOSED (Protection Armed)';
+          cabStatus.style.color = '#f0f4f8';
         }
       }
     }
@@ -1850,6 +1872,8 @@
 
           // 5. Chamber Incubators (0 to N)
           const cardInc = document.getElementById('card-incubators');
+          const cab = data.cabinet || {};
+          lastCabinetState = cab;
           let anyIncAlarm = false;
           (EQUIPMENT.incubators || []).forEach(inc => {
             const incAlarm = inc.alarm_cnl ? (r[inc.alarm_cnl] > 0) : false;
@@ -1871,6 +1895,34 @@
                 badgeInc.style.border = '1px solid rgba(148, 163, 184, 0.3)';
               }
               if (subInc) subInc.innerText = 'Alarms Suppressed';
+            } else if (cab.is_open) {
+              if (valInc) {
+                valInc.innerText = 'MUTED';
+                valInc.style.color = '#ffab00';
+              }
+              if (badgeInc) {
+                badgeInc.innerText = 'DOOR OPEN';
+                badgeInc.className = 'status-badge status-warn';
+                badgeInc.style.background = 'rgba(255, 171, 0, 0.2)';
+                badgeInc.style.color = '#ffab00';
+                badgeInc.style.border = '1px solid rgba(255, 171, 0, 0.4)';
+              }
+              if (subInc) subInc.innerText = '🛡️ Alarms Muted (Door Open)';
+            } else if (cab.mute_active && cab.grace_remaining_sec > 0) {
+              if (valInc) {
+                valInc.innerText = 'NORMAL';
+                valInc.style.color = '#f0f4f8';
+              }
+              if (badgeInc) {
+                const m = Math.floor(cab.grace_remaining_sec / 60);
+                const s = String(cab.grace_remaining_sec % 60).padStart(2, '0');
+                badgeInc.innerText = `GRACE ${m}:${s}`;
+                badgeInc.className = 'status-badge';
+                badgeInc.style.background = 'rgba(56, 189, 248, 0.15)';
+                badgeInc.style.color = '#38bdf8';
+                badgeInc.style.border = '1px solid rgba(56, 189, 248, 0.3)';
+              }
+              if (subInc) subInc.innerText = `🛡️ Recovery Grace (${cab.grace_remaining_sec}s)`;
             } else {
               if (valInc) {
                 valInc.innerText = incAlarm ? 'ALARM' : 'NORMAL';
@@ -1893,6 +1945,32 @@
             } else {
               cardInc.style.opacity = '1.0';
               cardInc.style.borderTopColor = anyIncAlarm ? '#ff1744' : '#00b0ff';
+            }
+          }
+
+          // Cabinet Environmental & Door Status Updates
+          const cabDoorBadge = document.getElementById('cab-door-badge');
+          if (cabDoorBadge) {
+            if (cab.is_open) {
+              cabDoorBadge.innerText = '🚪 DOOR OPEN (MUTED)';
+              cabDoorBadge.className = 'status-badge status-warn';
+              cabDoorBadge.style.background = 'rgba(255, 171, 0, 0.25)';
+              cabDoorBadge.style.color = '#ffab00';
+              cabDoorBadge.style.border = '1px solid rgba(255, 171, 0, 0.5)';
+            } else if (cab.mute_active && cab.grace_remaining_sec > 0) {
+              const m = Math.floor(cab.grace_remaining_sec / 60);
+              const s = String(cab.grace_remaining_sec % 60).padStart(2, '0');
+              cabDoorBadge.innerText = `🚪 GRACE (${m}:${s})`;
+              cabDoorBadge.className = 'status-badge';
+              cabDoorBadge.style.background = 'rgba(56, 189, 248, 0.2)';
+              cabDoorBadge.style.color = '#38bdf8';
+              cabDoorBadge.style.border = '1px solid rgba(56, 189, 248, 0.4)';
+            } else {
+              cabDoorBadge.innerText = '🚪 DOOR CLOSED';
+              cabDoorBadge.className = 'status-badge status-normal';
+              cabDoorBadge.style.background = '';
+              cabDoorBadge.style.color = '';
+              cabDoorBadge.style.border = '';
             }
           }
 

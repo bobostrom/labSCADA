@@ -17,6 +17,8 @@ Manages end-to-end clinical alarm lifecycle for Advanced Fertility of Alaska:
 import http.server
 import json
 import os
+import socket
+import struct
 import subprocess
 import threading
 import time
@@ -71,6 +73,58 @@ CLINIC_DOMAIN = os.environ.get("CLINIC_DOMAIN", "komdivflab.larestelemetry.com")
 CLINIC_LOGO   = os.environ.get("CLINIC_LOGO", "/assets/KOMDlogo.png")
 PLC_OPC_URL   = os.environ.get("PLC_OPC_URL", "opc.tcp://demo-plc:4840")
 SIMULATION_MODE = os.environ.get("SIMULATION_MODE", "false").lower() in ("true", "1", "yes")
+NODE00_IP       = os.environ.get("NODE00_IP", "192.168.88.251")
+POST_CLOSE_GRACE_SEC = 180  # 3 minutes
+
+# Real-time state machine for WAGO 750-341 cabinet door monitoring
+cabinet_door_state = {
+    "is_open": False,
+    "last_closed_at": 0,
+    "mute_active": False,
+    "grace_remaining_sec": 0,
+    "last_poll_ts": 0
+}
+
+def poll_cabinet_node00():
+    """Polls afoa-node00 WAGO 750-341 coupler (Port 502 FC02) for real-time door switch state."""
+    global cabinet_door_state
+    now = time.time()
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.settimeout(0.35)
+        s.connect((NODE00_IP, 502))
+        s.sendall(struct.pack('>HHHBBHH', 1, 0, 6, 1, 2, 0, 8))
+        resp = s.recv(32)
+        s.close()
+        if len(resp) >= 10:
+            byte_val = resp[9]
+            # Bit 7 is DI 8 on 750-436 sink input.
+            # Active (1) = Door Open (or contact loop open).
+            is_open = bool(byte_val & 0x80)
+            was_open = cabinet_door_state["is_open"]
+
+            if was_open and not is_open:
+                # Transition: Door closed -> begin 3-minute grace countdown
+                cabinet_door_state["last_closed_at"] = now
+
+            cabinet_door_state["is_open"] = is_open
+
+            if is_open:
+                cabinet_door_state["mute_active"] = True
+                cabinet_door_state["grace_remaining_sec"] = POST_CLOSE_GRACE_SEC
+            else:
+                elapsed = now - cabinet_door_state["last_closed_at"]
+                if cabinet_door_state["last_closed_at"] > 0 and elapsed < POST_CLOSE_GRACE_SEC:
+                    cabinet_door_state["mute_active"] = True
+                    cabinet_door_state["grace_remaining_sec"] = int(POST_CLOSE_GRACE_SEC - elapsed)
+                else:
+                    cabinet_door_state["mute_active"] = False
+                    cabinet_door_state["grace_remaining_sec"] = 0
+
+            cabinet_door_state["last_poll_ts"] = now
+    except Exception:
+        pass
+    return dict(cabinet_door_state)
 
 
 def load_equipment_config():
@@ -935,12 +989,13 @@ def telemetry_scan_worker():
                     else:
                         resolve_alarm(a_cnl, None)
 
-            # 5. Incubators (Discrete alarm, suppressed when OFF_SESSION)
+            # 5. Incubators (Discrete alarm, suppressed when OFF_SESSION or Cabinet Muted)
+            cab_st = poll_cabinet_node00()
             for inc in EQUIPMENT_CONFIG["incubators"]:
                 equip = inc["name"]
                 a_cnl = int(inc["alarm_cnl"]) if inc.get("alarm_cnl") else None
                 if a_cnl and a_cnl in readings:
-                    if current_mode == "OFF_SESSION":
+                    if current_mode == "OFF_SESSION" or cab_st.get("mute_active", False):
                         resolve_alarm(a_cnl, None)
                     elif readings[a_cnl] > 0:
                         trigger_alarm(a_cnl, equip, "Chamber Alarm Contact", None)
@@ -1418,6 +1473,7 @@ class ClinicalAlertHandler(http.server.BaseHTTPRequestHandler):
                     "by": str(qa_rows[0][1])
                 }
 
+            cab_st = poll_cabinet_node00()
             data = {
                 "server_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                 "active_alarm_count": len(alarms_copy),
@@ -1426,6 +1482,7 @@ class ClinicalAlertHandler(http.server.BaseHTTPRequestHandler):
                 "last_qa": last_qa,
                 "lab_mode": get_current_lab_mode(),
                 "cryo_holds": get_active_cryo_holds(),
+                "cabinet": cab_st,
                 "equipment": EQUIPMENT_CONFIG,
             }
             self.send_response(200)
