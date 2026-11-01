@@ -21,9 +21,9 @@ VAR
     rLabAmbientTemp         : REAL := 25.0;     (* Target ~25.0 °C *)
 
     (* --- Discrete Telemetry: Physical Door Contacts Published over OPC UA --- *)
-    {attribute 'symbol' := 'readwrite'}
+    {attribute 'symbol' := 'read'}
     bDoor01                 : BOOL := FALSE;    (* FALSE = Closed, TRUE = Open *)
-    {attribute 'symbol' := 'readwrite'}
+    {attribute 'symbol' := 'read'}
     bDoor02                 : BOOL := FALSE;    (* FALSE = Closed, TRUE = Open *)
 
     (* --- Discrete Hardware Inputs (Mapped from afoa-node00 750-341 via Modbus TCP) --- *)
