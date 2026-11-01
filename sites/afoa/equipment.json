@@ -176,8 +176,8 @@
     {
       "id": 2,
       "key": "door2",
-      "name": "Cryo Lab Door",
-      "short_name": "Cryo Door",
+      "name": "Procedure Room Door",
+      "short_name": "Procedure Room",
       "plc_var": "bDoor02_CryoLabDoor",
       "plc_fb": "fbDoor02",
       "contact_cnl": 120,
