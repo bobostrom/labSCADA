@@ -14,6 +14,8 @@ VAR_INPUT
     bRawContact         : BOOL := FALSE;    (* Physical input terminal (FALSE = Normal, TRUE = Alarm) *)
     {attribute 'symbol' := 'none'}
     bSimMode            : BOOL := FALSE;    (* TRUE = Ignore terminal, use virtual override *)
+    {attribute 'symbol' := 'read'}
+    bMute               : BOOL := FALSE;    (* TRUE = Suppress alarm (Cabinet door open or recovery grace) *)
     {attribute 'symbol' := 'none'}
     tPickupDelay        : TIME := T#15S;    (* Contact bounce suppression filter *)
     {attribute 'symbol' := 'none'}
@@ -22,8 +24,10 @@ END_VAR
 VAR_OUTPUT
     {attribute 'symbol' := 'read'}
     bAlarm              : BOOL := FALSE;    (* Filtered Priority 2 Alarm output to SCADA *)
-    {attribute 'symbol' := 'none'}
+    {attribute 'symbol' := 'read'}
     bInstantContact     : BOOL := FALSE;    (* Unfiltered raw contact status *)
+    {attribute 'symbol' := 'read'}
+    bMuted              : BOOL := FALSE;    (* Contact is tripped but suppressed by active mute *)
     {attribute 'symbol' := 'none'}
     tElapsedPU          : TIME := T#0S;
     {attribute 'symbol' := 'none'}
@@ -50,6 +54,15 @@ fbFilter(
     tDropoutDelay := tDropoutDelay
 );
 
-bAlarm     := fbFilter.Q;
+// 3. MUTE SUPERVISION
+// When bMute is active (cabinet door open or post-close grace), suppress bAlarm.
+bMuted := bMute AND fbFilter.Q;
+
+IF bMute THEN
+    bAlarm := FALSE;
+ELSE
+    bAlarm := fbFilter.Q;
+END_IF;
+
 tElapsedPU := fbFilter.tElapsedPU;
 tElapsedDO := fbFilter.tElapsedDO;

@@ -95,6 +95,7 @@ def load_equipment_config():
                 print(f"Warning: failed to parse {path}: {e}")
 
     cfg = {
+        "cabinets": list(raw.get("cabinets", [])),
         "dewars": list(raw.get("dewars", [])),
         "fridges": list(raw.get("fridges", [])),
         "freezers": list(raw.get("freezers", [])),

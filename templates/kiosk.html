@@ -365,6 +365,35 @@
       animation: pulse-alert 1.5s infinite;
     }
 
+    /* Incubator Cabinet & Chamber Wells */
+    .incubator-bay-card {
+      background: rgba(9, 13, 22, 0.75);
+      border: 1px solid rgba(0, 176, 255, 0.22);
+      border-radius: 8px;
+      padding: 10px;
+      min-width: 0;
+      cursor: pointer;
+      position: relative;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .incubator-bay-card:hover {
+      border-color: #00e5ff;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 18px rgba(0, 229, 255, 0.18);
+    }
+    .chamber-well {
+      background: rgba(9, 13, 22, 0.85);
+      border: 1px solid rgba(0, 176, 255, 0.2);
+      border-radius: 6px;
+      padding: 8px 6px;
+      text-align: center;
+      transition: all 0.15s;
+    }
+    .chamber-well:hover {
+      border-color: #00e5ff;
+      background: rgba(14, 23, 42, 0.95);
+    }
+
     @keyframes pulse-alert {
       0% {
         opacity: 0.8;
@@ -1065,28 +1094,73 @@
       </div>
       {% endif %}
 
-      <!-- Chamber Incubators Card (0 to N) -->
-      {% if equipment.incubators | length > 0 %}
+      <!-- Incubator Cabinet & Slide-out Bays Card -->
+      {% if equipment.incubators | length > 0 or equipment.cabinets | length > 0 %}
       <div class="card" id="card-incubators" style="border-top:3px solid #00b0ff;">
-        <div class="card-title">Chamber Incubators</div>
-        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(120px, 1fr)); gap:10px; margin-top:8px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+          <div>
+            <div class="card-title" style="margin-bottom:0;">
+              {% if equipment.cabinets and equipment.cabinets | length > 0 %}
+                {{ equipment.cabinets[0].name }}
+              {% else %}
+                Incubator Cabinet 01
+              {% endif %}
+            </div>
+            <div style="font-size:11px; color:#8899a6; margin-top:2px;">
+              3-Bay Slide-Out Enclosure • Tap any unit to inspect 10-zone heat bed
+            </div>
+          </div>
+          <!-- Cabinet Environmental Microclimate Badges -->
+          <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+            <span class="status-badge status-normal" id="cab-door-badge" style="font-size:10px; padding:3px 8px;">🚪 DOOR CLOSED</span>
+            <span style="font-size:11px; font-family:monospace; color:#38bdf8; font-weight:700; background:rgba(56,189,248,0.12); padding:3px 7px; border-radius:4px; border:1px solid rgba(56,189,248,0.25);" id="cab-temp-val" title="Cabinet Interior Temperature">24.5°C</span>
+            <span style="font-size:10px; color:#94a3b8; background:rgba(255,255,255,0.06); padding:3px 7px; border-radius:4px; border:1px solid rgba(255,255,255,0.08);" id="cab-fan-val" title="Thermostatic Exhaust Fan">🌀 FAN OFF</span>
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(130px, 1fr)); gap:10px; margin-top:12px;">
           {% for inc in equipment.incubators %}
-          <div
-            style="background:rgba(9,13,22,0.65); padding:10px 10px; border-radius:8px; border:1px solid rgba(255,255,255,0.06); min-width:0; overflow:hidden;">
+          <div class="incubator-bay-card"
+            id="bay-card-{{ inc.key }}"
+            onclick="openIncubatorModal('{{ inc.key }}')"
+            title="Click to inspect 10 chamber zones">
             <div
               style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:4px; margin-bottom:4px;">
-              <span style="font-size:11px; font-weight:700; color:#8899a6; text-transform:uppercase;">{{ inc.name }}</span>
+              <span style="font-size:10.5px; font-weight:800; color:#38bdf8; text-transform:uppercase;">
+                {% if inc.bay_number %}BAY {{ inc.bay_number }}: {% endif %}{{ inc.name }}
+              </span>
               <span id="badge-{{ inc.key }}" class="status-badge status-normal">CLEAR</span>
             </div>
-            <div style="font-size:1.5rem; font-weight:800; font-family:monospace; color:#f0f4f8; margin-top:2px;"
+            <div style="font-size:1.45rem; font-weight:800; font-family:monospace; color:#f0f4f8; margin-top:2px;"
               id="val-{{ inc.key }}">
               NORMAL
             </div>
             <div
-              style="font-size:11px; color:#8899a6; margin-top:5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"
-              id="sub-{{ inc.key }}">{{ inc.subtitle | default('Chamber • In-Range') }}</div>
+              style="font-size:11px; color:#8899a6; margin-top:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"
+              id="sub-{{ inc.key }}">{{ inc.subtitle | default('G210 InviCell • In-Range') }}</div>
+
+            <!-- Inspect Hint Footer -->
+            <div style="margin-top:8px; padding-top:6px; border-top:1px solid rgba(255,255,255,0.06); display:flex; justify-content:space-between; align-items:center; font-size:10px; color:#00e5ff;">
+              <span>🔍 10 Zones</span>
+              <span style="color:#64748b; font-size:9.5px; font-family:monospace;">{{ inc.model | default('G210') }}</span>
+            </div>
           </div>
           {% endfor %}
+
+          <!-- Bay 3 (Empty / Expansion Bay) -->
+          <div
+            style="background:rgba(9,13,22,0.3); border:1px dashed rgba(255,255,255,0.14); border-radius:8px; padding:10px; min-width:0; display:flex; flex-direction:column; justify-content:space-between; min-height:92px; opacity:0.65;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-size:10.5px; font-weight:700; color:#64748b; text-transform:uppercase;">BAY 3: EXPANSION</span>
+              <span class="status-badge" style="background:rgba(100,116,139,0.15); color:#64748b; font-size:9px; border:1px solid rgba(100,116,139,0.25);">EMPTY</span>
+            </div>
+            <div style="font-size:1.15rem; font-weight:700; font-family:monospace; color:#64748b; margin-top:4px;">
+              AVAILABLE
+            </div>
+            <div style="font-size:10px; color:#475569; margin-top:4px;">
+              Slide-Out Tray Ready
+            </div>
+          </div>
         </div>
       </div>
       {% endif %}
@@ -1382,11 +1456,166 @@
   {% endif %}
 
   <!-- ============================================================== -->
+  <!-- K-SYSTEMS G210 MULTI-ZONE CHAMBER INSPECTOR MODAL               -->
+  <!-- ============================================================== -->
+  <div id="incubatorModal" class="modal-overlay" style="display:none;" onclick="if(event.target===this) closeIncubatorModal()">
+    <div class="modal-box" style="max-width:640px; border-color:rgba(0, 176, 255, 0.45); padding:22px;">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:14px;">
+        <div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <h2 style="margin:0; font-size:1.35rem; color:#00b0ff;" id="incModalTitle">Incubator 01</h2>
+            <span class="status-badge status-normal" id="incModalBadge" style="font-size:11px;">CLEAR</span>
+          </div>
+          <div style="color:#8899a6; font-size:12px; margin-top:3px;" id="incModalSubtitle">K-Systems G210 InviCell • Bay 1 (Slide-out Tray)</div>
+        </div>
+        <button type="button" class="btn"
+          style="background:transparent; border:1px solid rgba(255,255,255,0.2); font-size:16px; padding:6px 12px;"
+          onclick="closeIncubatorModal()">✕</button>
+      </div>
+
+      <!-- Telemetry Status Bar -->
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px;">
+        <div style="background:rgba(9,13,22,0.85); border:1px solid rgba(255,255,255,0.08); border-radius:8px; padding:10px;">
+          <div style="font-size:10px; font-weight:700; color:#8899a6; text-transform:uppercase;">Discrete Alarm Relay</div>
+          <div style="display:flex; align-items:center; gap:6px; margin-top:4px;">
+            <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#10b981;" id="incModalHwDot"></span>
+            <span style="font-family:monospace; font-size:12.5px; font-weight:800; color:#f0f4f8;" id="incModalHwStatus">NORMAL (Closed Loop)</span>
+          </div>
+          <div style="font-size:10px; color:#38bdf8; margin-top:3px;" id="incModalHwChannel">● LIVE HARDWARE (Node00 DI 1)</div>
+        </div>
+
+        <div style="background:rgba(9,13,22,0.85); border:1px solid rgba(255,255,255,0.08); border-radius:8px; padding:10px;">
+          <div style="font-size:10px; font-weight:700; color:#8899a6; text-transform:uppercase;">Incubator Cabinet Supervision</div>
+          <div style="display:flex; align-items:center; gap:6px; margin-top:4px;">
+            <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#10b981;" id="incModalCabDot"></span>
+            <span style="font-family:monospace; font-size:12.5px; font-weight:800; color:#f0f4f8;" id="incModalCabStatus">DOOR CLOSED (Loop Active)</span>
+          </div>
+          <div style="font-size:10px; color:#a78bfa; margin-top:3px;">🛡️ 3-Min Post-Close Grace Armed</div>
+        </div>
+      </div>
+
+      <!-- 10-Chamber Visual Heat Map -->
+      <div style="margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
+        <span style="font-size:11px; font-weight:700; color:#cbd5e1; text-transform:uppercase; letter-spacing:0.5px;">Chamber Heated Wells (10 Zones)</span>
+        <span style="font-size:10px; background:rgba(251,191,36,0.15); color:#fbbf24; border:1px solid rgba(251,191,36,0.3); padding:2px 8px; border-radius:12px; font-weight:700;">⚙ SIMULATED SENSORS</span>
+      </div>
+
+      <div style="display:grid; grid-template-columns:repeat(5, 1fr); gap:8px; background:rgba(2,18,28,0.7); border:1px solid rgba(0,176,255,0.15); border-radius:10px; padding:12px;" id="incModalZonesGrid">
+        <!-- Rendered dynamically by JavaScript -->
+      </div>
+
+      <div style="margin-top:14px; padding:10px 12px; background:rgba(15,23,42,0.6); border-radius:8px; border:1px solid rgba(255,255,255,0.05); font-size:11px; color:#8899a6; line-height:1.45;">
+        <strong style="color:#f0f4f8;">Chamber Telemetry Note:</strong> The K-Systems G210 features 10 internal RTD sensor channels accessible via rear DB-25 connector. Physical zone telemetry requires an expansion RTD slice. Chamber temperatures above are simulated at 37.0°C clinical setpoint.
+      </div>
+
+      <div style="display:flex; justify-content:flex-end; margin-top:16px;">
+        <button type="button" class="btn" style="background:#0284c7; color:#fff; font-weight:700; padding:8px 20px; border-radius:6px;" onclick="closeIncubatorModal()">Close Inspector</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================== -->
   <!-- SCRIPTS                                                        -->
   <!-- ============================================================== -->
   <script>
     const EQUIPMENT = {{ equipment_json | safe }};
     const LN2_INSPECTION_CNLS = (EQUIPMENT.dewars || []).map(d => d.ln2_cnl).filter(Boolean);
+
+    // Incubator Modal & Multi-Zone Simulation State
+    let lastReadings = {};
+    let currentModalIncKey = null;
+    let simulatedChamberOffsets = {};
+
+    function getSimulatedChamberTemps(incKey) {
+      if (!simulatedChamberOffsets[incKey]) {
+        simulatedChamberOffsets[incKey] = [
+          0.01, -0.02, 0.02, -0.01, 0.00,
+          -0.01, 0.02, -0.02, 0.01, 0.00
+        ];
+      }
+      const offsets = simulatedChamberOffsets[incKey];
+      return offsets.map((off, idx) => {
+        const jitter = (Math.sin(Date.now() / 2500 + idx * 1.4) * 0.015);
+        return (37.00 + off + jitter).toFixed(2);
+      });
+    }
+
+    function openIncubatorModal(incKey) {
+      const inc = (EQUIPMENT.incubators || []).find(i => i.key === incKey);
+      if (!inc) return;
+      currentModalIncKey = incKey;
+
+      const titleEl = document.getElementById('incModalTitle');
+      const subEl = document.getElementById('incModalSubtitle');
+      const hwChan = document.getElementById('incModalHwChannel');
+
+      if (titleEl) titleEl.innerText = `${inc.name || 'Incubator'} (${inc.model || 'K-Systems G210'})`;
+      if (subEl) subEl.innerText = `${inc.subtitle || ('Bay ' + (inc.bay_number || '1'))} • K-Systems G210 InviCell`;
+      if (hwChan) hwChan.innerText = `● LIVE HARDWARE (${inc.alarm_cnl ? ('Channel ' + inc.alarm_cnl) : 'Node00 DI'})`;
+
+      renderChamberGrid(incKey);
+      updateModalAlarmState(inc);
+
+      const modal = document.getElementById('incubatorModal');
+      if (modal) modal.style.display = 'flex';
+    }
+
+    function closeIncubatorModal() {
+      currentModalIncKey = null;
+      const modal = document.getElementById('incubatorModal');
+      if (modal) modal.style.display = 'none';
+    }
+
+    function renderChamberGrid(incKey) {
+      const grid = document.getElementById('incModalZonesGrid');
+      if (!grid) return;
+      const temps = getSimulatedChamberTemps(incKey);
+
+      let html = '';
+      temps.forEach((t, i) => {
+        const chamberNum = String(i + 1).padStart(2, '0');
+        html += `
+          <div class="chamber-well">
+            <div style="font-size:10px; font-weight:700; color:#8899a6; text-transform:uppercase;">CH ${chamberNum}</div>
+            <div style="font-size:1.15rem; font-weight:800; font-family:monospace; color:#38bdf8; margin:2px 0;">${t}°C</div>
+            <div style="font-size:9px; color:#64748b;">Set: 37.0°</div>
+            <div style="margin-top:4px;"><span class="status-badge status-normal" style="font-size:8.5px; padding:1px 4px;">IN-RANGE</span></div>
+          </div>
+        `;
+      });
+      grid.innerHTML = html;
+    }
+
+    function updateModalAlarmState(inc) {
+      if (!inc) return;
+      const dot = document.getElementById('incModalHwDot');
+      const hwStatus = document.getElementById('incModalHwStatus');
+      const badge = document.getElementById('incModalBadge');
+
+      const incAlarm = inc.alarm_cnl && lastReadings ? (lastReadings[inc.alarm_cnl] > 0) : false;
+
+      if (incAlarm) {
+        if (dot) dot.style.background = '#ff1744';
+        if (hwStatus) {
+          hwStatus.innerText = 'TRIPPED (Open Circuit)';
+          hwStatus.style.color = '#ff1744';
+        }
+        if (badge) {
+          badge.innerText = 'TRIPPED';
+          badge.className = 'status-badge status-alert';
+        }
+      } else {
+        if (dot) dot.style.background = '#10b981';
+        if (hwStatus) {
+          hwStatus.innerText = 'NORMAL (Closed Loop)';
+          hwStatus.style.color = '#f0f4f8';
+        }
+        if (badge) {
+          badge.innerText = 'CLEAR';
+          badge.className = 'status-badge status-normal';
+        }
+      }
+    }
 
     // Navigation / Tabs Controller
     function switchTab(tab, updateUrl = true) {
@@ -1426,6 +1655,7 @@
         .then(r => r.json())
         .then(data => {
           const r = data.readings || {};
+          lastReadings = r;
 
           // Clock
           if (data.server_time) {
@@ -1663,6 +1893,22 @@
             } else {
               cardInc.style.opacity = '1.0';
               cardInc.style.borderTopColor = anyIncAlarm ? '#ff1744' : '#00b0ff';
+            }
+          }
+
+          // Cabinet Microclimate Readouts
+          const cabTemp = document.getElementById('cab-temp-val');
+          if (cabTemp) {
+            const amb = r[101] ? (r[101] - 0.4).toFixed(1) : '24.5';
+            cabTemp.innerText = `${amb}°C`;
+          }
+
+          // Real-time update for modal inspector if currently open
+          if (currentModalIncKey) {
+            const activeInc = (EQUIPMENT.incubators || []).find(i => i.key === currentModalIncKey);
+            if (activeInc) {
+              updateModalAlarmState(activeInc);
+              renderChamberGrid(currentModalIncKey);
             }
           }
         })

@@ -31,6 +31,8 @@ VAR
     bIncubator01_RawContact : BOOL := FALSE;    (* DI 1 on afoa-node00 750-436 *)
     {attribute 'symbol' := 'none'}
     bIncubator02_RawContact : BOOL := FALSE;    (* DI 2 on afoa-node00 750-436 *)
+    {attribute 'symbol' := 'none'}
+    bCabinetDoor_RawContact : BOOL := FALSE;    (* DI 8 on afoa-node00 750-436 *)
 
     (* --- Encapsulated Clinical Equipment Function Blocks (Published over OPC UA) --- *)
     fbFridge                : FB_MedFridge;
@@ -40,6 +42,7 @@ VAR
     fbDewar3                : FB_Dewar;
     fbDewar4                : FB_Dewar;
     fbDewar5                : FB_Dewar;
+    fbCabinet01             : FB_IncubatorCabinet;
     fbIncubator1            : FB_Incubator;
     fbIncubator2            : FB_Incubator;
     fbDoor01                : FB_PickupDropout;
@@ -122,14 +125,22 @@ fbDewar5(
     bSimMode     := bGlobalSimMode
 );
 
-// --- D. Embryology Incubators 01 & 02 (Dry contact with 15s debounce) ---
+// --- D. Incubator Cabinet 01 & Incubators (Muted when door open + 3m recovery grace) ---
+fbCabinet01(
+    bRawDoorContact     := bCabinetDoor_RawContact,
+    bDoorNormallyClosed := TRUE,    (* TRUE = Contact closes at 0V when door is closed *)
+    bSimMode            := bGlobalSimMode,
+    tDoorAlarmDelay     := T#3M,    (* Alarm if cabinet door left open > 3 minutes *)
+    tPostCloseGrace     := T#3M     (* Keep incubator alarms muted for 3 minutes after closing *)
+);
+
 fbIncubator1(
-    bRawContact := bIncubator01_RawContact,
+    bRawContact := (bIncubator01_RawContact AND NOT fbCabinet01.bIncubatorMute),
     bSimMode    := bGlobalSimMode
 );
 
 fbIncubator2(
-    bRawContact := bIncubator02_RawContact,
+    bRawContact := (bIncubator02_RawContact AND NOT fbCabinet01.bIncubatorMute),
     bSimMode    := bGlobalSimMode
 );
 
