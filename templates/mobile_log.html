@@ -173,20 +173,22 @@
       letter-spacing: 0.5px;
     }
 
-    /* Compact Vertical Stepper */
+    /* Horizontal Stepper */
     .stepper-vert-box {
       display: flex;
-      flex-direction: column;
+      flex-direction: row;
       align-items: center;
-      gap: 8px;
+      justify-content: center;
+      gap: 6px;
       margin: 6px auto 10px;
-      width: 135px;
+      width: 100%;
     }
 
     .stepper-btn-row {
       display: flex;
-      gap: 8px;
-      width: 100%;
+      gap: 5px;
+      flex: 1;
+      max-width: 130px;
     }
 
     .btn-step-vert {
@@ -195,9 +197,9 @@
       color: #f0f4f8;
       border: 1px solid rgba(255, 255, 255, 0.18);
       border-radius: 8px;
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 800;
-      padding: 9px 0;
+      padding: 11px 0;
       cursor: pointer;
       text-align: center;
       transition: all 0.1s;
@@ -223,7 +225,8 @@
 
     .level-input-wrap {
       position: relative;
-      width: 100%;
+      width: 135px;
+      flex-shrink: 0;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -605,24 +608,24 @@
           </div>
         </div>
 
-        <!-- Dipstick Level Stepper (Compact Vertical Layout for Mobile) -->
+        <!-- Dipstick Level Stepper (Horizontal Layout) -->
         <div class="form-group" style="text-align: center;">
           <label class="form-label">Ruler Frost Line (Centimeters)</label>
           <div class="stepper-vert-box">
-            <!-- Increment Buttons Above -->
+            <!-- Decrement Buttons Left -->
             <div class="stepper-btn-row">
-              <button type="button" class="btn-step-vert btn-plus" onclick="adjustLevel(0.5)">+0.5</button>
-              <button type="button" class="btn-step-vert btn-plus" onclick="adjustLevel(1.0)">+1.0</button>
+              <button type="button" class="btn-step-vert btn-minus" onclick="adjustLevel(-1.0)">-1.0</button>
+              <button type="button" class="btn-step-vert btn-minus" onclick="adjustLevel(-0.5)">-0.5</button>
             </div>
             <!-- Center Compact Number Display -->
             <div class="level-input-wrap">
               <input type="number" step="0.1" id="mobileLevel" class="input-level-compact" value="{{ init_level }}">
               <span class="level-cm-tag">cm</span>
             </div>
-            <!-- Decrement Buttons Below -->
+            <!-- Increment Buttons Right -->
             <div class="stepper-btn-row">
-              <button type="button" class="btn-step-vert btn-minus" onclick="adjustLevel(-0.5)">-0.5</button>
-              <button type="button" class="btn-step-vert btn-minus" onclick="adjustLevel(-1.0)">-1.0</button>
+              <button type="button" class="btn-step-vert btn-plus" onclick="adjustLevel(0.5)">+0.5</button>
+              <button type="button" class="btn-step-vert btn-plus" onclick="adjustLevel(1.0)">+1.0</button>
             </div>
           </div>
           <div style="font-size:11.5px; color:#8899a6; margin-top:-2px;">
