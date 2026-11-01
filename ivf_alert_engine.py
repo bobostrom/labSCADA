@@ -448,6 +448,121 @@ def get_current_channel_values():
 
 
 # ==============================================================================
+# PROBE CALIBRATION & NIST TRACEABILITY (CAP COM.30550 / CLIA)
+# ==============================================================================
+def ensure_calibration_table():
+    """Ensures mod_arc_postgre_sql.probe_calibration_logs exists for CAP COM.30550 annual verification."""
+    sql = """
+    CREATE TABLE IF NOT EXISTS mod_arc_postgre_sql.probe_calibration_logs (
+        id SERIAL PRIMARY KEY,
+        equipment_key VARCHAR(64) NOT NULL,
+        equipment_name VARCHAR(128) NOT NULL,
+        probe_label VARCHAR(128),
+        nist_cert_number VARCHAR(128) NOT NULL,
+        nist_exp_date DATE NOT NULL,
+        ref_temp_c DOUBLE PRECISION NOT NULL,
+        scada_temp_c DOUBLE PRECISION NOT NULL,
+        offset_applied_c DOUBLE PRECISION NOT NULL DEFAULT 0.0,
+        tolerance_c DOUBLE PRECISION NOT NULL DEFAULT 0.5,
+        pass_status BOOLEAN NOT NULL DEFAULT TRUE,
+        verified_by VARCHAR(32) NOT NULL,
+        notes TEXT,
+        verified_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        next_due_date DATE NOT NULL DEFAULT (CURRENT_DATE + INTERVAL '1 year')
+    );
+    """
+    return db_execute(sql)
+
+
+def get_calibration_summary():
+    """Returns calibration logs, per-equipment status, and last-used Master NIST thermometer details."""
+    rows = db_query("""
+    SELECT id, equipment_key, equipment_name, COALESCE(probe_label, ''),
+           nist_cert_number, nist_exp_date::text, ref_temp_c, scada_temp_c,
+           offset_applied_c, tolerance_c, pass_status, verified_by,
+           COALESCE(notes, ''), verified_at::text, next_due_date::text,
+           (next_due_date - CURRENT_DATE) AS days_until_due,
+           (nist_exp_date - CURRENT_DATE) AS days_until_nist_exp
+    FROM mod_arc_postgre_sql.probe_calibration_logs
+    ORDER BY verified_at DESC
+    LIMIT 60;
+    """)
+
+    logs = []
+    latest_by_equip = {}
+    last_nist_cert = ""
+    last_nist_exp = ""
+
+    for r in rows:
+        if len(r) >= 17:
+            try:
+                rec_id = int(r[0])
+                eq_key = r[1]
+                eq_name = r[2]
+                probe_lbl = r[3]
+                nist_cert = r[4]
+                nist_exp = r[5]
+                ref_c = float(r[6])
+                scada_c = float(r[7])
+                offset_c = float(r[8])
+                tol_c = float(r[9])
+                passed = (r[10] == "t")
+                ver_by = r[11]
+                notes = r[12]
+                ver_at = r[13]
+                next_due = r[14]
+                days_due = int(r[15]) if r[15] and r[15] != "NULL" else 365
+                days_nist = int(r[16]) if r[16] and r[16] != "NULL" else 365
+
+                if not last_nist_cert and nist_cert:
+                    last_nist_cert = nist_cert
+                    last_nist_exp = nist_exp
+
+                if not passed:
+                    status = "FAILED"
+                elif days_due < 0 or days_nist < 0:
+                    status = "EXPIRED"
+                elif days_due <= 30 or days_nist <= 30:
+                    status = "EXPIRING_SOON"
+                else:
+                    status = "VALID"
+
+                entry = {
+                    "id": rec_id,
+                    "equipment_key": eq_key,
+                    "equipment_name": eq_name,
+                    "probe_label": probe_lbl,
+                    "nist_cert_number": nist_cert,
+                    "nist_exp_date": nist_exp,
+                    "ref_temp_c": round(ref_c, 2),
+                    "scada_temp_c": round(scada_c, 2),
+                    "deviation_c": round(scada_c - ref_c, 2),
+                    "offset_applied_c": round(offset_c, 2),
+                    "tolerance_c": round(tol_c, 2),
+                    "pass_status": passed,
+                    "status": status,
+                    "verified_by": ver_by,
+                    "notes": notes,
+                    "verified_at": ver_at,
+                    "next_due_date": next_due,
+                    "days_until_due": days_due,
+                    "days_until_nist_exp": days_nist,
+                }
+                logs.append(entry)
+                if eq_key not in latest_by_equip:
+                    latest_by_equip[eq_key] = entry
+            except Exception as e:
+                print(f"Error parsing calibration row: {e}")
+
+    return {
+        "logs": logs,
+        "equipment_status": latest_by_equip,
+        "last_nist_cert": last_nist_cert,
+        "last_nist_exp": last_nist_exp,
+    }
+
+
+# ==============================================================================
 # LAB SESSION LIFECYCLE & AUDIT MANAGEMENT
 # ==============================================================================
 cached_lab_mode = None
@@ -1616,6 +1731,13 @@ class ClinicalAlertHandler(http.server.BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(json.dumps(events).encode("utf-8"))
 
+        elif parsed.path in ["/api/calibrations", "/api/calibration"]:
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.end_headers()
+            self.wfile.write(json.dumps(get_calibration_summary()).encode("utf-8"))
+
         elif parsed.path in ["/report/ln2", "/reports/ln2"]:
             params = urllib.parse.parse_qs(parsed.query)
             month_param = params.get("month", [None])[0]
@@ -1992,6 +2114,60 @@ class ClinicalAlertHandler(http.server.BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(json.dumps({"success": True, "tank": tank, "cancelled": True}).encode("utf-8"))
 
+        elif parsed.path in ["/api/calibrations", "/api/calibration"]:
+            try:
+                content_length = int(self.headers.get("Content-Length", 0))
+                body_str = self.rfile.read(content_length).decode("utf-8") if content_length > 0 else "{}"
+                payload = json.loads(body_str) if body_str else {}
+
+                eq_key = str(payload.get("equipment_key", "")).strip().replace("'", "''")
+                eq_name = str(payload.get("equipment_name", "")).strip().replace("'", "''")
+                probe_lbl = str(payload.get("probe_label", "")).strip().replace("'", "''")
+                nist_cert = str(payload.get("nist_cert_number", "")).strip().replace("'", "''")
+                nist_exp = str(payload.get("nist_exp_date", "")).strip().replace("'", "''")
+                ref_c = float(payload.get("ref_temp_c", 0.0))
+                scada_c = float(payload.get("scada_temp_c", 0.0))
+                offset_c = float(payload.get("offset_applied_c", 0.0))
+                tol_c = float(payload.get("tolerance_c", 0.5))
+                ver_by = str(payload.get("verified_by", "")).strip().upper().replace("'", "''")
+                notes = str(payload.get("notes", "")).strip().replace("'", "''")
+
+                if not eq_key or not eq_name or not nist_cert or not nist_exp or not ver_by:
+                    self.send_response(400)
+                    self.send_header("Content-Type", "application/json")
+                    self.end_headers()
+                    self.wfile.write(json.dumps({"success": False, "error": "Equipment, NIST Cert #, NIST Expiration Date, and Staff Initials are required."}).encode("utf-8"))
+                    return
+
+                passed = abs(scada_c - ref_c) <= tol_c
+                pass_sql = "TRUE" if passed else "FALSE"
+
+                sql = f"""
+                INSERT INTO mod_arc_postgre_sql.probe_calibration_logs
+                (equipment_key, equipment_name, probe_label, nist_cert_number, nist_exp_date,
+                 ref_temp_c, scada_temp_c, offset_applied_c, tolerance_c, pass_status,
+                 verified_by, notes, verified_at, next_due_date)
+                VALUES
+                ('{eq_key}', '{eq_name}', '{probe_lbl}', '{nist_cert}', '{nist_exp}'::date,
+                 {ref_c}, {scada_c}, {offset_c}, {tol_c}, {pass_sql},
+                 '{ver_by}', '{notes}', NOW(), (CURRENT_DATE + INTERVAL '1 year')::date);
+                """
+                ok = db_execute(sql)
+                self.send_response(200 if ok else 500)
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Access-Control-Allow-Origin", "*")
+                self.end_headers()
+                self.wfile.write(json.dumps({
+                    "success": ok,
+                    "pass_status": passed,
+                    "deviation_c": round(scada_c - ref_c, 2),
+                }).encode("utf-8"))
+            except Exception as e:
+                self.send_response(400)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps({"success": False, "error": str(e)}).encode("utf-8"))
+
         elif parsed.path == "/api/sim/toggle":
             if not SIMULATION_MODE:
                 self.send_response(404)
@@ -2043,6 +2219,7 @@ class ClinicalAlertHandler(http.server.BaseHTTPRequestHandler):
 # ==============================================================================
 def main():
     print(f"Starting IVF Clinical Alert & Escalation Engine on port {PORT}...")
+    ensure_calibration_table()
 
     # Spawn background scan & phone sync threads
     t_scan = threading.Thread(target=telemetry_scan_worker, daemon=True)

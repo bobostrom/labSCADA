@@ -1187,10 +1187,13 @@
           <button type="button" class="nav-tab" id="btnAuditDoors" style="padding:6px 14px; font-size:12.5px;"
             onclick="switchAuditView('doors')">🚪 Cleanroom Door Log</button>
           {% endif %}
+          <button type="button" class="nav-tab" id="btnAuditCal" style="padding:6px 14px; font-size:12.5px;"
+            onclick="switchAuditView('calibration')">🌡️ Probe Calibration &amp; NIST Log</button>
         </div>
       </div>
       <div id="alarmsTable" style="overflow-x:auto;">Loading alarms...</div>
       <div id="doorsTable" style="overflow-x:auto; display:none;">Loading door events...</div>
+      <div id="calibrationTable" style="overflow-x:auto; display:none;">Loading calibration records...</div>
     </div>
   </div>
 
@@ -1513,6 +1516,91 @@
 
       <div style="display:flex; justify-content:flex-end; margin-top:16px;">
         <button type="button" class="btn" style="background:#0284c7; color:#fff; font-weight:700; padding:8px 20px; border-radius:6px;" onclick="closeIncubatorModal()">Close Inspector</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================== -->
+  <!-- PROBE CALIBRATION & NIST TRACEABILITY MODAL (CAP COM.30550)    -->
+  <!-- ============================================================== -->
+  <div id="calibrationModal" class="modal-overlay" style="display:none;" onclick="if(event.target===this) closeCalibrationModal()">
+    <div class="modal-box" style="max-width:600px; border-color:rgba(16, 185, 129, 0.45); padding:22px;">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:14px;">
+        <div>
+          <h2 style="margin:0; font-size:1.35rem; color:#10b981;">🌡️ Log Annual Probe Calibration</h2>
+          <div style="color:#8899a6; font-size:12px; margin-top:3px;">CAP COM.30550 / CLIA Annual 1-Point Verification against Master NIST Reference</div>
+        </div>
+        <button type="button" class="btn"
+          style="background:transparent; border:1px solid rgba(255,255,255,0.2); font-size:16px; padding:6px 12px;"
+          onclick="closeCalibrationModal()">✕</button>
+      </div>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
+        <div class="form-group" style="margin-bottom:0;">
+          <label class="form-label">Monitored Equipment / Channel</label>
+          <select id="calEquipSelect" class="text-input" style="background:#0f172a; color:#f0f4f8;" onchange="onCalEquipChange()">
+          </select>
+        </div>
+        <div class="form-group" style="margin-bottom:0;">
+          <label class="form-label">Probe Identifier / Serial (Optional)</label>
+          <input type="text" id="calProbeLabel" class="text-input" placeholder="e.g. Pt100 Class A #04">
+        </div>
+      </div>
+
+      <div style="background:rgba(9,13,22,0.85); border:1px solid rgba(16,185,129,0.25); border-radius:8px; padding:12px; margin-bottom:12px;">
+        <div style="font-size:11px; font-weight:700; color:#10b981; text-transform:uppercase; margin-bottom:8px;">Master NIST-Traceable Reference Thermometer</div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+          <div>
+            <label class="form-label" style="font-size:11px;">NIST Certificate / Serial #</label>
+            <input type="text" id="calNistCert" class="text-input" placeholder="e.g. Fisher 14-648-233 / Cert #88412">
+          </div>
+          <div>
+            <label class="form-label" style="font-size:11px;">Master Cert Expiration Date</label>
+            <input type="date" id="calNistExp" class="text-input" style="color-scheme:dark;">
+          </div>
+        </div>
+      </div>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:10px; margin-bottom:12px;">
+        <div>
+          <label class="form-label" style="font-size:11px;">NIST Ref Temp (°C)</label>
+          <input type="number" step="0.01" id="calRefTemp" class="text-input" placeholder="-196.0" oninput="updateCalPreview()">
+        </div>
+        <div>
+          <label class="form-label" style="font-size:11px;">SCADA Probe (°C)</label>
+          <input type="number" step="0.01" id="calScadaTemp" class="text-input" placeholder="-195.8" oninput="updateCalPreview()">
+        </div>
+        <div>
+          <label class="form-label" style="font-size:11px;">PLC Offset (°C)</label>
+          <input type="number" step="0.01" id="calOffset" class="text-input" value="0.0" oninput="updateCalPreview()">
+        </div>
+        <div>
+          <label class="form-label" style="font-size:11px;">Tolerance (±°C)</label>
+          <input type="number" step="0.1" id="calTolerance" class="text-input" value="0.5" oninput="updateCalPreview()">
+        </div>
+      </div>
+
+      <div id="calPreviewBanner" style="background:rgba(15,23,42,0.8); border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:10px 12px; margin-bottom:12px; font-size:12.5px; display:flex; justify-content:space-between; align-items:center;">
+        <span style="color:#94a3b8;">Enter Reference &amp; SCADA temperatures to calculate deviation.</span>
+        <span id="calPreviewBadge" class="status-badge status-normal">--</span>
+      </div>
+
+      <div style="display:grid; grid-template-columns:140px 1fr; gap:12px; margin-bottom:12px;">
+        <div>
+          <label class="form-label">Verified By (Initials)</label>
+          <input type="text" id="calVerifiedBy" class="text-input" placeholder="e.g. BO" maxlength="8">
+        </div>
+        <div>
+          <label class="form-label">Calibration Notes (Optional)</label>
+          <input type="text" id="calNotes" class="text-input" placeholder="e.g. Ice-point bath / LN2 comparison in situ">
+        </div>
+      </div>
+
+      <div id="calSubmitMsg" style="font-size:13px; font-weight:600; margin-bottom:10px;"></div>
+
+      <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:14px;">
+        <button type="button" class="btn" style="background:#334155;" onclick="closeCalibrationModal()">Cancel</button>
+        <button type="button" class="btn" id="btnSubmitCal" style="background:#10b981; color:#090d16; font-weight:800; padding:10px 22px;" onclick="submitCalibrationLog()">✅ Record NIST Verification</button>
       </div>
     </div>
   </div>
@@ -2451,34 +2539,297 @@
     }
 
     // =========================================================================
-    // Cleanroom Door Audit Log Viewer
+    // Cleanroom Door & Probe Calibration Audit Log Viewer
     // =========================================================================
+    let cachedCalSummary = null;
+
+    function getCalibratableEquipment() {
+      const list = [];
+      (EQUIPMENT.dewars || []).forEach(d => {
+        if (d.temp_cnl) list.push({ key: d.key, name: d.label || d.name, temp_cnl: d.temp_cnl, default_tol: 2.0 });
+      });
+      (EQUIPMENT.fridges || []).forEach(f => {
+        if (f.temp_cnl) list.push({ key: f.key, name: f.name, temp_cnl: f.temp_cnl, default_tol: 0.5 });
+      });
+      (EQUIPMENT.freezers || []).forEach(fz => {
+        if (fz.temp_cnl) list.push({ key: fz.key, name: fz.name, temp_cnl: fz.temp_cnl, default_tol: 1.0 });
+      });
+      (EQUIPMENT.ambient || []).forEach(a => {
+        if (a.temp_cnl) list.push({ key: a.key, name: a.name, temp_cnl: a.temp_cnl, default_tol: 0.5 });
+      });
+      return list;
+    }
+
     function switchAuditView(tab) {
       currentAuditTab = tab;
       const btnA = document.getElementById('btnAuditAlarms');
       const btnD = document.getElementById('btnAuditDoors');
+      const btnC = document.getElementById('btnAuditCal');
       const tblA = document.getElementById('alarmsTable');
       const tblD = document.getElementById('doorsTable');
+      const tblC = document.getElementById('calibrationTable');
       const title = document.getElementById('auditSectionTitle');
       const desc = document.getElementById('auditSectionDesc');
 
+      if (btnA) btnA.className = 'nav-tab';
+      if (btnD) btnD.className = 'nav-tab';
+      if (btnC) btnC.className = 'nav-tab';
+      if (tblA) tblA.style.display = 'none';
+      if (tblD) tblD.style.display = 'none';
+      if (tblC) tblC.style.display = 'none';
+
       if (tab === 'doors' && btnD) {
-        btnA.className = 'nav-tab';
         btnD.className = 'nav-tab active';
-        tblA.style.display = 'none';
         tblD.style.display = 'block';
         title.innerText = 'Cleanroom Door Access Log';
         desc.innerText = 'Chronological log of cleanroom physical access, open duration, and session context.';
         loadDoorEvents();
+      } else if (tab === 'calibration' && btnC) {
+        btnC.className = 'nav-tab active';
+        tblC.style.display = 'block';
+        title.innerText = 'Probe Calibration & NIST Traceability Log (CAP COM.30550)';
+        desc.innerText = 'Annual 1-point verification of Pt100 RTD & thermocouple sensors against the clinic Master NIST-Traceable Reference Thermometer.';
+        loadCalibrations();
       } else {
         if (btnA) btnA.className = 'nav-tab active';
-        if (btnD) btnD.className = 'nav-tab';
-        tblA.style.display = 'block';
-        tblD.style.display = 'none';
+        if (tblA) tblA.style.display = 'block';
         title.innerText = 'Active Alarms & Clinical Audit Trail';
         desc.innerText = 'Reverse chronological history. Tap Acknowledge to silence repeating sirens.';
         loadAlarms();
       }
+    }
+
+    function loadCalibrations() {
+      fetch('/api/calibrations')
+        .then(r => r.json())
+        .then(data => {
+          cachedCalSummary = data;
+          const container = document.getElementById('calibrationTable');
+          if (!container) return;
+
+          const equipList = getCalibratableEquipment();
+          const eqStatus = data.equipment_status || {};
+          const logs = data.logs || [];
+
+          let h = '<div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:12px; padding:10px 12px; background:rgba(9,13,22,0.75); border:1px solid rgba(16,185,129,0.25); border-radius:8px;">' +
+            '<div style="font-size:12.5px; color:#cbd5e1;">' +
+            '<strong>CAP COM.30550 Compliance:</strong> Uncertified industrial probes are verified annually in-house against your Master NIST Reference Thermometer.' +
+            '</div>' +
+            '<button type="button" class="btn" style="background:#10b981; color:#090d16; font-weight:800; font-size:12.5px; padding:8px 14px;" onclick="openCalibrationModal()">+ Log Probe Verification</button>' +
+            '</div>';
+
+          // Per-Equipment Status Pills
+          h += '<div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(195px, 1fr)); gap:8px; margin-bottom:14px;">';
+          equipList.forEach(eq => {
+            const st = eqStatus[eq.key];
+            let badgeHtml = '<span style="color:#94a3b8; font-size:10.5px; font-weight:700;">UNVERIFIED</span>';
+            let subText = 'No record on file';
+            let borderCol = 'rgba(255,255,255,0.08)';
+            if (st) {
+              if (st.status === 'VALID') {
+                badgeHtml = '<span style="color:#10b981; font-size:10.5px; font-weight:800;">● NIST VERIFIED</span>';
+                borderCol = 'rgba(16,185,129,0.35)';
+              } else if (st.status === 'EXPIRING_SOON') {
+                badgeHtml = '<span style="color:#f59e0b; font-size:10.5px; font-weight:800;">⚠ DUE SOON</span>';
+                borderCol = 'rgba(245,158,11,0.4)';
+              } else {
+                badgeHtml = '<span style="color:#ef4444; font-size:10.5px; font-weight:800;">🚨 EXPIRED / FAIL</span>';
+                borderCol = 'rgba(239,68,68,0.45)';
+              }
+              subText = `Due: ${st.next_due_date} (Δ ${st.deviation_c >= 0 ? '+' : ''}${st.deviation_c}°C)`;
+            }
+            h += `<div style="background:rgba(15,23,42,0.75); border:1px solid ${borderCol}; border-radius:8px; padding:8px 10px; cursor:pointer;" onclick="openCalibrationModal('${eq.key}')">` +
+              `<div style="display:flex; justify-content:space-between; align-items:center;">` +
+              `<span style="font-weight:700; font-size:12px; color:#f0f4f8;">${eq.name}</span>` +
+              badgeHtml +
+              `</div>` +
+              `<div style="font-size:11px; color:#8899a6; margin-top:3px; font-family:monospace;">${subText}</div>` +
+              `</div>`;
+          });
+          h += '</div>';
+
+          if (logs.length === 0) {
+            h += '<p style="color:#94a3b8; padding:8px 0;">No probe calibration records logged yet. Click <b>+ Log Probe Verification</b> above to record your first NIST comparison.</p>';
+            container.innerHTML = h;
+            return;
+          }
+
+          h += '<table style="min-width:820px;"><thead><tr>' +
+            '<th>Verified Date</th>' +
+            '<th>Equipment</th>' +
+            '<th>Probe ID</th>' +
+            '<th>Master NIST Cert # (Exp)</th>' +
+            '<th>NIST Ref</th>' +
+            '<th>SCADA Read</th>' +
+            '<th>Deviation</th>' +
+            '<th>PLC Offset</th>' +
+            '<th>Status / Next Due</th>' +
+            '<th>Staff</th>' +
+            '</tr></thead><tbody>';
+
+          logs.forEach(row => {
+            const verDate = row.verified_at ? row.verified_at.split(' ')[0] : '-';
+            const devSign = row.deviation_c >= 0 ? '+' : '';
+            const offSign = row.offset_applied_c >= 0 ? '+' : '';
+            let stBadge = '<span class="status-badge status-normal">PASS</span>';
+            if (row.status === 'FAILED') {
+              stBadge = '<span class="status-badge status-alert">OUT OF TOL</span>';
+            } else if (row.status === 'EXPIRED') {
+              stBadge = '<span class="status-badge status-alert">EXPIRED</span>';
+            } else if (row.status === 'EXPIRING_SOON') {
+              stBadge = '<span class="status-badge status-warn">DUE SOON</span>';
+            }
+            h += `<tr>` +
+              `<td style="font-family:monospace;">${verDate}</td>` +
+              `<td><strong>${row.equipment_name}</strong></td>` +
+              `<td style="color:#94a3b8; font-size:12px;">${row.probe_label || '-'}</td>` +
+              `<td style="font-family:monospace; font-size:12px;">${row.nist_cert_number} <span style="color:#8899a6;">(Exp: ${row.nist_exp_date})</span></td>` +
+              `<td style="font-family:monospace; font-weight:700;">${row.ref_temp_c.toFixed(2)}°C</td>` +
+              `<td style="font-family:monospace; font-weight:700; color:#38bdf8;">${row.scada_temp_c.toFixed(2)}°C</td>` +
+              `<td style="font-family:monospace; font-weight:700;">${devSign}${row.deviation_c.toFixed(2)}°C <span style="color:#64748b; font-size:11px;">(±${row.tolerance_c}°C)</span></td>` +
+              `<td style="font-family:monospace;">${offSign}${row.offset_applied_c.toFixed(2)}°C</td>` +
+              `<td>${stBadge} <span style="font-size:11px; color:#8899a6; margin-left:4px;">Due ${row.next_due_date}</span></td>` +
+              `<td><b>${row.verified_by}</b></td>` +
+              `</tr>`;
+          });
+          h += '</tbody></table>';
+          container.innerHTML = h;
+        })
+        .catch(e => console.error('Calibrations fetch error:', e));
+    }
+
+    function openCalibrationModal(preselectKey) {
+      const sel = document.getElementById('calEquipSelect');
+      const equipList = getCalibratableEquipment();
+      sel.innerHTML = '';
+      equipList.forEach(eq => {
+        const opt = document.createElement('option');
+        opt.value = eq.key;
+        opt.textContent = `${eq.name} (Ch ${eq.temp_cnl})`;
+        sel.appendChild(opt);
+      });
+      if (preselectKey) {
+        sel.value = preselectKey;
+      }
+
+      if (cachedCalSummary) {
+        if (cachedCalSummary.last_nist_cert && !document.getElementById('calNistCert').value) {
+          document.getElementById('calNistCert').value = cachedCalSummary.last_nist_cert;
+        }
+        if (cachedCalSummary.last_nist_exp && !document.getElementById('calNistExp').value) {
+          document.getElementById('calNistExp').value = cachedCalSummary.last_nist_exp;
+        }
+      }
+
+      document.getElementById('calSubmitMsg').innerText = '';
+      onCalEquipChange();
+      document.getElementById('calibrationModal').style.display = 'flex';
+    }
+
+    function closeCalibrationModal() {
+      document.getElementById('calibrationModal').style.display = 'none';
+    }
+
+    function onCalEquipChange() {
+      const key = document.getElementById('calEquipSelect').value;
+      const equipList = getCalibratableEquipment();
+      const eq = equipList.find(item => item.key === key);
+      if (eq) {
+        document.getElementById('calTolerance').value = eq.default_tol.toFixed(1);
+        const liveVal = lastReadings[String(eq.temp_cnl)] !== undefined ? lastReadings[String(eq.temp_cnl)] : lastReadings[eq.temp_cnl];
+        if (liveVal !== undefined && liveVal !== null) {
+          document.getElementById('calScadaTemp').value = Number(liveVal).toFixed(2);
+        }
+        if (cachedCalSummary && cachedCalSummary.equipment_status && cachedCalSummary.equipment_status[key]) {
+          const prev = cachedCalSummary.equipment_status[key];
+          if (prev.probe_label) document.getElementById('calProbeLabel').value = prev.probe_label;
+          if (prev.offset_applied_c !== undefined) document.getElementById('calOffset').value = Number(prev.offset_applied_c).toFixed(2);
+        }
+      }
+      updateCalPreview();
+    }
+
+    function updateCalPreview() {
+      const refVal = parseFloat(document.getElementById('calRefTemp').value);
+      const scadaVal = parseFloat(document.getElementById('calScadaTemp').value);
+      const tolVal = parseFloat(document.getElementById('calTolerance').value) || 0.5;
+      const banner = document.getElementById('calPreviewBanner');
+      if (isNaN(refVal) || isNaN(scadaVal)) {
+        banner.innerHTML = '<span style="color:#94a3b8;">Enter Reference &amp; SCADA temperatures to calculate deviation.</span><span class="status-badge status-normal">--</span>';
+        return;
+      }
+      const dev = scadaVal - refVal;
+      const absDev = Math.abs(dev);
+      const sign = dev >= 0 ? '+' : '';
+      const pass = absDev <= tolVal;
+      const badge = pass
+        ? '<span class="status-badge status-normal">PASS (Within Tolerance)</span>'
+        : '<span class="status-badge status-alert">FAIL (Adjust PLC Offset)</span>';
+      banner.innerHTML = `<span>Deviation (SCADA − NIST): <strong style="font-family:monospace; color:#f0f4f8;">${sign}${dev.toFixed(2)}°C</strong> (Allowed: ±${tolVal.toFixed(1)}°C)</span>${badge}`;
+    }
+
+    function submitCalibrationLog() {
+      const key = document.getElementById('calEquipSelect').value;
+      const equipList = getCalibratableEquipment();
+      const eq = equipList.find(item => item.key === key);
+      const eqName = eq ? eq.name : key;
+
+      const probeLbl = document.getElementById('calProbeLabel').value.trim();
+      const nistCert = document.getElementById('calNistCert').value.trim();
+      const nistExp = document.getElementById('calNistExp').value.trim();
+      const refTemp = parseFloat(document.getElementById('calRefTemp').value);
+      const scadaTemp = parseFloat(document.getElementById('calScadaTemp').value);
+      const offsetVal = parseFloat(document.getElementById('calOffset').value) || 0.0;
+      const tolVal = parseFloat(document.getElementById('calTolerance').value) || 0.5;
+      const verBy = document.getElementById('calVerifiedBy').value.trim().toUpperCase();
+      const notes = document.getElementById('calNotes').value.trim();
+      const msgEl = document.getElementById('calSubmitMsg');
+
+      if (!nistCert || !nistExp || isNaN(refTemp) || isNaN(scadaTemp) || !verBy) {
+        msgEl.style.color = '#ef4444';
+        msgEl.innerText = 'Please complete NIST Cert #, Expiration Date, Reference Temp, SCADA Temp, and Staff Initials.';
+        return;
+      }
+
+      const btn = document.getElementById('btnSubmitCal');
+      btn.disabled = true;
+      btn.innerText = 'Saving...';
+
+      fetch('/api/calibrations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          equipment_key: key,
+          equipment_name: eqName,
+          probe_label: probeLbl,
+          nist_cert_number: nistCert,
+          nist_exp_date: nistExp,
+          ref_temp_c: refTemp,
+          scada_temp_c: scadaTemp,
+          offset_applied_c: offsetVal,
+          tolerance_c: tolVal,
+          verified_by: verBy,
+          notes: notes
+        })
+      })
+        .then(r => r.json())
+        .then(res => {
+          btn.disabled = false;
+          btn.innerText = '✅ Record NIST Verification';
+          if (res.success) {
+            closeCalibrationModal();
+            loadCalibrations();
+          } else {
+            msgEl.style.color = '#ef4444';
+            msgEl.innerText = 'Error: ' + (res.error || 'Failed to save record');
+          }
+        })
+        .catch(e => {
+          btn.disabled = false;
+          btn.innerText = '✅ Record NIST Verification';
+          msgEl.style.color = '#ef4444';
+          msgEl.innerText = 'Network error: ' + e;
+        });
     }
 
     function loadDoorEvents() {
