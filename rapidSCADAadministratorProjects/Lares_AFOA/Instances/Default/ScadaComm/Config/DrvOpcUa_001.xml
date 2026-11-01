@@ -30,9 +30,9 @@
       <Item active="true" nodeID="ns=4;s=|var|WAGO 750-8212 PFC200 G2 2ETH RS.Application.PLC_PRG.fbDoor02.Q" displayName="Cryo Lab Door Alarm" tagCode="DoorOpen_02" dataType="System.Boolean" isArray="false" />
       <Item active="true" nodeID="ns=4;s=|var|WAGO 750-8212 PFC200 G2 2ETH RS.Application.PLC_PRG.fbIncubator1.bAlarm" displayName="Incubator 01 Alarm" tagCode="IncubatorAlarm_01" dataType="System.Boolean" isArray="false" />
       <Item active="true" nodeID="ns=4;s=|var|WAGO 750-8212 PFC200 G2 2ETH RS.Application.PLC_PRG.fbIncubator2.bAlarm" displayName="Incubator 02 Alarm" tagCode="IncubatorAlarm_02" dataType="System.Boolean" isArray="false" />
-      <Item active="true" nodeID="ns=4;s=|var|WAGO 750-8212 PFC200 G2 2ETH RS.Application.PLC_PRG.fbCabinet01.bDoorOpen" displayName="Cabinet 01 Door Open" tagCode="Temperature_08" dataType="System.Boolean" isArray="false" />
-      <Item active="true" nodeID="ns=4;s=|var|WAGO 750-8212 PFC200 G2 2ETH RS.Application.PLC_PRG.fbCabinet01.bIncubatorMute" displayName="Cabinet 01 Incubator Mute" tagCode="Temperature_09" dataType="System.Boolean" isArray="false" />
-      <Item active="true" nodeID="ns=4;s=|var|WAGO 750-8212 PFC200 G2 2ETH RS.Application.PLC_PRG.fbCabinet01.bDoorAlarm" displayName="Cabinet 01 Door Alarm" tagCode="Temperature_10" dataType="System.Boolean" isArray="false" />
+      <Item active="true" nodeID="ns=4;s=|var|WAGO 750-8212 PFC200 G2 2ETH RS.Application.PLC_PRG.fbCabinet01.bDoorOpen" displayName="Cabinet 01 Door Open" tagCode="Cabinet_DoorOpen" dataType="System.Boolean" isArray="false" />
+      <Item active="true" nodeID="ns=4;s=|var|WAGO 750-8212 PFC200 G2 2ETH RS.Application.PLC_PRG.fbCabinet01.bIncubatorMute" displayName="Cabinet 01 Incubator Mute" tagCode="Cabinet_Mute" dataType="System.Boolean" isArray="false" />
+      <Item active="true" nodeID="ns=4;s=|var|WAGO 750-8212 PFC200 G2 2ETH RS.Application.PLC_PRG.fbCabinet01.bDoorAlarm" displayName="Cabinet 01 Door Alarm" tagCode="Cabinet_DoorAlarm" dataType="System.Boolean" isArray="false" />
     </Subscription>
   </Subscriptions>
   <Commands />

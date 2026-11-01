@@ -1784,9 +1784,8 @@
             const cardEl = document.getElementById(`card-cryo${cfg.id}`);
 
             const tempVal = cfg.temp_cnl ? r[cfg.temp_cnl] : undefined;
-            const highLim = cfg.high_limit !== undefined ? cfg.high_limit : -135.0;
-            const isAlarm = (cfg.alarm_cnl && r[cfg.alarm_cnl] > 0) || (tempVal !== undefined && tempVal > highLim && tempVal < 50.0);
-            const isWarn = !isAlarm && cfg.warn_cnl && (r[cfg.warn_cnl] > 0);
+            const isAlarm = cfg.alarm_cnl ? (r[cfg.alarm_cnl] > 0) : false;
+            const isWarn = !isAlarm && cfg.warn_cnl ? (r[cfg.warn_cnl] > 0) : false;
 
             if (tempVal !== undefined && valEl) {
               valEl.innerText = tempVal.toFixed(1);
