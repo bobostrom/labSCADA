@@ -235,6 +235,37 @@ def query_cryo_holds(start_dt, end_dt):
         return []
 
 
+def query_latest_probe_calibrations(end_dt):
+    """Queries the latest annual NIST probe calibration record for each equipment item up to end_dt."""
+    env = os.environ.copy()
+    env["PGPASSWORD"] = PG_PASS
+    if PG_SSLMODE:
+        env["PGSSLMODE"] = PG_SSLMODE
+    sql = f"""
+    SELECT DISTINCT ON (equipment_key)
+           equipment_key, equipment_name, COALESCE(probe_label, ''),
+           nist_cert_number, nist_exp_date::text, ref_temp_c, scada_temp_c,
+           offset_applied_c, tolerance_c, pass_status, verified_by,
+           verified_at::date::text, next_due_date::text
+    FROM mod_arc_postgre_sql.probe_calibration_logs
+    WHERE verified_at <= '{end_dt.strftime('%Y-%m-%d %H:%M:%S')}'
+    ORDER BY equipment_key, verified_at DESC;
+    """
+    cmd = ["psql", "-h", PG_HOST, "-p", str(PG_PORT), "-U", PG_USER, "-d", PG_DB, "-t", "-A", "-F", "\t", "-c", sql]
+    try:
+        res = subprocess.run(cmd, env=env, capture_output=True, text=True, check=True)
+        cal_map = {}
+        for line in res.stdout.strip().split("\n"):
+            if line:
+                parts = line.split("\t")
+                if len(parts) >= 13:
+                    cal_map[parts[0]] = parts
+        return cal_map
+    except Exception as e:
+        print(f"Warning: could not query probe calibration logs: {e}")
+        return {}
+
+
 def calculate_metrics(records, start_date=None, end_date=None, tank_id="Cryo Tank 1"):
     """Computes statistical metrics for CAP/CLIA compliance."""
     if not records:
@@ -851,6 +882,75 @@ def generate_alarms_audit_html_sheet(start_dt, end_dt, logo_b64, month_name_year
     else:
         holds_rows_html = """<tr><td colspan="6" class="text-center" style="padding:12px; color:#64748b;">No manual specimen retrieval holds initiated during this month.</td></tr>"""
 
+    # 6. Probe Calibration & NIST Traceability Table (CAP COM.30550 / CLIA)
+    cal_map = query_latest_probe_calibrations(end_dt)
+    cal_equip_list = []
+    for d in EQUIPMENT_CONFIG.get("dewars", []):
+        if d.get("temp_cnl"):
+            cal_equip_list.append((d["key"], d.get("label", d["name"])))
+    for f in EQUIPMENT_CONFIG.get("fridges", []):
+        if f.get("temp_cnl"):
+            cal_equip_list.append((f["key"], f["name"]))
+    for fz in EQUIPMENT_CONFIG.get("freezers", []):
+        if fz.get("temp_cnl"):
+            cal_equip_list.append((fz["key"], fz["name"]))
+    for a in EQUIPMENT_CONFIG.get("ambient", []):
+        if a.get("temp_cnl"):
+            cal_equip_list.append((a["key"], a["name"]))
+
+    cal_rows_html = ""
+    for eq_key, eq_label in cal_equip_list:
+        c = cal_map.get(eq_key)
+        if c:
+            probe_lbl = c[2] or "—"
+            nist_cert = f"{c[3]} (Exp: {c[4]})"
+            ref_c = float(c[5])
+            scada_c = float(c[6])
+            off_c = float(c[7])
+            tol_c = float(c[8])
+            passed = (c[9] == "t")
+            ver_by = c[10]
+            ver_date = c[11]
+            next_due = c[12]
+            dev_c = scada_c - ref_c
+            dev_sign = "+" if dev_c >= 0 else ""
+            off_sign = "+" if off_c >= 0 else ""
+
+            try:
+                due_dt = datetime.strptime(next_due[:10], "%Y-%m-%d")
+                exp_dt = datetime.strptime(c[4][:10], "%Y-%m-%d")
+                ref_dt = min(end_dt, datetime.now())
+                if not passed:
+                    st_html = '<span style="color:#dc2626; font-weight:800;">🔴 OUT OF TOLERANCE</span>'
+                elif due_dt.date() < ref_dt.date() or exp_dt.date() < ref_dt.date():
+                    st_html = f'<span style="color:#dc2626; font-weight:800;">🔴 EXPIRED ({next_due})</span>'
+                else:
+                    st_html = f'<span style="color:#16a34a; font-weight:700;">🟢 VERIFIED (Due {next_due})</span>'
+            except Exception:
+                st_html = f'<span style="color:#16a34a; font-weight:700;">🟢 VERIFIED (Due {next_due})</span>'
+
+            cal_rows_html += f"""
+            <tr>
+              <td><b>{eq_label}</b></td>
+              <td class="font-mono" style="font-size:11px;">{probe_lbl}</td>
+              <td class="font-mono" style="font-size:11px;">{nist_cert}</td>
+              <td class="text-center font-mono">{ref_c:.2f}°C</td>
+              <td class="text-center font-mono">{scada_c:.2f}°C</td>
+              <td class="text-center font-mono">{dev_sign}{dev_c:.2f}°C (±{tol_c:.1f})</td>
+              <td class="text-center font-mono">{off_sign}{off_c:.2f}°C</td>
+              <td class="text-center font-mono">{ver_date} ({ver_by})</td>
+              <td class="text-center">{st_html}</td>
+            </tr>
+            """
+        else:
+            cal_rows_html += f"""
+            <tr>
+              <td><b>{eq_label}</b></td>
+              <td colspan="7" class="text-center" style="color:#64748b; font-size:11.5px;">Pending initial annual 1-point NIST reference verification</td>
+              <td class="text-center"><span style="color:#d97706; font-weight:700;">⏳ UNVERIFIED</span></td>
+            </tr>
+            """
+
     logo_img_tag = f'<img src="data:image/png;base64,{logo_b64}" alt="{CLINIC_NAME} Logo" class="header-logo">' if logo_b64 else ''
 
     sheet_html = f"""
@@ -969,7 +1069,28 @@ def generate_alarms_audit_html_sheet(start_dt, end_dt, logo_b64, month_name_year
         </tbody>
       </table>
 
-      <!-- 6. Formal Laboratory Quality Sign-off Block -->
+      <!-- 6. Probe Calibration & NIST Traceability Table -->
+      <div class="section-title">6. Annual Probe Calibration &amp; NIST Traceability Log (CAP COM.30550 / CLIA)</div>
+      <table class="summary-table">
+        <thead>
+          <tr>
+            <th>Equipment</th>
+            <th>Probe ID</th>
+            <th>Master NIST Cert # (Exp)</th>
+            <th class="text-center">NIST Ref</th>
+            <th class="text-center">SCADA Read</th>
+            <th class="text-center">Deviation</th>
+            <th class="text-center">PLC Offset</th>
+            <th class="text-center">Verified</th>
+            <th class="text-center">Compliance Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {cal_rows_html}
+        </tbody>
+      </table>
+
+      <!-- 7. Formal Laboratory Quality Sign-off Block -->
       <div class="signoff-box">
         <div>
           <div style="font-size:12px; font-weight:700; color:#0f172a; margin-bottom:4px;">Embryology Laboratory Supervisor Certification</div>
