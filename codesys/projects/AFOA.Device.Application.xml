@@ -48,8 +48,8 @@
   <NodeList>
     <Node name="Application">
       <Node name="PLC_PRG">
-        <Node name="bDoor01_MainDoor" type="T_BOOL" access="ReadWrite" />
-        <Node name="bDoor02_CryoLabDoor" type="T_BOOL" access="ReadWrite" />
+        <Node name="bDoor01" type="T_BOOL" access="Read" />
+        <Node name="bDoor02" type="T_BOOL" access="Read" />
         <Node name="bGlobalSimMode" type="T_BOOL" access="ReadWrite" />
         <Node name="bHeartbeat" type="T_BOOL" access="Read" />
         <Node name="fbCabinet01" type="T_FB_IncubatorCabinet" access="ReadWrite" />
