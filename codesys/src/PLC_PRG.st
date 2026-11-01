@@ -26,6 +26,12 @@ VAR
     {attribute 'symbol' := 'readwrite'}
     bDoor02_CryoLabDoor     : BOOL := FALSE;    (* FALSE = Closed, TRUE = Open *)
 
+    (* --- Discrete Hardware Inputs (Mapped from afoa-node00 750-341 via Modbus TCP) --- *)
+    {attribute 'symbol' := 'none'}
+    bIncubator01_RawContact : BOOL := FALSE;    (* DI 1 on afoa-node00 750-436 *)
+    {attribute 'symbol' := 'none'}
+    bIncubator02_RawContact : BOOL := FALSE;    (* DI 2 on afoa-node00 750-436 *)
+
     (* --- Encapsulated Clinical Equipment Function Blocks (Published over OPC UA) --- *)
     fbFridge                : FB_MedFridge;
     fbFreezer               : FB_MedFreezer;
@@ -118,11 +124,13 @@ fbDewar5(
 
 // --- D. Embryology Incubators 01 & 02 (Dry contact with 15s debounce) ---
 fbIncubator1(
-    bSimMode := bGlobalSimMode
+    bRawContact := bIncubator01_RawContact,
+    bSimMode    := bGlobalSimMode
 );
 
 fbIncubator2(
-    bSimMode := bGlobalSimMode
+    bRawContact := bIncubator02_RawContact,
+    bSimMode    := bGlobalSimMode
 );
 
 // --- E. Cleanroom Main & Cryo Lab Doors (3-minute open timer) ---
