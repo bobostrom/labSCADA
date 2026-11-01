@@ -122,6 +122,10 @@ Unlike generic soft-PLCs, the embedded CODESYS runtime on the WAGO 750-8212 publ
 
 Configured in [sites/afoa/scada_config/DrvOpcUa_001.xml](file:///c:/Projects/labSCADA/sites/afoa/scada_config/DrvOpcUa_001.xml) and `/opt/scada/ScadaComm/Config/DrvOpcUa_001.xml`.
 
+> **Core Architectural Rule (Single Source of Truth):**
+> All fieldbus polling, timers, and alarm gating **MUST** go strictly through the **WAGO PFC200 (750-8212)** controller (`afoa-plc.labmon`). Remote fieldbus couplers (such as `afoa-node00.labmon` 750-341) are polled exclusively by the `-8212` PLC over Modbus TCP. Neither Rapid SCADA nor `ivf_alert_engine.py` should ever bypass the `-8212` to poll remote couplers directly. All telemetry flows:
+> `Remote Coupler` $\rightarrow$ `750-8212 PLC (CODESYS)` $\rightarrow$ `OPC UA (:4840)` $\rightarrow$ `ScadaComm` $\rightarrow$ `PostgreSQL (curcopy_current)` $\rightarrow$ `Alert Engine & Kiosk`.
+
 ---
 
 ## 4. Operational Maintenance & Transition Commands
