@@ -773,7 +773,7 @@ def generate_alarms_audit_html_sheet(start_dt, end_dt, logo_b64, month_name_year
     if EQUIPMENT_CONFIG.get("doors"):
         equipment_specs.append((
             "Cleanroom Access Doors",
-            "Door Work Limit < 3m • Off-Session Secure",
+            "Door Work Limit < 60m • Off-Session Secure",
             "Door"
         ))
 

@@ -144,16 +144,16 @@ fbIncubator2(
     bSimMode    := bGlobalSimMode
 );
 
-// --- E. Facility Doors 01 & 02 (3-minute open timer) ---
+// --- E. Facility Doors 01 & 02 (60-minute open timer) ---
 fbDoor01(
     IN            := bDoor01,
-    tPickupDelay  := T#3M,
+    tPickupDelay  := T#60M,
     tDropoutDelay := T#5S
 );
 
 fbDoor02(
     IN            := bDoor02,
-    tPickupDelay  := T#3M,
+    tPickupDelay  := T#60M,
     tDropoutDelay := T#5S
 );
 
