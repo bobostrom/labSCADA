@@ -1951,7 +1951,13 @@
           // Cabinet Environmental & Door Status Updates
           const cabDoorBadge = document.getElementById('cab-door-badge');
           if (cabDoorBadge) {
-            if (cab.is_open) {
+            if (cab.door_alarm) {
+              cabDoorBadge.innerText = '🚨 DOOR ALARM (> 3m)';
+              cabDoorBadge.className = 'status-badge status-alert';
+              cabDoorBadge.style.background = 'rgba(255, 23, 68, 0.25)';
+              cabDoorBadge.style.color = '#ff1744';
+              cabDoorBadge.style.border = '1px solid rgba(255, 23, 68, 0.5)';
+            } else if (cab.is_open) {
               cabDoorBadge.innerText = '🚪 DOOR OPEN (MUTED)';
               cabDoorBadge.className = 'status-badge status-warn';
               cabDoorBadge.style.background = 'rgba(255, 171, 0, 0.25)';

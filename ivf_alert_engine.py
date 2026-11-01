@@ -17,8 +17,6 @@ Manages end-to-end clinical alarm lifecycle for Advanced Fertility of Alaska:
 import http.server
 import json
 import os
-import socket
-import struct
 import subprocess
 import threading
 import time
@@ -73,57 +71,62 @@ CLINIC_DOMAIN = os.environ.get("CLINIC_DOMAIN", "komdivflab.larestelemetry.com")
 CLINIC_LOGO   = os.environ.get("CLINIC_LOGO", "/assets/KOMDlogo.png")
 PLC_OPC_URL   = os.environ.get("PLC_OPC_URL", "opc.tcp://demo-plc:4840")
 SIMULATION_MODE = os.environ.get("SIMULATION_MODE", "false").lower() in ("true", "1", "yes")
-NODE00_IP       = os.environ.get("NODE00_IP", "192.168.88.251")
 POST_CLOSE_GRACE_SEC = 180  # 3 minutes
 
-# Real-time state machine for WAGO 750-341 cabinet door monitoring
+# Real-time state machine for Incubator Cabinet supervision (via WAGO 750-8212 PLC)
 cabinet_door_state = {
     "is_open": False,
     "last_closed_at": 0,
     "mute_active": False,
     "grace_remaining_sec": 0,
+    "door_alarm": False,
     "last_poll_ts": 0
 }
 
-def poll_cabinet_node00():
-    """Polls afoa-node00 WAGO 750-341 coupler (Port 502 FC02) for real-time door switch state."""
+def update_cabinet_state(readings=None):
+    """Derives cabinet supervision state directly from WAGO 750-8212 PLC telemetry."""
     global cabinet_door_state
     now = time.time()
-    try:
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.settimeout(0.35)
-        s.connect((NODE00_IP, 502))
-        s.sendall(struct.pack('>HHHBBHH', 1, 0, 6, 1, 2, 0, 8))
-        resp = s.recv(32)
-        s.close()
-        if len(resp) >= 10:
-            byte_val = resp[9]
-            # Bit 7 is DI 8 on 750-436 sink input.
-            # Active (1) = Door Open (or contact loop open).
-            is_open = bool(byte_val & 0x80)
-            was_open = cabinet_door_state["is_open"]
+    cabs = EQUIPMENT_CONFIG.get("cabinets", [])
+    if not cabs:
+        return dict(cabinet_door_state)
+    cab = cabs[0]
+    door_cnl = cab.get("door_switch_cnl")
+    mute_cnl = cab.get("mute_active_cnl")
+    alarm_cnl = cab.get("door_alarm_cnl")
+    post_grace = cab.get("post_close_grace_sec", POST_CLOSE_GRACE_SEC)
 
-            if was_open and not is_open:
-                # Transition: Door closed -> begin 3-minute grace countdown
-                cabinet_door_state["last_closed_at"] = now
+    if readings is None:
+        readings = get_current_channel_values()
 
-            cabinet_door_state["is_open"] = is_open
+    # PLC Channels: 108 (Door Open), 109 (Incubator Mute), 110 (Door Alarm)
+    is_open = bool(readings.get(door_cnl, 0) > 0) if door_cnl and door_cnl in readings else False
+    mute_active = bool(readings.get(mute_cnl, 0) > 0) if mute_cnl and mute_cnl in readings else is_open
+    is_alarm = bool(readings.get(alarm_cnl, 0) > 0) if alarm_cnl and alarm_cnl in readings else False
 
-            if is_open:
-                cabinet_door_state["mute_active"] = True
-                cabinet_door_state["grace_remaining_sec"] = POST_CLOSE_GRACE_SEC
-            else:
-                elapsed = now - cabinet_door_state["last_closed_at"]
-                if cabinet_door_state["last_closed_at"] > 0 and elapsed < POST_CLOSE_GRACE_SEC:
-                    cabinet_door_state["mute_active"] = True
-                    cabinet_door_state["grace_remaining_sec"] = int(POST_CLOSE_GRACE_SEC - elapsed)
-                else:
-                    cabinet_door_state["mute_active"] = False
-                    cabinet_door_state["grace_remaining_sec"] = 0
+    was_open = cabinet_door_state.get("is_open", False)
+    if was_open and not is_open:
+        cabinet_door_state["last_closed_at"] = now
 
-            cabinet_door_state["last_poll_ts"] = now
-    except Exception:
-        pass
+    cabinet_door_state["is_open"] = is_open
+    cabinet_door_state["door_alarm"] = is_alarm
+
+    if is_open:
+        cabinet_door_state["mute_active"] = True
+        cabinet_door_state["grace_remaining_sec"] = post_grace
+    elif mute_active:
+        # PLC holds mute active during post-close grace period
+        elapsed = now - cabinet_door_state.get("last_closed_at", 0)
+        if cabinet_door_state.get("last_closed_at", 0) > 0 and elapsed < post_grace:
+            cabinet_door_state["grace_remaining_sec"] = max(0, int(post_grace - elapsed))
+        else:
+            cabinet_door_state["grace_remaining_sec"] = 0
+        cabinet_door_state["mute_active"] = True
+    else:
+        cabinet_door_state["mute_active"] = False
+        cabinet_door_state["grace_remaining_sec"] = 0
+
+    cabinet_door_state["last_poll_ts"] = now
     return dict(cabinet_door_state)
 
 
@@ -351,6 +354,19 @@ def build_channels_from_equipment(eq):
             cnls[int(inc["alarm_cnl"])] = {
                 "name": inc["name"],
                 "type": "incubator",
+                "priority": 2,
+            }
+    for cab in eq.get("cabinets", []):
+        if cab.get("door_switch_cnl"):
+            cnls[int(cab["door_switch_cnl"])] = {
+                "name": f"{cab['name']} Door",
+                "type": "door_contact",
+                "priority": 0,
+            }
+        if cab.get("door_alarm_cnl"):
+            cnls[int(cab["door_alarm_cnl"])] = {
+                "name": cab["name"],
+                "type": "cabinet_alarm",
                 "priority": 2,
             }
     return cnls
@@ -989,8 +1005,17 @@ def telemetry_scan_worker():
                     else:
                         resolve_alarm(a_cnl, None)
 
+            # 4b. Cabinets (Door held open alarm)
+            for cab in EQUIPMENT_CONFIG.get("cabinets", []):
+                cab_alarm_cnl = int(cab["door_alarm_cnl"]) if cab.get("door_alarm_cnl") else None
+                if cab_alarm_cnl and cab_alarm_cnl in readings:
+                    if readings[cab_alarm_cnl] > 0:
+                        trigger_alarm(cab_alarm_cnl, cab["name"], "Cabinet Door Left Open > 3m", None)
+                    else:
+                        resolve_alarm(cab_alarm_cnl, None)
+
             # 5. Incubators (Discrete alarm, suppressed when OFF_SESSION or Cabinet Muted)
-            cab_st = poll_cabinet_node00()
+            cab_st = update_cabinet_state(readings)
             for inc in EQUIPMENT_CONFIG["incubators"]:
                 equip = inc["name"]
                 a_cnl = int(inc["alarm_cnl"]) if inc.get("alarm_cnl") else None
@@ -1473,7 +1498,7 @@ class ClinicalAlertHandler(http.server.BaseHTTPRequestHandler):
                     "by": str(qa_rows[0][1])
                 }
 
-            cab_st = poll_cabinet_node00()
+            cab_st = update_cabinet_state(readings)
             data = {
                 "server_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                 "active_alarm_count": len(alarms_copy),
