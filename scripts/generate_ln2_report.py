@@ -408,6 +408,14 @@ def generate_sawtooth_chart(records, metrics, output_path, start_dt=None, end_dt
     plt.close()
 
 
+def get_dewar_subtitle(tank_id):
+    """Returns the configured description or subtitle for a dewar from EQUIPMENT_CONFIG."""
+    for d in EQUIPMENT_CONFIG.get("dewars", []):
+        if d.get("name") == tank_id or d.get("label") == tank_id:
+            return d.get("desc") or d.get("subtitle") or "Cryogenic Specimen Dewar"
+    return "Cryogenic Specimen Dewar"
+
+
 def generate_markdown_report(records, metrics, chart_rel_path, output_md_path):
     """Generates a publication-grade Markdown compliance report."""
     os.makedirs(os.path.dirname(output_md_path), exist_ok=True)
@@ -415,8 +423,8 @@ def generate_markdown_report(records, metrics, chart_rel_path, output_md_path):
     start_str = metrics["start_date"].strftime("%B %d, %Y")
     end_str = metrics["end_date"].strftime("%B %d, %Y")
     now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S AKDT")
-    tank_id = metrics.get("tank_id", "Cryo Tank 1")
-    subtitle = "Primary Embryo Storage Dewar" if "1" in str(tank_id) else "Primary Sperm Storage Dewar"
+    tank_id = metrics.get("tank_id", "Dewar 2")
+    subtitle = get_dewar_subtitle(tank_id)
     
     floor_margin = metrics['min_level'] - 27.0
     if floor_margin >= 0:
@@ -506,8 +514,8 @@ def generate_single_tank_html_sheet(records, metrics, chart_b64, logo_b64, month
     start_str = metrics["start_date"].strftime("%B %d, %Y")
     end_str = metrics["end_date"].strftime("%B %d, %Y")
     now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S AKDT")
-    tank_id = metrics.get("tank_id", "Cryo Tank 1")
-    subtitle = "Primary Embryo Storage Dewar" if "1" in str(tank_id) else ("Primary Sperm Storage Dewar" if "2" in str(tank_id) else "Cryogenic Specimen Dewar")
+    tank_id = metrics.get("tank_id", "Dewar 2")
+    subtitle = get_dewar_subtitle(tank_id)
 
     floor_margin = metrics['min_level'] - 27.0
     if floor_margin >= 0:
