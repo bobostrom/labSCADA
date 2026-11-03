@@ -25,7 +25,7 @@ VAR_OUTPUT
     {attribute 'symbol' := 'read'}
     bAlarm              : BOOL := FALSE;    (* Filtered Priority 2 Alarm output to SCADA *)
     {attribute 'symbol' := 'read'}
-    bInstantContact     : BOOL := FALSE;    (* Unfiltered raw contact status *)
+    bAlarmContact       : BOOL := FALSE;    (* Unfiltered raw alarm contact status *)
     {attribute 'symbol' := 'read'}
     bMuted              : BOOL := FALSE;    (* Contact is tripped but suppressed by active mute *)
     {attribute 'symbol' := 'none'}
@@ -42,14 +42,14 @@ END_VAR
 
 // 1. INPUT SELECTION
 IF bSimMode THEN
-    bInstantContact := bForceAlarm;
+    bAlarmContact := bForceAlarm;
 ELSE
-    bInstantContact := bRawContact;
+    bAlarmContact := bRawContact;
 END_IF;
 
 // 2. TIMED DEBOUNCE FILTER
 fbFilter(
-    IN            := bInstantContact,
+    IN            := bAlarmContact,
     tPickupDelay  := tPickupDelay,
     tDropoutDelay := tDropoutDelay
 );
