@@ -15,12 +15,15 @@
       <Item active="true" nodeID="ns=4;s=|var|CODESYS Control for Raspberry Pi 64 SL.Application.PLC_PRG.fbFreezer.bWarn" displayName="Medical Freezer Warn" tagCode="SensorStatus_06" dataType="System.Boolean" isArray="false" />
       <Item active="true" nodeID="ns=4;s=|var|CODESYS Control for Raspberry Pi 64 SL.Application.PLC_PRG.fbDewar1.bWarn" displayName="Dewar 1 Warn" tagCode="SensorStatus_07" dataType="System.Boolean" isArray="false" />
       <Item active="true" nodeID="ns=4;s=|var|CODESYS Control for Raspberry Pi 64 SL.Application.PLC_PRG.fbDewar2.bWarn" displayName="Dewar 2 Warn" tagCode="SensorStatus_08" dataType="System.Boolean" isArray="false" />
-      <Item active="true" nodeID="ns=4;s=|var|CODESYS Control for Raspberry Pi 64 SL.Application.PLC_PRG.bDoor01_MainDoor" displayName="Main Door Contact" tagCode="SensorStatus_09" dataType="System.Boolean" isArray="false" />
-      <Item active="true" nodeID="ns=4;s=|var|CODESYS Control for Raspberry Pi 64 SL.Application.PLC_PRG.bDoor02_CryoLabDoor" displayName="Cryo Lab Door Contact" tagCode="SensorStatus_10" dataType="System.Boolean" isArray="false" />
+      <Item active="true" nodeID="ns=4;s=|var|CODESYS Control for Raspberry Pi 64 SL.Application.PLC_PRG.bDoor01" displayName="Main Door Contact" tagCode="SensorStatus_09" dataType="System.Boolean" isArray="false" />
+      <Item active="true" nodeID="ns=4;s=|var|CODESYS Control for Raspberry Pi 64 SL.Application.PLC_PRG.bDoor02" displayName="Procedure Room Door Contact" tagCode="SensorStatus_10" dataType="System.Boolean" isArray="false" />
       <Item active="true" nodeID="ns=4;s=|var|CODESYS Control for Raspberry Pi 64 SL.Application.PLC_PRG.fbDoor01.Q" displayName="Main Cleanroom Door Alarm" tagCode="DoorOpen_01" dataType="System.Boolean" isArray="false" />
-      <Item active="true" nodeID="ns=4;s=|var|CODESYS Control for Raspberry Pi 64 SL.Application.PLC_PRG.fbDoor02.Q" displayName="Cryo Lab Door Alarm" tagCode="DoorOpen_02" dataType="System.Boolean" isArray="false" />
+      <Item active="true" nodeID="ns=4;s=|var|CODESYS Control for Raspberry Pi 64 SL.Application.PLC_PRG.fbDoor02.Q" displayName="Procedure Room Door Alarm" tagCode="DoorOpen_02" dataType="System.Boolean" isArray="false" />
       <Item active="true" nodeID="ns=4;s=|var|CODESYS Control for Raspberry Pi 64 SL.Application.PLC_PRG.fbIncubator1.bAlarm" displayName="Incubator 01 Alarm" tagCode="IncubatorAlarm_01" dataType="System.Boolean" isArray="false" />
       <Item active="true" nodeID="ns=4;s=|var|CODESYS Control for Raspberry Pi 64 SL.Application.PLC_PRG.fbIncubator2.bAlarm" displayName="Incubator 02 Alarm" tagCode="IncubatorAlarm_02" dataType="System.Boolean" isArray="false" />
+      <Item active="true" nodeID="ns=4;s=|var|CODESYS Control for Raspberry Pi 64 SL.Application.PLC_PRG.fbCabinet01.bDoorOpen" displayName="Incubator Cabinet Door Open" tagCode="Cabinet_DoorOpen" dataType="System.Boolean" isArray="false" />
+      <Item active="true" nodeID="ns=4;s=|var|CODESYS Control for Raspberry Pi 64 SL.Application.PLC_PRG.fbCabinet01.bIncubatorMute" displayName="Incubator Cabinet Mute Active" tagCode="Cabinet_Mute" dataType="System.Boolean" isArray="false" />
+      <Item active="true" nodeID="ns=4;s=|var|CODESYS Control for Raspberry Pi 64 SL.Application.PLC_PRG.fbCabinet01.bDoorAlarm" displayName="Incubator Cabinet Door Alarm" tagCode="Cabinet_DoorAlarm" dataType="System.Boolean" isArray="false" />
     </Subscription>
   </Subscriptions>
   <Commands>
@@ -30,7 +33,7 @@
     <Command nodeID="ns=4;s=|var|CODESYS Control for Raspberry Pi 64 SL.Application.PLC_PRG.fbDewar2.bForceExcursion" displayName="Force Dewar 2 Excursion" cmdCode="Sim_Dewar2" dataType="System.Boolean" />
     <Command nodeID="ns=4;s=|var|CODESYS Control for Raspberry Pi 64 SL.Application.PLC_PRG.fbIncubator1.bForceAlarm" displayName="Force Incubator 1 Alarm" cmdCode="Sim_Inc1" dataType="System.Boolean" />
     <Command nodeID="ns=4;s=|var|CODESYS Control for Raspberry Pi 64 SL.Application.PLC_PRG.fbIncubator2.bForceAlarm" displayName="Force Incubator 2 Alarm" cmdCode="Sim_Inc2" dataType="System.Boolean" />
-    <Command nodeID="ns=4;s=|var|CODESYS Control for Raspberry Pi 64 SL.Application.PLC_PRG.bDoor01_MainDoor" displayName="Force Main Door Open" cmdCode="Sim_Door1" dataType="System.Boolean" />
-    <Command nodeID="ns=4;s=|var|CODESYS Control for Raspberry Pi 64 SL.Application.PLC_PRG.bDoor02_CryoLabDoor" displayName="Force Cryo Door Open" cmdCode="Sim_Door2" dataType="System.Boolean" />
+    <Command nodeID="ns=4;s=|var|CODESYS Control for Raspberry Pi 64 SL.Application.PLC_PRG.bDoor01" displayName="Force Main Door Open" cmdCode="Sim_Door1" dataType="System.Boolean" />
+    <Command nodeID="ns=4;s=|var|CODESYS Control for Raspberry Pi 64 SL.Application.PLC_PRG.bDoor02" displayName="Force Procedure Room Door Open" cmdCode="Sim_Door2" dataType="System.Boolean" />
   </Commands>
 </OpcDeviceConfig>

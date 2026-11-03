@@ -62,22 +62,56 @@
       "high_limit": -15.0
     }
   ],
+  "cabinets": [
+    {
+      "id": 1,
+      "key": "cab_incubator_01",
+      "name": "Incubator Cabinet 01",
+      "short_name": "Incubator Cabinet",
+      "label": "Incubator Cabinet",
+      "desc": "3-Bay Slide-Out Cabinet with Thermostatic Exhaust Fan",
+      "capacity_bays": 3,
+      "plc_fb": "fbCabinet01",
+      "door_switch_cnl": 132,
+      "door_alarm_cnl": 134,
+      "mute_active_cnl": 133,
+      "temp_cnl": null,
+      "fan_command_cnl": null,
+      "fan_setpoint": 28.0,
+      "post_close_grace_sec": 180,
+      "target_temp_label": "Cabinet Limit: < 28.0°C"
+    }
+  ],
   "incubators": [
     {
       "id": 1,
       "key": "inc1",
+      "parent_cabinet": "cab_incubator_01",
+      "bay_number": 1,
       "name": "Incubator 01",
-      "subtitle": "Chamber A • In-Range",
+      "model": "K-Systems G210",
+      "subtitle": "Bay 1 • G210 InviCell",
       "plc_fb": "fbIncubator1",
-      "alarm_cnl": 123
+      "alarm_cnl": 123,
+      "has_zone_temps": true,
+      "zone_count": 10,
+      "zone_simulated": true,
+      "target_temp": 37.0
     },
     {
       "id": 2,
       "key": "inc2",
+      "parent_cabinet": "cab_incubator_01",
+      "bay_number": 2,
       "name": "Incubator 02",
-      "subtitle": "Chamber B • In-Range",
+      "model": "K-Systems G210",
+      "subtitle": "Bay 2 • G210 InviCell",
       "plc_fb": "fbIncubator2",
-      "alarm_cnl": 124
+      "alarm_cnl": 124,
+      "has_zone_temps": true,
+      "zone_count": 10,
+      "zone_simulated": true,
+      "target_temp": 37.0
     }
   ],
   "doors": [
@@ -86,7 +120,7 @@
       "key": "door1",
       "name": "Main Cleanroom Door",
       "short_name": "Main Door",
-      "plc_var": "bDoor01_MainDoor",
+      "plc_var": "bDoor01",
       "plc_fb": "fbDoor01",
       "contact_cnl": 119,
       "alarm_cnl": 121
@@ -94,9 +128,9 @@
     {
       "id": 2,
       "key": "door2",
-      "name": "Cryo Lab Door",
-      "short_name": "Cryo Door",
-      "plc_var": "bDoor02_CryoLabDoor",
+      "name": "Procedure Room Door",
+      "short_name": "Procedure Room",
+      "plc_var": "bDoor02",
       "plc_fb": "fbDoor02",
       "contact_cnl": 120,
       "alarm_cnl": 122
