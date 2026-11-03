@@ -324,7 +324,7 @@
   <Cnl>
     <CnlNum>115</CnlNum>
     <Active>true</Active>
-    <Name>Med Fridge Warn</Name>
+    <Name> SensorStatus_05</Name>
     <Code />
     <DataTypeID xsi:nil="true" />
     <DataLen xsi:nil="true" />
@@ -347,7 +347,7 @@
   <Cnl>
     <CnlNum>116</CnlNum>
     <Active>true</Active>
-    <Name>Med Freezer Warn</Name>
+    <Name>SensorStatus_06</Name>
     <Code />
     <DataTypeID xsi:nil="true" />
     <DataLen xsi:nil="true" />
@@ -370,7 +370,7 @@
   <Cnl>
     <CnlNum>117</CnlNum>
     <Active>true</Active>
-    <Name>Cryo Tank 1 Warn</Name>
+    <Name>SensorStatus_07</Name>
     <Code />
     <DataTypeID xsi:nil="true" />
     <DataLen xsi:nil="true" />
@@ -393,7 +393,7 @@
   <Cnl>
     <CnlNum>118</CnlNum>
     <Active>true</Active>
-    <Name>Cryo Tank 2 Warn</Name>
+    <Name>SensorStatus_08</Name>
     <Code />
     <DataTypeID xsi:nil="true" />
     <DataLen xsi:nil="true" />
@@ -416,7 +416,7 @@
   <Cnl>
     <CnlNum>119</CnlNum>
     <Active>true</Active>
-    <Name>Main Door Contact</Name>
+    <Name> SensorStatus_09</Name>
     <Code />
     <DataTypeID xsi:nil="true" />
     <DataLen xsi:nil="true" />
@@ -439,7 +439,7 @@
   <Cnl>
     <CnlNum>120</CnlNum>
     <Active>true</Active>
-    <Name>Cryo Door Contact</Name>
+    <Name>SensorStatus_10</Name>
     <Code />
     <DataTypeID xsi:nil="true" />
     <DataLen xsi:nil="true" />

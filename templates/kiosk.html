@@ -1736,17 +1736,31 @@
           chamberTemp = Number(lastReadings[String(inc.temp_cnl)]).toFixed(1);
         }
 
-        const isNormal = (chamberTemp !== '--' && Math.abs(parseFloat(chamberTemp) - 37.0) <= 0.5);
-        const badge = (chamberTemp === '--')
-          ? '<span class="status-badge" style="font-size:8.5px; padding:1px 4px; color:#8899a6;">STANDBY</span>'
-          : (isNormal
-            ? '<span class="status-badge status-normal" style="font-size:8.5px; padding:1px 4px;">IN-RANGE</span>'
-            : '<span class="status-badge status-warn" style="font-size:8.5px; padding:1px 4px;">DRIFT</span>');
+        let displayTemp = '--';
+        let badge = '';
+
+        if (chamberTemp === '--') {
+          displayTemp = '--';
+          badge = '<span class="status-badge" style="font-size:8.5px; padding:1px 4px; color:#8899a6; background:rgba(148,163,184,0.12); border:1px solid rgba(148,163,184,0.25);">STANDBY</span>';
+        } else {
+          const numVal = parseFloat(chamberTemp);
+          if (isNaN(numVal) || numVal <= 0.0) {
+            // Unwired or sentinel reading from PLC (e.g. -99.0°C)
+            displayTemp = '--';
+            badge = '<span class="status-badge" style="font-size:8.5px; padding:1px 4px; color:#94a3b8; background:rgba(148,163,184,0.15); border:1px solid rgba(148,163,184,0.35);">INVALID</span>';
+          } else {
+            const isNormal = Math.abs(numVal - 37.0) <= 0.5;
+            displayTemp = `${numVal.toFixed(1)}°C`;
+            badge = isNormal
+              ? '<span class="status-badge status-normal" style="font-size:8.5px; padding:1px 4px;">IN-RANGE</span>'
+              : '<span class="status-badge status-warn" style="font-size:8.5px; padding:1px 4px;">DRIFT</span>';
+          }
+        }
 
         html += `
           <div class="chamber-well">
             <div style="font-size:10px; font-weight:700; color:#8899a6; text-transform:uppercase;">CH ${chamberNum}</div>
-            <div style="font-size:1.15rem; font-weight:800; font-family:monospace; color:#38bdf8; margin:2px 0;">${chamberTemp}°C</div>
+            <div style="font-size:1.15rem; font-weight:800; font-family:monospace; color:${displayTemp === '--' ? '#64748b' : '#38bdf8'}; margin:2px 0;">${displayTemp}</div>
             <div style="font-size:9px; color:#64748b;">Set: 37.0°</div>
             <div style="margin-top:4px;">${badge}</div>
           </div>
