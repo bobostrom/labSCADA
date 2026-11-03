@@ -1734,8 +1734,6 @@
           chamberTemp = Number(lastReadings[inc.temp_cnl]).toFixed(1);
         } else if (inc.temp_cnl && lastReadings[String(inc.temp_cnl)] !== undefined && lastReadings[String(inc.temp_cnl)] !== null) {
           chamberTemp = Number(lastReadings[String(inc.temp_cnl)]).toFixed(1);
-        } else if (inc.target_temp) {
-          chamberTemp = Number(inc.target_temp).toFixed(1);
         }
 
         const isNormal = (chamberTemp !== '--' && Math.abs(parseFloat(chamberTemp) - 37.0) <= 0.5);
