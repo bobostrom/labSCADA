@@ -11,7 +11,7 @@
 FUNCTION_BLOCK FB_Incubator
 VAR_INPUT
     {attribute 'symbol' := 'none'}
-    bRawContact         : BOOL := FALSE;    (* Physical input terminal (FALSE = Normal, TRUE = Alarm) *)
+    bAlarmContact       : BOOL := FALSE;    (* Physical dry alarm contact from incubator (FALSE = Normal, TRUE = Alarm) *)
     {attribute 'symbol' := 'none'}
     bSimMode            : BOOL := FALSE;    (* TRUE = Ignore terminal, use virtual override *)
     {attribute 'symbol' := 'read'}
@@ -25,7 +25,7 @@ VAR_OUTPUT
     {attribute 'symbol' := 'read'}
     bAlarm              : BOOL := FALSE;    (* Filtered Priority 2 Alarm output to SCADA *)
     {attribute 'symbol' := 'read'}
-    bAlarmContact       : BOOL := FALSE;    (* Unfiltered raw alarm contact status *)
+    bInstantAlarm       : BOOL := FALSE;    (* Instantaneous alarm status (pre-debounce filter) *)
     {attribute 'symbol' := 'read'}
     bMuted              : BOOL := FALSE;    (* Contact is tripped but suppressed by active mute *)
     {attribute 'symbol' := 'none'}
@@ -42,14 +42,14 @@ END_VAR
 
 // 1. INPUT SELECTION
 IF bSimMode THEN
-    bAlarmContact := bForceAlarm;
+    bInstantAlarm := bForceAlarm;
 ELSE
-    bAlarmContact := bRawContact;
+    bInstantAlarm := bAlarmContact;
 END_IF;
 
 // 2. TIMED DEBOUNCE FILTER
 fbFilter(
-    IN            := bAlarmContact,
+    IN            := bInstantAlarm,
     tPickupDelay  := tPickupDelay,
     tDropoutDelay := tDropoutDelay
 );

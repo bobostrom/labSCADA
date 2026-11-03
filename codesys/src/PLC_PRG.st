@@ -135,15 +135,15 @@ fbCabinet01(
 );
 
 fbIncubator1(
-    bRawContact := bIncubator01_RawContact,
-    bMute       := fbCabinet01.bIncubatorMute,
-    bSimMode    := bGlobalSimMode
+    bAlarmContact := bIncubator01_RawContact,
+    bMute         := fbCabinet01.bIncubatorMute,
+    bSimMode      := bGlobalSimMode
 );
 
 fbIncubator2(
-    bRawContact := bIncubator02_RawContact,
-    bMute       := fbCabinet01.bIncubatorMute,
-    bSimMode    := bGlobalSimMode
+    bAlarmContact := bIncubator02_RawContact,
+    bMute         := fbCabinet01.bIncubatorMute,
+    bSimMode      := bGlobalSimMode
 );
 
 // --- E. Facility Doors 01 & 02 (60-minute open timer) ---
