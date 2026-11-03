@@ -43,8 +43,8 @@ VAR
     fbDewar4                : FB_Dewar;
     fbDewar5                : FB_Dewar;
     fbCabinet01             : FB_IncubatorCabinet;
-    fbIncubator1            : FB_Incubator;
-    fbIncubator2            : FB_Incubator;
+    fbIncubator1            : FB_G210_Incubator;
+    fbIncubator2            : FB_G210_Incubator;
     fbDoor01                : FB_PickupDropout;
     fbDoor02                : FB_PickupDropout;
 
@@ -136,14 +136,12 @@ fbCabinet01(
 
 fbIncubator1(
     bAlarmContact := bIncubator01_RawContact,
-    bMute         := fbCabinet01.bIncubatorMute,
-    bSimMode      := bGlobalSimMode
+    bMute         := fbCabinet01.bIncubatorMute
 );
 
 fbIncubator2(
     bAlarmContact := bIncubator02_RawContact,
-    bMute         := fbCabinet01.bIncubatorMute,
-    bSimMode      := bGlobalSimMode
+    bMute         := fbCabinet01.bIncubatorMute
 );
 
 // --- E. Facility Doors 01 & 02 (60-minute open timer) ---
