@@ -376,11 +376,13 @@
       position: relative;
       transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     }
+
     .incubator-bay-card:hover {
       border-color: #00e5ff;
       transform: translateY(-2px);
       box-shadow: 0 6px 18px rgba(0, 229, 255, 0.18);
     }
+
     .chamber-well {
       background: rgba(9, 13, 22, 0.85);
       border: 1px solid rgba(0, 176, 255, 0.2);
@@ -389,6 +391,7 @@
       text-align: center;
       transition: all 0.15s;
     }
+
     .chamber-well:hover {
       border-color: #00e5ff;
       background: rgba(14, 23, 42, 0.95);
@@ -997,16 +1000,19 @@
         <!-- Integrated Dipstick Sub-Panel -->
         <div class="dipstick-subpanel" id="dip-subpanel-{{ d.id }}">
           <div class="dip-header">
-            <span style="font-size:11.5px; font-weight:700; color:{{ d.color | default('#00e5ff') }}; text-transform:uppercase;">Manual
+            <span
+              style="font-size:11.5px; font-weight:700; color:{{ d.color | default('#00e5ff') }}; text-transform:uppercase;">Manual
               Dipstick</span>
             <span id="badge-ln2-{{ d.id }}" class="status-badge status-normal">ON SCHEDULE</span>
           </div>
           <div class="dip-level-row">
-            <div><span class="dip-level" id="val-ln2-level-{{ d.id }}">--</span><span style="color:#8899a6; font-size:12px;">
+            <div><span class="dip-level" id="val-ln2-level-{{ d.id }}">--</span><span
+                style="color:#8899a6; font-size:12px;">
                 cm</span></div>
             <span id="sub-ln2-check-{{ d.id }}" style="font-size:12px; color:#8899a6;">--</span>
           </div>
-          <div id="ln2-next-due-{{ d.id }}" style="font-size:11px; color:#8899a6; margin-top:2px;">Next: Mon/Wed/Fri by 5:00 PM
+          <div id="ln2-next-due-{{ d.id }}" style="font-size:11px; color:#8899a6; margin-top:2px;">Next: Mon/Wed/Fri by
+            5:00 PM
           </div>
           <div class="dip-actions">
             <button class="btn-mini" onclick="openLn2ModalFor('{{ d.name }}')">🧊 Log Check</button>
@@ -1022,13 +1028,15 @@
       {% if (equipment.fridges | length + equipment.freezers | length) > 0 %}
       <div class="card" id="card-cold-storage" style="border-top:3px solid #00e676;">
         <div class="card-title">Medical Cold Storage</div>
-        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(120px, 1fr)); gap:10px; margin-top:8px;">
+        <div
+          style="display:grid; grid-template-columns:repeat(auto-fit, minmax(120px, 1fr)); gap:10px; margin-top:8px;">
           {% for f in equipment.fridges %}
           <div
             style="background:rgba(9,13,22,0.65); padding:10px 10px; border-radius:8px; border:1px solid rgba(255,255,255,0.06); min-width:0; overflow:hidden;">
             <div
               style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:4px; margin-bottom:4px;">
-              <span style="font-size:11px; font-weight:700; color:#8899a6; text-transform:uppercase;">{{ f.short_name | default(f.name) }}</span>
+              <span style="font-size:11px; font-weight:700; color:#8899a6; text-transform:uppercase;">{{ f.short_name |
+                default(f.name) }}</span>
               <span id="badge-{{ f.key }}" class="status-badge status-normal">NORMAL</span>
             </div>
             <div style="font-size:1.65rem; font-weight:800; font-family:monospace; color:#f0f4f8; line-height:1.1;">
@@ -1044,7 +1052,8 @@
             style="background:rgba(9,13,22,0.65); padding:10px 10px; border-radius:8px; border:1px solid rgba(255,255,255,0.06); min-width:0; overflow:hidden;">
             <div
               style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:4px; margin-bottom:4px;">
-              <span style="font-size:11px; font-weight:700; color:#8899a6; text-transform:uppercase;">{{ fz.short_name | default(fz.name) }}</span>
+              <span style="font-size:11px; font-weight:700; color:#8899a6; text-transform:uppercase;">{{ fz.short_name |
+                default(fz.name) }}</span>
               <span id="badge-{{ fz.key }}" class="status-badge status-normal">NORMAL</span>
             </div>
             <div style="font-size:1.65rem; font-weight:800; font-family:monospace; color:#f0f4f8; line-height:1.1;">
@@ -1053,581 +1062,627 @@
             <div
               style="font-size:11px; color:#8899a6; margin-top:5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
               {{ fz.target_label | default('Limit: < -15.0°C') }}</div>
+            </div>
+            {% endfor %}
           </div>
-          {% endfor %}
         </div>
-      </div>
-      {% endif %}
+        {% endif %}
 
-      <!-- Cleanroom Ambient Sensors (0 to N) -->
-      {% for a in equipment.ambient %}
-      <div class="card" id="card-{{ a.key }}">
-        <div class="card-title">{{ a.name }}</div>
-        <div class="card-val"><span id="val-{{ a.key }}">--</span><span class="card-unit">°C</span></div>
-        <div class="card-sub">
-          <span>{{ a.target_label | default('Comfort Target: ~25.0°C') }}</span>
-          <span id="badge-{{ a.key }}" class="status-badge status-normal">COMFORT</span>
+        <!-- Cleanroom Ambient Sensors (0 to N) -->
+        {% for a in equipment.ambient %}
+        <div class="card" id="card-{{ a.key }}">
+          <div class="card-title">{{ a.name }}</div>
+          <div class="card-val"><span id="val-{{ a.key }}">--</span><span class="card-unit">°C</span></div>
+          <div class="card-sub">
+            <span>{{ a.target_label | default('Comfort Target: ~25.0°C') }}</span>
+            <span id="badge-{{ a.key }}" class="status-badge status-normal">COMFORT</span>
+          </div>
         </div>
-      </div>
-      {% endfor %}
+        {% endfor %}
 
-      <!-- Cleanroom Doors Card (0 to N) -->
-      {% if equipment.doors | length > 0 %}
-      <div class="card" id="card-doors" style="border-top:3px solid #2979ff;">
-        <div class="card-title">Cleanroom Doors &amp; Access</div>
-        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(120px, 1fr)); gap:10px; margin-top:8px;">
-          {% for dr in equipment.doors %}
+        <!-- Cleanroom Doors Card (0 to N) -->
+        {% if equipment.doors | length > 0 %}
+        <div class="card" id="card-doors" style="border-top:3px solid #2979ff;">
+          <div class="card-title">Cleanroom Doors &amp; Access</div>
           <div
-            style="background:rgba(9,13,22,0.65); padding:10px 10px; border-radius:8px; border:1px solid rgba(255,255,255,0.06); min-width:0; overflow:hidden;">
+            style="display:grid; grid-template-columns:repeat(auto-fit, minmax(120px, 1fr)); gap:10px; margin-top:8px;">
+            {% for dr in equipment.doors %}
             <div
-              style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:4px; margin-bottom:4px;">
-              <span style="font-size:11px; font-weight:700; color:#8899a6; text-transform:uppercase;">{{ dr.short_name | default(dr.name) }}</span>
-              <span id="badge-{{ dr.key }}" class="status-badge status-normal">SECURE</span>
+              style="background:rgba(9,13,22,0.65); padding:10px 10px; border-radius:8px; border:1px solid rgba(255,255,255,0.06); min-width:0; overflow:hidden;">
+              <div
+                style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:4px; margin-bottom:4px;">
+                <span style="font-size:11px; font-weight:700; color:#8899a6; text-transform:uppercase;">{{ dr.short_name
+                  | default(dr.name) }}</span>
+                <span id="badge-{{ dr.key }}" class="status-badge status-normal">SECURE</span>
+              </div>
+              <div style="font-size:1.5rem; font-weight:800; font-family:monospace; color:#f0f4f8; margin-top:2px;"
+                id="val-{{ dr.key }}">
+                CLOSED
+              </div>
+              <div
+                style="font-size:11px; color:#8899a6; margin-top:5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                60m alarm delay</div>
             </div>
-            <div style="font-size:1.5rem; font-weight:800; font-family:monospace; color:#f0f4f8; margin-top:2px;"
-              id="val-{{ dr.key }}">
-              CLOSED
-            </div>
-            <div
-              style="font-size:11px; color:#8899a6; margin-top:5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
-              60m alarm delay</div>
+            {% endfor %}
           </div>
-          {% endfor %}
         </div>
-      </div>
-      {% endif %}
+        {% endif %}
 
-      <!-- Incubator Cabinet & Slide-out Bays Card -->
-      {% if equipment.incubators | length > 0 or equipment.cabinets | length > 0 %}
-      <div class="card" id="card-incubators" style="border-top:3px solid #00b0ff;">
-        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
-          <div>
-            <div class="card-title" style="margin-bottom:0;">
-              {% if equipment.cabinets and equipment.cabinets | length > 0 %}
+        <!-- Incubator Cabinet & Slide-out Bays Card -->
+        {% if equipment.incubators | length > 0 or equipment.cabinets | length > 0 %}
+        <div class="card" id="card-incubators" style="border-top:3px solid #00b0ff;">
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+            <div>
+              <div class="card-title" style="margin-bottom:0;">
+                {% if equipment.cabinets and equipment.cabinets | length > 0 %}
                 {{ equipment.cabinets[0].name }}
-              {% else %}
+                {% else %}
                 Incubator Cabinet 01
-              {% endif %}
+                {% endif %}
+              </div>
+              <div style="font-size:11px; color:#8899a6; margin-top:2px;">
+                3-Bay Slide-Out Enclosure • Tap any unit to inspect 10-zone heat bed
+              </div>
             </div>
-            <div style="font-size:11px; color:#8899a6; margin-top:2px;">
-              3-Bay Slide-Out Enclosure • Tap any unit to inspect 10-zone heat bed
-            </div>
-          </div>
-          <!-- Cabinet Environmental Microclimate Badges -->
-          <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
-            <span class="status-badge status-normal" id="cab-door-badge" style="font-size:10px; padding:3px 8px;">🚪 DOOR CLOSED</span>
-            <span style="font-size:11px; font-family:monospace; color:#38bdf8; font-weight:700; background:rgba(56,189,248,0.12); padding:3px 7px; border-radius:4px; border:1px solid rgba(56,189,248,0.25);" id="cab-temp-val" title="Cabinet Interior Temperature">24.5°C</span>
-            <span style="font-size:10px; color:#94a3b8; background:rgba(255,255,255,0.06); padding:3px 7px; border-radius:4px; border:1px solid rgba(255,255,255,0.08);" id="cab-fan-val" title="Thermostatic Exhaust Fan">🌀 FAN OFF</span>
-          </div>
-        </div>
-
-        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(130px, 1fr)); gap:10px; margin-top:12px;">
-          {% for inc in equipment.incubators %}
-          <div class="incubator-bay-card"
-            id="bay-card-{{ inc.key }}"
-            onclick="openIncubatorModal('{{ inc.key }}')"
-            title="Click to inspect 10 chamber zones">
-            <div
-              style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:4px; margin-bottom:4px;">
-              <span style="font-size:10.5px; font-weight:800; color:#38bdf8; text-transform:uppercase;">
-                {% if inc.bay_number %}BAY {{ inc.bay_number }}: {% endif %}{{ inc.name }}
-              </span>
-              <span id="badge-{{ inc.key }}" class="status-badge status-normal">CLEAR</span>
-            </div>
-            <div style="font-size:1.45rem; font-weight:800; font-family:monospace; color:#f0f4f8; margin-top:2px;"
-              id="val-{{ inc.key }}">
-              NORMAL
-            </div>
-            <div
-              style="font-size:11px; color:#8899a6; margin-top:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"
-              id="sub-{{ inc.key }}">{{ inc.subtitle | default('G210 InviCell • In-Range') }}</div>
-
-            <!-- Inspect Hint Footer -->
-            <div style="margin-top:8px; padding-top:6px; border-top:1px solid rgba(255,255,255,0.06); display:flex; justify-content:space-between; align-items:center; font-size:10px; color:#00e5ff;">
-              <span>🔍 10 Zones</span>
-              <span style="color:#64748b; font-size:9.5px; font-family:monospace;">{{ inc.model | default('G210') }}</span>
+            <!-- Cabinet Environmental Microclimate Badges -->
+            <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+              <span class="status-badge status-normal" id="cab-door-badge" style="font-size:10px; padding:3px 8px;">🚪
+                DOOR CLOSED</span>
+              <span
+                style="font-size:11px; font-family:monospace; color:#38bdf8; font-weight:700; background:rgba(56,189,248,0.12); padding:3px 7px; border-radius:4px; border:1px solid rgba(56,189,248,0.25);"
+                id="cab-temp-val" title="Cabinet Interior Temperature">24.5°C</span>
+              <span
+                style="font-size:10px; color:#94a3b8; background:rgba(255,255,255,0.06); padding:3px 7px; border-radius:4px; border:1px solid rgba(255,255,255,0.08);"
+                id="cab-fan-val" title="Thermostatic Exhaust Fan">🌀 FAN OFF</span>
             </div>
           </div>
-          {% endfor %}
 
-          <!-- Bay 3 (Empty / Expansion Bay) -->
           <div
-            style="background:rgba(9,13,22,0.3); border:1px dashed rgba(255,255,255,0.14); border-radius:8px; padding:10px; min-width:0; display:flex; flex-direction:column; justify-content:space-between; min-height:92px; opacity:0.65;">
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-              <span style="font-size:10.5px; font-weight:700; color:#64748b; text-transform:uppercase;">BAY 3: EXPANSION</span>
-              <span class="status-badge" style="background:rgba(100,116,139,0.15); color:#64748b; font-size:9px; border:1px solid rgba(100,116,139,0.25);">EMPTY</span>
+            style="display:grid; grid-template-columns:repeat(auto-fit, minmax(130px, 1fr)); gap:10px; margin-top:12px;">
+            {% for inc in equipment.incubators %}
+            <div class="incubator-bay-card" id="bay-card-{{ inc.key }}" onclick="openIncubatorModal('{{ inc.key }}')"
+              title="Click to inspect 10 chamber zones">
+              <div
+                style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:4px; margin-bottom:4px;">
+                <span style="font-size:10.5px; font-weight:800; color:#38bdf8; text-transform:uppercase;">
+                  {% if inc.bay_number %}BAY {{ inc.bay_number }}: {% endif %}{{ inc.name }}
+                </span>
+                <span id="badge-{{ inc.key }}" class="status-badge status-normal">CLEAR</span>
+              </div>
+              <div style="font-size:1.45rem; font-weight:800; font-family:monospace; color:#f0f4f8; margin-top:2px;"
+                id="val-{{ inc.key }}">
+                NORMAL
+              </div>
+              <div
+                style="font-size:11px; color:#8899a6; margin-top:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"
+                id="sub-{{ inc.key }}">{{ inc.subtitle | default('G210 InviCell • In-Range') }}</div>
+
+              <!-- Inspect Hint Footer -->
+              <div
+                style="margin-top:8px; padding-top:6px; border-top:1px solid rgba(255,255,255,0.06); display:flex; justify-content:space-between; align-items:center; font-size:10px; color:#00e5ff;">
+                <span>🔍 10 Zones</span>
+                <span style="color:#64748b; font-size:9.5px; font-family:monospace;">{{ inc.model | default('G210')
+                  }}</span>
+              </div>
             </div>
-            <div style="font-size:1.15rem; font-weight:700; font-family:monospace; color:#64748b; margin-top:4px;">
-              AVAILABLE
-            </div>
-            <div style="font-size:10px; color:#475569; margin-top:4px;">
-              Slide-Out Tray Ready
+            {% endfor %}
+
+            <!-- Bay 3 (Empty / Expansion Bay) -->
+            <div
+              style="background:rgba(9,13,22,0.3); border:1px dashed rgba(255,255,255,0.14); border-radius:8px; padding:10px; min-width:0; display:flex; flex-direction:column; justify-content:space-between; min-height:92px; opacity:0.65;">
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <span style="font-size:10.5px; font-weight:700; color:#64748b; text-transform:uppercase;">BAY 3:
+                  EXPANSION</span>
+                <span class="status-badge"
+                  style="background:rgba(100,116,139,0.15); color:#64748b; font-size:9px; border:1px solid rgba(100,116,139,0.25);">EMPTY</span>
+              </div>
+              <div style="font-size:1.15rem; font-weight:700; font-family:monospace; color:#64748b; margin-top:4px;">
+                AVAILABLE
+              </div>
+              <div style="font-size:10px; color:#475569; margin-top:4px;">
+                Slide-Out Tray Ready
+              </div>
             </div>
           </div>
         </div>
+        {% endif %}
       </div>
-      {% endif %}
-    </div>
 
-    <!-- 3. Bottom Section: Active Alarms & Clinical Audit Trail -->
-    <div class="section-card">
-      <div
-        style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:8px;">
-        <div>
-          <h3 style="margin:0; font-size:1.15rem; color:#f0f4f8;" id="auditSectionTitle">Active Alarms &amp; Clinical
-            Audit Trail</h3>
-          <p style="color:#8899a6; font-size:13px; margin:3px 0 0;" id="auditSectionDesc">Reverse chronological history.
-            Tap Acknowledge to silence repeating sirens.</p>
-        </div>
+      <!-- 3. Bottom Section: Active Alarms & Clinical Audit Trail -->
+      <div class="section-card">
         <div
-          style="display:flex; gap:6px; background:rgba(2,22,34,0.9); padding:3px; border-radius:8px; border:1px solid var(--border-subtle);">
-          <button type="button" class="nav-tab active" id="btnAuditAlarms" style="padding:6px 14px; font-size:12.5px;"
-            onclick="switchAuditView('alarms')">🚨 Alarms &amp; Siren Log</button>
-          {% if equipment.doors | length > 0 %}
-          <button type="button" class="nav-tab" id="btnAuditDoors" style="padding:6px 14px; font-size:12.5px;"
-            onclick="switchAuditView('doors')">🚪 Cleanroom Door Log</button>
-          {% endif %}
-          <button type="button" class="nav-tab" id="btnAuditCal" style="padding:6px 14px; font-size:12.5px;"
-            onclick="switchAuditView('calibration')">🌡️ Probe Calibration &amp; NIST Log</button>
+          style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:8px;">
+          <div>
+            <h3 style="margin:0; font-size:1.15rem; color:#f0f4f8;" id="auditSectionTitle">Active Alarms &amp; Clinical
+              Audit Trail</h3>
+            <p style="color:#8899a6; font-size:13px; margin:3px 0 0;" id="auditSectionDesc">Reverse chronological
+              history.
+              Tap Acknowledge to silence repeating sirens.</p>
+          </div>
+          <div
+            style="display:flex; gap:6px; background:rgba(2,22,34,0.9); padding:3px; border-radius:8px; border:1px solid var(--border-subtle);">
+            <button type="button" class="nav-tab active" id="btnAuditAlarms" style="padding:6px 14px; font-size:12.5px;"
+              onclick="switchAuditView('alarms')">🚨 Alarms &amp; Siren Log</button>
+            {% if equipment.doors | length > 0 %}
+            <button type="button" class="nav-tab" id="btnAuditDoors" style="padding:6px 14px; font-size:12.5px;"
+              onclick="switchAuditView('doors')">🚪 Cleanroom Door Log</button>
+            {% endif %}
+            <button type="button" class="nav-tab" id="btnAuditCal" style="padding:6px 14px; font-size:12.5px;"
+              onclick="switchAuditView('calibration')">🌡️ Probe Calibration &amp; NIST Log</button>
+          </div>
         </div>
-      </div>
-      <div id="alarmsTable" style="overflow-x:auto;">Loading alarms...</div>
-      <div id="doorsTable" style="overflow-x:auto; display:none;">Loading door events...</div>
-      <div id="calibrationTable" style="overflow-x:auto; display:none;">Loading calibration records...</div>
-    </div>
-  </div>
-
-  <!-- ============================================================== -->
-  <!-- PAGE 2: CRYO TANK AUDIT & DIPSTICK SUITE                       -->
-  <!-- ============================================================== -->
-  {% if equipment.dewars | length > 0 %}
-  <div id="view-cryo" style="display:none;">
-    <!-- Sub-Page Header -->
-    <div class="subpage-header">
-      <div>
-        <h2 class="subpage-title">Liquid Nitrogen (LN2) Cryopreservation Suite</h2>
-        <p class="subpage-desc">Manual Dipstick Tracking, Boil-off Dynamics &amp; Regulatory Audit Trail (CAP /
-          CLIA / JCAHO)</p>
-      </div>
-      <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
-        <a href="/print/qr" target="_blank" class="btn-report" style="border-color:#38bdf8; color:#38bdf8;">📱 Print
-          Station QR Placard</a>
-        <button class="btn"
-          style="background:#00e5ff; color:#090d16; font-size:14px; font-weight:800; padding:10px 18px; border-radius:8px; box-shadow:0 4px 14px rgba(0,229,255,0.3);"
-          onclick="openLn2Modal()">🧊 Log Dipstick Check</button>
+        <div id="alarmsTable" style="overflow-x:auto;">Loading alarms...</div>
+        <div id="doorsTable" style="overflow-x:auto; display:none;">Loading door events...</div>
+        <div id="calibrationTable" style="overflow-x:auto; display:none;">Loading calibration records...</div>
       </div>
     </div>
 
-    <!-- Detailed Cryo Level Overview Cards -->
-    <div class="cryo-detail-grid">
-      {% for d in equipment.dewars %}
-      <div class="cryo-card-lg" style="border-top:4px solid {{ d.color | default('#00e5ff') }};">
-        <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-          <div>
-            <div style="font-size:13px; font-weight:700; color:{{ d.color | default('#00e5ff') }}; text-transform:uppercase;">{{ d.label | default(d.name) }}
-            </div>
-            <div style="font-size:2.4rem; font-weight:800; font-family:monospace; color:#f0f4f8; margin-top:4px;">
-              <span id="detail-ln2-level-{{ d.id }}">--</span><span style="font-size:1.2rem; color:#8899a6;"> cm</span>
-            </div>
-          </div>
-          <span id="detail-badge-ln2-{{ d.id }}" class="status-badge status-normal">ON SCHEDULE</span>
-        </div>
-
-        <div class="metrics-row">
-          <div>
-            <div class="metric-label">Vapor Temp</div>
-            <div class="metric-val" style="color:{{ d.color | default('#00e5ff') }};"><span id="detail-cryo{{ d.id }}-temp">--</span>°C</div>
-          </div>
-          <div>
-            <div class="metric-label">Boil-off Rate</div>
-            <div class="metric-val">~1.0 <span style="font-size:11px; color:#8899a6;">cm/d</span></div>
-          </div>
-          <div>
-            <div class="metric-label">Last Refill</div>
-            <div class="metric-val" style="font-size:0.95rem;" id="detail-refill-{{ d.id }}">Logged</div>
-          </div>
-        </div>
-
-        <div style="font-size:12.5px; color:#8899a6; line-height:1.6;">
-          <div><b>Last Check:</b> <span id="detail-last-check-{{ d.id }}">--</span></div>
-          <div><b>Schedule:</b> <span id="detail-next-check-{{ d.id }}">Mon / Wed / Fri by 5:00 PM</span></div>
-        </div>
-        <button class="btn"
-          style="width:100%; background:{{ d.color | default('#00b0ff') }}; color:#090d16; font-weight:800; margin-top:14px; padding:12px; border-radius:8px;"
-          onclick="openLn2ModalFor('{{ d.name }}')">🧊 Log {{ d.name }} Check</button>
-      </div>
-      {% endfor %}
-    </div>
-
-    <!-- Sawtooth Curves Showcase -->
-    <div class="section-card">
-      <div
-        style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:12px;">
+    <!-- ============================================================== -->
+    <!-- PAGE 2: CRYO TANK AUDIT & DIPSTICK SUITE                       -->
+    <!-- ============================================================== -->
+    {% if equipment.dewars | length > 0 %}
+    <div id="view-cryo" style="display:none;">
+      <!-- Sub-Page Header -->
+      <div class="subpage-header">
         <div>
-          <h3 style="margin:0; font-size:1.15rem; color:#f0f4f8;">60-Day Liquid Nitrogen Level &amp; Refill Sawtooth Curves
-          </h3>
-          <p style="color:#8899a6; font-size:13px; margin:3px 0 0;">Visual confirmation of continuous boil-off rate and
-            refill volume adherence.</p>
+          <h2 class="subpage-title">Liquid Nitrogen (LN2) Cryopreservation Suite</h2>
+          <p class="subpage-desc">Manual Dipstick Tracking, Boil-off Dynamics &amp; Regulatory Audit Trail (CAP /
+            CLIA / JCAHO)</p>
         </div>
-        <div class="chips-row">
-          {% for d in equipment.dewars %}
-          <div class="chip {% if loop.first %}active{% endif %}" id="chip-chart-{{ d.id }}" onclick="switchSawtooth({{ d.id }})">{{ d.name }} Curve</div>
-          {% endfor %}
+        <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+          <a href="/print/qr" target="_blank" class="btn-report" style="border-color:#38bdf8; color:#38bdf8;">📱 Print
+            Station QR Placard</a>
+          <button class="btn"
+            style="background:#00e5ff; color:#090d16; font-size:14px; font-weight:800; padding:10px 18px; border-radius:8px; box-shadow:0 4px 14px rgba(0,229,255,0.3);"
+            onclick="openLn2Modal()">🧊 Log Dipstick Check</button>
         </div>
       </div>
-      <div class="chart-container">
-        <img id="sawtoothImg" src="/report/ln2/chart?tank={{ equipment.dewars[0].id }}" alt="LN2 Sawtooth Chart" class="chart-img">
+
+      <!-- Detailed Cryo Level Overview Cards -->
+      <div class="cryo-detail-grid">
+        {% for d in equipment.dewars %}
+        <div class="cryo-card-lg" style="border-top:4px solid {{ d.color | default('#00e5ff') }};">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+            <div>
+              <div
+                style="font-size:13px; font-weight:700; color:{{ d.color | default('#00e5ff') }}; text-transform:uppercase;">
+                {{ d.label | default(d.name) }}
+              </div>
+              <div style="font-size:2.4rem; font-weight:800; font-family:monospace; color:#f0f4f8; margin-top:4px;">
+                <span id="detail-ln2-level-{{ d.id }}">--</span><span style="font-size:1.2rem; color:#8899a6;">
+                  cm</span>
+              </div>
+            </div>
+            <span id="detail-badge-ln2-{{ d.id }}" class="status-badge status-normal">ON SCHEDULE</span>
+          </div>
+
+          <div class="metrics-row">
+            <div>
+              <div class="metric-label">Vapor Temp</div>
+              <div class="metric-val" style="color:{{ d.color | default('#00e5ff') }};"><span
+                  id="detail-cryo{{ d.id }}-temp">--</span>°C</div>
+            </div>
+            <div>
+              <div class="metric-label">Boil-off Rate</div>
+              <div class="metric-val">~1.0 <span style="font-size:11px; color:#8899a6;">cm/d</span></div>
+            </div>
+            <div>
+              <div class="metric-label">Last Refill</div>
+              <div class="metric-val" style="font-size:0.95rem;" id="detail-refill-{{ d.id }}">Logged</div>
+            </div>
+          </div>
+
+          <div style="font-size:12.5px; color:#8899a6; line-height:1.6;">
+            <div><b>Last Check:</b> <span id="detail-last-check-{{ d.id }}">--</span></div>
+            <div><b>Schedule:</b> <span id="detail-next-check-{{ d.id }}">Mon / Wed / Fri by 5:00 PM</span></div>
+          </div>
+          <button class="btn"
+            style="width:100%; background:{{ d.color | default('#00b0ff') }}; color:#090d16; font-weight:800; margin-top:14px; padding:12px; border-radius:8px;"
+            onclick="openLn2ModalFor('{{ d.name }}')">🧊 Log {{ d.name }} Check</button>
+        </div>
+        {% endfor %}
+      </div>
+
+      <!-- Sawtooth Curves Showcase -->
+      <div class="section-card">
+        <div
+          style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:12px;">
+          <div>
+            <h3 style="margin:0; font-size:1.15rem; color:#f0f4f8;">60-Day Liquid Nitrogen Level &amp; Refill Sawtooth
+              Curves
+            </h3>
+            <p style="color:#8899a6; font-size:13px; margin:3px 0 0;">Visual confirmation of continuous boil-off rate
+              and
+              refill volume adherence.</p>
+          </div>
+          <div class="chips-row">
+            {% for d in equipment.dewars %}
+            <div class="chip {% if loop.first %}active{% endif %}" id="chip-chart-{{ d.id }}"
+              onclick="switchSawtooth({{ d.id }})">{{ d.name }} Curve</div>
+            {% endfor %}
+          </div>
+        </div>
+        <div class="chart-container">
+          <img id="sawtoothImg" src="/report/ln2/chart?tank={{ equipment.dewars[0].id }}" alt="LN2 Sawtooth Chart"
+            class="chart-img">
+        </div>
+      </div>
+
+      <!-- Full Liquid Nitrogen Audit Trail Table -->
+      <div class="section-card">
+        <div
+          style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:10px;">
+          <div>
+            <h3 style="margin:0; font-size:1.15rem; color:#f0f4f8;">Liquid Nitrogen Manual Dipstick Audit Trail</h3>
+            <p style="color:#8899a6; font-size:13px; margin:3px 0 0;">Complete regulatory history for level
+              verification,
+              manual refills, and seal inspections.</p>
+          </div>
+        </div>
+        <div id="ln2HistoryTable">Loading inspection logs...</div>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Global Application Footer -->
+    <footer class="kiosk-footer">
+      <div>{{ clinic_name }} &bull; Clinical SCADA Telemetry</div>
+      <div>Powered by <strong>Lares Telemetry</strong></div>
+    </footer>
+
+    <!-- Modal: Lab Operational Mode Selector -->
+    <div class="modal-overlay" id="sessionModal" style="display:none;"
+      onclick="if(event.target===this) closeSessionModal()">
+      <div class="modal-box">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+          <h2 style="margin:0; font-size:1.35rem; color:#f0f4f8;">Lab Operational Mode</h2>
+          <button type="button" onclick="closeSessionModal()"
+            style="background:transparent; border:none; color:#8899a6; font-size:22px; cursor:pointer;">&times;</button>
+        </div>
+
+        <p style="color:#94a3b8; font-size:13px; margin:0 0 16px; line-height:1.45;">
+          The clinic cycles between quarterly clinical operating sessions (~2 weeks) and dormant standby periods. Select
+          target mode:
+        </p>
+
+        <div style="display:flex; gap:12px; margin-bottom:18px;">
+          <div id="opt-mode-in" class="session-mode-card active" onclick="selectSessionMode('IN_SESSION')">
+            <div style="font-size:16px; font-weight:800; color:#10b981; margin-bottom:4px;">🟢 In-Session Active</div>
+            <div style="font-size:12px; color:#cbd5e1; line-height:1.35;">Full clinical procedures. Incubator monitoring
+              active. Cleanroom doors 60-min hold delay enabled.</div>
+          </div>
+          <div id="opt-mode-off" class="session-mode-card" onclick="selectSessionMode('OFF_SESSION')">
+            <div style="font-size:16px; font-weight:800; color:#f59e0b; margin-bottom:4px;">⏸️ Off-Session Standby</div>
+            <div style="font-size:12px; color:#cbd5e1; line-height:1.35;">Lab dormant. Incubators powered off (alarms
+              suppressed). Any cleanroom door opening alerts immediately.</div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Authorized Staff Initials / Name</label>
+          <input type="text" id="sessionUser" class="text-input" placeholder="e.g. BO, Sarah" maxlength="24">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Notes / Reason (Optional)</label>
+          <input type="text" id="sessionNotes" class="text-input" placeholder="e.g. Q4 Embryology Session start">
+        </div>
+
+        <div id="sessionErr"
+          style="color:#ef4444; font-size:12.5px; font-weight:700; margin-bottom:12px; display:none;">
+        </div>
+
+        <div style="display:flex; gap:10px; margin-top:20px;">
+          <button type="button" class="btn" style="flex:1; background:#1e293b;"
+            onclick="closeSessionModal()">Cancel</button>
+          <button type="button" class="btn" style="flex:1; background:#00e676; color:#090d16; font-weight:800;"
+            id="btnSaveSessionMode" onclick="saveSessionMode()">Confirm Mode Change</button>
+        </div>
+
+        <!-- Historical Transition Audit Trail -->
+        <div style="margin-top:22px; padding-top:16px; border-top:1px solid rgba(255,255,255,0.12);">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <span
+              style="font-size:11.5px; font-weight:800; color:var(--brand-glacier); text-transform:uppercase; letter-spacing:0.5px;">Operational
+              Mode Audit Trail</span>
+            <span style="font-size:11px; color:#8899a6;">Permanent PostgreSQL Record</span>
+          </div>
+          <div id="sessionHistoryTable"
+            style="max-height:190px; overflow-y:auto; border-radius:8px; border:1px solid rgba(255,255,255,0.06); background:#02121c;">
+            Loading transition history...
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- Full Liquid Nitrogen Audit Trail Table -->
-    <div class="section-card">
-      <div
-        style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:10px;">
-        <div>
-          <h3 style="margin:0; font-size:1.15rem; color:#f0f4f8;">Liquid Nitrogen Manual Dipstick Audit Trail</h3>
-          <p style="color:#8899a6; font-size:13px; margin:3px 0 0;">Complete regulatory history for level verification,
-            manual refills, and seal inspections.</p>
+    <!-- ============================================================== -->
+    <!-- GLOVE-FRIENDLY LN2 INSPECTION MODAL                            -->
+    <!-- ============================================================== -->
+    {% if equipment.dewars | length > 0 %}
+    <div id="ln2Modal" class="modal-overlay" style="display:none;">
+      <div class="modal-box">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px;">
+          <div>
+            <h2 style="margin:0; font-size:1.3rem; color:#00e5ff;">🧊 Record LN2 Dipstick Check</h2>
+            <div style="color:#8899a6; font-size:12px; margin-top:3px;">Mon / Wed / Fri Cleanroom Schedule (Due by 5:00
+              PM)</div>
+          </div>
+          <button type="button" class="btn"
+            style="background:transparent; border:1px solid rgba(255,255,255,0.2); font-size:16px; padding:6px 12px;"
+            onclick="closeLn2Modal()">✕</button>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Tank Identifier</label>
+          <div class="chips-row">
+            {% for d in equipment.dewars %}
+            <div class="chip {% if loop.first %}active{% endif %}" id="chip-tank-{{ d.id }}"
+              onclick="selectTank('{{ d.name }}')">{{ d.label | default(d.name) }}</div>
+            {% endfor %}
+          </div>
+        </div>
+
+        <div class="form-group" style="text-align:center;">
+          <label class="form-label">Ruler Frost Line (Centimeters)</label>
+          <div class="stepper-vert-box">
+            <!-- Decrement Buttons Left -->
+            <div class="stepper-btn-row">
+              <button type="button" class="btn-stepper-vert btn-minus" onclick="adjustLn2(-1.0)">- 1.0</button>
+              <button type="button" class="btn-stepper-vert btn-minus" onclick="adjustLn2(-0.5)">- 0.5</button>
+            </div>
+            <!-- Center Compact Number Display (max 3 digits, e.g. 32.5) -->
+            <div class="level-input-wrap">
+              <input type="number" step="0.1" id="ln2LevelInput" class="input-level-compact" value="30.0">
+              <span class="level-cm-tag">cm</span>
+            </div>
+            <!-- Increment Buttons Right -->
+            <div class="stepper-btn-row">
+              <button type="button" class="btn-stepper-vert btn-plus" onclick="adjustLn2(0.5)">+ 0.5</button>
+              <button type="button" class="btn-stepper-vert btn-plus" onclick="adjustLn2(1.0)">+ 1.0</button>
+            </div>
+          </div>
+          <div style="font-size:11.5px; color:#8899a6; margin-top:-2px;">
+            Previous check: <strong id="ln2LastRecordedHint" style="color:#00e5ff;">-- cm</strong>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Nitrogen Added / Topped Off?</label>
+          <div class="chips-row">
+            <div class="chip-fill active" id="fill-no" onclick="selectFill(false)">🔘 No (Level Check Only)</div>
+            <div class="chip-fill" id="fill-yes" onclick="selectFill(true)">🔵 Yes (Tank Filled to Full)</div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Staff Initials</label>
+          <div class="chips-row" style="margin-bottom:8px;">
+            <div class="chip" onclick="selectInit('BO')">BO</div>
+            <div class="chip" onclick="selectInit('SJ')">SJ</div>
+            <div class="chip" onclick="selectInit('AK')">AK</div>
+            <div class="chip" onclick="selectInit('TL')">TL</div>
+          </div>
+          <input type="text" id="ln2InitialsInput" class="text-input" placeholder="Type initials (e.g. BO)"
+            maxlength="8">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Visual Inspection / Neck Seal</label>
+          <div class="chips-row">
+            <div class="chip active" id="seal-good" onclick="selectSeal('Good')">Normal / Good Seal</div>
+            <div class="chip" id="seal-frost" onclick="selectSeal('Neck Frost')">Neck Frost</div>
+            <div class="chip" id="seal-concern" onclick="selectSeal('Vacuum Concern')">Vacuum Concern</div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Notes (Optional)</label>
+          <input type="text" id="ln2NotesInput" class="text-input"
+            placeholder="Optional notes (e.g. routine top-off, inspected o-ring)">
+        </div>
+
+        <div id="modalSubmitMsg" style="font-size:13px; font-weight:600; margin-bottom:12px;"></div>
+
+        <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:18px;">
+          <button type="button" class="btn" style="background:#334155;" onclick="closeLn2Modal()">Cancel</button>
+          <button type="button" class="btn"
+            style="background:#00e5ff; color:#090d16; font-size:15px; font-weight:700; padding:10px 24px;"
+            onclick="submitLn2Log()">✅ Submit Inspection</button>
         </div>
       </div>
-      <div id="ln2HistoryTable">Loading inspection logs...</div>
     </div>
-  </div>
-  {% endif %}
+    {% endif %}
 
-  <!-- Global Application Footer -->
-  <footer class="kiosk-footer">
-    <div>{{ clinic_name }} &bull; Clinical SCADA Telemetry</div>
-    <div>Powered by <strong>Lares Telemetry</strong></div>
-  </footer>
-
-  <!-- Modal: Lab Operational Mode Selector -->
-  <div class="modal-overlay" id="sessionModal" style="display:none;"
-    onclick="if(event.target===this) closeSessionModal()">
-    <div class="modal-box">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-        <h2 style="margin:0; font-size:1.35rem; color:#f0f4f8;">Lab Operational Mode</h2>
-        <button type="button" onclick="closeSessionModal()"
-          style="background:transparent; border:none; color:#8899a6; font-size:22px; cursor:pointer;">&times;</button>
-      </div>
-
-      <p style="color:#94a3b8; font-size:13px; margin:0 0 16px; line-height:1.45;">
-        The clinic cycles between quarterly clinical operating sessions (~2 weeks) and dormant standby periods. Select
-        target mode:
-      </p>
-
-      <div style="display:flex; gap:12px; margin-bottom:18px;">
-        <div id="opt-mode-in" class="session-mode-card active" onclick="selectSessionMode('IN_SESSION')">
-          <div style="font-size:16px; font-weight:800; color:#10b981; margin-bottom:4px;">🟢 In-Session Active</div>
-          <div style="font-size:12px; color:#cbd5e1; line-height:1.35;">Full clinical procedures. Incubator monitoring
-            active. Cleanroom doors 60-min hold delay enabled.</div>
+    <!-- ============================================================== -->
+    <!-- K-SYSTEMS G210 MULTI-ZONE CHAMBER INSPECTOR MODAL               -->
+    <!-- ============================================================== -->
+    <div id="incubatorModal" class="modal-overlay" style="display:none;"
+      onclick="if(event.target===this) closeIncubatorModal()">
+      <div class="modal-box" style="max-width:640px; border-color:rgba(0, 176, 255, 0.45); padding:22px;">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:14px;">
+          <div>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <h2 style="margin:0; font-size:1.35rem; color:#00b0ff;" id="incModalTitle">Incubator 01</h2>
+              <span class="status-badge status-normal" id="incModalBadge" style="font-size:11px;">CLEAR</span>
+            </div>
+            <div style="color:#8899a6; font-size:12px; margin-top:3px;" id="incModalSubtitle">K-Systems G210 InviCell •
+              Bay 1 (Slide-out Tray)</div>
+          </div>
+          <button type="button" class="btn"
+            style="background:transparent; border:1px solid rgba(255,255,255,0.2); font-size:16px; padding:6px 12px;"
+            onclick="closeIncubatorModal()">✕</button>
         </div>
-        <div id="opt-mode-off" class="session-mode-card" onclick="selectSessionMode('OFF_SESSION')">
-          <div style="font-size:16px; font-weight:800; color:#f59e0b; margin-bottom:4px;">⏸️ Off-Session Standby</div>
-          <div style="font-size:12px; color:#cbd5e1; line-height:1.35;">Lab dormant. Incubators powered off (alarms
-            suppressed). Any cleanroom door opening alerts immediately.</div>
+
+        <!-- Telemetry Status Bar -->
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px;">
+          <div
+            style="background:rgba(9,13,22,0.85); border:1px solid rgba(255,255,255,0.08); border-radius:8px; padding:10px;">
+            <div style="font-size:10px; font-weight:700; color:#8899a6; text-transform:uppercase;">Discrete Alarm Relay
+            </div>
+            <div style="display:flex; align-items:center; gap:6px; margin-top:4px;">
+              <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#10b981;"
+                id="incModalHwDot"></span>
+              <span style="font-family:monospace; font-size:12.5px; font-weight:800; color:#f0f4f8;"
+                id="incModalHwStatus">NORMAL (Closed Loop)</span>
+            </div>
+            <div style="font-size:10px; color:#38bdf8; margin-top:3px;" id="incModalHwChannel">● LIVE HARDWARE (Node00
+              DI 1)</div>
+          </div>
+
+          <div
+            style="background:rgba(9,13,22,0.85); border:1px solid rgba(255,255,255,0.08); border-radius:8px; padding:10px;">
+            <div style="font-size:10px; font-weight:700; color:#8899a6; text-transform:uppercase;">Incubator Cabinet
+              Supervision</div>
+            <div style="display:flex; align-items:center; gap:6px; margin-top:4px;">
+              <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#10b981;"
+                id="incModalCabDot"></span>
+              <span style="font-family:monospace; font-size:12.5px; font-weight:800; color:#f0f4f8;"
+                id="incModalCabStatus">DOOR CLOSED (Loop Active)</span>
+            </div>
+            <div style="font-size:10px; color:#a78bfa; margin-top:3px;">🛡️ 3-Min Post-Close Grace Armed</div>
+          </div>
         </div>
-      </div>
 
-      <div class="form-group">
-        <label class="form-label">Authorized Staff Initials / Name</label>
-        <input type="text" id="sessionUser" class="text-input" placeholder="e.g. BO, Sarah" maxlength="24">
-      </div>
-
-      <div class="form-group">
-        <label class="form-label">Notes / Reason (Optional)</label>
-        <input type="text" id="sessionNotes" class="text-input" placeholder="e.g. Q4 Embryology Session start">
-      </div>
-
-      <div id="sessionErr" style="color:#ef4444; font-size:12.5px; font-weight:700; margin-bottom:12px; display:none;">
-      </div>
-
-      <div style="display:flex; gap:10px; margin-top:20px;">
-        <button type="button" class="btn" style="flex:1; background:#1e293b;"
-          onclick="closeSessionModal()">Cancel</button>
-        <button type="button" class="btn" style="flex:1; background:#00e676; color:#090d16; font-weight:800;"
-          id="btnSaveSessionMode" onclick="saveSessionMode()">Confirm Mode Change</button>
-      </div>
-
-      <!-- Historical Transition Audit Trail -->
-      <div style="margin-top:22px; padding-top:16px; border-top:1px solid rgba(255,255,255,0.12);">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+        <!-- 10-Chamber Visual Heat Map -->
+        <div style="margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
           <span
-            style="font-size:11.5px; font-weight:800; color:var(--brand-glacier); text-transform:uppercase; letter-spacing:0.5px;">Operational
-            Mode Audit Trail</span>
-          <span style="font-size:11px; color:#8899a6;">Permanent PostgreSQL Record</span>
+            style="font-size:11px; font-weight:700; color:#cbd5e1; text-transform:uppercase; letter-spacing:0.5px;">Chamber
+            Heated Wells (10 Zones)</span>
+          <span
+            style="font-size:10px; background:rgba(251,191,36,0.15); color:#fbbf24; border:1px solid rgba(251,191,36,0.3); padding:2px 8px; border-radius:12px; font-weight:700;">⚙
+            SIMULATED SENSORS</span>
         </div>
-        <div id="sessionHistoryTable"
-          style="max-height:190px; overflow-y:auto; border-radius:8px; border:1px solid rgba(255,255,255,0.06); background:#02121c;">
-          Loading transition history...
+
+        <div
+          style="display:grid; grid-template-columns:repeat(5, 1fr); gap:8px; background:rgba(2,18,28,0.7); border:1px solid rgba(0,176,255,0.15); border-radius:10px; padding:12px;"
+          id="incModalZonesGrid">
+          <!-- Rendered dynamically by JavaScript -->
+        </div>
+
+        <div
+          style="margin-top:14px; padding:10px 12px; background:rgba(15,23,42,0.6); border-radius:8px; border:1px solid rgba(255,255,255,0.05); font-size:11px; color:#8899a6; line-height:1.45;">
+          <strong style="color:#f0f4f8;">Chamber Telemetry Note:</strong> The K-Systems G210 features 10 internal RTD
+          sensor channels accessible via rear DB-25 connector. Physical zone telemetry requires an expansion RTD slice.
+          Chamber temperatures above are simulated at 37.0°C clinical setpoint.
+        </div>
+
+        <div style="display:flex; justify-content:flex-end; margin-top:16px;">
+          <button type="button" class="btn"
+            style="background:#0284c7; color:#fff; font-weight:700; padding:8px 20px; border-radius:6px;"
+            onclick="closeIncubatorModal()">Close Inspector</button>
         </div>
       </div>
     </div>
-  </div>
 
-  <!-- ============================================================== -->
-  <!-- GLOVE-FRIENDLY LN2 INSPECTION MODAL                            -->
-  <!-- ============================================================== -->
-  {% if equipment.dewars | length > 0 %}
-  <div id="ln2Modal" class="modal-overlay" style="display:none;">
-    <div class="modal-box">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px;">
-        <div>
-          <h2 style="margin:0; font-size:1.3rem; color:#00e5ff;">🧊 Record LN2 Dipstick Check</h2>
-          <div style="color:#8899a6; font-size:12px; margin-top:3px;">Mon / Wed / Fri Cleanroom Schedule (Due by 5:00
-            PM)</div>
-        </div>
-        <button type="button" class="btn"
-          style="background:transparent; border:1px solid rgba(255,255,255,0.2); font-size:16px; padding:6px 12px;"
-          onclick="closeLn2Modal()">✕</button>
-      </div>
-
-      <div class="form-group">
-        <label class="form-label">Tank Identifier</label>
-        <div class="chips-row">
-          {% for d in equipment.dewars %}
-          <div class="chip {% if loop.first %}active{% endif %}" id="chip-tank-{{ d.id }}" onclick="selectTank('{{ d.name }}')">{{ d.label | default(d.name) }}</div>
-          {% endfor %}
-        </div>
-      </div>
-
-      <div class="form-group" style="text-align:center;">
-        <label class="form-label">Ruler Frost Line (Centimeters)</label>
-        <div class="stepper-vert-box">
-          <!-- Decrement Buttons Left -->
-          <div class="stepper-btn-row">
-            <button type="button" class="btn-stepper-vert btn-minus" onclick="adjustLn2(-1.0)">- 1.0</button>
-            <button type="button" class="btn-stepper-vert btn-minus" onclick="adjustLn2(-0.5)">- 0.5</button>
-          </div>
-          <!-- Center Compact Number Display (max 3 digits, e.g. 32.5) -->
-          <div class="level-input-wrap">
-            <input type="number" step="0.1" id="ln2LevelInput" class="input-level-compact" value="30.0">
-            <span class="level-cm-tag">cm</span>
-          </div>
-          <!-- Increment Buttons Right -->
-          <div class="stepper-btn-row">
-            <button type="button" class="btn-stepper-vert btn-plus" onclick="adjustLn2(0.5)">+ 0.5</button>
-            <button type="button" class="btn-stepper-vert btn-plus" onclick="adjustLn2(1.0)">+ 1.0</button>
-          </div>
-        </div>
-        <div style="font-size:11.5px; color:#8899a6; margin-top:-2px;">
-          Previous check: <strong id="ln2LastRecordedHint" style="color:#00e5ff;">-- cm</strong>
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label class="form-label">Nitrogen Added / Topped Off?</label>
-        <div class="chips-row">
-          <div class="chip-fill active" id="fill-no" onclick="selectFill(false)">🔘 No (Level Check Only)</div>
-          <div class="chip-fill" id="fill-yes" onclick="selectFill(true)">🔵 Yes (Tank Filled to Full)</div>
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label class="form-label">Staff Initials</label>
-        <div class="chips-row" style="margin-bottom:8px;">
-          <div class="chip" onclick="selectInit('BO')">BO</div>
-          <div class="chip" onclick="selectInit('SJ')">SJ</div>
-          <div class="chip" onclick="selectInit('AK')">AK</div>
-          <div class="chip" onclick="selectInit('TL')">TL</div>
-        </div>
-        <input type="text" id="ln2InitialsInput" class="text-input" placeholder="Type initials (e.g. BO)" maxlength="8">
-      </div>
-
-      <div class="form-group">
-        <label class="form-label">Visual Inspection / Neck Seal</label>
-        <div class="chips-row">
-          <div class="chip active" id="seal-good" onclick="selectSeal('Good')">Normal / Good Seal</div>
-          <div class="chip" id="seal-frost" onclick="selectSeal('Neck Frost')">Neck Frost</div>
-          <div class="chip" id="seal-concern" onclick="selectSeal('Vacuum Concern')">Vacuum Concern</div>
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label class="form-label">Notes (Optional)</label>
-        <input type="text" id="ln2NotesInput" class="text-input"
-          placeholder="Optional notes (e.g. routine top-off, inspected o-ring)">
-      </div>
-
-      <div id="modalSubmitMsg" style="font-size:13px; font-weight:600; margin-bottom:12px;"></div>
-
-      <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:18px;">
-        <button type="button" class="btn" style="background:#334155;" onclick="closeLn2Modal()">Cancel</button>
-        <button type="button" class="btn"
-          style="background:#00e5ff; color:#090d16; font-size:15px; font-weight:700; padding:10px 24px;"
-          onclick="submitLn2Log()">✅ Submit Inspection</button>
-      </div>
-    </div>
-  </div>
-  {% endif %}
-
-  <!-- ============================================================== -->
-  <!-- K-SYSTEMS G210 MULTI-ZONE CHAMBER INSPECTOR MODAL               -->
-  <!-- ============================================================== -->
-  <div id="incubatorModal" class="modal-overlay" style="display:none;" onclick="if(event.target===this) closeIncubatorModal()">
-    <div class="modal-box" style="max-width:640px; border-color:rgba(0, 176, 255, 0.45); padding:22px;">
-      <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:14px;">
-        <div>
-          <div style="display:flex; align-items:center; gap:8px;">
-            <h2 style="margin:0; font-size:1.35rem; color:#00b0ff;" id="incModalTitle">Incubator 01</h2>
-            <span class="status-badge status-normal" id="incModalBadge" style="font-size:11px;">CLEAR</span>
-          </div>
-          <div style="color:#8899a6; font-size:12px; margin-top:3px;" id="incModalSubtitle">K-Systems G210 InviCell • Bay 1 (Slide-out Tray)</div>
-        </div>
-        <button type="button" class="btn"
-          style="background:transparent; border:1px solid rgba(255,255,255,0.2); font-size:16px; padding:6px 12px;"
-          onclick="closeIncubatorModal()">✕</button>
-      </div>
-
-      <!-- Telemetry Status Bar -->
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px;">
-        <div style="background:rgba(9,13,22,0.85); border:1px solid rgba(255,255,255,0.08); border-radius:8px; padding:10px;">
-          <div style="font-size:10px; font-weight:700; color:#8899a6; text-transform:uppercase;">Discrete Alarm Relay</div>
-          <div style="display:flex; align-items:center; gap:6px; margin-top:4px;">
-            <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#10b981;" id="incModalHwDot"></span>
-            <span style="font-family:monospace; font-size:12.5px; font-weight:800; color:#f0f4f8;" id="incModalHwStatus">NORMAL (Closed Loop)</span>
-          </div>
-          <div style="font-size:10px; color:#38bdf8; margin-top:3px;" id="incModalHwChannel">● LIVE HARDWARE (Node00 DI 1)</div>
-        </div>
-
-        <div style="background:rgba(9,13,22,0.85); border:1px solid rgba(255,255,255,0.08); border-radius:8px; padding:10px;">
-          <div style="font-size:10px; font-weight:700; color:#8899a6; text-transform:uppercase;">Incubator Cabinet Supervision</div>
-          <div style="display:flex; align-items:center; gap:6px; margin-top:4px;">
-            <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#10b981;" id="incModalCabDot"></span>
-            <span style="font-family:monospace; font-size:12.5px; font-weight:800; color:#f0f4f8;" id="incModalCabStatus">DOOR CLOSED (Loop Active)</span>
-          </div>
-          <div style="font-size:10px; color:#a78bfa; margin-top:3px;">🛡️ 3-Min Post-Close Grace Armed</div>
-        </div>
-      </div>
-
-      <!-- 10-Chamber Visual Heat Map -->
-      <div style="margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
-        <span style="font-size:11px; font-weight:700; color:#cbd5e1; text-transform:uppercase; letter-spacing:0.5px;">Chamber Heated Wells (10 Zones)</span>
-        <span style="font-size:10px; background:rgba(251,191,36,0.15); color:#fbbf24; border:1px solid rgba(251,191,36,0.3); padding:2px 8px; border-radius:12px; font-weight:700;">⚙ SIMULATED SENSORS</span>
-      </div>
-
-      <div style="display:grid; grid-template-columns:repeat(5, 1fr); gap:8px; background:rgba(2,18,28,0.7); border:1px solid rgba(0,176,255,0.15); border-radius:10px; padding:12px;" id="incModalZonesGrid">
-        <!-- Rendered dynamically by JavaScript -->
-      </div>
-
-      <div style="margin-top:14px; padding:10px 12px; background:rgba(15,23,42,0.6); border-radius:8px; border:1px solid rgba(255,255,255,0.05); font-size:11px; color:#8899a6; line-height:1.45;">
-        <strong style="color:#f0f4f8;">Chamber Telemetry Note:</strong> The K-Systems G210 features 10 internal RTD sensor channels accessible via rear DB-25 connector. Physical zone telemetry requires an expansion RTD slice. Chamber temperatures above are simulated at 37.0°C clinical setpoint.
-      </div>
-
-      <div style="display:flex; justify-content:flex-end; margin-top:16px;">
-        <button type="button" class="btn" style="background:#0284c7; color:#fff; font-weight:700; padding:8px 20px; border-radius:6px;" onclick="closeIncubatorModal()">Close Inspector</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ============================================================== -->
-  <!-- PROBE CALIBRATION & NIST TRACEABILITY MODAL (CAP COM.30550)    -->
-  <!-- ============================================================== -->
-  <div id="calibrationModal" class="modal-overlay" style="display:none;" onclick="if(event.target===this) closeCalibrationModal()">
-    <div class="modal-box" style="max-width:600px; border-color:rgba(16, 185, 129, 0.45); padding:22px;">
-      <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:14px;">
-        <div>
-          <h2 style="margin:0; font-size:1.35rem; color:#10b981;">🌡️ Log Annual Probe Calibration</h2>
-          <div style="color:#8899a6; font-size:12px; margin-top:3px;">CAP COM.30550 / CLIA Annual 1-Point Verification against Master NIST Reference</div>
-        </div>
-        <button type="button" class="btn"
-          style="background:transparent; border:1px solid rgba(255,255,255,0.2); font-size:16px; padding:6px 12px;"
-          onclick="closeCalibrationModal()">✕</button>
-      </div>
-
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
-        <div class="form-group" style="margin-bottom:0;">
-          <label class="form-label">Monitored Equipment / Channel</label>
-          <select id="calEquipSelect" class="text-input" style="background:#0f172a; color:#f0f4f8;" onchange="onCalEquipChange()">
-          </select>
-        </div>
-        <div class="form-group" style="margin-bottom:0;">
-          <label class="form-label">Probe Identifier / Serial (Optional)</label>
-          <input type="text" id="calProbeLabel" class="text-input" placeholder="e.g. Pt100 Class A #04">
-        </div>
-      </div>
-
-      <div style="background:rgba(9,13,22,0.85); border:1px solid rgba(16,185,129,0.25); border-radius:8px; padding:12px; margin-bottom:12px;">
-        <div style="font-size:11px; font-weight:700; color:#10b981; text-transform:uppercase; margin-bottom:8px;">Master NIST-Traceable Reference Thermometer</div>
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+    <!-- ============================================================== -->
+    <!-- PROBE CALIBRATION & NIST TRACEABILITY MODAL (CAP COM.30550)    -->
+    <!-- ============================================================== -->
+    <div id="calibrationModal" class="modal-overlay" style="display:none;"
+      onclick="if(event.target===this) closeCalibrationModal()">
+      <div class="modal-box" style="max-width:600px; border-color:rgba(16, 185, 129, 0.45); padding:22px;">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:14px;">
           <div>
-            <label class="form-label" style="font-size:11px;">NIST Certificate / Serial #</label>
-            <input type="text" id="calNistCert" class="text-input" placeholder="e.g. Fisher 14-648-233 / Cert #88412">
+            <h2 style="margin:0; font-size:1.35rem; color:#10b981;">🌡️ Log Annual Probe Calibration</h2>
+            <div style="color:#8899a6; font-size:12px; margin-top:3px;">CAP COM.30550 / CLIA Annual 1-Point Verification
+              against Master NIST Reference</div>
+          </div>
+          <button type="button" class="btn"
+            style="background:transparent; border:1px solid rgba(255,255,255,0.2); font-size:16px; padding:6px 12px;"
+            onclick="closeCalibrationModal()">✕</button>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label">Monitored Equipment / Channel</label>
+            <select id="calEquipSelect" class="text-input" style="background:#0f172a; color:#f0f4f8;"
+              onchange="onCalEquipChange()">
+            </select>
+          </div>
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label">Probe Identifier / Serial (Optional)</label>
+            <input type="text" id="calProbeLabel" class="text-input" placeholder="e.g. Pt100 Class A #04">
+          </div>
+        </div>
+
+        <div
+          style="background:rgba(9,13,22,0.85); border:1px solid rgba(16,185,129,0.25); border-radius:8px; padding:12px; margin-bottom:12px;">
+          <div style="font-size:11px; font-weight:700; color:#10b981; text-transform:uppercase; margin-bottom:8px;">
+            Master NIST-Traceable Reference Thermometer</div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+            <div>
+              <label class="form-label" style="font-size:11px;">NIST Certificate / Serial #</label>
+              <input type="text" id="calNistCert" class="text-input" placeholder="e.g. Fisher 14-648-233 / Cert #88412">
+            </div>
+            <div>
+              <label class="form-label" style="font-size:11px;">Master Cert Expiration Date</label>
+              <input type="date" id="calNistExp" class="text-input" style="color-scheme:dark;">
+            </div>
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:10px; margin-bottom:12px;">
+          <div>
+            <label class="form-label" style="font-size:11px;">NIST Ref Temp (°C)</label>
+            <input type="number" step="0.01" id="calRefTemp" class="text-input" placeholder="-196.0"
+              oninput="updateCalPreview()">
           </div>
           <div>
-            <label class="form-label" style="font-size:11px;">Master Cert Expiration Date</label>
-            <input type="date" id="calNistExp" class="text-input" style="color-scheme:dark;">
+            <label class="form-label" style="font-size:11px;">SCADA Probe (°C)</label>
+            <input type="number" step="0.01" id="calScadaTemp" class="text-input" placeholder="-195.8"
+              oninput="updateCalPreview()">
+          </div>
+          <div>
+            <label class="form-label" style="font-size:11px;">PLC Offset (°C)</label>
+            <input type="number" step="0.01" id="calOffset" class="text-input" value="0.0" oninput="updateCalPreview()">
+          </div>
+          <div>
+            <label class="form-label" style="font-size:11px;">Tolerance (±°C)</label>
+            <input type="number" step="0.1" id="calTolerance" class="text-input" value="0.5"
+              oninput="updateCalPreview()">
           </div>
         </div>
-      </div>
 
-      <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:10px; margin-bottom:12px;">
-        <div>
-          <label class="form-label" style="font-size:11px;">NIST Ref Temp (°C)</label>
-          <input type="number" step="0.01" id="calRefTemp" class="text-input" placeholder="-196.0" oninput="updateCalPreview()">
+        <div id="calPreviewBanner"
+          style="background:rgba(15,23,42,0.8); border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:10px 12px; margin-bottom:12px; font-size:12.5px; display:flex; justify-content:space-between; align-items:center;">
+          <span style="color:#94a3b8;">Enter Reference &amp; SCADA temperatures to calculate deviation.</span>
+          <span id="calPreviewBadge" class="status-badge status-normal">--</span>
         </div>
-        <div>
-          <label class="form-label" style="font-size:11px;">SCADA Probe (°C)</label>
-          <input type="number" step="0.01" id="calScadaTemp" class="text-input" placeholder="-195.8" oninput="updateCalPreview()">
-        </div>
-        <div>
-          <label class="form-label" style="font-size:11px;">PLC Offset (°C)</label>
-          <input type="number" step="0.01" id="calOffset" class="text-input" value="0.0" oninput="updateCalPreview()">
-        </div>
-        <div>
-          <label class="form-label" style="font-size:11px;">Tolerance (±°C)</label>
-          <input type="number" step="0.1" id="calTolerance" class="text-input" value="0.5" oninput="updateCalPreview()">
-        </div>
-      </div>
 
-      <div id="calPreviewBanner" style="background:rgba(15,23,42,0.8); border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:10px 12px; margin-bottom:12px; font-size:12.5px; display:flex; justify-content:space-between; align-items:center;">
-        <span style="color:#94a3b8;">Enter Reference &amp; SCADA temperatures to calculate deviation.</span>
-        <span id="calPreviewBadge" class="status-badge status-normal">--</span>
-      </div>
-
-      <div style="display:grid; grid-template-columns:140px 1fr; gap:12px; margin-bottom:12px;">
-        <div>
-          <label class="form-label">Verified By (Initials)</label>
-          <input type="text" id="calVerifiedBy" class="text-input" placeholder="e.g. BO" maxlength="8">
+        <div style="display:grid; grid-template-columns:140px 1fr; gap:12px; margin-bottom:12px;">
+          <div>
+            <label class="form-label">Verified By (Initials)</label>
+            <input type="text" id="calVerifiedBy" class="text-input" placeholder="e.g. BO" maxlength="8">
+          </div>
+          <div>
+            <label class="form-label">Calibration Notes (Optional)</label>
+            <input type="text" id="calNotes" class="text-input"
+              placeholder="e.g. Ice-point bath / LN2 comparison in situ">
+          </div>
         </div>
-        <div>
-          <label class="form-label">Calibration Notes (Optional)</label>
-          <input type="text" id="calNotes" class="text-input" placeholder="e.g. Ice-point bath / LN2 comparison in situ">
+
+        <div id="calSubmitMsg" style="font-size:13px; font-weight:600; margin-bottom:10px;"></div>
+
+        <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:14px;">
+          <button type="button" class="btn" style="background:#334155;"
+            onclick="closeCalibrationModal()">Cancel</button>
+          <button type="button" class="btn" id="btnSubmitCal"
+            style="background:#10b981; color:#090d16; font-weight:800; padding:10px 22px;"
+            onclick="submitCalibrationLog()">✅ Record NIST Verification</button>
         </div>
-      </div>
-
-      <div id="calSubmitMsg" style="font-size:13px; font-weight:600; margin-bottom:10px;"></div>
-
-      <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:14px;">
-        <button type="button" class="btn" style="background:#334155;" onclick="closeCalibrationModal()">Cancel</button>
-        <button type="button" class="btn" id="btnSubmitCal" style="background:#10b981; color:#090d16; font-weight:800; padding:10px 22px;" onclick="submitCalibrationLog()">✅ Record NIST Verification</button>
       </div>
     </div>
-  </div>
 
-  <!-- ============================================================== -->
-  <!-- SCRIPTS                                                        -->
-  <!-- ============================================================== -->
-  <script>
-    const EQUIPMENT = {{ equipment_json | safe }};
-    const LN2_INSPECTION_CNLS = (EQUIPMENT.dewars || []).map(d => d.ln2_cnl).filter(Boolean);
+    <!-- ============================================================== -->
+    <!-- SCRIPTS                                                        -->
+    <!-- ============================================================== -->
+    <script>
+      const EQUIPMENT = {{ equipment_json | safe }};
+      const LN2_INSPECTION_CNLS = (EQUIPMENT.dewars || []).map(d => d.ln2_cnl).filter(Boolean);
 
-    // Incubator Modal & Multi-Zone Telemetry State
+    // Incubator Modal & Telemetry State
     let lastReadings = {};
     let lastCabinetState = {};
     let currentModalIncKey = null;
-
-    function getIncubatorChamberTemps(inc) {
-      if (!inc) return Array(10).fill('--');
-      const cnls = inc.zone_cnls || [];
-      if (cnls.length > 0) {
-        return cnls.map(cnl => {
-          const val = lastReadings[cnl] !== undefined ? lastReadings[cnl] : lastReadings[String(cnl)];
-          return (val !== undefined && val !== null) ? Number(val).toFixed(1) : '--';
-        });
-      }
-      return Array(10).fill((inc.target_temp || 37.0).toFixed(1));
-    }
 
     function openIncubatorModal(incKey) {
       const inc = (EQUIPMENT.incubators || []).find(i => i.key === incKey);
@@ -1657,27 +1712,38 @@
 
     function renderChamberGrid(inc) {
       const grid = document.getElementById('incModalZonesGrid');
-      if (!grid) return;
-      const temps = getIncubatorChamberTemps(inc);
+      if (!grid || !inc) return;
+
+      // Single source of truth: read from PLC channel if mapped, else target_temp
+      let displayTemp = '--';
+      if (inc.temp_cnl) {
+        const val = lastReadings[inc.temp_cnl] !== undefined ? lastReadings[inc.temp_cnl] : lastReadings[String(inc.temp_cnl)];
+        if (val !== undefined && val !== null) {
+          displayTemp = Number(val).toFixed(1);
+        }
+      } else if (inc.target_temp) {
+        displayTemp = Number(inc.target_temp).toFixed(1);
+      }
 
       let html = '';
-      temps.forEach((t, i) => {
-        const chamberNum = String(i + 1).padStart(2, '0');
-        const isNormal = (t !== '--' && Math.abs(parseFloat(t) - 37.0) <= 0.5);
-        const badge = (t === '--')
-          ? '<span class="status-badge" style="font-size:8.5px; padding:1px 4px; color:#8899a6;">OFFLINE</span>'
+      for (let i = 1; i <= 10; i++) {
+        const chamberNum = String(i).padStart(2, '0');
+        const isNormal = (displayTemp !== '--' && Math.abs(parseFloat(displayTemp) - 37.0) <= 0.5);
+        const badge = (displayTemp === '--')
+          ? '<span class="status-badge" style="font-size:8.5px; padding:1px 4px; color:#8899a6;">STANDBY</span>'
           : (isNormal
             ? '<span class="status-badge status-normal" style="font-size:8.5px; padding:1px 4px;">IN-RANGE</span>'
             : '<span class="status-badge status-warn" style="font-size:8.5px; padding:1px 4px;">DRIFT</span>');
+
         html += `
           <div class="chamber-well">
             <div style="font-size:10px; font-weight:700; color:#8899a6; text-transform:uppercase;">CH ${chamberNum}</div>
-            <div style="font-size:1.15rem; font-weight:800; font-family:monospace; color:#38bdf8; margin:2px 0;">${t}°C</div>
+            <div style="font-size:1.15rem; font-weight:800; font-family:monospace; color:#38bdf8; margin:2px 0;">${displayTemp}°C</div>
             <div style="font-size:9px; color:#64748b;">Set: 37.0°</div>
             <div style="margin-top:4px;">${badge}</div>
           </div>
         `;
-      });
+      }
       grid.innerHTML = html;
     }
 
@@ -1735,1180 +1801,1180 @@
 
     // Navigation / Tabs Controller
     function switchTab(tab, updateUrl = true) {
-      const viewCryo = document.getElementById('view-cryo');
-      const tabCryo = document.getElementById('tab-cryo');
-      const isLive = (tab === 'live' || !viewCryo);
-      document.getElementById('view-live').style.display = isLive ? 'block' : 'none';
-      if (viewCryo) viewCryo.style.display = isLive ? 'none' : 'block';
-      document.getElementById('tab-live').className = isLive ? 'nav-tab active' : 'nav-tab';
-      if (tabCryo) tabCryo.className = isLive ? 'nav-tab' : 'nav-tab active';
+            const viewCryo = document.getElementById('view-cryo');
+            const tabCryo = document.getElementById('tab-cryo');
+            const isLive = (tab === 'live' || !viewCryo);
+            document.getElementById('view-live').style.display = isLive ? 'block' : 'none';
+            if (viewCryo) viewCryo.style.display = isLive ? 'none' : 'block';
+            document.getElementById('tab-live').className = isLive ? 'nav-tab active' : 'nav-tab';
+            if (tabCryo) tabCryo.className = isLive ? 'nav-tab' : 'nav-tab active';
 
-      if (updateUrl) {
-        const targetPath = isLive ? '/' : '/cryo';
-        if (window.location.pathname !== targetPath) {
-          window.history.pushState({ tab: isLive ? 'live' : 'cryo' }, '', targetPath);
-        }
-      }
-    }
-
-    window.addEventListener('popstate', (e) => {
-      const tab = (e.state && e.state.tab) || (window.location.pathname.startsWith('/cryo') ? 'cryo' : 'live');
-      switchTab(tab, false);
-    });
-
-    function switchSawtooth(tankNum) {
-      const img = document.getElementById('sawtoothImg');
-      if (img) img.src = '/report/ln2/chart?tank=' + tankNum + '&t=' + Date.now();
-      (EQUIPMENT.dewars || []).forEach(d => {
-        const chip = document.getElementById('chip-chart-' + d.id);
-        if (chip) chip.className = (tankNum === d.id) ? 'chip active' : 'chip';
-      });
-    }
-
-    // Telemetry & Alarm Updates (Driven by EQUIPMENT manifest)
-    function updateTelemetry() {
-      fetch('/api/status')
-        .then(r => r.json())
-        .then(data => {
-          const r = data.readings || {};
-          lastReadings = r;
-
-          // If incubator modal is currently open, live-refresh its chamber temperatures & hardware alarm state
-          if (currentModalIncKey) {
-            const curInc = (EQUIPMENT.incubators || []).find(i => i.key === currentModalIncKey);
-            if (curInc) {
-              renderChamberGrid(curInc);
-              updateModalAlarmState(curInc);
-            }
-          }
-
-          // Clock
-          if (data.server_time) {
-            const timeOnly = data.server_time.split(' ')[1] || '';
-            document.getElementById('liveClock').innerText = timeOnly + ' AKDT';
-          }
-
-          // Daily QA Verification Status
-          const qa = data.last_qa;
-          const qaBadge = document.getElementById('qaBadge');
-          const qaText = document.getElementById('qaStatusText');
-          if (qa && qa.triggered_at) {
-            const todayDateStr = (data.server_time || '').split(' ')[0];
-            const qaDateStr = qa.triggered_at.split(' ')[0];
-            const qaTimeStr = (qa.triggered_at.split(' ')[1] || '').split('.')[0];
-            if (todayDateStr && qaDateStr === todayDateStr) {
-              qaBadge.innerText = 'VERIFIED TODAY';
-              qaBadge.className = 'status-badge status-normal';
-              qaText.innerText = `✅ Verified Today at ${qaTimeStr} by ${qa.by || 'Lab Kiosk'} (Priority 0 pathway operational).`;
-            } else {
-              qaBadge.innerText = 'PENDING TODAY';
-              qaBadge.className = 'status-badge status-warn';
-              qaText.innerText = `⚠️ Daily pathway test pending for today. Last run on ${qaDateStr} at ${qaTimeStr}.`;
-            }
-          }
-
-          // Lab Session Mode
-          const currentMode = data.lab_mode || 'IN_SESSION';
-          const sessionChip = document.getElementById('sessionModeChip');
-          const sessionLabel = document.getElementById('sessionModeLabel');
-          if (sessionChip && sessionLabel) {
-            if (currentMode === 'OFF_SESSION') {
-              sessionChip.className = 'badge-session session-standby';
-              sessionLabel.innerText = 'OFF-SESSION (STANDBY)';
-            } else {
-              sessionChip.className = 'badge-session session-active';
-              sessionLabel.innerText = 'CLINICAL IN-SESSION';
-            }
-          }
-
-          // 1. Ambient Sensors
-          (EQUIPMENT.ambient || []).forEach(a => {
-            const valEl = document.getElementById(`val-${a.key}`);
-            const badgeEl = document.getElementById(`badge-${a.key}`);
-            const tempVal = a.temp_cnl ? r[a.temp_cnl] : undefined;
-            if (tempVal !== undefined && valEl) {
-              valEl.innerText = tempVal.toFixed(1);
-            }
-            if (badgeEl && tempVal !== undefined) {
-              const low = a.low_limit !== undefined ? a.low_limit : 20.0;
-              const high = a.high_limit !== undefined ? a.high_limit : 27.0;
-              if (tempVal < low || tempVal > high) {
-                badgeEl.innerText = 'DRIFT';
-                badgeEl.className = 'status-badge status-warn';
-              } else {
-                badgeEl.innerText = 'COMFORT';
-                badgeEl.className = 'status-badge status-normal';
+            if (updateUrl) {
+              const targetPath = isLive ? '/' : '/cryo';
+              if (window.location.pathname !== targetPath) {
+                window.history.pushState({ tab: isLive ? 'live' : 'cryo' }, '', targetPath);
               }
             }
+          }
+
+          window.addEventListener('popstate', (e) => {
+            const tab = (e.state && e.state.tab) || (window.location.pathname.startsWith('/cryo') ? 'cryo' : 'live');
+            switchTab(tab, false);
           });
 
-          // 2. Medical Cold Storage (Fridges & Freezers)
-          let anyColdAlarm = false;
-          let anyColdWarn = false;
-          (EQUIPMENT.fridges || []).concat(EQUIPMENT.freezers || []).forEach(unit => {
-            const valEl = document.getElementById(`val-${unit.key}`);
-            const badgeEl = document.getElementById(`badge-${unit.key}`);
-            const tempVal = unit.temp_cnl ? r[unit.temp_cnl] : undefined;
-            if (tempVal !== undefined && valEl) {
-              valEl.innerText = tempVal.toFixed(1);
-            }
-            const isAlarm = unit.alarm_cnl ? (r[unit.alarm_cnl] > 0) : false;
-            const isWarn = !isAlarm && unit.warn_cnl ? (r[unit.warn_cnl] > 0) : false;
-            if (isAlarm) anyColdAlarm = true;
-            if (isWarn) anyColdWarn = true;
-            if (badgeEl) {
-              if (isAlarm) {
-                badgeEl.innerText = 'EXCURSION';
-                badgeEl.className = 'status-badge status-alert';
-              } else if (isWarn) {
-                badgeEl.innerText = 'DELAY';
-                badgeEl.className = 'status-badge status-warn';
-              } else {
-                badgeEl.innerText = 'NORMAL';
-                badgeEl.className = 'status-badge status-normal';
-              }
-            }
-          });
-          const cardCS = document.getElementById('card-cold-storage');
-          if (cardCS) {
-            cardCS.style.borderTopColor = anyColdAlarm ? '#ff1744' : (anyColdWarn ? '#ffab00' : '#00e676');
+          function switchSawtooth(tankNum) {
+            const img = document.getElementById('sawtoothImg');
+            if (img) img.src = '/report/ln2/chart?tank=' + tankNum + '&t=' + Date.now();
+            (EQUIPMENT.dewars || []).forEach(d => {
+              const chip = document.getElementById('chip-chart-' + d.id);
+              if (chip) chip.className = (tankNum === d.id) ? 'chip active' : 'chip';
+            });
           }
 
-          // 3. Monitored Dewars (0 to N)
-          const holds = data.cryo_holds || {};
-          (EQUIPMENT.dewars || []).forEach(cfg => {
-            const b = document.getElementById(`badge-cryo${cfg.id}`);
-            const valEl = document.getElementById(`val-cryo${cfg.id}`);
-            const detailEl = document.getElementById(`detail-cryo${cfg.id}-temp`);
-            const btnHold = document.getElementById(`btn-hold-cryo${cfg.id}`);
-            const cardEl = document.getElementById(`card-cryo${cfg.id}`);
+          // Telemetry & Alarm Updates (Driven by EQUIPMENT manifest)
+          function updateTelemetry() {
+            fetch('/api/status')
+              .then(r => r.json())
+              .then(data => {
+                const r = data.readings || {};
+                lastReadings = r;
 
-            const tempVal = cfg.temp_cnl ? r[cfg.temp_cnl] : undefined;
-            const isAlarm = cfg.alarm_cnl ? (r[cfg.alarm_cnl] > 0) : false;
-            const isWarn = !isAlarm && cfg.warn_cnl ? (r[cfg.warn_cnl] > 0) : false;
-
-            if (tempVal !== undefined && valEl) {
-              valEl.innerText = tempVal.toFixed(1);
-            }
-            if (tempVal !== undefined && detailEl) {
-              detailEl.innerText = tempVal.toFixed(1);
-            }
-
-            if (b) {
-              if (isAlarm) {
-                b.innerText = 'CRITICAL';
-                b.className = 'status-badge status-alert';
-              } else if (isWarn) {
-                b.innerText = 'DELAY';
-                b.className = 'status-badge status-warn';
-              } else {
-                b.innerText = 'NORMAL';
-                b.className = 'status-badge status-normal';
-              }
-            }
-
-            // Holds
-            const hold = holds[cfg.name] || holds[`Cryo Tank ${cfg.id}`] || holds["All Dewars"] || holds["All Cryo Tanks"] || holds["ALL"];
-            const defaultColor = cfg.color || '#00e5ff';
-            if (hold && hold.remaining_seconds > 0) {
-              const m = Math.ceil(hold.remaining_seconds / 60);
-              if (b) {
-                b.innerText = `HOLD (${m}m)`;
-                b.className = 'status-badge status-warn';
-              }
-              if (btnHold) {
-                btnHold.innerText = `🟡 Muted (${m}m)`;
-                btnHold.style.background = '#d97706';
-              }
-              if (cardEl && !isAlarm) cardEl.style.borderTopColor = '#f59e0b';
-            } else {
-              if (btnHold) {
-                btnHold.innerText = '⏱️ Mute (15m)';
-                btnHold.style.background = '#0284c7';
-              }
-              if (cardEl) {
-                cardEl.style.borderTopColor = isAlarm ? '#ff1744' : (isWarn ? '#ffab00' : defaultColor);
-              }
-            }
-          });
-
-          // 4. Cleanroom Doors (0 to N)
-          let anyDoorAlarm = false;
-          let anyDoorOpen = false;
-          (EQUIPMENT.doors || []).forEach(dr => {
-            const dAlarm = dr.alarm_cnl ? (r[dr.alarm_cnl] > 0) : false;
-            const dOpen = dr.contact_cnl ? (r[dr.contact_cnl] > 0) : false;
-            if (dAlarm) anyDoorAlarm = true;
-            if (dOpen) anyDoorOpen = true;
-            const valEl = document.getElementById(`val-${dr.key}`);
-            const badgeEl = document.getElementById(`badge-${dr.key}`);
-            if (valEl && badgeEl) {
-              if (dAlarm) {
-                valEl.innerText = 'AJAR';
-                valEl.style.color = '#ff1744';
-                badgeEl.innerText = 'ALARM';
-                badgeEl.className = 'status-badge status-alert';
-              } else if (dOpen) {
-                valEl.innerText = (currentMode === 'OFF_SESSION') ? 'ENTRY' : 'OPEN';
-                valEl.style.color = (currentMode === 'OFF_SESSION') ? '#ff1744' : '#ffab00';
-                badgeEl.innerText = (currentMode === 'OFF_SESSION') ? 'OFF-SESSION' : 'DELAY';
-                badgeEl.className = (currentMode === 'OFF_SESSION') ? 'status-badge status-alert' : 'status-badge status-warn';
-              } else {
-                valEl.innerText = 'CLOSED';
-                valEl.style.color = '#f0f4f8';
-                badgeEl.innerText = 'SECURE';
-                badgeEl.className = 'status-badge status-normal';
-              }
-            }
-          });
-          const cardDoors = document.getElementById('card-doors');
-          if (cardDoors) {
-            if (anyDoorAlarm || (currentMode === 'OFF_SESSION' && anyDoorOpen)) {
-              cardDoors.style.borderTopColor = '#ff1744';
-            } else if (anyDoorOpen) {
-              cardDoors.style.borderTopColor = '#ffab00';
-            } else {
-              cardDoors.style.borderTopColor = '#2979ff';
-            }
-          }
-
-          // 5. Chamber Incubators (0 to N)
-          const cardInc = document.getElementById('card-incubators');
-          const cab = data.cabinet || {};
-          lastCabinetState = cab;
-          let anyIncAlarm = false;
-          (EQUIPMENT.incubators || []).forEach(inc => {
-            const incAlarm = inc.alarm_cnl ? (r[inc.alarm_cnl] > 0) : false;
-            if (incAlarm) anyIncAlarm = true;
-            const valInc = document.getElementById(`val-${inc.key}`);
-            const badgeInc = document.getElementById(`badge-${inc.key}`);
-            const subInc = document.getElementById(`sub-${inc.key}`);
-
-            if (currentMode === 'OFF_SESSION') {
-              if (valInc) {
-                valInc.innerText = 'STANDBY';
-                valInc.style.color = '#94a3b8';
-              }
-              if (badgeInc) {
-                badgeInc.innerText = 'OFF-SESSION';
-                badgeInc.className = 'status-badge';
-                badgeInc.style.background = 'rgba(148, 163, 184, 0.15)';
-                badgeInc.style.color = '#94a3b8';
-                badgeInc.style.border = '1px solid rgba(148, 163, 184, 0.3)';
-              }
-              if (subInc) subInc.innerText = 'Alarms Suppressed';
-            } else if (cab.is_open) {
-              if (valInc) {
-                valInc.innerText = 'MUTED';
-                valInc.style.color = '#ffab00';
-              }
-              if (badgeInc) {
-                badgeInc.innerText = 'DOOR OPEN';
-                badgeInc.className = 'status-badge status-warn';
-                badgeInc.style.background = 'rgba(255, 171, 0, 0.2)';
-                badgeInc.style.color = '#ffab00';
-                badgeInc.style.border = '1px solid rgba(255, 171, 0, 0.4)';
-              }
-              if (subInc) subInc.innerText = '🛡️ Alarms Muted (Door Open)';
-            } else if (cab.mute_active && cab.grace_remaining_sec > 0) {
-              if (valInc) {
-                valInc.innerText = 'NORMAL';
-                valInc.style.color = '#f0f4f8';
-              }
-              if (badgeInc) {
-                const m = Math.floor(cab.grace_remaining_sec / 60);
-                const s = String(cab.grace_remaining_sec % 60).padStart(2, '0');
-                badgeInc.innerText = `GRACE ${m}:${s}`;
-                badgeInc.className = 'status-badge';
-                badgeInc.style.background = 'rgba(56, 189, 248, 0.15)';
-                badgeInc.style.color = '#38bdf8';
-                badgeInc.style.border = '1px solid rgba(56, 189, 248, 0.3)';
-              }
-              if (subInc) subInc.innerText = `🛡️ Recovery Grace (${cab.grace_remaining_sec}s)`;
-            } else {
-              if (valInc) {
-                valInc.innerText = incAlarm ? 'ALARM' : 'NORMAL';
-                valInc.style.color = incAlarm ? '#ff1744' : '#f0f4f8';
-              }
-              if (badgeInc) {
-                badgeInc.innerText = incAlarm ? 'TRIPPED' : 'CLEAR';
-                badgeInc.className = incAlarm ? 'status-badge status-alert' : 'status-badge status-normal';
-                badgeInc.style.background = '';
-                badgeInc.style.color = '';
-                badgeInc.style.border = '';
-              }
-              if (subInc) subInc.innerText = incAlarm ? 'Chamber Trip Active' : (inc.subtitle || 'Chamber • In-Range');
-            }
-          });
-          if (cardInc) {
-            if (currentMode === 'OFF_SESSION') {
-              cardInc.style.opacity = '0.75';
-              cardInc.style.borderTopColor = '#64748b';
-            } else {
-              cardInc.style.opacity = '1.0';
-              cardInc.style.borderTopColor = anyIncAlarm ? '#ff1744' : '#00b0ff';
-            }
-          }
-
-          // Cabinet Environmental & Door Status Updates
-          const cabDoorBadge = document.getElementById('cab-door-badge');
-          if (cabDoorBadge) {
-            if (cab.door_alarm) {
-              cabDoorBadge.innerText = '🚨 DOOR ALARM (> 3m)';
-              cabDoorBadge.className = 'status-badge status-alert';
-              cabDoorBadge.style.background = 'rgba(255, 23, 68, 0.25)';
-              cabDoorBadge.style.color = '#ff1744';
-              cabDoorBadge.style.border = '1px solid rgba(255, 23, 68, 0.5)';
-            } else if (cab.is_open) {
-              cabDoorBadge.innerText = '🚪 DOOR OPEN (MUTED)';
-              cabDoorBadge.className = 'status-badge status-warn';
-              cabDoorBadge.style.background = 'rgba(255, 171, 0, 0.25)';
-              cabDoorBadge.style.color = '#ffab00';
-              cabDoorBadge.style.border = '1px solid rgba(255, 171, 0, 0.5)';
-            } else if (cab.mute_active && cab.grace_remaining_sec > 0) {
-              const m = Math.floor(cab.grace_remaining_sec / 60);
-              const s = String(cab.grace_remaining_sec % 60).padStart(2, '0');
-              cabDoorBadge.innerText = `🚪 GRACE (${m}:${s})`;
-              cabDoorBadge.className = 'status-badge';
-              cabDoorBadge.style.background = 'rgba(56, 189, 248, 0.2)';
-              cabDoorBadge.style.color = '#38bdf8';
-              cabDoorBadge.style.border = '1px solid rgba(56, 189, 248, 0.4)';
-            } else {
-              cabDoorBadge.innerText = '🚪 DOOR CLOSED';
-              cabDoorBadge.className = 'status-badge status-normal';
-              cabDoorBadge.style.background = '';
-              cabDoorBadge.style.color = '';
-              cabDoorBadge.style.border = '';
-            }
-          }
-
-          // Cabinet Microclimate Readouts
-          const cabTemp = document.getElementById('cab-temp-val');
-          if (cabTemp) {
-            const amb = r[101] ? (r[101] - 0.4).toFixed(1) : '24.5';
-            cabTemp.innerText = `${amb}°C`;
-          }
-
-          // Real-time update for modal inspector if currently open
-          if (currentModalIncKey) {
-            const activeInc = (EQUIPMENT.incubators || []).find(i => i.key === currentModalIncKey);
-            if (activeInc) {
-              updateModalAlarmState(activeInc);
-              renderChamberGrid(currentModalIncKey);
-            }
-          }
-        })
-        .catch(e => console.error('Telemetry error:', e));
-    }
-
-    function runDailyTest() {
-      const st = document.getElementById('testStatus');
-      st.style.color = '#00e5ff';
-      st.innerText = '⏳ Dispatching test alert to Pushover...';
-      fetch('/api/test', { method: 'POST' })
-        .then(r => r.json())
-        .then(d => {
-          st.style.color = '#00e676';
-          st.innerText = '✅ Daily Alarm Test dispatched to team at ' + d.timestamp + ' (Pushover Priority 0)';
-          updateTelemetry();
-          loadAlarms();
-          setTimeout(() => { st.innerText = ''; }, 6000);
-        })
-        .catch(e => {
-          st.style.color = '#ff1744';
-          st.innerText = '❌ Failed to send test alert';
-        });
-    }
-
-    function ackAlarm(id) {
-      fetch('/api/ack?id=' + id, { method: 'POST' })
-        .then(r => r.json())
-        .then(d => {
-          loadAlarms();
-        });
-    }
-
-    function loadAlarms() {
-      fetch('/api/alarms')
-        .then(r => r.json())
-        .then(rows => {
-          if (rows.length === 0) {
-            document.getElementById('alarmsTable').innerHTML = '<p style="color:#00e676; padding:12px 0;">🟢 All systems normal. No alarm events recorded.</p>';
-            return;
-          }
-          let h = '<table style="min-width:700px;"><thead><tr>' +
-            '<th>Time</th>' +
-            '<th>Equipment</th>' +
-            '<th>Condition</th>' +
-            '<th>Reading</th>' +
-            '<th>Status</th>' +
-            '<th>Acknowledged By</th>' +
-            '<th>Action</th>' +
-            '</tr></thead><tbody>';
-
-          rows.forEach(r => {
-            let statusHtml = '';
-            let actHtml = '-';
-            let whoAckHtml = '';
-            let rowStyle = '';
-
-            const isUnacked = !r.is_acknowledged;
-            const isResolved = r.is_resolved;
-
-            // 1. Acknowledged By Column
-            if (isUnacked) {
-              whoAckHtml = '<span style="color:#ff5252; font-weight:700; font-size:11.5px; letter-spacing:0.3px;">UNACKNOWLEDGED</span>';
-            } else {
-              const name = r.acknowledged_by || 'Staff';
-              let ackTimeStr = '';
-              if (r.acknowledged_at) {
-                const parts = r.acknowledged_at.split(' ');
-                if (parts.length > 1) {
-                  ackTimeStr = `<span style="font-size:11px; color:#8899a6; display:block;">at ${parts[1].split('.')[0]}</span>`;
+                // If incubator modal is currently open, live-refresh its chamber temperatures & hardware alarm state
+                if (currentModalIncKey) {
+                  const curInc = (EQUIPMENT.incubators || []).find(i => i.key === currentModalIncKey);
+                  if (curInc) {
+                    renderChamberGrid(curInc);
+                    updateModalAlarmState(curInc);
+                  }
                 }
-              }
-              const tokAttr = r.acknowledged_by_token ? ` title="Token: ${r.acknowledged_by_token}"` : '';
-              whoAckHtml = `<span style="color:#00e5ff; font-weight:600;"${tokAttr}>${name}</span>${ackTimeStr}`;
-            }
 
-            // 2. Status & Action Columns
-            if (isUnacked && !isResolved) {
-              // Active ongoing alarm
-              if (r.priority === 1) {
-                statusHtml = '<span style="color:#ffab00; font-weight:700;">⚠️ ACTIVE (WARN)</span>';
-                actHtml = `<button class="btn" style="background:#ffab00; color:#0f172a; font-weight:700; padding:6px 14px; font-size:12px;" onclick="ackAlarm(${r.id})">✋ Acknowledge</button>`;
-              } else {
-                statusHtml = '<span style="color:#ff1744; font-weight:800;">🔴 ACTIVE (SIREN)</span>';
-                actHtml = `<button class="btn" style="background:#ff1744; color:#ffffff; font-weight:800; padding:6px 14px; font-size:12px;" onclick="ackAlarm(${r.id})">✋ Silence & Ack</button>`;
-              }
-              rowStyle = 'style="background:rgba(255,23,68,0.12);"';
-            } else if (!isUnacked && !isResolved) {
-              // Acknowledged, chamber attending / in progress
-              statusHtml = '<span style="color:#00b0ff; font-weight:700;">🟡 Attending</span>';
-              actHtml = '<span style="color:#8899a6; font-size:12px;">In Progress</span>';
-            } else if (isUnacked && isResolved) {
-              // Recovered on its own, but unacknowledged (past excursion needing sign-off)
-              const dur = r.duration_seconds ? ` (${r.duration_seconds < 60 ? r.duration_seconds + 's' : Math.floor(r.duration_seconds / 60) + 'm ' + (r.duration_seconds % 60) + 's'})` : '';
-              statusHtml = `<span style="color:#ffab00; font-weight:700;">⚠️ RECOVERED${dur}</span>`;
-              actHtml = `<button class="btn" style="background:#ffab00; color:#0b111e; font-weight:800; padding:6px 14px; font-size:12px;" onclick="ackAlarm(${r.id})">✍️ Sign Off</button>`;
-              rowStyle = 'style="background:rgba(255,171,0,0.08); border-left:3px solid #ffab00;"';
-            } else {
-              // Fully acknowledged and resolved
-              const dur = r.duration_seconds ? ` (${r.duration_seconds < 60 ? r.duration_seconds + 's' : Math.floor(r.duration_seconds / 60) + 'm ' + (r.duration_seconds % 60) + 's'})` : '';
-              statusHtml = `<span style="color:#00e676; font-weight:600;">🟢 Resolved${dur}</span>`;
-              actHtml = '<span style="color:#64748b; font-size:12px;">Complete</span>';
-            }
-
-            let valDisp = '-';
-            if (r.excursion_val !== null) {
-              if (LN2_INSPECTION_CNLS.includes(r.cnl_num)) {
-                valDisp = r.excursion_val + 'h overdue';
-              } else {
-                const num = parseFloat(r.excursion_val);
-                valDisp = !isNaN(num) ? num.toFixed(1) + '°C' : r.excursion_val + '°C';
-              }
-            }
-            const timeDisp = r.triggered_at ? r.triggered_at.split('.')[0] : '-';
-
-            h += `<tr ${rowStyle}>` +
-              `<td>${timeDisp}</td>` +
-              `<td><b>${r.equipment_name}</b></td>` +
-              `<td>${r.alarm_type}</td>` +
-              `<td>${valDisp}</td>` +
-              `<td>${statusHtml}</td>` +
-              `<td>${whoAckHtml}</td>` +
-              `<td>${actHtml}</td>` +
-              `</tr>`;
-          });
-          h += '</tbody></table>';
-          document.getElementById('alarmsTable').innerHTML = h;
-        });
-    }
-
-    // LN2 Modal & Inspection Handlers
-    let currentTank = (EQUIPMENT.dewars && EQUIPMENT.dewars.length > 0) ? EQUIPMENT.dewars[0].name : 'Dewar 1';
-    let currentFill = false;
-    let currentSeal = 'Good';
-    let lastRecordedLevels = {};
-    (EQUIPMENT.dewars || []).forEach(d => {
-      lastRecordedLevels[d.name] = 30.0;
-    });
-
-    function syncModalLevelToCurrentTank() {
-      const inp = document.getElementById('ln2LevelInput');
-      const hint = document.getElementById('ln2LastRecordedHint');
-      const lastVal = lastRecordedLevels[currentTank] || 30.0;
-      if (inp) {
-        inp.value = lastVal.toFixed(1);
-      }
-      if (hint) {
-        hint.innerText = lastVal.toFixed(1) + ' cm';
-      }
-    }
-
-    function openLn2Modal() {
-      const modal = document.getElementById('ln2Modal');
-      if (!modal) return;
-      modal.style.display = 'flex';
-      document.getElementById('modalSubmitMsg').innerText = '';
-      syncModalLevelToCurrentTank();
-    }
-
-    function openLn2ModalFor(tank) {
-      selectTank(tank);
-      openLn2Modal();
-    }
-
-    function closeLn2Modal() {
-      const modal = document.getElementById('ln2Modal');
-      if (modal) modal.style.display = 'none';
-    }
-
-    function selectTank(tank) {
-      currentTank = tank;
-      (EQUIPMENT.dewars || []).forEach(d => {
-        const chip = document.getElementById('chip-tank-' + d.id);
-        if (chip) {
-          chip.className = (tank === d.name) ? 'chip active' : 'chip';
-        }
-      });
-      syncModalLevelToCurrentTank();
-    }
-
-    function adjustLn2(delta) {
-      const inp = document.getElementById('ln2LevelInput');
-      let val = parseFloat(inp.value) || 30.0;
-      val = Math.max(0, Math.round((val + delta) * 10) / 10);
-      inp.value = val.toFixed(1);
-    }
-
-    function selectFill(isFilled) {
-      currentFill = isFilled;
-      document.getElementById('fill-no').className = isFilled ? 'chip-fill' : 'chip-fill active';
-      document.getElementById('fill-yes').className = isFilled ? 'chip-fill active' : 'chip-fill';
-    }
-
-    function selectInit(init) {
-      document.getElementById('ln2InitialsInput').value = init;
-    }
-
-    function selectSeal(seal) {
-      currentSeal = seal;
-      document.getElementById('seal-good').className = (seal === 'Good') ? 'chip active' : 'chip';
-      document.getElementById('seal-frost').className = (seal === 'Neck Frost') ? 'chip active' : 'chip';
-      document.getElementById('seal-concern').className = (seal === 'Vacuum Concern') ? 'chip active' : 'chip';
-    }
-
-    function submitLn2Log() {
-      const lvlStr = document.getElementById('ln2LevelInput').value;
-      const levelVal = parseFloat(lvlStr);
-      const initials = document.getElementById('ln2InitialsInput').value.trim();
-      const notes = document.getElementById('ln2NotesInput').value.trim();
-      const msgEl = document.getElementById('modalSubmitMsg');
-
-      if (isNaN(levelVal) || levelVal <= 0) {
-        msgEl.style.color = '#ff1744';
-        msgEl.innerText = '⚠️ Please enter a valid dipstick level (cm).';
-        return;
-      }
-
-      if (!initials) {
-        msgEl.style.color = '#ff1744';
-        msgEl.innerText = '⚠️ Please enter staff initials.';
-        return;
-      }
-
-      const payload = {
-        tank_id: currentTank,
-        level_cm: levelVal,
-        was_filled: currentFill,
-        frost_condition: currentSeal,
-        initials: initials,
-        notes: notes
-      };
-
-      msgEl.style.color = '#00e5ff';
-      msgEl.innerText = '⏳ Submitting inspection log...';
-
-      fetch('/api/ln2_log', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      })
-        .then(r => r.json())
-        .then(d => {
-          if (d.success) {
-            msgEl.style.color = '#00e676';
-            msgEl.innerText = '✅ ' + d.message;
-            lastRecordedLevels[currentTank] = levelVal;
-            try {
-              updateLn2Status();
-              loadAlarms();
-            } catch (uiErr) {
-              console.warn('UI refresh warning:', uiErr);
-            }
-            setTimeout(() => {
-              closeLn2Modal();
-              document.getElementById('ln2NotesInput').value = '';
-            }, 1200);
-          } else {
-            msgEl.style.color = '#ff1744';
-            msgEl.innerText = '❌ ' + (d.error || 'Failed to submit log');
-          }
-        })
-        .catch(e => {
-          msgEl.style.color = '#ff1744';
-          msgEl.innerText = '❌ Error submitting: ' + e;
-        });
-    }
-
-    function updateLn2Status() {
-      if (!EQUIPMENT.dewars || EQUIPMENT.dewars.length === 0) return;
-      fetch('/api/ln2_status')
-        .then(r => r.json())
-        .then(data => {
-          const tanks = data.tanks || {};
-
-          // Update Configured Dewars
-          (EQUIPMENT.dewars || []).forEach(dCfg => {
-            const i = dCfg.id;
-            const dName = dCfg.name;
-            try {
-              const t = tanks[dName] || tanks[`Cryo Tank ${i}`];
-              if (t) {
-                if (typeof t.level_cm === 'number') {
-                  lastRecordedLevels[dName] = t.level_cm;
+                // Clock
+                if (data.server_time) {
+                  const timeOnly = data.server_time.split(' ')[1] || '';
+                  document.getElementById('liveClock').innerText = timeOnly + ' AKDT';
                 }
-                const lvl = (typeof t.level_cm === 'number') ? t.level_cm.toFixed(1) : '--';
-                const hrs = (typeof t.hours_since === 'number') ? `${t.hours_since.toFixed(1)}h ago (${t.initials})` : `-- (${t.initials || '--'})`;
-                const due = t.detail || `Next: ${t.next_check || 'Scheduled'}`;
-                const badgeTxt = t.badge || 'ON SCHEDULE';
 
-                // Main Card Elements
-                const el = document.getElementById(`val-ln2-level-${i}`);
-                if (el) el.innerText = lvl;
-                const b = document.getElementById(`badge-ln2-${i}`);
-                if (b) b.innerText = badgeTxt;
-                const sub = document.getElementById(`sub-ln2-check-${i}`);
-                if (sub) sub.innerText = hrs;
-                const nextDue = document.getElementById(`ln2-next-due-${i}`);
-                if (nextDue) nextDue.innerText = due;
+                // Daily QA Verification Status
+                const qa = data.last_qa;
+                const qaBadge = document.getElementById('qaBadge');
+                const qaText = document.getElementById('qaStatusText');
+                if (qa && qa.triggered_at) {
+                  const todayDateStr = (data.server_time || '').split(' ')[0];
+                  const qaDateStr = qa.triggered_at.split(' ')[0];
+                  const qaTimeStr = (qa.triggered_at.split(' ')[1] || '').split('.')[0];
+                  if (todayDateStr && qaDateStr === todayDateStr) {
+                    qaBadge.innerText = 'VERIFIED TODAY';
+                    qaBadge.className = 'status-badge status-normal';
+                    qaText.innerText = `✅ Verified Today at ${qaTimeStr} by ${qa.by || 'Lab Kiosk'} (Priority 0 pathway operational).`;
+                  } else {
+                    qaBadge.innerText = 'PENDING TODAY';
+                    qaBadge.className = 'status-badge status-warn';
+                    qaText.innerText = `⚠️ Daily pathway test pending for today. Last run on ${qaDateStr} at ${qaTimeStr}.`;
+                  }
+                }
 
-                // Subpage Detail Elements
-                const dEl = document.getElementById(`detail-ln2-level-${i}`);
-                if (dEl) dEl.innerText = lvl;
-                const dB = document.getElementById(`detail-badge-ln2-${i}`);
-                if (dB) dB.innerText = badgeTxt;
-                const dCheck = document.getElementById(`detail-last-check-${i}`);
-                if (dCheck) dCheck.innerText = `${lvl} cm (${hrs})`;
-                const dNext = document.getElementById(`detail-next-check-${i}`);
-                if (dNext) dNext.innerText = t.next_check || '--';
+                // Lab Session Mode
+                const currentMode = data.lab_mode || 'IN_SESSION';
+                const sessionChip = document.getElementById('sessionModeChip');
+                const sessionLabel = document.getElementById('sessionModeLabel');
+                if (sessionChip && sessionLabel) {
+                  if (currentMode === 'OFF_SESSION') {
+                    sessionChip.className = 'badge-session session-standby';
+                    sessionLabel.innerText = 'OFF-SESSION (STANDBY)';
+                  } else {
+                    sessionChip.className = 'badge-session session-active';
+                    sessionLabel.innerText = 'CLINICAL IN-SESSION';
+                  }
+                }
 
-                const badgeClass = (t.status === 'OVERDUE') ? 'status-badge status-alert' :
-                  ((t.status === 'DUE') ? 'status-badge status-warn' : 'status-badge status-normal');
-                if (b) b.className = badgeClass;
-                if (dB) dB.className = badgeClass;
-              }
-            } catch (e) {
-              console.error(`Error updating ${dName} UI:`, e);
-            }
+                // 1. Ambient Sensors
+                (EQUIPMENT.ambient || []).forEach(a => {
+                  const valEl = document.getElementById(`val-${a.key}`);
+                  const badgeEl = document.getElementById(`badge-${a.key}`);
+                  const tempVal = a.temp_cnl ? r[a.temp_cnl] : undefined;
+                  if (tempVal !== undefined && valEl) {
+                    valEl.innerText = tempVal.toFixed(1);
+                  }
+                  if (badgeEl && tempVal !== undefined) {
+                    const low = a.low_limit !== undefined ? a.low_limit : 20.0;
+                    const high = a.high_limit !== undefined ? a.high_limit : 27.0;
+                    if (tempVal < low || tempVal > high) {
+                      badgeEl.innerText = 'DRIFT';
+                      badgeEl.className = 'status-badge status-warn';
+                    } else {
+                      badgeEl.innerText = 'COMFORT';
+                      badgeEl.className = 'status-badge status-normal';
+                    }
+                  }
+                });
+
+                // 2. Medical Cold Storage (Fridges & Freezers)
+                let anyColdAlarm = false;
+                let anyColdWarn = false;
+                (EQUIPMENT.fridges || []).concat(EQUIPMENT.freezers || []).forEach(unit => {
+                  const valEl = document.getElementById(`val-${unit.key}`);
+                  const badgeEl = document.getElementById(`badge-${unit.key}`);
+                  const tempVal = unit.temp_cnl ? r[unit.temp_cnl] : undefined;
+                  if (tempVal !== undefined && valEl) {
+                    valEl.innerText = tempVal.toFixed(1);
+                  }
+                  const isAlarm = unit.alarm_cnl ? (r[unit.alarm_cnl] > 0) : false;
+                  const isWarn = !isAlarm && unit.warn_cnl ? (r[unit.warn_cnl] > 0) : false;
+                  if (isAlarm) anyColdAlarm = true;
+                  if (isWarn) anyColdWarn = true;
+                  if (badgeEl) {
+                    if (isAlarm) {
+                      badgeEl.innerText = 'EXCURSION';
+                      badgeEl.className = 'status-badge status-alert';
+                    } else if (isWarn) {
+                      badgeEl.innerText = 'DELAY';
+                      badgeEl.className = 'status-badge status-warn';
+                    } else {
+                      badgeEl.innerText = 'NORMAL';
+                      badgeEl.className = 'status-badge status-normal';
+                    }
+                  }
+                });
+                const cardCS = document.getElementById('card-cold-storage');
+                if (cardCS) {
+                  cardCS.style.borderTopColor = anyColdAlarm ? '#ff1744' : (anyColdWarn ? '#ffab00' : '#00e676');
+                }
+
+                // 3. Monitored Dewars (0 to N)
+                const holds = data.cryo_holds || {};
+                (EQUIPMENT.dewars || []).forEach(cfg => {
+                  const b = document.getElementById(`badge-cryo${cfg.id}`);
+                  const valEl = document.getElementById(`val-cryo${cfg.id}`);
+                  const detailEl = document.getElementById(`detail-cryo${cfg.id}-temp`);
+                  const btnHold = document.getElementById(`btn-hold-cryo${cfg.id}`);
+                  const cardEl = document.getElementById(`card-cryo${cfg.id}`);
+
+                  const tempVal = cfg.temp_cnl ? r[cfg.temp_cnl] : undefined;
+                  const isAlarm = cfg.alarm_cnl ? (r[cfg.alarm_cnl] > 0) : false;
+                  const isWarn = !isAlarm && cfg.warn_cnl ? (r[cfg.warn_cnl] > 0) : false;
+
+                  if (tempVal !== undefined && valEl) {
+                    valEl.innerText = tempVal.toFixed(1);
+                  }
+                  if (tempVal !== undefined && detailEl) {
+                    detailEl.innerText = tempVal.toFixed(1);
+                  }
+
+                  if (b) {
+                    if (isAlarm) {
+                      b.innerText = 'CRITICAL';
+                      b.className = 'status-badge status-alert';
+                    } else if (isWarn) {
+                      b.innerText = 'DELAY';
+                      b.className = 'status-badge status-warn';
+                    } else {
+                      b.innerText = 'NORMAL';
+                      b.className = 'status-badge status-normal';
+                    }
+                  }
+
+                  // Holds
+                  const hold = holds[cfg.name] || holds[`Cryo Tank ${cfg.id}`] || holds["All Dewars"] || holds["All Cryo Tanks"] || holds["ALL"];
+                  const defaultColor = cfg.color || '#00e5ff';
+                  if (hold && hold.remaining_seconds > 0) {
+                    const m = Math.ceil(hold.remaining_seconds / 60);
+                    if (b) {
+                      b.innerText = `HOLD (${m}m)`;
+                      b.className = 'status-badge status-warn';
+                    }
+                    if (btnHold) {
+                      btnHold.innerText = `🟡 Muted (${m}m)`;
+                      btnHold.style.background = '#d97706';
+                    }
+                    if (cardEl && !isAlarm) cardEl.style.borderTopColor = '#f59e0b';
+                  } else {
+                    if (btnHold) {
+                      btnHold.innerText = '⏱️ Mute (15m)';
+                      btnHold.style.background = '#0284c7';
+                    }
+                    if (cardEl) {
+                      cardEl.style.borderTopColor = isAlarm ? '#ff1744' : (isWarn ? '#ffab00' : defaultColor);
+                    }
+                  }
+                });
+
+                // 4. Cleanroom Doors (0 to N)
+                let anyDoorAlarm = false;
+                let anyDoorOpen = false;
+                (EQUIPMENT.doors || []).forEach(dr => {
+                  const dAlarm = dr.alarm_cnl ? (r[dr.alarm_cnl] > 0) : false;
+                  const dOpen = dr.contact_cnl ? (r[dr.contact_cnl] > 0) : false;
+                  if (dAlarm) anyDoorAlarm = true;
+                  if (dOpen) anyDoorOpen = true;
+                  const valEl = document.getElementById(`val-${dr.key}`);
+                  const badgeEl = document.getElementById(`badge-${dr.key}`);
+                  if (valEl && badgeEl) {
+                    if (dAlarm) {
+                      valEl.innerText = 'AJAR';
+                      valEl.style.color = '#ff1744';
+                      badgeEl.innerText = 'ALARM';
+                      badgeEl.className = 'status-badge status-alert';
+                    } else if (dOpen) {
+                      valEl.innerText = (currentMode === 'OFF_SESSION') ? 'ENTRY' : 'OPEN';
+                      valEl.style.color = (currentMode === 'OFF_SESSION') ? '#ff1744' : '#ffab00';
+                      badgeEl.innerText = (currentMode === 'OFF_SESSION') ? 'OFF-SESSION' : 'DELAY';
+                      badgeEl.className = (currentMode === 'OFF_SESSION') ? 'status-badge status-alert' : 'status-badge status-warn';
+                    } else {
+                      valEl.innerText = 'CLOSED';
+                      valEl.style.color = '#f0f4f8';
+                      badgeEl.innerText = 'SECURE';
+                      badgeEl.className = 'status-badge status-normal';
+                    }
+                  }
+                });
+                const cardDoors = document.getElementById('card-doors');
+                if (cardDoors) {
+                  if (anyDoorAlarm || (currentMode === 'OFF_SESSION' && anyDoorOpen)) {
+                    cardDoors.style.borderTopColor = '#ff1744';
+                  } else if (anyDoorOpen) {
+                    cardDoors.style.borderTopColor = '#ffab00';
+                  } else {
+                    cardDoors.style.borderTopColor = '#2979ff';
+                  }
+                }
+
+                // 5. Chamber Incubators (0 to N)
+                const cardInc = document.getElementById('card-incubators');
+                const cab = data.cabinet || {};
+                lastCabinetState = cab;
+                let anyIncAlarm = false;
+                (EQUIPMENT.incubators || []).forEach(inc => {
+                  const incAlarm = inc.alarm_cnl ? (r[inc.alarm_cnl] > 0) : false;
+                  if (incAlarm) anyIncAlarm = true;
+                  const valInc = document.getElementById(`val-${inc.key}`);
+                  const badgeInc = document.getElementById(`badge-${inc.key}`);
+                  const subInc = document.getElementById(`sub-${inc.key}`);
+
+                  if (currentMode === 'OFF_SESSION') {
+                    if (valInc) {
+                      valInc.innerText = 'STANDBY';
+                      valInc.style.color = '#94a3b8';
+                    }
+                    if (badgeInc) {
+                      badgeInc.innerText = 'OFF-SESSION';
+                      badgeInc.className = 'status-badge';
+                      badgeInc.style.background = 'rgba(148, 163, 184, 0.15)';
+                      badgeInc.style.color = '#94a3b8';
+                      badgeInc.style.border = '1px solid rgba(148, 163, 184, 0.3)';
+                    }
+                    if (subInc) subInc.innerText = 'Alarms Suppressed';
+                  } else if (cab.is_open) {
+                    if (valInc) {
+                      valInc.innerText = 'MUTED';
+                      valInc.style.color = '#ffab00';
+                    }
+                    if (badgeInc) {
+                      badgeInc.innerText = 'DOOR OPEN';
+                      badgeInc.className = 'status-badge status-warn';
+                      badgeInc.style.background = 'rgba(255, 171, 0, 0.2)';
+                      badgeInc.style.color = '#ffab00';
+                      badgeInc.style.border = '1px solid rgba(255, 171, 0, 0.4)';
+                    }
+                    if (subInc) subInc.innerText = '🛡️ Alarms Muted (Door Open)';
+                  } else if (cab.mute_active && cab.grace_remaining_sec > 0) {
+                    if (valInc) {
+                      valInc.innerText = 'NORMAL';
+                      valInc.style.color = '#f0f4f8';
+                    }
+                    if (badgeInc) {
+                      const m = Math.floor(cab.grace_remaining_sec / 60);
+                      const s = String(cab.grace_remaining_sec % 60).padStart(2, '0');
+                      badgeInc.innerText = `GRACE ${m}:${s}`;
+                      badgeInc.className = 'status-badge';
+                      badgeInc.style.background = 'rgba(56, 189, 248, 0.15)';
+                      badgeInc.style.color = '#38bdf8';
+                      badgeInc.style.border = '1px solid rgba(56, 189, 248, 0.3)';
+                    }
+                    if (subInc) subInc.innerText = `🛡️ Recovery Grace (${cab.grace_remaining_sec}s)`;
+                  } else {
+                    if (valInc) {
+                      valInc.innerText = incAlarm ? 'ALARM' : 'NORMAL';
+                      valInc.style.color = incAlarm ? '#ff1744' : '#f0f4f8';
+                    }
+                    if (badgeInc) {
+                      badgeInc.innerText = incAlarm ? 'TRIPPED' : 'CLEAR';
+                      badgeInc.className = incAlarm ? 'status-badge status-alert' : 'status-badge status-normal';
+                      badgeInc.style.background = '';
+                      badgeInc.style.color = '';
+                      badgeInc.style.border = '';
+                    }
+                    if (subInc) subInc.innerText = incAlarm ? 'Chamber Trip Active' : (inc.subtitle || 'Chamber • In-Range');
+                  }
+                });
+                if (cardInc) {
+                  if (currentMode === 'OFF_SESSION') {
+                    cardInc.style.opacity = '0.75';
+                    cardInc.style.borderTopColor = '#64748b';
+                  } else {
+                    cardInc.style.opacity = '1.0';
+                    cardInc.style.borderTopColor = anyIncAlarm ? '#ff1744' : '#00b0ff';
+                  }
+                }
+
+                // Cabinet Environmental & Door Status Updates
+                const cabDoorBadge = document.getElementById('cab-door-badge');
+                if (cabDoorBadge) {
+                  if (cab.door_alarm) {
+                    cabDoorBadge.innerText = '🚨 DOOR ALARM (> 3m)';
+                    cabDoorBadge.className = 'status-badge status-alert';
+                    cabDoorBadge.style.background = 'rgba(255, 23, 68, 0.25)';
+                    cabDoorBadge.style.color = '#ff1744';
+                    cabDoorBadge.style.border = '1px solid rgba(255, 23, 68, 0.5)';
+                  } else if (cab.is_open) {
+                    cabDoorBadge.innerText = '🚪 DOOR OPEN (MUTED)';
+                    cabDoorBadge.className = 'status-badge status-warn';
+                    cabDoorBadge.style.background = 'rgba(255, 171, 0, 0.25)';
+                    cabDoorBadge.style.color = '#ffab00';
+                    cabDoorBadge.style.border = '1px solid rgba(255, 171, 0, 0.5)';
+                  } else if (cab.mute_active && cab.grace_remaining_sec > 0) {
+                    const m = Math.floor(cab.grace_remaining_sec / 60);
+                    const s = String(cab.grace_remaining_sec % 60).padStart(2, '0');
+                    cabDoorBadge.innerText = `🚪 GRACE (${m}:${s})`;
+                    cabDoorBadge.className = 'status-badge';
+                    cabDoorBadge.style.background = 'rgba(56, 189, 248, 0.2)';
+                    cabDoorBadge.style.color = '#38bdf8';
+                    cabDoorBadge.style.border = '1px solid rgba(56, 189, 248, 0.4)';
+                  } else {
+                    cabDoorBadge.innerText = '🚪 DOOR CLOSED';
+                    cabDoorBadge.className = 'status-badge status-normal';
+                    cabDoorBadge.style.background = '';
+                    cabDoorBadge.style.color = '';
+                    cabDoorBadge.style.border = '';
+                  }
+                }
+
+                // Cabinet Microclimate Readouts
+                const cabTemp = document.getElementById('cab-temp-val');
+                if (cabTemp) {
+                  const amb = r[101] ? (r[101] - 0.4).toFixed(1) : '24.5';
+                  cabTemp.innerText = `${amb}°C`;
+                }
+
+                // Real-time update for modal inspector if currently open
+                if (currentModalIncKey) {
+                  const activeInc = (EQUIPMENT.incubators || []).find(i => i.key === currentModalIncKey);
+                  if (activeInc) {
+                    updateModalAlarmState(activeInc);
+                    renderChamberGrid(currentModalIncKey);
+                  }
+                }
+              })
+              .catch(e => console.error('Telemetry error:', e));
+          }
+
+          function runDailyTest() {
+            const st = document.getElementById('testStatus');
+            st.style.color = '#00e5ff';
+            st.innerText = '⏳ Dispatching test alert to Pushover...';
+            fetch('/api/test', { method: 'POST' })
+              .then(r => r.json())
+              .then(d => {
+                st.style.color = '#00e676';
+                st.innerText = '✅ Daily Alarm Test dispatched to team at ' + d.timestamp + ' (Pushover Priority 0)';
+                updateTelemetry();
+                loadAlarms();
+                setTimeout(() => { st.innerText = ''; }, 6000);
+              })
+              .catch(e => {
+                st.style.color = '#ff1744';
+                st.innerText = '❌ Failed to send test alert';
+              });
+          }
+
+          function ackAlarm(id) {
+            fetch('/api/ack?id=' + id, { method: 'POST' })
+              .then(r => r.json())
+              .then(d => {
+                loadAlarms();
+              });
+          }
+
+          function loadAlarms() {
+            fetch('/api/alarms')
+              .then(r => r.json())
+              .then(rows => {
+                if (rows.length === 0) {
+                  document.getElementById('alarmsTable').innerHTML = '<p style="color:#00e676; padding:12px 0;">🟢 All systems normal. No alarm events recorded.</p>';
+                  return;
+                }
+                let h = '<table style="min-width:700px;"><thead><tr>' +
+                  '<th>Time</th>' +
+                  '<th>Equipment</th>' +
+                  '<th>Condition</th>' +
+                  '<th>Reading</th>' +
+                  '<th>Status</th>' +
+                  '<th>Acknowledged By</th>' +
+                  '<th>Action</th>' +
+                  '</tr></thead><tbody>';
+
+                rows.forEach(r => {
+                  let statusHtml = '';
+                  let actHtml = '-';
+                  let whoAckHtml = '';
+                  let rowStyle = '';
+
+                  const isUnacked = !r.is_acknowledged;
+                  const isResolved = r.is_resolved;
+
+                  // 1. Acknowledged By Column
+                  if (isUnacked) {
+                    whoAckHtml = '<span style="color:#ff5252; font-weight:700; font-size:11.5px; letter-spacing:0.3px;">UNACKNOWLEDGED</span>';
+                  } else {
+                    const name = r.acknowledged_by || 'Staff';
+                    let ackTimeStr = '';
+                    if (r.acknowledged_at) {
+                      const parts = r.acknowledged_at.split(' ');
+                      if (parts.length > 1) {
+                        ackTimeStr = `<span style="font-size:11px; color:#8899a6; display:block;">at ${parts[1].split('.')[0]}</span>`;
+                      }
+                    }
+                    const tokAttr = r.acknowledged_by_token ? ` title="Token: ${r.acknowledged_by_token}"` : '';
+                    whoAckHtml = `<span style="color:#00e5ff; font-weight:600;"${tokAttr}>${name}</span>${ackTimeStr}`;
+                  }
+
+                  // 2. Status & Action Columns
+                  if (isUnacked && !isResolved) {
+                    // Active ongoing alarm
+                    if (r.priority === 1) {
+                      statusHtml = '<span style="color:#ffab00; font-weight:700;">⚠️ ACTIVE (WARN)</span>';
+                      actHtml = `<button class="btn" style="background:#ffab00; color:#0f172a; font-weight:700; padding:6px 14px; font-size:12px;" onclick="ackAlarm(${r.id})">✋ Acknowledge</button>`;
+                    } else {
+                      statusHtml = '<span style="color:#ff1744; font-weight:800;">🔴 ACTIVE (SIREN)</span>';
+                      actHtml = `<button class="btn" style="background:#ff1744; color:#ffffff; font-weight:800; padding:6px 14px; font-size:12px;" onclick="ackAlarm(${r.id})">✋ Silence & Ack</button>`;
+                    }
+                    rowStyle = 'style="background:rgba(255,23,68,0.12);"';
+                  } else if (!isUnacked && !isResolved) {
+                    // Acknowledged, chamber attending / in progress
+                    statusHtml = '<span style="color:#00b0ff; font-weight:700;">🟡 Attending</span>';
+                    actHtml = '<span style="color:#8899a6; font-size:12px;">In Progress</span>';
+                  } else if (isUnacked && isResolved) {
+                    // Recovered on its own, but unacknowledged (past excursion needing sign-off)
+                    const dur = r.duration_seconds ? ` (${r.duration_seconds < 60 ? r.duration_seconds + 's' : Math.floor(r.duration_seconds / 60) + 'm ' + (r.duration_seconds % 60) + 's'})` : '';
+                    statusHtml = `<span style="color:#ffab00; font-weight:700;">⚠️ RECOVERED${dur}</span>`;
+                    actHtml = `<button class="btn" style="background:#ffab00; color:#0b111e; font-weight:800; padding:6px 14px; font-size:12px;" onclick="ackAlarm(${r.id})">✍️ Sign Off</button>`;
+                    rowStyle = 'style="background:rgba(255,171,0,0.08); border-left:3px solid #ffab00;"';
+                  } else {
+                    // Fully acknowledged and resolved
+                    const dur = r.duration_seconds ? ` (${r.duration_seconds < 60 ? r.duration_seconds + 's' : Math.floor(r.duration_seconds / 60) + 'm ' + (r.duration_seconds % 60) + 's'})` : '';
+                    statusHtml = `<span style="color:#00e676; font-weight:600;">🟢 Resolved${dur}</span>`;
+                    actHtml = '<span style="color:#64748b; font-size:12px;">Complete</span>';
+                  }
+
+                  let valDisp = '-';
+                  if (r.excursion_val !== null) {
+                    if (LN2_INSPECTION_CNLS.includes(r.cnl_num)) {
+                      valDisp = r.excursion_val + 'h overdue';
+                    } else {
+                      const num = parseFloat(r.excursion_val);
+                      valDisp = !isNaN(num) ? num.toFixed(1) + '°C' : r.excursion_val + '°C';
+                    }
+                  }
+                  const timeDisp = r.triggered_at ? r.triggered_at.split('.')[0] : '-';
+
+                  h += `<tr ${rowStyle}>` +
+                    `<td>${timeDisp}</td>` +
+                    `<td><b>${r.equipment_name}</b></td>` +
+                    `<td>${r.alarm_type}</td>` +
+                    `<td>${valDisp}</td>` +
+                    `<td>${statusHtml}</td>` +
+                    `<td>${whoAckHtml}</td>` +
+                    `<td>${actHtml}</td>` +
+                    `</tr>`;
+                });
+                h += '</tbody></table>';
+                document.getElementById('alarmsTable').innerHTML = h;
+              });
+          }
+
+          // LN2 Modal & Inspection Handlers
+          let currentTank = (EQUIPMENT.dewars && EQUIPMENT.dewars.length > 0) ? EQUIPMENT.dewars[0].name : 'Dewar 1';
+          let currentFill = false;
+          let currentSeal = 'Good';
+          let lastRecordedLevels = {};
+          (EQUIPMENT.dewars || []).forEach(d => {
+            lastRecordedLevels[d.name] = 30.0;
           });
 
-          // Render History Table
-          const hist = data.history || [];
-          const tableContainer = document.getElementById('ln2HistoryTable');
-          if (tableContainer) {
-            if (hist.length === 0) {
-              tableContainer.innerHTML = '<p style="color:#8899a6; padding:8px 0;">No inspection logs recorded.</p>';
+          function syncModalLevelToCurrentTank() {
+            const inp = document.getElementById('ln2LevelInput');
+            const hint = document.getElementById('ln2LastRecordedHint');
+            const lastVal = lastRecordedLevels[currentTank] || 30.0;
+            if (inp) {
+              inp.value = lastVal.toFixed(1);
+            }
+            if (hint) {
+              hint.innerText = lastVal.toFixed(1) + ' cm';
+            }
+          }
+
+          function openLn2Modal() {
+            const modal = document.getElementById('ln2Modal');
+            if (!modal) return;
+            modal.style.display = 'flex';
+            document.getElementById('modalSubmitMsg').innerText = '';
+            syncModalLevelToCurrentTank();
+          }
+
+          function openLn2ModalFor(tank) {
+            selectTank(tank);
+            openLn2Modal();
+          }
+
+          function closeLn2Modal() {
+            const modal = document.getElementById('ln2Modal');
+            if (modal) modal.style.display = 'none';
+          }
+
+          function selectTank(tank) {
+            currentTank = tank;
+            (EQUIPMENT.dewars || []).forEach(d => {
+              const chip = document.getElementById('chip-tank-' + d.id);
+              if (chip) {
+                chip.className = (tank === d.name) ? 'chip active' : 'chip';
+              }
+            });
+            syncModalLevelToCurrentTank();
+          }
+
+          function adjustLn2(delta) {
+            const inp = document.getElementById('ln2LevelInput');
+            let val = parseFloat(inp.value) || 30.0;
+            val = Math.max(0, Math.round((val + delta) * 10) / 10);
+            inp.value = val.toFixed(1);
+          }
+
+          function selectFill(isFilled) {
+            currentFill = isFilled;
+            document.getElementById('fill-no').className = isFilled ? 'chip-fill' : 'chip-fill active';
+            document.getElementById('fill-yes').className = isFilled ? 'chip-fill active' : 'chip-fill';
+          }
+
+          function selectInit(init) {
+            document.getElementById('ln2InitialsInput').value = init;
+          }
+
+          function selectSeal(seal) {
+            currentSeal = seal;
+            document.getElementById('seal-good').className = (seal === 'Good') ? 'chip active' : 'chip';
+            document.getElementById('seal-frost').className = (seal === 'Neck Frost') ? 'chip active' : 'chip';
+            document.getElementById('seal-concern').className = (seal === 'Vacuum Concern') ? 'chip active' : 'chip';
+          }
+
+          function submitLn2Log() {
+            const lvlStr = document.getElementById('ln2LevelInput').value;
+            const levelVal = parseFloat(lvlStr);
+            const initials = document.getElementById('ln2InitialsInput').value.trim();
+            const notes = document.getElementById('ln2NotesInput').value.trim();
+            const msgEl = document.getElementById('modalSubmitMsg');
+
+            if (isNaN(levelVal) || levelVal <= 0) {
+              msgEl.style.color = '#ff1744';
+              msgEl.innerText = '⚠️ Please enter a valid dipstick level (cm).';
               return;
             }
-            let th = '<table><thead><tr><th>Logged Time</th><th>Tank</th><th>Level (cm)</th><th>Filled?</th><th>Neck Seal</th><th>Initials</th><th>Notes</th></tr></thead><tbody>';
-            hist.forEach(row => {
-              const timeStr = row.logged_at ? row.logged_at.split('.')[0] : '-';
-              const fillBadge = row.was_filled ? '<span style="color:#00e676; font-weight:700;">🔵 Yes (Filled)</span>' : '<span style="color:#8899a6;">Check Only</span>';
-              const sealColor = (row.frost_condition === 'Good') ? '#00e676' : '#ffab00';
-              th += `<tr><td>${timeStr}</td><td><b>${row.tank_id}</b></td><td style="color:#00e5ff; font-family:monospace; font-weight:700; font-size:15px;">${row.level_cm.toFixed(1)} cm</td><td>${fillBadge}</td><td><span style="color:${sealColor};">${row.frost_condition}</span></td><td><b>${row.initials}</b></td><td style="color:#8899a6;">${row.notes || '-'}</td></tr>`;
-            });
-            th += '</tbody></table>';
-            tableContainer.innerHTML = th;
-          }
-        })
-        .catch(e => console.error('LN2 fetch error:', e));
-    }
 
-    // =========================================================================
-    // Session Mode & Cryo Hold Management Functions
-    // =========================================================================
-    let selectedMode = 'IN_SESSION';
-    let currentAuditTab = 'alarms';
-
-    function openSessionModal() {
-      document.getElementById('sessionModal').style.display = 'flex';
-      document.getElementById('sessionErr').style.display = 'none';
-      loadSessionHistory();
-    }
-
-    function closeSessionModal() {
-      document.getElementById('sessionModal').style.display = 'none';
-    }
-
-    function selectSessionMode(mode) {
-      selectedMode = mode;
-      document.getElementById('opt-mode-in').className = (mode === 'IN_SESSION') ? 'session-mode-card active' : 'session-mode-card';
-      document.getElementById('opt-mode-off').className = (mode === 'OFF_SESSION') ? 'session-mode-card active' : 'session-mode-card';
-    }
-
-    function loadSessionHistory() {
-      fetch('/api/lab-mode')
-        .then(r => r.json())
-        .then(d => {
-          if (d.mode) selectSessionMode(d.mode);
-          const history = d.history || [];
-          const container = document.getElementById('sessionHistoryTable');
-          if (!container) return;
-          if (history.length === 0) {
-            container.innerHTML = '<p style="color:#8899a6; padding:12px; margin:0;">No mode transitions recorded yet.</p>';
-            return;
-          }
-          let h = '<table style="width:100%; font-size:12px; margin:0;"><thead><tr>' +
-            '<th style="padding:8px 10px;">Time</th>' +
-            '<th style="padding:8px 10px;">Mode</th>' +
-            '<th style="padding:8px 10px;">Staff</th>' +
-            '<th style="padding:8px 10px;">Notes / Reason</th>' +
-            '</tr></thead><tbody>';
-          history.forEach(row => {
-            const timeStr = row.updated_at ? row.updated_at.split('.')[0] : '-';
-            const isAct = (row.mode === 'IN_SESSION');
-            const badge = isAct
-              ? '<span style="color:#00e676; font-weight:800; font-size:11px;">🟢 IN-SESSION</span>'
-              : '<span style="color:#f59e0b; font-weight:800; font-size:11px;">⏸️ OFF-SESSION</span>';
-            const userStr = row.updated_by || 'Staff';
-            const notesStr = row.notes ? row.notes : '<span style="color:#64748b;">-</span>';
-            h += `<tr>` +
-              `<td style="padding:8px 10px; font-family:monospace; color:#cbd5e1;">${timeStr}</td>` +
-              `<td style="padding:8px 10px;">${badge}</td>` +
-              `<td style="padding:8px 10px;"><b>${userStr}</b></td>` +
-              `<td style="padding:8px 10px; color:#94a3b8;">${notesStr}</td>` +
-              `</tr>`;
-          });
-          h += '</tbody></table>';
-          container.innerHTML = h;
-        })
-        .catch(e => console.error('Error loading session history:', e));
-    }
-
-    function saveSessionMode() {
-      const u = document.getElementById('sessionUser').value.trim() || 'Kiosk Staff';
-      const n = document.getElementById('sessionNotes').value.trim();
-      const btn = document.getElementById('btnSaveSessionMode');
-      btn.disabled = true;
-      btn.innerText = 'Updating...';
-
-      fetch('/api/lab-mode', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mode: selectedMode, user: u, notes: n })
-      })
-        .then(r => r.json())
-        .then(d => {
-          btn.disabled = false;
-          btn.innerText = 'Confirm Mode Change';
-          loadSessionHistory();
-          updateTelemetry();
-          document.getElementById('sessionNotes').value = '';
-        })
-        .catch(e => {
-          btn.disabled = false;
-          btn.innerText = 'Confirm Mode Change';
-          const err = document.getElementById('sessionErr');
-          err.innerText = 'Error saving operational mode: ' + e;
-          err.style.display = 'block';
-        });
-    }
-
-    function toggleCryoHoldKiosk(tank) {
-      fetch('/api/status')
-        .then(r => r.json())
-        .then(d => {
-          const holds = d.cryo_holds || {};
-          const isHolding = !!(holds[tank] || holds["All Dewars"] || holds["All Cryo Tanks"] || holds["ALL"]);
-          if (isHolding) {
-            if (confirm(`Resume live alarms and sirens for ${tank} now?`)) {
-              fetch('/api/cryo-hold/cancel', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ tank: tank, user: 'Kiosk Staff' })
-              }).then(() => updateTelemetry());
+            if (!initials) {
+              msgEl.style.color = '#ff1744';
+              msgEl.innerText = '⚠️ Please enter staff initials.';
+              return;
             }
-          } else {
-            fetch('/api/cryo-hold', {
+
+            const payload = {
+              tank_id: currentTank,
+              level_cm: levelVal,
+              was_filled: currentFill,
+              frost_condition: currentSeal,
+              initials: initials,
+              notes: notes
+            };
+
+            msgEl.style.color = '#00e5ff';
+            msgEl.innerText = '⏳ Submitting inspection log...';
+
+            fetch('/api/ln2_log', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ tank: tank, duration_minutes: 15, user: 'Kiosk Staff' })
-            }).then(() => updateTelemetry());
+              body: JSON.stringify(payload)
+            })
+              .then(r => r.json())
+              .then(d => {
+                if (d.success) {
+                  msgEl.style.color = '#00e676';
+                  msgEl.innerText = '✅ ' + d.message;
+                  lastRecordedLevels[currentTank] = levelVal;
+                  try {
+                    updateLn2Status();
+                    loadAlarms();
+                  } catch (uiErr) {
+                    console.warn('UI refresh warning:', uiErr);
+                  }
+                  setTimeout(() => {
+                    closeLn2Modal();
+                    document.getElementById('ln2NotesInput').value = '';
+                  }, 1200);
+                } else {
+                  msgEl.style.color = '#ff1744';
+                  msgEl.innerText = '❌ ' + (d.error || 'Failed to submit log');
+                }
+              })
+              .catch(e => {
+                msgEl.style.color = '#ff1744';
+                msgEl.innerText = '❌ Error submitting: ' + e;
+              });
           }
-        });
-    }
 
-    // =========================================================================
-    // Cleanroom Door & Probe Calibration Audit Log Viewer
-    // =========================================================================
-    let cachedCalSummary = null;
+          function updateLn2Status() {
+            if (!EQUIPMENT.dewars || EQUIPMENT.dewars.length === 0) return;
+            fetch('/api/ln2_status')
+              .then(r => r.json())
+              .then(data => {
+                const tanks = data.tanks || {};
 
-    function getCalibratableEquipment() {
-      const list = [];
-      (EQUIPMENT.dewars || []).forEach(d => {
-        if (d.temp_cnl) list.push({ key: d.key, name: d.label || d.name, temp_cnl: d.temp_cnl, default_tol: 2.0 });
-      });
-      (EQUIPMENT.fridges || []).forEach(f => {
-        if (f.temp_cnl) list.push({ key: f.key, name: f.name, temp_cnl: f.temp_cnl, default_tol: 0.5 });
-      });
-      (EQUIPMENT.freezers || []).forEach(fz => {
-        if (fz.temp_cnl) list.push({ key: fz.key, name: fz.name, temp_cnl: fz.temp_cnl, default_tol: 1.0 });
-      });
-      (EQUIPMENT.ambient || []).forEach(a => {
-        if (a.temp_cnl) list.push({ key: a.key, name: a.name, temp_cnl: a.temp_cnl, default_tol: 0.5 });
-      });
-      return list;
-    }
+                // Update Configured Dewars
+                (EQUIPMENT.dewars || []).forEach(dCfg => {
+                  const i = dCfg.id;
+                  const dName = dCfg.name;
+                  try {
+                    const t = tanks[dName] || tanks[`Cryo Tank ${i}`];
+                    if (t) {
+                      if (typeof t.level_cm === 'number') {
+                        lastRecordedLevels[dName] = t.level_cm;
+                      }
+                      const lvl = (typeof t.level_cm === 'number') ? t.level_cm.toFixed(1) : '--';
+                      const hrs = (typeof t.hours_since === 'number') ? `${t.hours_since.toFixed(1)}h ago (${t.initials})` : `-- (${t.initials || '--'})`;
+                      const due = t.detail || `Next: ${t.next_check || 'Scheduled'}`;
+                      const badgeTxt = t.badge || 'ON SCHEDULE';
 
-    function switchAuditView(tab) {
-      currentAuditTab = tab;
-      const btnA = document.getElementById('btnAuditAlarms');
-      const btnD = document.getElementById('btnAuditDoors');
-      const btnC = document.getElementById('btnAuditCal');
-      const tblA = document.getElementById('alarmsTable');
-      const tblD = document.getElementById('doorsTable');
-      const tblC = document.getElementById('calibrationTable');
-      const title = document.getElementById('auditSectionTitle');
-      const desc = document.getElementById('auditSectionDesc');
+                      // Main Card Elements
+                      const el = document.getElementById(`val-ln2-level-${i}`);
+                      if (el) el.innerText = lvl;
+                      const b = document.getElementById(`badge-ln2-${i}`);
+                      if (b) b.innerText = badgeTxt;
+                      const sub = document.getElementById(`sub-ln2-check-${i}`);
+                      if (sub) sub.innerText = hrs;
+                      const nextDue = document.getElementById(`ln2-next-due-${i}`);
+                      if (nextDue) nextDue.innerText = due;
 
-      if (btnA) btnA.className = 'nav-tab';
-      if (btnD) btnD.className = 'nav-tab';
-      if (btnC) btnC.className = 'nav-tab';
-      if (tblA) tblA.style.display = 'none';
-      if (tblD) tblD.style.display = 'none';
-      if (tblC) tblC.style.display = 'none';
+                      // Subpage Detail Elements
+                      const dEl = document.getElementById(`detail-ln2-level-${i}`);
+                      if (dEl) dEl.innerText = lvl;
+                      const dB = document.getElementById(`detail-badge-ln2-${i}`);
+                      if (dB) dB.innerText = badgeTxt;
+                      const dCheck = document.getElementById(`detail-last-check-${i}`);
+                      if (dCheck) dCheck.innerText = `${lvl} cm (${hrs})`;
+                      const dNext = document.getElementById(`detail-next-check-${i}`);
+                      if (dNext) dNext.innerText = t.next_check || '--';
 
-      if (tab === 'doors' && btnD) {
-        btnD.className = 'nav-tab active';
-        tblD.style.display = 'block';
-        title.innerText = 'Cleanroom Door Access Log';
-        desc.innerText = 'Chronological log of cleanroom physical access, open duration, and session context.';
-        loadDoorEvents();
-      } else if (tab === 'calibration' && btnC) {
-        btnC.className = 'nav-tab active';
-        tblC.style.display = 'block';
-        title.innerText = 'Probe Calibration & NIST Traceability Log (CAP COM.30550)';
-        desc.innerText = 'Annual 1-point verification of Pt100 RTD & thermocouple sensors against the clinic Master NIST-Traceable Reference Thermometer.';
-        loadCalibrations();
-      } else {
-        if (btnA) btnA.className = 'nav-tab active';
-        if (tblA) tblA.style.display = 'block';
-        title.innerText = 'Active Alarms & Clinical Audit Trail';
-        desc.innerText = 'Reverse chronological history. Tap Acknowledge to silence repeating sirens.';
-        loadAlarms();
-      }
-    }
+                      const badgeClass = (t.status === 'OVERDUE') ? 'status-badge status-alert' :
+                        ((t.status === 'DUE') ? 'status-badge status-warn' : 'status-badge status-normal');
+                      if (b) b.className = badgeClass;
+                      if (dB) dB.className = badgeClass;
+                    }
+                  } catch (e) {
+                    console.error(`Error updating ${dName} UI:`, e);
+                  }
+                });
 
-    function loadCalibrations() {
-      fetch('/api/calibrations')
-        .then(r => r.json())
-        .then(data => {
-          cachedCalSummary = data;
-          const container = document.getElementById('calibrationTable');
-          if (!container) return;
+                // Render History Table
+                const hist = data.history || [];
+                const tableContainer = document.getElementById('ln2HistoryTable');
+                if (tableContainer) {
+                  if (hist.length === 0) {
+                    tableContainer.innerHTML = '<p style="color:#8899a6; padding:8px 0;">No inspection logs recorded.</p>';
+                    return;
+                  }
+                  let th = '<table><thead><tr><th>Logged Time</th><th>Tank</th><th>Level (cm)</th><th>Filled?</th><th>Neck Seal</th><th>Initials</th><th>Notes</th></tr></thead><tbody>';
+                  hist.forEach(row => {
+                    const timeStr = row.logged_at ? row.logged_at.split('.')[0] : '-';
+                    const fillBadge = row.was_filled ? '<span style="color:#00e676; font-weight:700;">🔵 Yes (Filled)</span>' : '<span style="color:#8899a6;">Check Only</span>';
+                    const sealColor = (row.frost_condition === 'Good') ? '#00e676' : '#ffab00';
+                    th += `<tr><td>${timeStr}</td><td><b>${row.tank_id}</b></td><td style="color:#00e5ff; font-family:monospace; font-weight:700; font-size:15px;">${row.level_cm.toFixed(1)} cm</td><td>${fillBadge}</td><td><span style="color:${sealColor};">${row.frost_condition}</span></td><td><b>${row.initials}</b></td><td style="color:#8899a6;">${row.notes || '-'}</td></tr>`;
+                  });
+                  th += '</tbody></table>';
+                  tableContainer.innerHTML = th;
+                }
+              })
+              .catch(e => console.error('LN2 fetch error:', e));
+          }
 
-          const equipList = getCalibratableEquipment();
-          const eqStatus = data.equipment_status || {};
-          const logs = data.logs || [];
+          // =========================================================================
+          // Session Mode & Cryo Hold Management Functions
+          // =========================================================================
+          let selectedMode = 'IN_SESSION';
+          let currentAuditTab = 'alarms';
 
-          let h = '<div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:12px; padding:10px 12px; background:rgba(9,13,22,0.75); border:1px solid rgba(16,185,129,0.25); border-radius:8px;">' +
-            '<div style="font-size:12.5px; color:#cbd5e1;">' +
-            '<strong>CAP COM.30550 Compliance:</strong> Uncertified industrial probes are verified annually in-house against your Master NIST Reference Thermometer.' +
-            '</div>' +
-            '<button type="button" class="btn" style="background:#10b981; color:#090d16; font-weight:800; font-size:12.5px; padding:8px 14px;" onclick="openCalibrationModal()">+ Log Probe Verification</button>' +
-            '</div>';
+          function openSessionModal() {
+            document.getElementById('sessionModal').style.display = 'flex';
+            document.getElementById('sessionErr').style.display = 'none';
+            loadSessionHistory();
+          }
 
-          // Per-Equipment Status Pills
-          h += '<div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(195px, 1fr)); gap:8px; margin-bottom:14px;">';
-          equipList.forEach(eq => {
-            const st = eqStatus[eq.key];
-            let badgeHtml = '<span style="color:#94a3b8; font-size:10.5px; font-weight:700;">UNVERIFIED</span>';
-            let subText = 'No record on file';
-            let borderCol = 'rgba(255,255,255,0.08)';
-            if (st) {
-              if (st.status === 'VALID') {
-                badgeHtml = '<span style="color:#10b981; font-size:10.5px; font-weight:800;">● NIST VERIFIED</span>';
-                borderCol = 'rgba(16,185,129,0.35)';
-              } else if (st.status === 'EXPIRING_SOON') {
-                badgeHtml = '<span style="color:#f59e0b; font-size:10.5px; font-weight:800;">⚠ DUE SOON</span>';
-                borderCol = 'rgba(245,158,11,0.4)';
-              } else {
-                badgeHtml = '<span style="color:#ef4444; font-size:10.5px; font-weight:800;">🚨 EXPIRED / FAIL</span>';
-                borderCol = 'rgba(239,68,68,0.45)';
+          function closeSessionModal() {
+            document.getElementById('sessionModal').style.display = 'none';
+          }
+
+          function selectSessionMode(mode) {
+            selectedMode = mode;
+            document.getElementById('opt-mode-in').className = (mode === 'IN_SESSION') ? 'session-mode-card active' : 'session-mode-card';
+            document.getElementById('opt-mode-off').className = (mode === 'OFF_SESSION') ? 'session-mode-card active' : 'session-mode-card';
+          }
+
+          function loadSessionHistory() {
+            fetch('/api/lab-mode')
+              .then(r => r.json())
+              .then(d => {
+                if (d.mode) selectSessionMode(d.mode);
+                const history = d.history || [];
+                const container = document.getElementById('sessionHistoryTable');
+                if (!container) return;
+                if (history.length === 0) {
+                  container.innerHTML = '<p style="color:#8899a6; padding:12px; margin:0;">No mode transitions recorded yet.</p>';
+                  return;
+                }
+                let h = '<table style="width:100%; font-size:12px; margin:0;"><thead><tr>' +
+                  '<th style="padding:8px 10px;">Time</th>' +
+                  '<th style="padding:8px 10px;">Mode</th>' +
+                  '<th style="padding:8px 10px;">Staff</th>' +
+                  '<th style="padding:8px 10px;">Notes / Reason</th>' +
+                  '</tr></thead><tbody>';
+                history.forEach(row => {
+                  const timeStr = row.updated_at ? row.updated_at.split('.')[0] : '-';
+                  const isAct = (row.mode === 'IN_SESSION');
+                  const badge = isAct
+                    ? '<span style="color:#00e676; font-weight:800; font-size:11px;">🟢 IN-SESSION</span>'
+                    : '<span style="color:#f59e0b; font-weight:800; font-size:11px;">⏸️ OFF-SESSION</span>';
+                  const userStr = row.updated_by || 'Staff';
+                  const notesStr = row.notes ? row.notes : '<span style="color:#64748b;">-</span>';
+                  h += `<tr>` +
+                    `<td style="padding:8px 10px; font-family:monospace; color:#cbd5e1;">${timeStr}</td>` +
+                    `<td style="padding:8px 10px;">${badge}</td>` +
+                    `<td style="padding:8px 10px;"><b>${userStr}</b></td>` +
+                    `<td style="padding:8px 10px; color:#94a3b8;">${notesStr}</td>` +
+                    `</tr>`;
+                });
+                h += '</tbody></table>';
+                container.innerHTML = h;
+              })
+              .catch(e => console.error('Error loading session history:', e));
+          }
+
+          function saveSessionMode() {
+            const u = document.getElementById('sessionUser').value.trim() || 'Kiosk Staff';
+            const n = document.getElementById('sessionNotes').value.trim();
+            const btn = document.getElementById('btnSaveSessionMode');
+            btn.disabled = true;
+            btn.innerText = 'Updating...';
+
+            fetch('/api/lab-mode', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ mode: selectedMode, user: u, notes: n })
+            })
+              .then(r => r.json())
+              .then(d => {
+                btn.disabled = false;
+                btn.innerText = 'Confirm Mode Change';
+                loadSessionHistory();
+                updateTelemetry();
+                document.getElementById('sessionNotes').value = '';
+              })
+              .catch(e => {
+                btn.disabled = false;
+                btn.innerText = 'Confirm Mode Change';
+                const err = document.getElementById('sessionErr');
+                err.innerText = 'Error saving operational mode: ' + e;
+                err.style.display = 'block';
+              });
+          }
+
+          function toggleCryoHoldKiosk(tank) {
+            fetch('/api/status')
+              .then(r => r.json())
+              .then(d => {
+                const holds = d.cryo_holds || {};
+                const isHolding = !!(holds[tank] || holds["All Dewars"] || holds["All Cryo Tanks"] || holds["ALL"]);
+                if (isHolding) {
+                  if (confirm(`Resume live alarms and sirens for ${tank} now?`)) {
+                    fetch('/api/cryo-hold/cancel', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ tank: tank, user: 'Kiosk Staff' })
+                    }).then(() => updateTelemetry());
+                  }
+                } else {
+                  fetch('/api/cryo-hold', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ tank: tank, duration_minutes: 15, user: 'Kiosk Staff' })
+                  }).then(() => updateTelemetry());
+                }
+              });
+          }
+
+          // =========================================================================
+          // Cleanroom Door & Probe Calibration Audit Log Viewer
+          // =========================================================================
+          let cachedCalSummary = null;
+
+          function getCalibratableEquipment() {
+            const list = [];
+            (EQUIPMENT.dewars || []).forEach(d => {
+              if (d.temp_cnl) list.push({ key: d.key, name: d.label || d.name, temp_cnl: d.temp_cnl, default_tol: 2.0 });
+            });
+            (EQUIPMENT.fridges || []).forEach(f => {
+              if (f.temp_cnl) list.push({ key: f.key, name: f.name, temp_cnl: f.temp_cnl, default_tol: 0.5 });
+            });
+            (EQUIPMENT.freezers || []).forEach(fz => {
+              if (fz.temp_cnl) list.push({ key: fz.key, name: fz.name, temp_cnl: fz.temp_cnl, default_tol: 1.0 });
+            });
+            (EQUIPMENT.ambient || []).forEach(a => {
+              if (a.temp_cnl) list.push({ key: a.key, name: a.name, temp_cnl: a.temp_cnl, default_tol: 0.5 });
+            });
+            return list;
+          }
+
+          function switchAuditView(tab) {
+            currentAuditTab = tab;
+            const btnA = document.getElementById('btnAuditAlarms');
+            const btnD = document.getElementById('btnAuditDoors');
+            const btnC = document.getElementById('btnAuditCal');
+            const tblA = document.getElementById('alarmsTable');
+            const tblD = document.getElementById('doorsTable');
+            const tblC = document.getElementById('calibrationTable');
+            const title = document.getElementById('auditSectionTitle');
+            const desc = document.getElementById('auditSectionDesc');
+
+            if (btnA) btnA.className = 'nav-tab';
+            if (btnD) btnD.className = 'nav-tab';
+            if (btnC) btnC.className = 'nav-tab';
+            if (tblA) tblA.style.display = 'none';
+            if (tblD) tblD.style.display = 'none';
+            if (tblC) tblC.style.display = 'none';
+
+            if (tab === 'doors' && btnD) {
+              btnD.className = 'nav-tab active';
+              tblD.style.display = 'block';
+              title.innerText = 'Cleanroom Door Access Log';
+              desc.innerText = 'Chronological log of cleanroom physical access, open duration, and session context.';
+              loadDoorEvents();
+            } else if (tab === 'calibration' && btnC) {
+              btnC.className = 'nav-tab active';
+              tblC.style.display = 'block';
+              title.innerText = 'Probe Calibration & NIST Traceability Log (CAP COM.30550)';
+              desc.innerText = 'Annual 1-point verification of Pt100 RTD & thermocouple sensors against the clinic Master NIST-Traceable Reference Thermometer.';
+              loadCalibrations();
+            } else {
+              if (btnA) btnA.className = 'nav-tab active';
+              if (tblA) tblA.style.display = 'block';
+              title.innerText = 'Active Alarms & Clinical Audit Trail';
+              desc.innerText = 'Reverse chronological history. Tap Acknowledge to silence repeating sirens.';
+              loadAlarms();
+            }
+          }
+
+          function loadCalibrations() {
+            fetch('/api/calibrations')
+              .then(r => r.json())
+              .then(data => {
+                cachedCalSummary = data;
+                const container = document.getElementById('calibrationTable');
+                if (!container) return;
+
+                const equipList = getCalibratableEquipment();
+                const eqStatus = data.equipment_status || {};
+                const logs = data.logs || [];
+
+                let h = '<div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:12px; padding:10px 12px; background:rgba(9,13,22,0.75); border:1px solid rgba(16,185,129,0.25); border-radius:8px;">' +
+                  '<div style="font-size:12.5px; color:#cbd5e1;">' +
+                  '<strong>CAP COM.30550 Compliance:</strong> Uncertified industrial probes are verified annually in-house against your Master NIST Reference Thermometer.' +
+                  '</div>' +
+                  '<button type="button" class="btn" style="background:#10b981; color:#090d16; font-weight:800; font-size:12.5px; padding:8px 14px;" onclick="openCalibrationModal()">+ Log Probe Verification</button>' +
+                  '</div>';
+
+                // Per-Equipment Status Pills
+                h += '<div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(195px, 1fr)); gap:8px; margin-bottom:14px;">';
+                equipList.forEach(eq => {
+                  const st = eqStatus[eq.key];
+                  let badgeHtml = '<span style="color:#94a3b8; font-size:10.5px; font-weight:700;">UNVERIFIED</span>';
+                  let subText = 'No record on file';
+                  let borderCol = 'rgba(255,255,255,0.08)';
+                  if (st) {
+                    if (st.status === 'VALID') {
+                      badgeHtml = '<span style="color:#10b981; font-size:10.5px; font-weight:800;">● NIST VERIFIED</span>';
+                      borderCol = 'rgba(16,185,129,0.35)';
+                    } else if (st.status === 'EXPIRING_SOON') {
+                      badgeHtml = '<span style="color:#f59e0b; font-size:10.5px; font-weight:800;">⚠ DUE SOON</span>';
+                      borderCol = 'rgba(245,158,11,0.4)';
+                    } else {
+                      badgeHtml = '<span style="color:#ef4444; font-size:10.5px; font-weight:800;">🚨 EXPIRED / FAIL</span>';
+                      borderCol = 'rgba(239,68,68,0.45)';
+                    }
+                    subText = `Due: ${st.next_due_date} (Δ ${st.deviation_c >= 0 ? '+' : ''}${st.deviation_c}°C)`;
+                  }
+                  h += `<div style="background:rgba(15,23,42,0.75); border:1px solid ${borderCol}; border-radius:8px; padding:8px 10px; cursor:pointer;" onclick="openCalibrationModal('${eq.key}')">` +
+                    `<div style="display:flex; justify-content:space-between; align-items:center;">` +
+                    `<span style="font-weight:700; font-size:12px; color:#f0f4f8;">${eq.name}</span>` +
+                    badgeHtml +
+                    `</div>` +
+                    `<div style="font-size:11px; color:#8899a6; margin-top:3px; font-family:monospace;">${subText}</div>` +
+                    `</div>`;
+                });
+                h += '</div>';
+
+                if (logs.length === 0) {
+                  h += '<p style="color:#94a3b8; padding:8px 0;">No probe calibration records logged yet. Click <b>+ Log Probe Verification</b> above to record your first NIST comparison.</p>';
+                  container.innerHTML = h;
+                  return;
+                }
+
+                h += '<table style="min-width:820px;"><thead><tr>' +
+                  '<th>Verified Date</th>' +
+                  '<th>Equipment</th>' +
+                  '<th>Probe ID</th>' +
+                  '<th>Master NIST Cert # (Exp)</th>' +
+                  '<th>NIST Ref</th>' +
+                  '<th>SCADA Read</th>' +
+                  '<th>Deviation</th>' +
+                  '<th>PLC Offset</th>' +
+                  '<th>Status / Next Due</th>' +
+                  '<th>Staff</th>' +
+                  '</tr></thead><tbody>';
+
+                logs.forEach(row => {
+                  const verDate = row.verified_at ? row.verified_at.split(' ')[0] : '-';
+                  const devSign = row.deviation_c >= 0 ? '+' : '';
+                  const offSign = row.offset_applied_c >= 0 ? '+' : '';
+                  let stBadge = '<span class="status-badge status-normal">PASS</span>';
+                  if (row.status === 'FAILED') {
+                    stBadge = '<span class="status-badge status-alert">OUT OF TOL</span>';
+                  } else if (row.status === 'EXPIRED') {
+                    stBadge = '<span class="status-badge status-alert">EXPIRED</span>';
+                  } else if (row.status === 'EXPIRING_SOON') {
+                    stBadge = '<span class="status-badge status-warn">DUE SOON</span>';
+                  }
+                  h += `<tr>` +
+                    `<td style="font-family:monospace;">${verDate}</td>` +
+                    `<td><strong>${row.equipment_name}</strong></td>` +
+                    `<td style="color:#94a3b8; font-size:12px;">${row.probe_label || '-'}</td>` +
+                    `<td style="font-family:monospace; font-size:12px;">${row.nist_cert_number} <span style="color:#8899a6;">(Exp: ${row.nist_exp_date})</span></td>` +
+                    `<td style="font-family:monospace; font-weight:700;">${row.ref_temp_c.toFixed(2)}°C</td>` +
+                    `<td style="font-family:monospace; font-weight:700; color:#38bdf8;">${row.scada_temp_c.toFixed(2)}°C</td>` +
+                    `<td style="font-family:monospace; font-weight:700;">${devSign}${row.deviation_c.toFixed(2)}°C <span style="color:#64748b; font-size:11px;">(±${row.tolerance_c}°C)</span></td>` +
+                    `<td style="font-family:monospace;">${offSign}${row.offset_applied_c.toFixed(2)}°C</td>` +
+                    `<td>${stBadge} <span style="font-size:11px; color:#8899a6; margin-left:4px;">Due ${row.next_due_date}</span></td>` +
+                    `<td><b>${row.verified_by}</b></td>` +
+                    `</tr>`;
+                });
+                h += '</tbody></table>';
+                container.innerHTML = h;
+              })
+              .catch(e => console.error('Calibrations fetch error:', e));
+          }
+
+          function openCalibrationModal(preselectKey) {
+            const sel = document.getElementById('calEquipSelect');
+            const equipList = getCalibratableEquipment();
+            sel.innerHTML = '';
+            equipList.forEach(eq => {
+              const opt = document.createElement('option');
+              opt.value = eq.key;
+              opt.textContent = `${eq.name} (Ch ${eq.temp_cnl})`;
+              sel.appendChild(opt);
+            });
+            if (preselectKey) {
+              sel.value = preselectKey;
+            }
+
+            if (cachedCalSummary) {
+              if (cachedCalSummary.last_nist_cert && !document.getElementById('calNistCert').value) {
+                document.getElementById('calNistCert').value = cachedCalSummary.last_nist_cert;
               }
-              subText = `Due: ${st.next_due_date} (Δ ${st.deviation_c >= 0 ? '+' : ''}${st.deviation_c}°C)`;
-            }
-            h += `<div style="background:rgba(15,23,42,0.75); border:1px solid ${borderCol}; border-radius:8px; padding:8px 10px; cursor:pointer;" onclick="openCalibrationModal('${eq.key}')">` +
-              `<div style="display:flex; justify-content:space-between; align-items:center;">` +
-              `<span style="font-weight:700; font-size:12px; color:#f0f4f8;">${eq.name}</span>` +
-              badgeHtml +
-              `</div>` +
-              `<div style="font-size:11px; color:#8899a6; margin-top:3px; font-family:monospace;">${subText}</div>` +
-              `</div>`;
-          });
-          h += '</div>';
-
-          if (logs.length === 0) {
-            h += '<p style="color:#94a3b8; padding:8px 0;">No probe calibration records logged yet. Click <b>+ Log Probe Verification</b> above to record your first NIST comparison.</p>';
-            container.innerHTML = h;
-            return;
-          }
-
-          h += '<table style="min-width:820px;"><thead><tr>' +
-            '<th>Verified Date</th>' +
-            '<th>Equipment</th>' +
-            '<th>Probe ID</th>' +
-            '<th>Master NIST Cert # (Exp)</th>' +
-            '<th>NIST Ref</th>' +
-            '<th>SCADA Read</th>' +
-            '<th>Deviation</th>' +
-            '<th>PLC Offset</th>' +
-            '<th>Status / Next Due</th>' +
-            '<th>Staff</th>' +
-            '</tr></thead><tbody>';
-
-          logs.forEach(row => {
-            const verDate = row.verified_at ? row.verified_at.split(' ')[0] : '-';
-            const devSign = row.deviation_c >= 0 ? '+' : '';
-            const offSign = row.offset_applied_c >= 0 ? '+' : '';
-            let stBadge = '<span class="status-badge status-normal">PASS</span>';
-            if (row.status === 'FAILED') {
-              stBadge = '<span class="status-badge status-alert">OUT OF TOL</span>';
-            } else if (row.status === 'EXPIRED') {
-              stBadge = '<span class="status-badge status-alert">EXPIRED</span>';
-            } else if (row.status === 'EXPIRING_SOON') {
-              stBadge = '<span class="status-badge status-warn">DUE SOON</span>';
-            }
-            h += `<tr>` +
-              `<td style="font-family:monospace;">${verDate}</td>` +
-              `<td><strong>${row.equipment_name}</strong></td>` +
-              `<td style="color:#94a3b8; font-size:12px;">${row.probe_label || '-'}</td>` +
-              `<td style="font-family:monospace; font-size:12px;">${row.nist_cert_number} <span style="color:#8899a6;">(Exp: ${row.nist_exp_date})</span></td>` +
-              `<td style="font-family:monospace; font-weight:700;">${row.ref_temp_c.toFixed(2)}°C</td>` +
-              `<td style="font-family:monospace; font-weight:700; color:#38bdf8;">${row.scada_temp_c.toFixed(2)}°C</td>` +
-              `<td style="font-family:monospace; font-weight:700;">${devSign}${row.deviation_c.toFixed(2)}°C <span style="color:#64748b; font-size:11px;">(±${row.tolerance_c}°C)</span></td>` +
-              `<td style="font-family:monospace;">${offSign}${row.offset_applied_c.toFixed(2)}°C</td>` +
-              `<td>${stBadge} <span style="font-size:11px; color:#8899a6; margin-left:4px;">Due ${row.next_due_date}</span></td>` +
-              `<td><b>${row.verified_by}</b></td>` +
-              `</tr>`;
-          });
-          h += '</tbody></table>';
-          container.innerHTML = h;
-        })
-        .catch(e => console.error('Calibrations fetch error:', e));
-    }
-
-    function openCalibrationModal(preselectKey) {
-      const sel = document.getElementById('calEquipSelect');
-      const equipList = getCalibratableEquipment();
-      sel.innerHTML = '';
-      equipList.forEach(eq => {
-        const opt = document.createElement('option');
-        opt.value = eq.key;
-        opt.textContent = `${eq.name} (Ch ${eq.temp_cnl})`;
-        sel.appendChild(opt);
-      });
-      if (preselectKey) {
-        sel.value = preselectKey;
-      }
-
-      if (cachedCalSummary) {
-        if (cachedCalSummary.last_nist_cert && !document.getElementById('calNistCert').value) {
-          document.getElementById('calNistCert').value = cachedCalSummary.last_nist_cert;
-        }
-        if (cachedCalSummary.last_nist_exp && !document.getElementById('calNistExp').value) {
-          document.getElementById('calNistExp').value = cachedCalSummary.last_nist_exp;
-        }
-      }
-
-      document.getElementById('calSubmitMsg').innerText = '';
-      onCalEquipChange();
-      document.getElementById('calibrationModal').style.display = 'flex';
-    }
-
-    function closeCalibrationModal() {
-      document.getElementById('calibrationModal').style.display = 'none';
-    }
-
-    function onCalEquipChange() {
-      const key = document.getElementById('calEquipSelect').value;
-      const equipList = getCalibratableEquipment();
-      const eq = equipList.find(item => item.key === key);
-      if (eq) {
-        document.getElementById('calTolerance').value = eq.default_tol.toFixed(1);
-        const liveVal = lastReadings[String(eq.temp_cnl)] !== undefined ? lastReadings[String(eq.temp_cnl)] : lastReadings[eq.temp_cnl];
-        if (liveVal !== undefined && liveVal !== null) {
-          document.getElementById('calScadaTemp').value = Number(liveVal).toFixed(2);
-        }
-        if (cachedCalSummary && cachedCalSummary.equipment_status && cachedCalSummary.equipment_status[key]) {
-          const prev = cachedCalSummary.equipment_status[key];
-          if (prev.probe_label) document.getElementById('calProbeLabel').value = prev.probe_label;
-          if (prev.offset_applied_c !== undefined) document.getElementById('calOffset').value = Number(prev.offset_applied_c).toFixed(2);
-        }
-      }
-      updateCalPreview();
-    }
-
-    function updateCalPreview() {
-      const refVal = parseFloat(document.getElementById('calRefTemp').value);
-      const scadaVal = parseFloat(document.getElementById('calScadaTemp').value);
-      const tolVal = parseFloat(document.getElementById('calTolerance').value) || 0.5;
-      const banner = document.getElementById('calPreviewBanner');
-      if (isNaN(refVal) || isNaN(scadaVal)) {
-        banner.innerHTML = '<span style="color:#94a3b8;">Enter Reference &amp; SCADA temperatures to calculate deviation.</span><span class="status-badge status-normal">--</span>';
-        return;
-      }
-      const dev = scadaVal - refVal;
-      const absDev = Math.abs(dev);
-      const sign = dev >= 0 ? '+' : '';
-      const pass = absDev <= tolVal;
-      const badge = pass
-        ? '<span class="status-badge status-normal">PASS (Within Tolerance)</span>'
-        : '<span class="status-badge status-alert">FAIL (Adjust PLC Offset)</span>';
-      banner.innerHTML = `<span>Deviation (SCADA − NIST): <strong style="font-family:monospace; color:#f0f4f8;">${sign}${dev.toFixed(2)}°C</strong> (Allowed: ±${tolVal.toFixed(1)}°C)</span>${badge}`;
-    }
-
-    function submitCalibrationLog() {
-      const key = document.getElementById('calEquipSelect').value;
-      const equipList = getCalibratableEquipment();
-      const eq = equipList.find(item => item.key === key);
-      const eqName = eq ? eq.name : key;
-
-      const probeLbl = document.getElementById('calProbeLabel').value.trim();
-      const nistCert = document.getElementById('calNistCert').value.trim();
-      const nistExp = document.getElementById('calNistExp').value.trim();
-      const refTemp = parseFloat(document.getElementById('calRefTemp').value);
-      const scadaTemp = parseFloat(document.getElementById('calScadaTemp').value);
-      const offsetVal = parseFloat(document.getElementById('calOffset').value) || 0.0;
-      const tolVal = parseFloat(document.getElementById('calTolerance').value) || 0.5;
-      const verBy = document.getElementById('calVerifiedBy').value.trim().toUpperCase();
-      const notes = document.getElementById('calNotes').value.trim();
-      const msgEl = document.getElementById('calSubmitMsg');
-
-      if (!nistCert || !nistExp || isNaN(refTemp) || isNaN(scadaTemp) || !verBy) {
-        msgEl.style.color = '#ef4444';
-        msgEl.innerText = 'Please complete NIST Cert #, Expiration Date, Reference Temp, SCADA Temp, and Staff Initials.';
-        return;
-      }
-
-      const btn = document.getElementById('btnSubmitCal');
-      btn.disabled = true;
-      btn.innerText = 'Saving...';
-
-      fetch('/api/calibrations', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          equipment_key: key,
-          equipment_name: eqName,
-          probe_label: probeLbl,
-          nist_cert_number: nistCert,
-          nist_exp_date: nistExp,
-          ref_temp_c: refTemp,
-          scada_temp_c: scadaTemp,
-          offset_applied_c: offsetVal,
-          tolerance_c: tolVal,
-          verified_by: verBy,
-          notes: notes
-        })
-      })
-        .then(r => r.json())
-        .then(res => {
-          btn.disabled = false;
-          btn.innerText = '✅ Record NIST Verification';
-          if (res.success) {
-            closeCalibrationModal();
-            loadCalibrations();
-          } else {
-            msgEl.style.color = '#ef4444';
-            msgEl.innerText = 'Error: ' + (res.error || 'Failed to save record');
-          }
-        })
-        .catch(e => {
-          btn.disabled = false;
-          btn.innerText = '✅ Record NIST Verification';
-          msgEl.style.color = '#ef4444';
-          msgEl.innerText = 'Network error: ' + e;
-        });
-    }
-
-    function loadDoorEvents() {
-      fetch('/api/door-events')
-        .then(r => r.json())
-        .then(events => {
-          const container = document.getElementById('doorsTable');
-          if (!events || events.length === 0) {
-            container.innerHTML = '<p style="color:#00e676; padding:12px 0;">🚪 No door access transitions recorded yet.</p>';
-            return;
-          }
-          let h = '<table style="min-width:700px;"><thead><tr>' +
-            '<th>Opened At</th>' +
-            '<th>Door</th>' +
-            '<th>Closed At</th>' +
-            '<th>Duration</th>' +
-            '<th>Session Mode</th>' +
-            '<th>Alarm Tripped</th>' +
-            '</tr></thead><tbody>';
-
-          events.forEach(ev => {
-            const openStr = ev.opened_at ? ev.opened_at.split('.')[0] : '-';
-            const closeStr = ev.closed_at ? ev.closed_at.split('.')[0] : '<span style="color:#ffab00; font-weight:700;">CURRENTLY OPEN</span>';
-            let durStr = '-';
-            if (ev.duration_seconds !== null && ev.duration_seconds !== undefined) {
-              const m = Math.floor(ev.duration_seconds / 60);
-              const s = ev.duration_seconds % 60;
-              durStr = m > 0 ? `${m}m ${s}s` : `${s}s`;
-            } else if (!ev.closed_at) {
-              durStr = '<span style="color:#ffab00;">In Progress</span>';
+              if (cachedCalSummary.last_nist_exp && !document.getElementById('calNistExp').value) {
+                document.getElementById('calNistExp').value = cachedCalSummary.last_nist_exp;
+              }
             }
 
-            const modeBadge = (ev.lab_mode === 'OFF_SESSION')
-              ? '<span style="background:rgba(245,158,11,0.2); color:#f59e0b; padding:2px 7px; border-radius:4px; font-weight:700; font-size:11px;">OFF-SESSION</span>'
-              : '<span style="background:rgba(0,230,118,0.15); color:#00e676; padding:2px 7px; border-radius:4px; font-weight:700; font-size:11px;">IN-SESSION</span>';
+            document.getElementById('calSubmitMsg').innerText = '';
+            onCalEquipChange();
+            document.getElementById('calibrationModal').style.display = 'flex';
+          }
 
-            const alarmBadge = ev.alarm_tripped
-              ? '<span class="status-badge status-alert">EXCURSION</span>'
-              : '<span class="status-badge status-normal">SECURE</span>';
+          function closeCalibrationModal() {
+            document.getElementById('calibrationModal').style.display = 'none';
+          }
 
-            h += `<tr>` +
-              `<td>${openStr}</td>` +
-              `<td><strong>${ev.door_name}</strong></td>` +
-              `<td>${closeStr}</td>` +
-              `<td style="font-family:monospace; font-weight:700;">${durStr}</td>` +
-              `<td>${modeBadge}</td>` +
-              `<td>${alarmBadge}</td>` +
-              `</tr>`;
-          });
-          h += '</tbody></table>';
-          container.innerHTML = h;
-        })
-        .catch(e => console.error('Door events fetch error:', e));
-    }
+          function onCalEquipChange() {
+            const key = document.getElementById('calEquipSelect').value;
+            const equipList = getCalibratableEquipment();
+            const eq = equipList.find(item => item.key === key);
+            if (eq) {
+              document.getElementById('calTolerance').value = eq.default_tol.toFixed(1);
+              const liveVal = lastReadings[String(eq.temp_cnl)] !== undefined ? lastReadings[String(eq.temp_cnl)] : lastReadings[eq.temp_cnl];
+              if (liveVal !== undefined && liveVal !== null) {
+                document.getElementById('calScadaTemp').value = Number(liveVal).toFixed(2);
+              }
+              if (cachedCalSummary && cachedCalSummary.equipment_status && cachedCalSummary.equipment_status[key]) {
+                const prev = cachedCalSummary.equipment_status[key];
+                if (prev.probe_label) document.getElementById('calProbeLabel').value = prev.probe_label;
+                if (prev.offset_applied_c !== undefined) document.getElementById('calOffset').value = Number(prev.offset_applied_c).toFixed(2);
+              }
+            }
+            updateCalPreview();
+          }
 
-    // Initialization
-    const initialTab = (window.location.pathname.startsWith('/cryo') || window.location.hash === '#cryo') ? 'cryo' : 'live';
-    switchTab(initialTab, false);
+          function updateCalPreview() {
+            const refVal = parseFloat(document.getElementById('calRefTemp').value);
+            const scadaVal = parseFloat(document.getElementById('calScadaTemp').value);
+            const tolVal = parseFloat(document.getElementById('calTolerance').value) || 0.5;
+            const banner = document.getElementById('calPreviewBanner');
+            if (isNaN(refVal) || isNaN(scadaVal)) {
+              banner.innerHTML = '<span style="color:#94a3b8;">Enter Reference &amp; SCADA temperatures to calculate deviation.</span><span class="status-badge status-normal">--</span>';
+              return;
+            }
+            const dev = scadaVal - refVal;
+            const absDev = Math.abs(dev);
+            const sign = dev >= 0 ? '+' : '';
+            const pass = absDev <= tolVal;
+            const badge = pass
+              ? '<span class="status-badge status-normal">PASS (Within Tolerance)</span>'
+              : '<span class="status-badge status-alert">FAIL (Adjust PLC Offset)</span>';
+            banner.innerHTML = `<span>Deviation (SCADA − NIST): <strong style="font-family:monospace; color:#f0f4f8;">${sign}${dev.toFixed(2)}°C</strong> (Allowed: ±${tolVal.toFixed(1)}°C)</span>${badge}`;
+          }
 
-    setInterval(updateTelemetry, 1000);
-    setInterval(loadAlarms, 2000);
-    setInterval(updateLn2Status, 3000);
-    setInterval(() => { if (currentAuditTab === 'doors') loadDoorEvents(); }, 3000);
-    updateTelemetry();
-    loadAlarms();
-    updateLn2Status();
-  </script>
+          function submitCalibrationLog() {
+            const key = document.getElementById('calEquipSelect').value;
+            const equipList = getCalibratableEquipment();
+            const eq = equipList.find(item => item.key === key);
+            const eqName = eq ? eq.name : key;
+
+            const probeLbl = document.getElementById('calProbeLabel').value.trim();
+            const nistCert = document.getElementById('calNistCert').value.trim();
+            const nistExp = document.getElementById('calNistExp').value.trim();
+            const refTemp = parseFloat(document.getElementById('calRefTemp').value);
+            const scadaTemp = parseFloat(document.getElementById('calScadaTemp').value);
+            const offsetVal = parseFloat(document.getElementById('calOffset').value) || 0.0;
+            const tolVal = parseFloat(document.getElementById('calTolerance').value) || 0.5;
+            const verBy = document.getElementById('calVerifiedBy').value.trim().toUpperCase();
+            const notes = document.getElementById('calNotes').value.trim();
+            const msgEl = document.getElementById('calSubmitMsg');
+
+            if (!nistCert || !nistExp || isNaN(refTemp) || isNaN(scadaTemp) || !verBy) {
+              msgEl.style.color = '#ef4444';
+              msgEl.innerText = 'Please complete NIST Cert #, Expiration Date, Reference Temp, SCADA Temp, and Staff Initials.';
+              return;
+            }
+
+            const btn = document.getElementById('btnSubmitCal');
+            btn.disabled = true;
+            btn.innerText = 'Saving...';
+
+            fetch('/api/calibrations', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                equipment_key: key,
+                equipment_name: eqName,
+                probe_label: probeLbl,
+                nist_cert_number: nistCert,
+                nist_exp_date: nistExp,
+                ref_temp_c: refTemp,
+                scada_temp_c: scadaTemp,
+                offset_applied_c: offsetVal,
+                tolerance_c: tolVal,
+                verified_by: verBy,
+                notes: notes
+              })
+            })
+              .then(r => r.json())
+              .then(res => {
+                btn.disabled = false;
+                btn.innerText = '✅ Record NIST Verification';
+                if (res.success) {
+                  closeCalibrationModal();
+                  loadCalibrations();
+                } else {
+                  msgEl.style.color = '#ef4444';
+                  msgEl.innerText = 'Error: ' + (res.error || 'Failed to save record');
+                }
+              })
+              .catch(e => {
+                btn.disabled = false;
+                btn.innerText = '✅ Record NIST Verification';
+                msgEl.style.color = '#ef4444';
+                msgEl.innerText = 'Network error: ' + e;
+              });
+          }
+
+          function loadDoorEvents() {
+            fetch('/api/door-events')
+              .then(r => r.json())
+              .then(events => {
+                const container = document.getElementById('doorsTable');
+                if (!events || events.length === 0) {
+                  container.innerHTML = '<p style="color:#00e676; padding:12px 0;">🚪 No door access transitions recorded yet.</p>';
+                  return;
+                }
+                let h = '<table style="min-width:700px;"><thead><tr>' +
+                  '<th>Opened At</th>' +
+                  '<th>Door</th>' +
+                  '<th>Closed At</th>' +
+                  '<th>Duration</th>' +
+                  '<th>Session Mode</th>' +
+                  '<th>Alarm Tripped</th>' +
+                  '</tr></thead><tbody>';
+
+                events.forEach(ev => {
+                  const openStr = ev.opened_at ? ev.opened_at.split('.')[0] : '-';
+                  const closeStr = ev.closed_at ? ev.closed_at.split('.')[0] : '<span style="color:#ffab00; font-weight:700;">CURRENTLY OPEN</span>';
+                  let durStr = '-';
+                  if (ev.duration_seconds !== null && ev.duration_seconds !== undefined) {
+                    const m = Math.floor(ev.duration_seconds / 60);
+                    const s = ev.duration_seconds % 60;
+                    durStr = m > 0 ? `${m}m ${s}s` : `${s}s`;
+                  } else if (!ev.closed_at) {
+                    durStr = '<span style="color:#ffab00;">In Progress</span>';
+                  }
+
+                  const modeBadge = (ev.lab_mode === 'OFF_SESSION')
+                    ? '<span style="background:rgba(245,158,11,0.2); color:#f59e0b; padding:2px 7px; border-radius:4px; font-weight:700; font-size:11px;">OFF-SESSION</span>'
+                    : '<span style="background:rgba(0,230,118,0.15); color:#00e676; padding:2px 7px; border-radius:4px; font-weight:700; font-size:11px;">IN-SESSION</span>';
+
+                  const alarmBadge = ev.alarm_tripped
+                    ? '<span class="status-badge status-alert">EXCURSION</span>'
+                    : '<span class="status-badge status-normal">SECURE</span>';
+
+                  h += `<tr>` +
+                    `<td>${openStr}</td>` +
+                    `<td><strong>${ev.door_name}</strong></td>` +
+                    `<td>${closeStr}</td>` +
+                    `<td style="font-family:monospace; font-weight:700;">${durStr}</td>` +
+                    `<td>${modeBadge}</td>` +
+                    `<td>${alarmBadge}</td>` +
+                    `</tr>`;
+                });
+                h += '</tbody></table>';
+                container.innerHTML = h;
+              })
+              .catch(e => console.error('Door events fetch error:', e));
+          }
+
+          // Initialization
+          const initialTab = (window.location.pathname.startsWith('/cryo') || window.location.hash === '#cryo') ? 'cryo' : 'live';
+          switchTab(initialTab, false);
+
+          setInterval(updateTelemetry, 1000);
+          setInterval(loadAlarms, 2000);
+          setInterval(updateLn2Status, 3000);
+          setInterval(() => { if (currentAuditTab === 'doors') loadDoorEvents(); }, 3000);
+          updateTelemetry();
+          loadAlarms();
+          updateLn2Status();
+    </script>
 </body>
 
 </html>
