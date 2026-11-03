@@ -135,12 +135,14 @@ fbCabinet01(
 );
 
 fbIncubator1(
-    bRawContact := (bIncubator01_RawContact AND NOT fbCabinet01.bIncubatorMute),
+    bRawContact := bIncubator01_RawContact,
+    bMute       := fbCabinet01.bIncubatorMute,
     bSimMode    := bGlobalSimMode
 );
 
 fbIncubator2(
-    bRawContact := (bIncubator02_RawContact AND NOT fbCabinet01.bIncubatorMute),
+    bRawContact := bIncubator02_RawContact,
+    bMute       := fbCabinet01.bIncubatorMute,
     bSimMode    := bGlobalSimMode
 );
 
