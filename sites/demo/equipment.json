@@ -95,7 +95,8 @@
       "alarm_cnl": 123,
       "has_zone_temps": true,
       "zone_count": 10,
-      "zone_simulated": true,
+      "zone_simulated": false,
+      "zone_cnls": [141, 142, 143, 144, 145, 146, 147, 148, 149, 150],
       "target_temp": 37.0
     },
     {
@@ -110,7 +111,8 @@
       "alarm_cnl": 124,
       "has_zone_temps": true,
       "zone_count": 10,
-      "zone_simulated": true,
+      "zone_simulated": false,
+      "zone_cnls": [151, 152, 153, 154, 155, 156, 157, 158, 159, 160],
       "target_temp": 37.0
     }
   ],

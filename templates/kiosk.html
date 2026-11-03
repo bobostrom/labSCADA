@@ -1612,15 +1612,21 @@
     const EQUIPMENT = {{ equipment_json | safe }};
     const LN2_INSPECTION_CNLS = (EQUIPMENT.dewars || []).map(d => d.ln2_cnl).filter(Boolean);
 
-    // Incubator Modal & Multi-Zone Simulation State
+    // Incubator Modal & Multi-Zone Telemetry State
     let lastReadings = {};
     let lastCabinetState = {};
     let currentModalIncKey = null;
-    let simulatedChamberOffsets = {};
 
-    function getSimulatedChamberTemps(incKey) {
-      // Default clinical setpoint: 37.0°C across all 10 heated wells
-      return Array(10).fill((37.0).toFixed(1));
+    function getIncubatorChamberTemps(inc) {
+      if (!inc) return Array(10).fill('--');
+      const cnls = inc.zone_cnls || [];
+      if (cnls.length > 0) {
+        return cnls.map(cnl => {
+          const val = lastReadings[cnl] !== undefined ? lastReadings[cnl] : lastReadings[String(cnl)];
+          return (val !== undefined && val !== null) ? Number(val).toFixed(1) : '--';
+        });
+      }
+      return Array(10).fill((inc.target_temp || 37.0).toFixed(1));
     }
 
     function openIncubatorModal(incKey) {
@@ -1636,7 +1642,7 @@
       if (subEl) subEl.innerText = `${inc.subtitle || ('Bay ' + (inc.bay_number || '1'))} • K-Systems G210 InviCell`;
       if (hwChan) hwChan.innerText = `● LIVE HARDWARE (${inc.alarm_cnl ? ('Channel ' + inc.alarm_cnl) : 'Node00 DI'})`;
 
-      renderChamberGrid(incKey);
+      renderChamberGrid(inc);
       updateModalAlarmState(inc);
 
       const modal = document.getElementById('incubatorModal');
@@ -1649,20 +1655,26 @@
       if (modal) modal.style.display = 'none';
     }
 
-    function renderChamberGrid(incKey) {
+    function renderChamberGrid(inc) {
       const grid = document.getElementById('incModalZonesGrid');
       if (!grid) return;
-      const temps = getSimulatedChamberTemps(incKey);
+      const temps = getIncubatorChamberTemps(inc);
 
       let html = '';
       temps.forEach((t, i) => {
         const chamberNum = String(i + 1).padStart(2, '0');
+        const isNormal = (t !== '--' && Math.abs(parseFloat(t) - 37.0) <= 0.5);
+        const badge = (t === '--')
+          ? '<span class="status-badge" style="font-size:8.5px; padding:1px 4px; color:#8899a6;">OFFLINE</span>'
+          : (isNormal
+            ? '<span class="status-badge status-normal" style="font-size:8.5px; padding:1px 4px;">IN-RANGE</span>'
+            : '<span class="status-badge status-warn" style="font-size:8.5px; padding:1px 4px;">DRIFT</span>');
         html += `
           <div class="chamber-well">
             <div style="font-size:10px; font-weight:700; color:#8899a6; text-transform:uppercase;">CH ${chamberNum}</div>
             <div style="font-size:1.15rem; font-weight:800; font-family:monospace; color:#38bdf8; margin:2px 0;">${t}°C</div>
             <div style="font-size:9px; color:#64748b;">Set: 37.0°</div>
-            <div style="margin-top:4px;"><span class="status-badge status-normal" style="font-size:8.5px; padding:1px 4px;">IN-RANGE</span></div>
+            <div style="margin-top:4px;">${badge}</div>
           </div>
         `;
       });
@@ -1760,6 +1772,15 @@
         .then(data => {
           const r = data.readings || {};
           lastReadings = r;
+
+          // If incubator modal is currently open, live-refresh its chamber temperatures & hardware alarm state
+          if (currentModalIncKey) {
+            const curInc = (EQUIPMENT.incubators || []).find(i => i.key === currentModalIncKey);
+            if (curInc) {
+              renderChamberGrid(curInc);
+              updateModalAlarmState(curInc);
+            }
+          }
 
           // Clock
           if (data.server_time) {
