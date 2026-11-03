@@ -1619,17 +1619,8 @@
     let simulatedChamberOffsets = {};
 
     function getSimulatedChamberTemps(incKey) {
-      if (!simulatedChamberOffsets[incKey]) {
-        simulatedChamberOffsets[incKey] = [
-          0.01, -0.02, 0.02, -0.01, 0.00,
-          -0.01, 0.02, -0.02, 0.01, 0.00
-        ];
-      }
-      const offsets = simulatedChamberOffsets[incKey];
-      return offsets.map((off, idx) => {
-        const jitter = (Math.sin(Date.now() / 2500 + idx * 1.4) * 0.015);
-        return (37.00 + off + jitter).toFixed(2);
-      });
+      // Default clinical setpoint: 37.0°C across all 10 heated wells
+      return Array(10).fill((37.0).toFixed(1));
     }
 
     function openIncubatorModal(incKey) {
