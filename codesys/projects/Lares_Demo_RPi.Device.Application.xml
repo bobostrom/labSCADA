@@ -9,18 +9,14 @@
     <TypeSimple name="T_BOOL" size="1" swapsize="0" typeclass="Bool" iecname="BOOL" />
     <TypeSimple name="T_REAL" size="4" swapsize="4" typeclass="Real" iecname="REAL" />
     <TypeSimple name="T_TIME" size="4" swapsize="4" typeclass="Time" iecname="TIME" />
+    <TypeArray name="T_ARRAY__1__10__OF_REAL" size="40" nativesize="40" typeclass="Array" iecname="ARRAY [1..10] OF REAL" basetype="T_REAL">
+      <ArrayDim minrange="1" maxrange="10" />
+    </TypeArray>
     <TypeUserDef name="T_FB_Dewar" size="7" nativesize="264" typeclass="Userdef" pouclass="FUNCTION_BLOCK" iecname="FB_Dewar">
       <UserDefElement iecname="rProcessTemp" type="T_REAL" byteoffset="0" vartype="VAR_OUTPUT" access="Read" />
       <UserDefElement iecname="bAlarm" type="T_BOOL" byteoffset="4" vartype="VAR_OUTPUT" access="Read" />
       <UserDefElement iecname="bWarn" type="T_BOOL" byteoffset="5" vartype="VAR_OUTPUT" access="Read" />
       <UserDefElement iecname="bForceExcursion" type="T_BOOL" byteoffset="6" vartype="VAR" access="ReadWrite" />
-    </TypeUserDef>
-    <TypeUserDef name="T_FB_Incubator" size="5" nativesize="136" typeclass="Userdef" pouclass="FUNCTION_BLOCK" iecname="FB_Incubator">
-      <UserDefElement iecname="bMute" type="T_BOOL" byteoffset="0" vartype="VAR_INPUT" access="Read" />
-      <UserDefElement iecname="bAlarm" type="T_BOOL" byteoffset="1" vartype="VAR_OUTPUT" access="Read" />
-      <UserDefElement iecname="bAlarmContact" type="T_BOOL" byteoffset="2" vartype="VAR_OUTPUT" access="Read" />
-      <UserDefElement iecname="bMuted" type="T_BOOL" byteoffset="3" vartype="VAR_OUTPUT" access="Read" />
-      <UserDefElement iecname="bForceAlarm" type="T_BOOL" byteoffset="4" vartype="VAR" access="ReadWrite" />
     </TypeUserDef>
     <TypeUserDef name="T_FB_IncubatorCabinet" size="15" nativesize="112" typeclass="Userdef" pouclass="FUNCTION_BLOCK" iecname="FB_IncubatorCabinet">
       <UserDefElement iecname="rCabinetTemp" type="T_REAL" byteoffset="0" vartype="VAR_INPUT" access="Read" />
@@ -38,7 +34,7 @@
       <UserDefElement iecname="bWarn" type="T_BOOL" byteoffset="5" vartype="VAR_OUTPUT" access="Read" />
       <UserDefElement iecname="bForceExcursion" type="T_BOOL" byteoffset="6" vartype="VAR" access="ReadWrite" />
     </TypeUserDef>
-    <TypeUserDef name="T_FB_MedFridge" size="7" nativesize="264" typeclass="Userdef" pouclass="FUNCTION_BLOCK" iecname="FB_MedFridge">
+    <TypeUserDef name="T_FB_MedFridge" size="7" nativesize="272" typeclass="Userdef" pouclass="FUNCTION_BLOCK" iecname="FB_MedFridge">
       <UserDefElement iecname="rProcessTemp" type="T_REAL" byteoffset="0" vartype="VAR_OUTPUT" access="Read" />
       <UserDefElement iecname="bAlarm" type="T_BOOL" byteoffset="4" vartype="VAR_OUTPUT" access="Read" />
       <UserDefElement iecname="bWarn" type="T_BOOL" byteoffset="5" vartype="VAR_OUTPUT" access="Read" />
@@ -46,6 +42,13 @@
     </TypeUserDef>
     <TypeUserDef name="T_FB_PickupDropout" size="1" nativesize="96" typeclass="Userdef" pouclass="FUNCTION_BLOCK" iecname="FB_PickupDropout">
       <UserDefElement iecname="Q" type="T_BOOL" byteoffset="0" vartype="VAR_OUTPUT" access="Read" />
+    </TypeUserDef>
+    <TypeUserDef name="T_FB_G210_Incubator" size="44" nativesize="160" typeclass="Userdef" pouclass="FUNCTION_BLOCK" iecname="FB_G210_Incubator">
+      <UserDefElement iecname="bAlarmContact" type="T_BOOL" byteoffset="0" vartype="VAR_INPUT" access="ReadWrite" />
+      <UserDefElement iecname="bMute" type="T_BOOL" byteoffset="1" vartype="VAR_INPUT" access="Read" />
+      <UserDefElement iecname="bAlarm" type="T_BOOL" byteoffset="2" vartype="VAR_OUTPUT" access="Read" />
+      <UserDefElement iecname="bMuted" type="T_BOOL" byteoffset="3" vartype="VAR_OUTPUT" access="Read" />
+      <UserDefElement iecname="rZoneTemps" type="T_ARRAY__1__10__OF_REAL" byteoffset="4" vartype="VAR_OUTPUT" access="Read" />
     </TypeUserDef>
   </TypeList>
   <NodeList>
@@ -62,8 +65,8 @@
         <Node name="fbDoor02" type="T_FB_PickupDropout" access="Read" />
         <Node name="fbFreezer" type="T_FB_MedFreezer" access="ReadWrite" />
         <Node name="fbFridge" type="T_FB_MedFridge" access="ReadWrite" />
-        <Node name="fbIncubator1" type="T_FB_Incubator" access="ReadWrite" />
-        <Node name="fbIncubator2" type="T_FB_Incubator" access="ReadWrite" />
+        <Node name="fbIncubator1" type="T_FB_G210_Incubator" access="ReadWrite" />
+        <Node name="fbIncubator2" type="T_FB_G210_Incubator" access="ReadWrite" />
         <Node name="rLabAmbientTemp" type="T_REAL" access="Read" />
       </Node>
     </Node>
