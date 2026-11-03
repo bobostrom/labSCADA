@@ -2,7 +2,7 @@
    FUNCTION BLOCK: FB_G210_Incubator
    DESCRIPTION: Encapsulated clinical monitoring block for K-Systems G210
                 Multi-Chamber Incubators (10 Heated Zones).
-                - 10 Chamber Zone Temperatures (Default 37.0°C)
+                - 10 Chamber Zone Temperatures (Default -99.0°C unassigned sentinel)
                 - Direct Physical Dry Alarm Contact (bAlarmContact)
                 - Door/Recovery Mute Supervision (bMute)
                 - Pickup/Dropout Debounce Filter
@@ -24,7 +24,7 @@ VAR_OUTPUT
     {attribute 'symbol' := 'read'}
     bMuted              : BOOL := FALSE;    (* Contact is tripped but actively suppressed by cabinet mute *)
     {attribute 'symbol' := 'read'}
-    rZoneTemps          : ARRAY[1..10] OF REAL := [10(37.0)];  (* 10 Heated Chambers, Default 37.0 °C *)
+    rZoneTemps          : ARRAY[1..10] OF REAL := [10(-99.0)];  (* 10 Heated Chambers, Default -99.0 °C (Unwired Sentinel) *)
 END_VAR
 VAR
     {attribute 'symbol' := 'none'}
