@@ -33,6 +33,26 @@
       <Item active="true" nodeID="ns=4;s=|var|WAGO 750-8212 PFC200 G2 2ETH RS.Application.PLC_PRG.fbCabinet01.bDoorOpen" displayName="Cabinet 01 Door Open" tagCode="Cabinet_DoorOpen" dataType="System.Boolean" isArray="false" />
       <Item active="true" nodeID="ns=4;s=|var|WAGO 750-8212 PFC200 G2 2ETH RS.Application.PLC_PRG.fbCabinet01.bIncubatorMute" displayName="Cabinet 01 Incubator Mute" tagCode="Cabinet_Mute" dataType="System.Boolean" isArray="false" />
       <Item active="true" nodeID="ns=4;s=|var|WAGO 750-8212 PFC200 G2 2ETH RS.Application.PLC_PRG.fbCabinet01.bDoorAlarm" displayName="Cabinet 01 Door Alarm" tagCode="Cabinet_DoorAlarm" dataType="System.Boolean" isArray="false" />
+      <Item active="true" nodeID="ns=4;s=|var|WAGO 750-8212 PFC200 G2 2ETH RS.Application.PLC_PRG.fbIncubator1.rZoneTemps[1]" displayName="Incubator 01 Zone 01" tagCode="Inc1_Zone_01" dataType="System.Double" isArray="false" />
+      <Item active="true" nodeID="ns=4;s=|var|WAGO 750-8212 PFC200 G2 2ETH RS.Application.PLC_PRG.fbIncubator1.rZoneTemps[2]" displayName="Incubator 01 Zone 02" tagCode="Inc1_Zone_02" dataType="System.Double" isArray="false" />
+      <Item active="true" nodeID="ns=4;s=|var|WAGO 750-8212 PFC200 G2 2ETH RS.Application.PLC_PRG.fbIncubator1.rZoneTemps[3]" displayName="Incubator 01 Zone 03" tagCode="Inc1_Zone_03" dataType="System.Double" isArray="false" />
+      <Item active="true" nodeID="ns=4;s=|var|WAGO 750-8212 PFC200 G2 2ETH RS.Application.PLC_PRG.fbIncubator1.rZoneTemps[4]" displayName="Incubator 01 Zone 04" tagCode="Inc1_Zone_04" dataType="System.Double" isArray="false" />
+      <Item active="true" nodeID="ns=4;s=|var|WAGO 750-8212 PFC200 G2 2ETH RS.Application.PLC_PRG.fbIncubator1.rZoneTemps[5]" displayName="Incubator 01 Zone 05" tagCode="Inc1_Zone_05" dataType="System.Double" isArray="false" />
+      <Item active="true" nodeID="ns=4;s=|var|WAGO 750-8212 PFC200 G2 2ETH RS.Application.PLC_PRG.fbIncubator1.rZoneTemps[6]" displayName="Incubator 01 Zone 06" tagCode="Inc1_Zone_06" dataType="System.Double" isArray="false" />
+      <Item active="true" nodeID="ns=4;s=|var|WAGO 750-8212 PFC200 G2 2ETH RS.Application.PLC_PRG.fbIncubator1.rZoneTemps[7]" displayName="Incubator 01 Zone 07" tagCode="Inc1_Zone_07" dataType="System.Double" isArray="false" />
+      <Item active="true" nodeID="ns=4;s=|var|WAGO 750-8212 PFC200 G2 2ETH RS.Application.PLC_PRG.fbIncubator1.rZoneTemps[8]" displayName="Incubator 01 Zone 08" tagCode="Inc1_Zone_08" dataType="System.Double" isArray="false" />
+      <Item active="true" nodeID="ns=4;s=|var|WAGO 750-8212 PFC200 G2 2ETH RS.Application.PLC_PRG.fbIncubator1.rZoneTemps[9]" displayName="Incubator 01 Zone 09" tagCode="Inc1_Zone_09" dataType="System.Double" isArray="false" />
+      <Item active="true" nodeID="ns=4;s=|var|WAGO 750-8212 PFC200 G2 2ETH RS.Application.PLC_PRG.fbIncubator1.rZoneTemps[10]" displayName="Incubator 01 Zone 10" tagCode="Inc1_Zone_10" dataType="System.Double" isArray="false" />
+      <Item active="true" nodeID="ns=4;s=|var|WAGO 750-8212 PFC200 G2 2ETH RS.Application.PLC_PRG.fbIncubator2.rZoneTemps[1]" displayName="Incubator 02 Zone 01" tagCode="Inc2_Zone_01" dataType="System.Double" isArray="false" />
+      <Item active="true" nodeID="ns=4;s=|var|WAGO 750-8212 PFC200 G2 2ETH RS.Application.PLC_PRG.fbIncubator2.rZoneTemps[2]" displayName="Incubator 02 Zone 02" tagCode="Inc2_Zone_02" dataType="System.Double" isArray="false" />
+      <Item active="true" nodeID="ns=4;s=|var|WAGO 750-8212 PFC200 G2 2ETH RS.Application.PLC_PRG.fbIncubator2.rZoneTemps[3]" displayName="Incubator 02 Zone 03" tagCode="Inc2_Zone_03" dataType="System.Double" isArray="false" />
+      <Item active="true" nodeID="ns=4;s=|var|WAGO 750-8212 PFC200 G2 2ETH RS.Application.PLC_PRG.fbIncubator2.rZoneTemps[4]" displayName="Incubator 02 Zone 04" tagCode="Inc2_Zone_04" dataType="System.Double" isArray="false" />
+      <Item active="true" nodeID="ns=4;s=|var|WAGO 750-8212 PFC200 G2 2ETH RS.Application.PLC_PRG.fbIncubator2.rZoneTemps[5]" displayName="Incubator 02 Zone 05" tagCode="Inc2_Zone_05" dataType="System.Double" isArray="false" />
+      <Item active="true" nodeID="ns=4;s=|var|WAGO 750-8212 PFC200 G2 2ETH RS.Application.PLC_PRG.fbIncubator2.rZoneTemps[6]" displayName="Incubator 02 Zone 06" tagCode="Inc2_Zone_06" dataType="System.Double" isArray="false" />
+      <Item active="true" nodeID="ns=4;s=|var|WAGO 750-8212 PFC200 G2 2ETH RS.Application.PLC_PRG.fbIncubator2.rZoneTemps[7]" displayName="Incubator 02 Zone 07" tagCode="Inc2_Zone_07" dataType="System.Double" isArray="false" />
+      <Item active="true" nodeID="ns=4;s=|var|WAGO 750-8212 PFC200 G2 2ETH RS.Application.PLC_PRG.fbIncubator2.rZoneTemps[8]" displayName="Incubator 02 Zone 08" tagCode="Inc2_Zone_08" dataType="System.Double" isArray="false" />
+      <Item active="true" nodeID="ns=4;s=|var|WAGO 750-8212 PFC200 G2 2ETH RS.Application.PLC_PRG.fbIncubator2.rZoneTemps[9]" displayName="Incubator 02 Zone 09" tagCode="Inc2_Zone_09" dataType="System.Double" isArray="false" />
+      <Item active="true" nodeID="ns=4;s=|var|WAGO 750-8212 PFC200 G2 2ETH RS.Application.PLC_PRG.fbIncubator2.rZoneTemps[10]" displayName="Incubator 02 Zone 10" tagCode="Inc2_Zone_10" dataType="System.Double" isArray="false" />
     </Subscription>
   </Subscriptions>
   <Commands />

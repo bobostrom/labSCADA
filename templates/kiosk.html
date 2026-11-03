@@ -1714,22 +1714,32 @@
       const grid = document.getElementById('incModalZonesGrid');
       if (!grid || !inc) return;
 
-      // Single source of truth: read from PLC channel if mapped, else target_temp
-      let displayTemp = '--';
-      if (inc.temp_cnl) {
-        const val = lastReadings[inc.temp_cnl] !== undefined ? lastReadings[inc.temp_cnl] : lastReadings[String(inc.temp_cnl)];
-        if (val !== undefined && val !== null) {
-          displayTemp = Number(val).toFixed(1);
-        }
-      } else if (inc.target_temp) {
-        displayTemp = Number(inc.target_temp).toFixed(1);
+      // Resolve incubator object if string key passed
+      if (typeof inc === 'string') {
+        inc = (EQUIPMENT.incubators || []).find(i => i.key === inc);
       }
+      if (!inc) return;
 
       let html = '';
       for (let i = 1; i <= 10; i++) {
         const chamberNum = String(i).padStart(2, '0');
-        const isNormal = (displayTemp !== '--' && Math.abs(parseFloat(displayTemp) - 37.0) <= 0.5);
-        const badge = (displayTemp === '--')
+        const zoneCnl = (inc.zone_cnls && inc.zone_cnls.length >= i) ? inc.zone_cnls[i - 1] : null;
+
+        let chamberTemp = '--';
+        if (zoneCnl && lastReadings[zoneCnl] !== undefined && lastReadings[zoneCnl] !== null) {
+          chamberTemp = Number(lastReadings[zoneCnl]).toFixed(1);
+        } else if (zoneCnl && lastReadings[String(zoneCnl)] !== undefined && lastReadings[String(zoneCnl)] !== null) {
+          chamberTemp = Number(lastReadings[String(zoneCnl)]).toFixed(1);
+        } else if (inc.temp_cnl && lastReadings[inc.temp_cnl] !== undefined && lastReadings[inc.temp_cnl] !== null) {
+          chamberTemp = Number(lastReadings[inc.temp_cnl]).toFixed(1);
+        } else if (inc.temp_cnl && lastReadings[String(inc.temp_cnl)] !== undefined && lastReadings[String(inc.temp_cnl)] !== null) {
+          chamberTemp = Number(lastReadings[String(inc.temp_cnl)]).toFixed(1);
+        } else if (inc.target_temp) {
+          chamberTemp = Number(inc.target_temp).toFixed(1);
+        }
+
+        const isNormal = (chamberTemp !== '--' && Math.abs(parseFloat(chamberTemp) - 37.0) <= 0.5);
+        const badge = (chamberTemp === '--')
           ? '<span class="status-badge" style="font-size:8.5px; padding:1px 4px; color:#8899a6;">STANDBY</span>'
           : (isNormal
             ? '<span class="status-badge status-normal" style="font-size:8.5px; padding:1px 4px;">IN-RANGE</span>'
@@ -1738,7 +1748,7 @@
         html += `
           <div class="chamber-well">
             <div style="font-size:10px; font-weight:700; color:#8899a6; text-transform:uppercase;">CH ${chamberNum}</div>
-            <div style="font-size:1.15rem; font-weight:800; font-family:monospace; color:#38bdf8; margin:2px 0;">${displayTemp}°C</div>
+            <div style="font-size:1.15rem; font-weight:800; font-family:monospace; color:#38bdf8; margin:2px 0;">${chamberTemp}°C</div>
             <div style="font-size:9px; color:#64748b;">Set: 37.0°</div>
             <div style="margin-top:4px;">${badge}</div>
           </div>
@@ -2160,7 +2170,7 @@
                   const activeInc = (EQUIPMENT.incubators || []).find(i => i.key === currentModalIncKey);
                   if (activeInc) {
                     updateModalAlarmState(activeInc);
-                    renderChamberGrid(currentModalIncKey);
+                    renderChamberGrid(activeInc);
                   }
                 }
               })

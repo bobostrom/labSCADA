@@ -18,7 +18,7 @@
     <TypeUserDef name="T_FB_Incubator" size="5" nativesize="136" typeclass="Userdef" pouclass="FUNCTION_BLOCK" iecname="FB_Incubator">
       <UserDefElement iecname="bMute" type="T_BOOL" byteoffset="0" vartype="VAR_INPUT" access="Read" />
       <UserDefElement iecname="bAlarm" type="T_BOOL" byteoffset="1" vartype="VAR_OUTPUT" access="Read" />
-      <UserDefElement iecname="bInstantContact" type="T_BOOL" byteoffset="2" vartype="VAR_OUTPUT" access="Read" />
+      <UserDefElement iecname="bAlarmContact" type="T_BOOL" byteoffset="2" vartype="VAR_OUTPUT" access="Read" />
       <UserDefElement iecname="bMuted" type="T_BOOL" byteoffset="3" vartype="VAR_OUTPUT" access="Read" />
       <UserDefElement iecname="bForceAlarm" type="T_BOOL" byteoffset="4" vartype="VAR" access="ReadWrite" />
     </TypeUserDef>

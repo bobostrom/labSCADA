@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <ArrayOfCnl xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
   <Cnl>
     <CnlNum>101</CnlNum>
@@ -324,7 +324,7 @@
   <Cnl>
     <CnlNum>115</CnlNum>
     <Active>true</Active>
-    <Name>Med Fridge Warn</Name>
+    <Name> SensorStatus_05</Name>
     <Code />
     <DataTypeID xsi:nil="true" />
     <DataLen xsi:nil="true" />
@@ -347,7 +347,7 @@
   <Cnl>
     <CnlNum>116</CnlNum>
     <Active>true</Active>
-    <Name>Med Freezer Warn</Name>
+    <Name>SensorStatus_06</Name>
     <Code />
     <DataTypeID xsi:nil="true" />
     <DataLen xsi:nil="true" />
@@ -370,7 +370,7 @@
   <Cnl>
     <CnlNum>117</CnlNum>
     <Active>true</Active>
-    <Name>Cryo Tank 1 Warn</Name>
+    <Name>SensorStatus_07</Name>
     <Code />
     <DataTypeID xsi:nil="true" />
     <DataLen xsi:nil="true" />
@@ -393,7 +393,7 @@
   <Cnl>
     <CnlNum>118</CnlNum>
     <Active>true</Active>
-    <Name>Cryo Tank 2 Warn</Name>
+    <Name>SensorStatus_08</Name>
     <Code />
     <DataTypeID xsi:nil="true" />
     <DataLen xsi:nil="true" />
@@ -416,7 +416,7 @@
   <Cnl>
     <CnlNum>119</CnlNum>
     <Active>true</Active>
-    <Name>Main Door Contact</Name>
+    <Name> SensorStatus_09</Name>
     <Code />
     <DataTypeID xsi:nil="true" />
     <DataLen xsi:nil="true" />
@@ -439,7 +439,7 @@
   <Cnl>
     <CnlNum>120</CnlNum>
     <Active>true</Active>
-    <Name>Cryo Door Contact</Name>
+    <Name>SensorStatus_10</Name>
     <Code />
     <DataTypeID xsi:nil="true" />
     <DataLen xsi:nil="true" />
@@ -573,5 +573,672 @@
     <LimID xsi:nil="true" />
     <ArchiveMask xsi:nil="true" />
     <EventMask xsi:nil="true" />
+  </Cnl>
+  <Cnl>
+    <CnlNum>126</CnlNum>
+    <Active>true</Active>
+    <Name>Dewar3_Alarm</Name>
+    <Code />
+    <DataTypeID xsi:nil="true" />
+    <DataLen xsi:nil="true" />
+    <CnlTypeID>1</CnlTypeID>
+    <ObjNum>1</ObjNum>
+    <DeviceNum>1</DeviceNum>
+    <TagNum xsi:nil="true" />
+    <TagCode>Dewar3_Alarm</TagCode>
+    <FormulaEnabled>false</FormulaEnabled>
+    <InFormula />
+    <OutFormula />
+    <FormatID>21</FormatID>
+    <OutFormatID xsi:nil="true" />
+    <QuantityID xsi:nil="true" />
+    <UnitID xsi:nil="true" />
+    <LimID xsi:nil="true" />
+    <ArchiveMask xsi:nil="true" />
+    <EventMask>5</EventMask>
+  </Cnl>
+  <Cnl>
+    <CnlNum>127</CnlNum>
+    <Active>true</Active>
+    <Name>Dewar4_Alarm</Name>
+    <Code />
+    <DataTypeID xsi:nil="true" />
+    <DataLen xsi:nil="true" />
+    <CnlTypeID>1</CnlTypeID>
+    <ObjNum>1</ObjNum>
+    <DeviceNum>1</DeviceNum>
+    <TagNum xsi:nil="true" />
+    <TagCode>Dewar4_Alarm</TagCode>
+    <FormulaEnabled>false</FormulaEnabled>
+    <InFormula />
+    <OutFormula />
+    <FormatID>21</FormatID>
+    <OutFormatID xsi:nil="true" />
+    <QuantityID xsi:nil="true" />
+    <UnitID xsi:nil="true" />
+    <LimID xsi:nil="true" />
+    <ArchiveMask xsi:nil="true" />
+    <EventMask>5</EventMask>
+  </Cnl>
+  <Cnl>
+    <CnlNum>128</CnlNum>
+    <Active>true</Active>
+    <Name>Dewar5_Alarm</Name>
+    <Code />
+    <DataTypeID xsi:nil="true" />
+    <DataLen xsi:nil="true" />
+    <CnlTypeID>1</CnlTypeID>
+    <ObjNum>1</ObjNum>
+    <DeviceNum>1</DeviceNum>
+    <TagNum xsi:nil="true" />
+    <TagCode>Dewar5_Alarm</TagCode>
+    <FormulaEnabled>false</FormulaEnabled>
+    <InFormula />
+    <OutFormula />
+    <FormatID>21</FormatID>
+    <OutFormatID xsi:nil="true" />
+    <QuantityID xsi:nil="true" />
+    <UnitID xsi:nil="true" />
+    <LimID xsi:nil="true" />
+    <ArchiveMask xsi:nil="true" />
+    <EventMask>5</EventMask>
+  </Cnl>
+  <Cnl>
+    <CnlNum>129</CnlNum>
+    <Active>true</Active>
+    <Name>Dewar3_Warn</Name>
+    <Code />
+    <DataTypeID xsi:nil="true" />
+    <DataLen xsi:nil="true" />
+    <CnlTypeID>1</CnlTypeID>
+    <ObjNum>1</ObjNum>
+    <DeviceNum>1</DeviceNum>
+    <TagNum xsi:nil="true" />
+    <TagCode>Dewar3_Warn</TagCode>
+    <FormulaEnabled>false</FormulaEnabled>
+    <InFormula />
+    <OutFormula />
+    <FormatID>21</FormatID>
+    <OutFormatID xsi:nil="true" />
+    <QuantityID xsi:nil="true" />
+    <UnitID xsi:nil="true" />
+    <LimID xsi:nil="true" />
+    <ArchiveMask xsi:nil="true" />
+    <EventMask>5</EventMask>
+  </Cnl>
+  <Cnl>
+    <CnlNum>130</CnlNum>
+    <Active>true</Active>
+    <Name>Dewar4_Warn</Name>
+    <Code />
+    <DataTypeID xsi:nil="true" />
+    <DataLen xsi:nil="true" />
+    <CnlTypeID>1</CnlTypeID>
+    <ObjNum>1</ObjNum>
+    <DeviceNum>1</DeviceNum>
+    <TagNum xsi:nil="true" />
+    <TagCode>Dewar4_Warn</TagCode>
+    <FormulaEnabled>false</FormulaEnabled>
+    <InFormula />
+    <OutFormula />
+    <FormatID>21</FormatID>
+    <OutFormatID xsi:nil="true" />
+    <QuantityID xsi:nil="true" />
+    <UnitID xsi:nil="true" />
+    <LimID xsi:nil="true" />
+    <ArchiveMask xsi:nil="true" />
+    <EventMask>5</EventMask>
+  </Cnl>
+  <Cnl>
+    <CnlNum>131</CnlNum>
+    <Active>true</Active>
+    <Name>Dewar5_Warn</Name>
+    <Code />
+    <DataTypeID xsi:nil="true" />
+    <DataLen xsi:nil="true" />
+    <CnlTypeID>1</CnlTypeID>
+    <ObjNum>1</ObjNum>
+    <DeviceNum>1</DeviceNum>
+    <TagNum xsi:nil="true" />
+    <TagCode>Dewar5_Warn</TagCode>
+    <FormulaEnabled>false</FormulaEnabled>
+    <InFormula />
+    <OutFormula />
+    <FormatID>21</FormatID>
+    <OutFormatID xsi:nil="true" />
+    <QuantityID xsi:nil="true" />
+    <UnitID xsi:nil="true" />
+    <LimID xsi:nil="true" />
+    <ArchiveMask xsi:nil="true" />
+    <EventMask>5</EventMask>
+  </Cnl>
+  <Cnl>
+    <CnlNum>132</CnlNum>
+    <Active>true</Active>
+    <Name>Cabinet_DoorOpen</Name>
+    <Code />
+    <DataTypeID xsi:nil="true" />
+    <DataLen xsi:nil="true" />
+    <CnlTypeID>1</CnlTypeID>
+    <ObjNum>1</ObjNum>
+    <DeviceNum>1</DeviceNum>
+    <TagNum xsi:nil="true" />
+    <TagCode>Cabinet_DoorOpen</TagCode>
+    <FormulaEnabled>false</FormulaEnabled>
+    <InFormula />
+    <OutFormula />
+    <FormatID>21</FormatID>
+    <OutFormatID xsi:nil="true" />
+    <QuantityID xsi:nil="true" />
+    <UnitID xsi:nil="true" />
+    <LimID xsi:nil="true" />
+    <ArchiveMask xsi:nil="true" />
+    <EventMask>5</EventMask>
+  </Cnl>
+  <Cnl>
+    <CnlNum>133</CnlNum>
+    <Active>true</Active>
+    <Name>Cabinet_Mute</Name>
+    <Code />
+    <DataTypeID xsi:nil="true" />
+    <DataLen xsi:nil="true" />
+    <CnlTypeID>1</CnlTypeID>
+    <ObjNum>1</ObjNum>
+    <DeviceNum>1</DeviceNum>
+    <TagNum xsi:nil="true" />
+    <TagCode>Cabinet_Mute</TagCode>
+    <FormulaEnabled>false</FormulaEnabled>
+    <InFormula />
+    <OutFormula />
+    <FormatID>21</FormatID>
+    <OutFormatID xsi:nil="true" />
+    <QuantityID xsi:nil="true" />
+    <UnitID xsi:nil="true" />
+    <LimID xsi:nil="true" />
+    <ArchiveMask xsi:nil="true" />
+    <EventMask>5</EventMask>
+  </Cnl>
+  <Cnl>
+    <CnlNum>134</CnlNum>
+    <Active>true</Active>
+    <Name>Cabinet_DoorAlarm</Name>
+    <Code />
+    <DataTypeID xsi:nil="true" />
+    <DataLen xsi:nil="true" />
+    <CnlTypeID>1</CnlTypeID>
+    <ObjNum>1</ObjNum>
+    <DeviceNum>1</DeviceNum>
+    <TagNum xsi:nil="true" />
+    <TagCode>Cabinet_DoorAlarm</TagCode>
+    <FormulaEnabled>false</FormulaEnabled>
+    <InFormula />
+    <OutFormula />
+    <FormatID>21</FormatID>
+    <OutFormatID xsi:nil="true" />
+    <QuantityID xsi:nil="true" />
+    <UnitID xsi:nil="true" />
+    <LimID xsi:nil="true" />
+    <ArchiveMask xsi:nil="true" />
+    <EventMask>5</EventMask>
+  </Cnl>
+  <Cnl>
+    <CnlNum>141</CnlNum>
+    <Active>true</Active>
+    <Name>Incubator 01 Zone 01</Name>
+    <Code />
+    <DataTypeID xsi:nil="true" />
+    <DataLen xsi:nil="true" />
+    <CnlTypeID>2</CnlTypeID>
+    <ObjNum>1</ObjNum>
+    <DeviceNum>1</DeviceNum>
+    <TagNum xsi:nil="true" />
+    <TagCode>Inc1_Zone_01</TagCode>
+    <FormulaEnabled>false</FormulaEnabled>
+    <InFormula />
+    <OutFormula />
+    <FormatID>3</FormatID>
+    <OutFormatID xsi:nil="true" />
+    <QuantityID>4</QuantityID>
+    <UnitID>22</UnitID>
+    <LimID xsi:nil="true" />
+    <ArchiveMask xsi:nil="true" />
+    <EventMask>81</EventMask>
+  </Cnl>
+  <Cnl>
+    <CnlNum>142</CnlNum>
+    <Active>true</Active>
+    <Name>Incubator 01 Zone 02</Name>
+    <Code />
+    <DataTypeID xsi:nil="true" />
+    <DataLen xsi:nil="true" />
+    <CnlTypeID>2</CnlTypeID>
+    <ObjNum>1</ObjNum>
+    <DeviceNum>1</DeviceNum>
+    <TagNum xsi:nil="true" />
+    <TagCode>Inc1_Zone_02</TagCode>
+    <FormulaEnabled>false</FormulaEnabled>
+    <InFormula />
+    <OutFormula />
+    <FormatID>3</FormatID>
+    <OutFormatID xsi:nil="true" />
+    <QuantityID>4</QuantityID>
+    <UnitID>22</UnitID>
+    <LimID xsi:nil="true" />
+    <ArchiveMask xsi:nil="true" />
+    <EventMask>81</EventMask>
+  </Cnl>
+  <Cnl>
+    <CnlNum>143</CnlNum>
+    <Active>true</Active>
+    <Name>Incubator 01 Zone 03</Name>
+    <Code />
+    <DataTypeID xsi:nil="true" />
+    <DataLen xsi:nil="true" />
+    <CnlTypeID>2</CnlTypeID>
+    <ObjNum>1</ObjNum>
+    <DeviceNum>1</DeviceNum>
+    <TagNum xsi:nil="true" />
+    <TagCode>Inc1_Zone_03</TagCode>
+    <FormulaEnabled>false</FormulaEnabled>
+    <InFormula />
+    <OutFormula />
+    <FormatID>3</FormatID>
+    <OutFormatID xsi:nil="true" />
+    <QuantityID>4</QuantityID>
+    <UnitID>22</UnitID>
+    <LimID xsi:nil="true" />
+    <ArchiveMask xsi:nil="true" />
+    <EventMask>81</EventMask>
+  </Cnl>
+  <Cnl>
+    <CnlNum>144</CnlNum>
+    <Active>true</Active>
+    <Name>Incubator 01 Zone 04</Name>
+    <Code />
+    <DataTypeID xsi:nil="true" />
+    <DataLen xsi:nil="true" />
+    <CnlTypeID>2</CnlTypeID>
+    <ObjNum>1</ObjNum>
+    <DeviceNum>1</DeviceNum>
+    <TagNum xsi:nil="true" />
+    <TagCode>Inc1_Zone_04</TagCode>
+    <FormulaEnabled>false</FormulaEnabled>
+    <InFormula />
+    <OutFormula />
+    <FormatID>3</FormatID>
+    <OutFormatID xsi:nil="true" />
+    <QuantityID>4</QuantityID>
+    <UnitID>22</UnitID>
+    <LimID xsi:nil="true" />
+    <ArchiveMask xsi:nil="true" />
+    <EventMask>81</EventMask>
+  </Cnl>
+  <Cnl>
+    <CnlNum>145</CnlNum>
+    <Active>true</Active>
+    <Name>Incubator 01 Zone 05</Name>
+    <Code />
+    <DataTypeID xsi:nil="true" />
+    <DataLen xsi:nil="true" />
+    <CnlTypeID>2</CnlTypeID>
+    <ObjNum>1</ObjNum>
+    <DeviceNum>1</DeviceNum>
+    <TagNum xsi:nil="true" />
+    <TagCode>Inc1_Zone_05</TagCode>
+    <FormulaEnabled>false</FormulaEnabled>
+    <InFormula />
+    <OutFormula />
+    <FormatID>3</FormatID>
+    <OutFormatID xsi:nil="true" />
+    <QuantityID>4</QuantityID>
+    <UnitID>22</UnitID>
+    <LimID xsi:nil="true" />
+    <ArchiveMask xsi:nil="true" />
+    <EventMask>81</EventMask>
+  </Cnl>
+  <Cnl>
+    <CnlNum>146</CnlNum>
+    <Active>true</Active>
+    <Name>Incubator 01 Zone 06</Name>
+    <Code />
+    <DataTypeID xsi:nil="true" />
+    <DataLen xsi:nil="true" />
+    <CnlTypeID>2</CnlTypeID>
+    <ObjNum>1</ObjNum>
+    <DeviceNum>1</DeviceNum>
+    <TagNum xsi:nil="true" />
+    <TagCode>Inc1_Zone_06</TagCode>
+    <FormulaEnabled>false</FormulaEnabled>
+    <InFormula />
+    <OutFormula />
+    <FormatID>3</FormatID>
+    <OutFormatID xsi:nil="true" />
+    <QuantityID>4</QuantityID>
+    <UnitID>22</UnitID>
+    <LimID xsi:nil="true" />
+    <ArchiveMask xsi:nil="true" />
+    <EventMask>81</EventMask>
+  </Cnl>
+  <Cnl>
+    <CnlNum>147</CnlNum>
+    <Active>true</Active>
+    <Name>Incubator 01 Zone 07</Name>
+    <Code />
+    <DataTypeID xsi:nil="true" />
+    <DataLen xsi:nil="true" />
+    <CnlTypeID>2</CnlTypeID>
+    <ObjNum>1</ObjNum>
+    <DeviceNum>1</DeviceNum>
+    <TagNum xsi:nil="true" />
+    <TagCode>Inc1_Zone_07</TagCode>
+    <FormulaEnabled>false</FormulaEnabled>
+    <InFormula />
+    <OutFormula />
+    <FormatID>3</FormatID>
+    <OutFormatID xsi:nil="true" />
+    <QuantityID>4</QuantityID>
+    <UnitID>22</UnitID>
+    <LimID xsi:nil="true" />
+    <ArchiveMask xsi:nil="true" />
+    <EventMask>81</EventMask>
+  </Cnl>
+  <Cnl>
+    <CnlNum>148</CnlNum>
+    <Active>true</Active>
+    <Name>Incubator 01 Zone 08</Name>
+    <Code />
+    <DataTypeID xsi:nil="true" />
+    <DataLen xsi:nil="true" />
+    <CnlTypeID>2</CnlTypeID>
+    <ObjNum>1</ObjNum>
+    <DeviceNum>1</DeviceNum>
+    <TagNum xsi:nil="true" />
+    <TagCode>Inc1_Zone_08</TagCode>
+    <FormulaEnabled>false</FormulaEnabled>
+    <InFormula />
+    <OutFormula />
+    <FormatID>3</FormatID>
+    <OutFormatID xsi:nil="true" />
+    <QuantityID>4</QuantityID>
+    <UnitID>22</UnitID>
+    <LimID xsi:nil="true" />
+    <ArchiveMask xsi:nil="true" />
+    <EventMask>81</EventMask>
+  </Cnl>
+  <Cnl>
+    <CnlNum>149</CnlNum>
+    <Active>true</Active>
+    <Name>Incubator 01 Zone 09</Name>
+    <Code />
+    <DataTypeID xsi:nil="true" />
+    <DataLen xsi:nil="true" />
+    <CnlTypeID>2</CnlTypeID>
+    <ObjNum>1</ObjNum>
+    <DeviceNum>1</DeviceNum>
+    <TagNum xsi:nil="true" />
+    <TagCode>Inc1_Zone_09</TagCode>
+    <FormulaEnabled>false</FormulaEnabled>
+    <InFormula />
+    <OutFormula />
+    <FormatID>3</FormatID>
+    <OutFormatID xsi:nil="true" />
+    <QuantityID>4</QuantityID>
+    <UnitID>22</UnitID>
+    <LimID xsi:nil="true" />
+    <ArchiveMask xsi:nil="true" />
+    <EventMask>81</EventMask>
+  </Cnl>
+  <Cnl>
+    <CnlNum>150</CnlNum>
+    <Active>true</Active>
+    <Name>Incubator 01 Zone 10</Name>
+    <Code />
+    <DataTypeID xsi:nil="true" />
+    <DataLen xsi:nil="true" />
+    <CnlTypeID>2</CnlTypeID>
+    <ObjNum>1</ObjNum>
+    <DeviceNum>1</DeviceNum>
+    <TagNum xsi:nil="true" />
+    <TagCode>Inc1_Zone_10</TagCode>
+    <FormulaEnabled>false</FormulaEnabled>
+    <InFormula />
+    <OutFormula />
+    <FormatID>3</FormatID>
+    <OutFormatID xsi:nil="true" />
+    <QuantityID>4</QuantityID>
+    <UnitID>22</UnitID>
+    <LimID xsi:nil="true" />
+    <ArchiveMask xsi:nil="true" />
+    <EventMask>81</EventMask>
+  </Cnl>
+  <Cnl>
+    <CnlNum>151</CnlNum>
+    <Active>true</Active>
+    <Name>Incubator 02 Zone 01</Name>
+    <Code />
+    <DataTypeID xsi:nil="true" />
+    <DataLen xsi:nil="true" />
+    <CnlTypeID>2</CnlTypeID>
+    <ObjNum>1</ObjNum>
+    <DeviceNum>1</DeviceNum>
+    <TagNum xsi:nil="true" />
+    <TagCode>Inc2_Zone_01</TagCode>
+    <FormulaEnabled>false</FormulaEnabled>
+    <InFormula />
+    <OutFormula />
+    <FormatID>3</FormatID>
+    <OutFormatID xsi:nil="true" />
+    <QuantityID>4</QuantityID>
+    <UnitID>22</UnitID>
+    <LimID xsi:nil="true" />
+    <ArchiveMask xsi:nil="true" />
+    <EventMask>81</EventMask>
+  </Cnl>
+  <Cnl>
+    <CnlNum>152</CnlNum>
+    <Active>true</Active>
+    <Name>Incubator 02 Zone 02</Name>
+    <Code />
+    <DataTypeID xsi:nil="true" />
+    <DataLen xsi:nil="true" />
+    <CnlTypeID>2</CnlTypeID>
+    <ObjNum>1</ObjNum>
+    <DeviceNum>1</DeviceNum>
+    <TagNum xsi:nil="true" />
+    <TagCode>Inc2_Zone_02</TagCode>
+    <FormulaEnabled>false</FormulaEnabled>
+    <InFormula />
+    <OutFormula />
+    <FormatID>3</FormatID>
+    <OutFormatID xsi:nil="true" />
+    <QuantityID>4</QuantityID>
+    <UnitID>22</UnitID>
+    <LimID xsi:nil="true" />
+    <ArchiveMask xsi:nil="true" />
+    <EventMask>81</EventMask>
+  </Cnl>
+  <Cnl>
+    <CnlNum>153</CnlNum>
+    <Active>true</Active>
+    <Name>Incubator 02 Zone 03</Name>
+    <Code />
+    <DataTypeID xsi:nil="true" />
+    <DataLen xsi:nil="true" />
+    <CnlTypeID>2</CnlTypeID>
+    <ObjNum>1</ObjNum>
+    <DeviceNum>1</DeviceNum>
+    <TagNum xsi:nil="true" />
+    <TagCode>Inc2_Zone_03</TagCode>
+    <FormulaEnabled>false</FormulaEnabled>
+    <InFormula />
+    <OutFormula />
+    <FormatID>3</FormatID>
+    <OutFormatID xsi:nil="true" />
+    <QuantityID>4</QuantityID>
+    <UnitID>22</UnitID>
+    <LimID xsi:nil="true" />
+    <ArchiveMask xsi:nil="true" />
+    <EventMask>81</EventMask>
+  </Cnl>
+  <Cnl>
+    <CnlNum>154</CnlNum>
+    <Active>true</Active>
+    <Name>Incubator 02 Zone 04</Name>
+    <Code />
+    <DataTypeID xsi:nil="true" />
+    <DataLen xsi:nil="true" />
+    <CnlTypeID>2</CnlTypeID>
+    <ObjNum>1</ObjNum>
+    <DeviceNum>1</DeviceNum>
+    <TagNum xsi:nil="true" />
+    <TagCode>Inc2_Zone_04</TagCode>
+    <FormulaEnabled>false</FormulaEnabled>
+    <InFormula />
+    <OutFormula />
+    <FormatID>3</FormatID>
+    <OutFormatID xsi:nil="true" />
+    <QuantityID>4</QuantityID>
+    <UnitID>22</UnitID>
+    <LimID xsi:nil="true" />
+    <ArchiveMask xsi:nil="true" />
+    <EventMask>81</EventMask>
+  </Cnl>
+  <Cnl>
+    <CnlNum>155</CnlNum>
+    <Active>true</Active>
+    <Name>Incubator 02 Zone 05</Name>
+    <Code />
+    <DataTypeID xsi:nil="true" />
+    <DataLen xsi:nil="true" />
+    <CnlTypeID>2</CnlTypeID>
+    <ObjNum>1</ObjNum>
+    <DeviceNum>1</DeviceNum>
+    <TagNum xsi:nil="true" />
+    <TagCode>Inc2_Zone_05</TagCode>
+    <FormulaEnabled>false</FormulaEnabled>
+    <InFormula />
+    <OutFormula />
+    <FormatID>3</FormatID>
+    <OutFormatID xsi:nil="true" />
+    <QuantityID>4</QuantityID>
+    <UnitID>22</UnitID>
+    <LimID xsi:nil="true" />
+    <ArchiveMask xsi:nil="true" />
+    <EventMask>81</EventMask>
+  </Cnl>
+  <Cnl>
+    <CnlNum>156</CnlNum>
+    <Active>true</Active>
+    <Name>Incubator 02 Zone 06</Name>
+    <Code />
+    <DataTypeID xsi:nil="true" />
+    <DataLen xsi:nil="true" />
+    <CnlTypeID>2</CnlTypeID>
+    <ObjNum>1</ObjNum>
+    <DeviceNum>1</DeviceNum>
+    <TagNum xsi:nil="true" />
+    <TagCode>Inc2_Zone_06</TagCode>
+    <FormulaEnabled>false</FormulaEnabled>
+    <InFormula />
+    <OutFormula />
+    <FormatID>3</FormatID>
+    <OutFormatID xsi:nil="true" />
+    <QuantityID>4</QuantityID>
+    <UnitID>22</UnitID>
+    <LimID xsi:nil="true" />
+    <ArchiveMask xsi:nil="true" />
+    <EventMask>81</EventMask>
+  </Cnl>
+  <Cnl>
+    <CnlNum>157</CnlNum>
+    <Active>true</Active>
+    <Name>Incubator 02 Zone 07</Name>
+    <Code />
+    <DataTypeID xsi:nil="true" />
+    <DataLen xsi:nil="true" />
+    <CnlTypeID>2</CnlTypeID>
+    <ObjNum>1</ObjNum>
+    <DeviceNum>1</DeviceNum>
+    <TagNum xsi:nil="true" />
+    <TagCode>Inc2_Zone_07</TagCode>
+    <FormulaEnabled>false</FormulaEnabled>
+    <InFormula />
+    <OutFormula />
+    <FormatID>3</FormatID>
+    <OutFormatID xsi:nil="true" />
+    <QuantityID>4</QuantityID>
+    <UnitID>22</UnitID>
+    <LimID xsi:nil="true" />
+    <ArchiveMask xsi:nil="true" />
+    <EventMask>81</EventMask>
+  </Cnl>
+  <Cnl>
+    <CnlNum>158</CnlNum>
+    <Active>true</Active>
+    <Name>Incubator 02 Zone 08</Name>
+    <Code />
+    <DataTypeID xsi:nil="true" />
+    <DataLen xsi:nil="true" />
+    <CnlTypeID>2</CnlTypeID>
+    <ObjNum>1</ObjNum>
+    <DeviceNum>1</DeviceNum>
+    <TagNum xsi:nil="true" />
+    <TagCode>Inc2_Zone_08</TagCode>
+    <FormulaEnabled>false</FormulaEnabled>
+    <InFormula />
+    <OutFormula />
+    <FormatID>3</FormatID>
+    <OutFormatID xsi:nil="true" />
+    <QuantityID>4</QuantityID>
+    <UnitID>22</UnitID>
+    <LimID xsi:nil="true" />
+    <ArchiveMask xsi:nil="true" />
+    <EventMask>81</EventMask>
+  </Cnl>
+  <Cnl>
+    <CnlNum>159</CnlNum>
+    <Active>true</Active>
+    <Name>Incubator 02 Zone 09</Name>
+    <Code />
+    <DataTypeID xsi:nil="true" />
+    <DataLen xsi:nil="true" />
+    <CnlTypeID>2</CnlTypeID>
+    <ObjNum>1</ObjNum>
+    <DeviceNum>1</DeviceNum>
+    <TagNum xsi:nil="true" />
+    <TagCode>Inc2_Zone_09</TagCode>
+    <FormulaEnabled>false</FormulaEnabled>
+    <InFormula />
+    <OutFormula />
+    <FormatID>3</FormatID>
+    <OutFormatID xsi:nil="true" />
+    <QuantityID>4</QuantityID>
+    <UnitID>22</UnitID>
+    <LimID xsi:nil="true" />
+    <ArchiveMask xsi:nil="true" />
+    <EventMask>81</EventMask>
+  </Cnl>
+  <Cnl>
+    <CnlNum>160</CnlNum>
+    <Active>true</Active>
+    <Name>Incubator 02 Zone 10</Name>
+    <Code />
+    <DataTypeID xsi:nil="true" />
+    <DataLen xsi:nil="true" />
+    <CnlTypeID>2</CnlTypeID>
+    <ObjNum>1</ObjNum>
+    <DeviceNum>1</DeviceNum>
+    <TagNum xsi:nil="true" />
+    <TagCode>Inc2_Zone_10</TagCode>
+    <FormulaEnabled>false</FormulaEnabled>
+    <InFormula />
+    <OutFormula />
+    <FormatID>3</FormatID>
+    <OutFormatID xsi:nil="true" />
+    <QuantityID>4</QuantityID>
+    <UnitID>22</UnitID>
+    <LimID xsi:nil="true" />
+    <ArchiveMask xsi:nil="true" />
+    <EventMask>81</EventMask>
   </Cnl>
 </ArrayOfCnl>
