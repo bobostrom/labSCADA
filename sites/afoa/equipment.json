@@ -203,5 +203,25 @@
       "low_limit": 20.0,
       "high_limit": 27.0
     }
+  ],
+  "ups": [
+    {
+      "id": 1,
+      "key": "ups1",
+      "name": "Facility Primary UPS",
+      "short_name": "Primary UPS",
+      "model": "APC Back-UPS 650",
+      "location": "Main Cleanroom / Automation Rack",
+      "plc_fb": "fbUPS01",
+      "online_cnl": 171,
+      "battery_cnl": 172,
+      "runtime_cnl": 173,
+      "voltage_cnl": 174,
+      "load_cnl": 175,
+      "power_alarm_cnl": 176,
+      "low_batt_alarm_cnl": 177,
+      "beeper_muted_cnl": 178,
+      "mute_cmd_cnl": 179
+    }
   ]
 }

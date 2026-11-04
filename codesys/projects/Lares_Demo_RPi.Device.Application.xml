@@ -13,22 +13,6 @@
     <TypeArray name="T_ARRAY__1__10__OF_REAL" size="40" nativesize="40" typeclass="Array" iecname="ARRAY [1..10] OF REAL" basetype="T_REAL">
       <ArrayDim minrange="1" maxrange="10" />
     </TypeArray>
-    <TypeUserDef name="T_FB_APC_SmartUPS" size="32" nativesize="144" typeclass="Userdef" pouclass="FUNCTION_BLOCK" iecname="FB_APC_SmartUPS">
-      <UserDefElement iecname="wStatusWord" type="T_WORD" byteoffset="0" vartype="VAR_INPUT" access="ReadWrite" />
-      <UserDefElement iecname="wBatteryPct" type="T_WORD" byteoffset="2" vartype="VAR_INPUT" access="ReadWrite" />
-      <UserDefElement iecname="wRuntimeSec" type="T_WORD" byteoffset="4" vartype="VAR_INPUT" access="ReadWrite" />
-      <UserDefElement iecname="wLineVoltageX10" type="T_WORD" byteoffset="6" vartype="VAR_INPUT" access="ReadWrite" />
-      <UserDefElement iecname="wLoadPct" type="T_WORD" byteoffset="8" vartype="VAR_INPUT" access="ReadWrite" />
-      <UserDefElement iecname="wRuntimeMin" type="T_WORD" byteoffset="10" vartype="VAR_INPUT" access="ReadWrite" />
-      <UserDefElement iecname="bOnline" type="T_BOOL" byteoffset="12" vartype="VAR_OUTPUT" access="Read" />
-      <UserDefElement iecname="bOnBattery" type="T_BOOL" byteoffset="13" vartype="VAR_OUTPUT" access="Read" />
-      <UserDefElement iecname="bAlarmPowerLost" type="T_BOOL" byteoffset="14" vartype="VAR_OUTPUT" access="Read" />
-      <UserDefElement iecname="bAlarmLowBattery" type="T_BOOL" byteoffset="15" vartype="VAR_OUTPUT" access="Read" />
-      <UserDefElement iecname="rBatteryPct" type="T_REAL" byteoffset="16" vartype="VAR_OUTPUT" access="Read" />
-      <UserDefElement iecname="rLineVoltage" type="T_REAL" byteoffset="20" vartype="VAR_OUTPUT" access="Read" />
-      <UserDefElement iecname="rRuntimeMinutes" type="T_REAL" byteoffset="24" vartype="VAR_OUTPUT" access="Read" />
-      <UserDefElement iecname="rLoadPct" type="T_REAL" byteoffset="28" vartype="VAR_OUTPUT" access="Read" />
-    </TypeUserDef>
     <TypeUserDef name="T_FB_Dewar" size="7" nativesize="264" typeclass="Userdef" pouclass="FUNCTION_BLOCK" iecname="FB_Dewar">
       <UserDefElement iecname="rProcessTemp" type="T_REAL" byteoffset="0" vartype="VAR_OUTPUT" access="Read" />
       <UserDefElement iecname="bAlarm" type="T_BOOL" byteoffset="4" vartype="VAR_OUTPUT" access="Read" />
@@ -59,6 +43,38 @@
     </TypeUserDef>
     <TypeUserDef name="T_FB_PickupDropout" size="1" nativesize="96" typeclass="Userdef" pouclass="FUNCTION_BLOCK" iecname="FB_PickupDropout">
       <UserDefElement iecname="Q" type="T_BOOL" byteoffset="0" vartype="VAR_OUTPUT" access="Read" />
+    </TypeUserDef>
+    <TypeUserDef name="T_TON" size="16" nativesize="32" typeclass="Userdef" pouclass="FUNCTION_BLOCK" iecname="TON">
+      <UserDefElement iecname="IN" type="T_BOOL" byteoffset="0" vartype="VAR_INPUT" access="ReadWrite" />
+      <UserDefElement iecname="PT" type="T_TIME" byteoffset="4" vartype="VAR_INPUT" access="ReadWrite" />
+      <UserDefElement iecname="Q" type="T_BOOL" byteoffset="8" vartype="VAR_OUTPUT" access="ReadWrite" />
+      <UserDefElement iecname="ET" type="T_TIME" byteoffset="12" vartype="VAR_OUTPUT" access="ReadWrite" />
+    </TypeUserDef>
+    <TypeUserDef name="T_FB_APC_SmartUPS" size="61" nativesize="200" typeclass="Userdef" pouclass="FUNCTION_BLOCK" iecname="FB_APC_SmartUPS">
+      <UserDefElement iecname="wBeeperStatus" type="T_WORD" byteoffset="0" vartype="VAR_INPUT" access="ReadWrite" />
+      <UserDefElement iecname="bCmdMuteBeeper" type="T_BOOL" byteoffset="2" vartype="VAR_INPUT" access="ReadWrite" />
+      <UserDefElement iecname="bCmdDisableBeeper" type="T_BOOL" byteoffset="3" vartype="VAR_INPUT" access="ReadWrite" />
+      <UserDefElement iecname="bCmdEnableBeeper" type="T_BOOL" byteoffset="4" vartype="VAR_INPUT" access="ReadWrite" />
+      <UserDefElement iecname="wStatusWord" type="T_WORD" byteoffset="6" vartype="VAR_INPUT" access="ReadWrite" />
+      <UserDefElement iecname="wBatteryPct" type="T_WORD" byteoffset="8" vartype="VAR_INPUT" access="ReadWrite" />
+      <UserDefElement iecname="wRuntimeSec" type="T_WORD" byteoffset="10" vartype="VAR_INPUT" access="ReadWrite" />
+      <UserDefElement iecname="wLineVoltageX10" type="T_WORD" byteoffset="12" vartype="VAR_INPUT" access="ReadWrite" />
+      <UserDefElement iecname="wLoadPct" type="T_WORD" byteoffset="14" vartype="VAR_INPUT" access="ReadWrite" />
+      <UserDefElement iecname="wRuntimeMin" type="T_WORD" byteoffset="16" vartype="VAR_INPUT" access="ReadWrite" />
+      <UserDefElement iecname="wCommandOut" type="T_WORD" byteoffset="18" vartype="VAR_OUTPUT" access="ReadWrite" />
+      <UserDefElement iecname="bOnline" type="T_BOOL" byteoffset="20" vartype="VAR_OUTPUT" access="Read" />
+      <UserDefElement iecname="bOnBattery" type="T_BOOL" byteoffset="21" vartype="VAR_OUTPUT" access="Read" />
+      <UserDefElement iecname="bAlarmPowerLost" type="T_BOOL" byteoffset="22" vartype="VAR_OUTPUT" access="Read" />
+      <UserDefElement iecname="bAlarmLowBattery" type="T_BOOL" byteoffset="23" vartype="VAR_OUTPUT" access="Read" />
+      <UserDefElement iecname="rBatteryPct" type="T_REAL" byteoffset="24" vartype="VAR_OUTPUT" access="Read" />
+      <UserDefElement iecname="rLineVoltage" type="T_REAL" byteoffset="28" vartype="VAR_OUTPUT" access="Read" />
+      <UserDefElement iecname="rRuntimeMinutes" type="T_REAL" byteoffset="32" vartype="VAR_OUTPUT" access="Read" />
+      <UserDefElement iecname="rLoadPct" type="T_REAL" byteoffset="36" vartype="VAR_OUTPUT" access="Read" />
+      <UserDefElement iecname="tonCmdPulse" type="T_TON" byteoffset="40" vartype="VAR" access="ReadWrite" />
+      <UserDefElement iecname="wActiveCmd" type="T_WORD" byteoffset="56" vartype="VAR" access="ReadWrite" />
+      <UserDefElement iecname="bPrevMute" type="T_BOOL" byteoffset="58" vartype="VAR" access="ReadWrite" />
+      <UserDefElement iecname="bPrevDisable" type="T_BOOL" byteoffset="59" vartype="VAR" access="ReadWrite" />
+      <UserDefElement iecname="bPrevEnable" type="T_BOOL" byteoffset="60" vartype="VAR" access="ReadWrite" />
     </TypeUserDef>
     <TypeUserDef name="T_FB_G210_Incubator" size="44" nativesize="160" typeclass="Userdef" pouclass="FUNCTION_BLOCK" iecname="FB_G210_Incubator">
       <UserDefElement iecname="bAlarmContact" type="T_BOOL" byteoffset="0" vartype="VAR_INPUT" access="ReadWrite" />

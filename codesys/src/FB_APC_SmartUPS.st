@@ -70,6 +70,10 @@ VAR
     {attribute 'symbol' := 'none'}
     fbFilterPowerLoss   : FB_PickupDropout;
     {attribute 'symbol' := 'none'}
+    tonCmdPulse         : TON;
+    {attribute 'symbol' := 'none'}
+    wActiveCmd          : WORD := 0;
+    {attribute 'symbol' := 'none'}
     bPrevMute           : BOOL := FALSE;
     {attribute 'symbol' := 'none'}
     bPrevDisable        : BOOL := FALSE;
@@ -119,20 +123,26 @@ ELSE
     bAlarmLowBattery := FALSE;
 END_IF;
 
-// 5. BEEPER COMMAND EXECUTION (One-Shot Output to Modbus Register 40010)
+// 5. BEEPER COMMAND EXECUTION (Pulsed Output to Modbus Register 40010)
+// Latch active command for 1.5s so asynchronous Modbus cyclic task reliably transmits write
 IF bCmdMuteBeeper AND NOT bPrevMute THEN
-    wCommandOut := 1;       // 1 = Mute
+    wActiveCmd := 1;       // 1 = Mute
     bCmdMuteBeeper := FALSE;
 ELSIF bCmdDisableBeeper AND NOT bPrevDisable THEN
-    wCommandOut := 2;       // 2 = Disable
+    wActiveCmd := 2;       // 2 = Disable
     bCmdDisableBeeper := FALSE;
 ELSIF bCmdEnableBeeper AND NOT bPrevEnable THEN
-    wCommandOut := 3;       // 3 = Enable
+    wActiveCmd := 3;       // 3 = Enable
     bCmdEnableBeeper := FALSE;
-ELSE
-    wCommandOut := 0;
 END_IF;
 
 bPrevMute    := bCmdMuteBeeper;
 bPrevDisable := bCmdDisableBeeper;
 bPrevEnable  := bCmdEnableBeeper;
+
+tonCmdPulse(IN := (wActiveCmd > 0), PT := T#1500MS);
+IF tonCmdPulse.Q THEN
+    wActiveCmd := 0;
+END_IF;
+
+wCommandOut := wActiveCmd;

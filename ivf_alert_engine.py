@@ -159,6 +159,7 @@ def load_equipment_config():
         "incubators": list(raw.get("incubators", [])),
         "doors": list(raw.get("doors", [])),
         "ambient": list(raw.get("ambient", [])),
+        "ups": list(raw.get("ups", [])),
     }
     return cfg
 
@@ -187,14 +188,11 @@ for _dr in EQUIPMENT_CONFIG["doors"]:
 sim_fault_states = {k: False for k in SIM_TARGETS}
 
 
-def write_plc_sim_bool(var_suffix, bool_val):
-    """Writes a boolean fault-injection flag to the CODESYS PLC via OPC UA (only in SIMULATION_MODE)."""
-    if not SIMULATION_MODE:
-        return False, "Simulation mode is disabled on this production site."
-
+def write_plc_bool(var_suffix, bool_val):
+    """Writes a boolean variable to the CODESYS PLC via OPC UA."""
     device_prefixes = [
-        "CODESYS Control for Raspberry Pi 64 SL.Application",
         "WAGO 750-8212 PFC200 G2 2ETH RS.Application",
+        "CODESYS Control for Raspberry Pi 64 SL.Application",
     ]
     try:
         from opcua import Client, ua
@@ -214,9 +212,16 @@ def write_plc_sim_bool(var_suffix, bool_val):
         finally:
             client.disconnect()
     except ImportError:
-        return False, "opcua package not installed on host; install with: sudo pip3 install --break-system-packages opcua"
+        return False, "opcua package not installed on host"
     except Exception as e:
         return False, str(e)
+
+
+def write_plc_sim_bool(var_suffix, bool_val):
+    """Writes a boolean fault-injection flag to the CODESYS PLC via OPC UA (only in SIMULATION_MODE)."""
+    if not SIMULATION_MODE:
+        return False, "Simulation mode is disabled on this production site."
+    return write_plc_bool(var_suffix, bool_val)
 
 def render_template(template_name, **context):
     """Renders a Jinja2 template with site-specific branding and equipment topology context."""
@@ -369,6 +374,19 @@ def build_channels_from_equipment(eq):
                 "type": "cabinet_alarm",
                 "priority": 2,
             }
+    for u in eq.get("ups", []):
+        if u.get("power_alarm_cnl"):
+            cnls[int(u["power_alarm_cnl"])] = {
+                "name": f"{u['name']} (Utility Power Lost)",
+                "type": "discrete_alarm",
+                "priority": 2,
+            }
+        if u.get("low_batt_alarm_cnl"):
+            cnls[int(u["low_batt_alarm_cnl"])] = {
+                "name": f"{u['name']} (Battery Critical)",
+                "type": "discrete_alarm",
+                "priority": 2,
+            }
     return cnls
 
 
@@ -432,7 +450,7 @@ def db_execute(sql):
 
 
 def get_current_channel_values():
-    """Queries mod_arc_postgre_sql.curcopy_current for real-time channel readings."""
+    """Queries mod_arc_postgre_sql.curcopy_current for real-time channel readings (populated by Rapid SCADA from PLC)."""
     sql = "SELECT cnl_num, val, stat FROM mod_arc_postgre_sql.curcopy_current;"
     rows = db_query(sql)
     readings = {}
@@ -444,6 +462,8 @@ def get_current_channel_values():
                 readings[cnl] = val
             except ValueError:
                 pass
+    return readings
+
     return readings
 
 
@@ -871,13 +891,25 @@ def trigger_alarm(cnl_num, equipment_name, alarm_type, excursion_val, priority=N
         cfg = CHANNELS.get(cnl_num, {})
         priority = cfg.get("priority", 2)
 
-    val_str = f"{excursion_val:.1f}°C" if excursion_val is not None else "TRIPPED"
+    val_str = f"{excursion_val:.1f}°C" if (excursion_val is not None and isinstance(excursion_val, (int, float))) else "TRIPPED"
     if cnl_num in LN2_INSPECTION_CNLS and excursion_val is not None:
         val_str = f"{excursion_val:.1f}h since check"
+    elif any(cnl_num in (u.get("power_alarm_cnl"), u.get("low_batt_alarm_cnl")) for u in EQUIPMENT_CONFIG.get("ups", [])):
+        val_str = f"{excursion_val:.0f}% Battery" if excursion_val is not None else "TRIPPED"
+
+    is_ups_power_alarm = any(cnl_num == u.get("power_alarm_cnl") for u in EQUIPMENT_CONFIG.get("ups", []))
+    is_ups_low_batt = any(cnl_num == u.get("low_batt_alarm_cnl") for u in EQUIPMENT_CONFIG.get("ups", []))
 
     if priority == 2:
-        title = f"🔴 CRITICAL ALARM: {equipment_name}"
-        message = f"{equipment_name} {alarm_type}! Reading: {val_str}. Immediate intervention required."
+        if is_ups_power_alarm:
+            title = f"⚡ EMERGENCY: {equipment_name}"
+            message = f"🚨 {equipment_name}: Utility grid power lost! Operating on battery inverter ({val_str}). MANUAL GENERATOR START REQUIRED IMMEDIATELY."
+        elif is_ups_low_batt:
+            title = f"🔴 CRITICAL EMERGENCY: {equipment_name}"
+            message = f"🚨 {equipment_name}: Battery reserve is critically low ({val_str})! Inverter shutdown imminent."
+        else:
+            title = f"🔴 CRITICAL ALARM: {equipment_name}"
+            message = f"{equipment_name} {alarm_type}! Reading: {val_str}. Immediate intervention required."
         sound = "siren"
         print(f"[{datetime.now().strftime('%T')}] FIRING EMERGENCY SIREN (Priority 2): {title} ({val_str})")
         success, receipt = send_pushover_alert(
@@ -1141,6 +1173,27 @@ def telemetry_scan_worker():
                         trigger_alarm(a_cnl, equip, "Chamber Alarm Contact", None)
                     else:
                         resolve_alarm(a_cnl, None)
+
+            # 6. Facility UPS Systems (0 to N, populated from PLC via curcopy_current)
+            for u in EQUIPMENT_CONFIG.get("ups", []):
+                equip = u["name"]
+                p_cnl = int(u["power_alarm_cnl"]) if u.get("power_alarm_cnl") else None
+                lb_cnl = int(u["low_batt_alarm_cnl"]) if u.get("low_batt_alarm_cnl") else None
+                batt_cnl = int(u["battery_cnl"]) if u.get("battery_cnl") else None
+
+                batt_val = readings.get(batt_cnl) if batt_cnl else None
+
+                if p_cnl and p_cnl in readings:
+                    if readings[p_cnl] > 0:
+                        trigger_alarm(p_cnl, equip, "Utility Power Lost (Generator Required)", batt_val, priority=2)
+                    else:
+                        resolve_alarm(p_cnl, batt_val)
+
+                if lb_cnl and lb_cnl in readings:
+                    if readings[lb_cnl] > 0:
+                        trigger_alarm(lb_cnl, equip, "Battery Critical (<20% or <15m)", batt_val, priority=2)
+                    else:
+                        resolve_alarm(lb_cnl, batt_val)
 
         except Exception as e:
             print(f"Scan loop error: {e}")
@@ -2208,6 +2261,38 @@ class ClinicalAlertHandler(http.server.BaseHTTPRequestHandler):
             self.send_header("Access-Control-Allow-Origin", "*")
             self.end_headers()
             self.wfile.write(json.dumps({"success": True, "faults": sim_fault_states}).encode("utf-8"))
+
+        elif parsed.path == "/api/ups/mute":
+            # Operator Mute command dispatched to CODESYS PLC (-8212)
+            ups_key = params.get("key", ["ups1"])[0]
+            target_ups = None
+            for u in EQUIPMENT_CONFIG.get("ups", []):
+                if u.get("key") == ups_key:
+                    target_ups = u
+                    break
+            if not target_ups and EQUIPMENT_CONFIG.get("ups"):
+                target_ups = EQUIPMENT_CONFIG["ups"][0]
+
+            plc_fb = target_ups.get("plc_fb", "fbUPS01") if target_ups else "fbUPS01"
+            # Route command strictly through the PLC
+            ok, msg = write_plc_bool(f"PLC_PRG.{plc_fb}.bCmdMuteBeeper", True)
+
+            # Audit record in PostgreSQL
+            safe_msg = str(msg).replace("'", "''")
+            ups_name = target_ups.get("name", "Facility Primary UPS") if target_ups else "Facility Primary UPS"
+            safe_name = ups_name.replace("'", "''")
+            db_execute(f"""
+            INSERT INTO mod_arc_postgre_sql.alarm_events 
+            (cnl_num, equipment_name, alarm_type, excursion_val, triggered_at, is_acknowledged, acknowledged_by, is_resolved, corrective_action_notes, priority)
+            VALUES 
+            (179, '{safe_name}', 'Beeper Mute Operator Command', NULL, NOW(), TRUE, 'Lab Kiosk', TRUE, '{safe_msg}', 0);
+            """)
+
+            self.send_response(200 if ok else 500)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.end_headers()
+            self.wfile.write(json.dumps({"success": ok, "message": msg, "ups": ups_key}).encode("utf-8"))
 
         else:
             self.send_response(404)
