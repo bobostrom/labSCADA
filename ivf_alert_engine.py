@@ -69,7 +69,12 @@ CLINIC_NAME   = os.environ.get("CLINIC_NAME", "Advanced Fertility of Alaska")
 CLINIC_SLUG   = os.environ.get("CLINIC_SLUG", "komdivflab")
 CLINIC_DOMAIN = os.environ.get("CLINIC_DOMAIN", "komdivflab.larestelemetry.com")
 CLINIC_LOGO   = os.environ.get("CLINIC_LOGO", "/assets/KOMDlogo.png")
-PLC_OPC_URL   = os.environ.get("PLC_OPC_URL", "opc.tcp://demo-plc:4840")
+PLC_OPC_URL     = os.environ.get("PLC_OPC_URL", "opc.tcp://demo-plc:4840")
+OPC_CLIENT_CERT = os.environ.get("OPC_CLIENT_CERT", "/etc/labscada/certs/client_cert.pem")
+OPC_CLIENT_KEY  = os.environ.get("OPC_CLIENT_KEY", "/etc/labscada/certs/client_key.pem")
+OPC_APP_URI     = os.environ.get("OPC_APP_URI", "urn:demo-scada:RapidScada:DrvOpcUa")
+PLC_OPC_USER    = os.environ.get("PLC_OPC_USER", "scada")
+PLC_OPC_PASS    = os.environ.get("PLC_OPC_PASS", "labMon@2026")
 SIMULATION_MODE = os.environ.get("SIMULATION_MODE", "false").lower() in ("true", "1", "yes")
 POST_CLOSE_GRACE_SEC = 180  # 3 minutes
 
@@ -189,14 +194,62 @@ sim_fault_states = {k: False for k in SIM_TARGETS}
 
 
 def write_plc_bool(var_suffix, bool_val):
-    """Writes a boolean variable to the CODESYS PLC via OPC UA."""
+    """Writes a boolean variable to the CODESYS PLC via OPC UA (supporting SignAndEncrypt & credentials)."""
     device_prefixes = [
         "WAGO 750-8212 PFC200 G2 2ETH RS.Application",
         "CODESYS Control for Raspberry Pi 64 SL.Application",
     ]
+
+    # Method 1: Try asyncua (supports modern SignAndEncrypt with Basic256Sha256 and credentials)
+    try:
+        import asyncio
+        from asyncua import Client, ua
+        from asyncua.crypto.security_policies import SecurityPolicyBasic256Sha256
+
+        async def _async_write():
+            client = Client(PLC_OPC_URL, timeout=4)
+            if os.path.exists(OPC_CLIENT_CERT) and os.path.exists(OPC_CLIENT_KEY):
+                client.application_uri = OPC_APP_URI
+                await client.set_security(
+                    SecurityPolicyBasic256Sha256,
+                    certificate=OPC_CLIENT_CERT,
+                    private_key=OPC_CLIENT_KEY,
+                    mode=3  # SignAndEncrypt
+                )
+                client.set_user(PLC_OPC_USER)
+                client.set_password(PLC_OPC_PASS)
+            elif PLC_OPC_USER:
+                client.set_user(PLC_OPC_USER)
+                if PLC_OPC_PASS:
+                    client.set_password(PLC_OPC_PASS)
+
+            async with client:
+                for prefix in device_prefixes:
+                    node_id = f"ns=4;s=|var|{prefix}.{var_suffix}"
+                    try:
+                        node = client.get_node(node_id)
+                        dv = ua.DataValue(ua.Variant(bool(bool_val), ua.VariantType.Boolean))
+                        await node.write_value(dv)
+                        return True, f"Wrote {bool_val} to {node_id}"
+                    except Exception:
+                        continue
+                return False, f"Node {var_suffix} not found on {PLC_OPC_URL}"
+
+        return asyncio.run(_async_write())
+    except ImportError:
+        pass
+    except Exception as e:
+        # If asyncua attempted and failed with a protocol/security error, return the failure
+        return False, str(e)
+
+    # Method 2: Fallback to classic opcua library
     try:
         from opcua import Client, ua
         client = Client(PLC_OPC_URL, timeout=4)
+        if PLC_OPC_USER:
+            client.set_user(PLC_OPC_USER)
+            if PLC_OPC_PASS:
+                client.set_password(PLC_OPC_PASS)
         client.connect()
         try:
             for prefix in device_prefixes:
@@ -212,7 +265,7 @@ def write_plc_bool(var_suffix, bool_val):
         finally:
             client.disconnect()
     except ImportError:
-        return False, "opcua package not installed on host"
+        return False, "Neither asyncua nor opcua package installed on host"
     except Exception as e:
         return False, str(e)
 
