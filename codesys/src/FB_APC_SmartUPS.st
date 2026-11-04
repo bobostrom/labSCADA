@@ -6,6 +6,7 @@
                 - Supervised Utility Grid Power Loss (Generator Dispatch)
                 - Battery State of Charge & Remaining Runtime Monitoring
                 - Low Battery Reserve Emergency Escalation
+                - Beeper Mute / Silence Supervisory Command Control
    ============================================================================== *)
 FUNCTION_BLOCK FB_APC_SmartUPS
 VAR_INPUT
@@ -21,6 +22,16 @@ VAR_INPUT
     wLoadPct            : WORD := 0;       (* Register 40005: Inverter Load (0-100%) *)
     {attribute 'symbol' := 'readwrite'}
     wRuntimeMin         : WORD := 60;      (* Register 40007: Runtime in minutes *)
+    {attribute 'symbol' := 'readwrite'}
+    wBeeperStatus       : WORD := 1;       (* Register 40008: 1=Enabled, 2=Muted, 3=Disabled *)
+
+    (* --- Interactive Operator Commands (from Kiosk UI or PLC) --- *)
+    {attribute 'symbol' := 'readwrite'}
+    bCmdMuteBeeper      : BOOL := FALSE;   (* TRUE pulse: Temporarily mute beeper for current power loss *)
+    {attribute 'symbol' := 'readwrite'}
+    bCmdDisableBeeper   : BOOL := FALSE;   (* TRUE pulse: Disable beeper speaker *)
+    {attribute 'symbol' := 'readwrite'}
+    bCmdEnableBeeper    : BOOL := FALSE;   (* TRUE pulse: Enable beeper speaker *)
 
     {attribute 'symbol' := 'none'}
     tPowerLossDelay     : TIME := T#10S;   (* Debounce filter to ignore momentary utility grid flickers *)
@@ -46,10 +57,24 @@ VAR_OUTPUT
     rRuntimeMinutes     : REAL := 60.0;    (* Estimated remaining runtime in minutes *)
     {attribute 'symbol' := 'read'}
     rLoadPct            : REAL := 0.0;     (* Current load percentage *)
+    {attribute 'symbol' := 'read'}
+    bBeeperMuted        : BOOL := FALSE;   (* Beeper is currently muted *)
+    {attribute 'symbol' := 'read'}
+    bBeeperDisabled     : BOOL := FALSE;   (* Beeper is disabled *)
+
+    (* --- Modbus Command Output (Mapped to Holding Register 40010 / Offset 9) --- *)
+    {attribute 'symbol' := 'readwrite'}
+    wCommandOut         : WORD := 0;       (* 1=Mute, 2=Disable, 3=Enable *)
 END_VAR
 VAR
     {attribute 'symbol' := 'none'}
     fbFilterPowerLoss   : FB_PickupDropout;
+    {attribute 'symbol' := 'none'}
+    bPrevMute           : BOOL := FALSE;
+    {attribute 'symbol' := 'none'}
+    bPrevDisable        : BOOL := FALSE;
+    {attribute 'symbol' := 'none'}
+    bPrevEnable         : BOOL := FALSE;
 END_VAR
 
 // 1. DECODE APC SMART-UPS STATUS WORD (Register 40001)
@@ -63,6 +88,10 @@ bOnBattery := (wStatusWord AND 16#0002) <> 0;
 rBatteryPct     := WORD_TO_REAL(wBatteryPct);
 rLineVoltage    := WORD_TO_REAL(wLineVoltageX10) / 10.0;
 rLoadPct        := WORD_TO_REAL(wLoadPct);
+
+// Beeper status
+bBeeperMuted    := (wBeeperStatus = 2);
+bBeeperDisabled := (wBeeperStatus = 3);
 
 // Calculate runtime in minutes (prefer wRuntimeMin if non-zero, else wRuntimeSec / 60)
 IF wRuntimeMin > 0 THEN
@@ -90,3 +119,20 @@ ELSE
     bAlarmLowBattery := FALSE;
 END_IF;
 
+// 5. BEEPER COMMAND EXECUTION (One-Shot Output to Modbus Register 40010)
+IF bCmdMuteBeeper AND NOT bPrevMute THEN
+    wCommandOut := 1;       // 1 = Mute
+    bCmdMuteBeeper := FALSE;
+ELSIF bCmdDisableBeeper AND NOT bPrevDisable THEN
+    wCommandOut := 2;       // 2 = Disable
+    bCmdDisableBeeper := FALSE;
+ELSIF bCmdEnableBeeper AND NOT bPrevEnable THEN
+    wCommandOut := 3;       // 3 = Enable
+    bCmdEnableBeeper := FALSE;
+ELSE
+    wCommandOut := 0;
+END_IF;
+
+bPrevMute    := bCmdMuteBeeper;
+bPrevDisable := bCmdDisableBeeper;
+bPrevEnable  := bCmdEnableBeeper;
