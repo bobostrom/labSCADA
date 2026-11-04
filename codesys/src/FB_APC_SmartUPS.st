@@ -89,3 +89,4 @@ IF bOnBattery AND ((wBatteryPct <= wLowBatteryLimit) OR (rRuntimeMinutes <= WORD
 ELSE
     bAlarmLowBattery := FALSE;
 END_IF;
+

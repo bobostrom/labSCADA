@@ -47,6 +47,21 @@ VAR
     fbIncubator2            : FB_G210_Incubator;
     fbDoor01                : FB_PickupDropout;
     fbDoor02                : FB_PickupDropout;
+    fbUPS01                 : FB_APC_SmartUPS;
+
+    (* --- Modbus TCP Mapped Inputs from demo-ups (192.168.10.32:502) --- *)
+    {attribute 'symbol' := 'none'}
+    wUPS_StatusWord         : WORD := 16#0001;  (* Register 40001: Bit 0=Online, Bit 1=On Battery *)
+    {attribute 'symbol' := 'none'}
+    wUPS_BatteryPct         : WORD := 100;     (* Register 40002: Charge % *)
+    {attribute 'symbol' := 'none'}
+    wUPS_RuntimeSec         : WORD := 0;       (* Register 40003: Seconds *)
+    {attribute 'symbol' := 'none'}
+    wUPS_LineVoltageX10     : WORD := 1200;    (* Register 40004: Volts * 10 *)
+    {attribute 'symbol' := 'none'}
+    wUPS_LoadPct            : WORD := 0;       (* Register 40005: Load % *)
+    {attribute 'symbol' := 'none'}
+    wUPS_RuntimeMin         : WORD := 60;      (* Register 40007: Minutes *)
 
     (* --- Ambient Room Drift Dynamics --- *)
     {attribute 'symbol' := 'none'}
@@ -155,6 +170,19 @@ fbDoor02(
     IN            := bDoor02,
     tPickupDelay  := T#60M,
     tDropoutDelay := T#5S
+);
+
+// --- F. Facility UPS Power Subsystem (demo-ups via Modbus TCP) ---
+fbUPS01(
+    wStatusWord         := wUPS_StatusWord,
+    wBatteryPct         := wUPS_BatteryPct,
+    wRuntimeSec         := wUPS_RuntimeSec,
+    wLineVoltageX10     := wUPS_LineVoltageX10,
+    wLoadPct            := wUPS_LoadPct,
+    wRuntimeMin         := wUPS_RuntimeMin,
+    tPowerLossDelay     := T#10S,   (* 10-second debounce for utility flickers *)
+    wLowBatteryLimit    := 20,      (* Critical alarm threshold at 20% *)
+    wLowRuntimeLimitMin := 15       (* Critical alarm threshold at 15 min *)
 );
 
 END_PROGRAM
