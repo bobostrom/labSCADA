@@ -32,3 +32,6 @@ notes/assets/ln2_sawtooth_*.png
 # Local site environment & secrets
 site.env
 .env
+
+backups/
+*.sql

@@ -9,6 +9,7 @@ This directory contains internal engineering scratch notes, network setups, rout
 * **[routersetup for labmon.md](routersetup%20for%20labmon.md):** MikroTik RouterOS setup, dynamic DNS, and firewall configuration.
 * **[mikrotik_dhcp_dns_auto_registration.md](mikrotik_dhcp_dns_auto_registration.md):** MikroTik DHCP-to-DNS automatic static registration script and setup (RB5009 lab vs L009 home).
 * **[cryo_tank_mute_button_plan.md](cryo_tank_mute_button_plan.md):** Industrial engineering design for WAGO digital I/O momentary pushbutton mounted on tanks to pause cryo alarms for 15 minutes during sample retrieval.
+* **[mikrotik_site_to_site_wireguard_guide.md](mikrotik_site_to_site_wireguard_guide.md):** MikroTik RouterOS v7 Site-to-Site WireGuard bridging, disconnect/reconnect procedures, and multi-site client switcher guide.
 * **[user_access_and_custom_domain_strategy.md](user_access_and_custom_domain_strategy.md):** Cloudflare Zero Trust tunnel and custom domain access strategy.
 * **[cloud_database_and_supabase_strategy.md](cloud_database_and_supabase_strategy.md):** Architecture for multi-clinic replication, Supabase PostgreSQL, auth, and cloud report storage.
 * **`assets/`:** Symlink to root [`../assets/`](../assets/) containing clinical logos, favicons, and generated charts.
