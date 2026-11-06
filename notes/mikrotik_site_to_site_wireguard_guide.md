@@ -135,3 +135,4 @@ When preparing a new customer clinic router (e.g. RB5009 for Clinic B):
    * Add New Peer pointing to Clinic B's DDNS endpoint.
    * Add transit IP if using a new interface, or reuse transit subnet.
    * Ensure route to clinic's LAN exists.
+
