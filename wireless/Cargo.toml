@@ -1,0 +1,8 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/wireless-protocol",
+    "crates/bridge",
+    "crates/node",
+]
+

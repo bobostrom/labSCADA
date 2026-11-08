@@ -2019,18 +2019,30 @@
                   const tempVal = cfg.temp_cnl ? r[cfg.temp_cnl] : undefined;
                   const isAlarm = cfg.alarm_cnl ? (r[cfg.alarm_cnl] > 0) : false;
                   const isWarn = !isAlarm && cfg.warn_cnl ? (r[cfg.warn_cnl] > 0) : false;
+                  const isFault = (tempVal !== undefined && (tempVal <= -273.0 || tempVal >= 900.0));
 
-                  if (tempVal !== undefined && valEl) {
-                    valEl.innerText = tempVal.toFixed(1);
+                  if (valEl) {
+                    if (tempVal === undefined || isFault) {
+                      valEl.innerText = '--.-';
+                    } else {
+                      valEl.innerText = tempVal.toFixed(1);
+                    }
                   }
-                  if (tempVal !== undefined && detailEl) {
-                    detailEl.innerText = tempVal.toFixed(1);
+                  if (detailEl) {
+                    if (tempVal === undefined || isFault) {
+                      detailEl.innerText = '--.-';
+                    } else {
+                      detailEl.innerText = tempVal.toFixed(1);
+                    }
                   }
 
                   if (b) {
                     if (isAlarm) {
                       b.innerText = 'CRITICAL';
                       b.className = 'status-badge status-alert';
+                    } else if (isFault) {
+                      b.innerText = 'PROBE FAULT';
+                      b.className = 'status-badge status-warn';
                     } else if (isWarn) {
                       b.innerText = 'DELAY';
                       b.className = 'status-badge status-warn';
@@ -2060,7 +2072,7 @@
                       btnHold.style.background = '#0284c7';
                     }
                     if (cardEl) {
-                      cardEl.style.borderTopColor = isAlarm ? '#ff1744' : (isWarn ? '#ffab00' : defaultColor);
+                      cardEl.style.borderTopColor = isAlarm ? '#ff1744' : (isFault ? '#e11d48' : (isWarn ? '#ffab00' : defaultColor));
                     }
                   }
                 });

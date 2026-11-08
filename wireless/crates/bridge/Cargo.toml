@@ -1,0 +1,22 @@
+[package]
+name = "wireless-bridge"
+version = "0.1.0"
+edition = "2021"
+authors = ["LabSCADA Automation Team"]
+description = "ESP32-S3 Bridge: ESP-NOW Multi-Slave Gateway to Modbus RTU / USB Serial"
+
+[dependencies]
+wireless-protocol = { path = "../wireless-protocol", default-features = false }
+rmodbus = { version = "0.7", default-features = false, features = ["alloc"] }
+serde = { version = "1.0", default-features = false, features = ["derive"] }
+postcard = { version = "1.0", default-features = false }
+heapless = "0.8"
+
+esp-hal = { version = "1.2.2", features = ["esp32s3", "unstable"] }
+esp32s3 = "0.36.0"
+esp-alloc = { version = "0.11.0", features = ["esp32s3"] }
+esp-bootloader-esp-idf = { version = "0.6.0", features = ["esp32s3"] }
+esp-backtrace = { version = "0.20.0", features = ["esp32s3", "panic-handler", "println"] }
+esp-println = { version = "0.18.0", features = ["esp32s3"] }
+esp-radio = { version = "1.0.0-beta.1", features = ["esp32s3", "esp-now", "unstable"] }
+esp-rtos = { version = "0.4.0", features = ["esp32s3", "esp-radio", "esp-alloc"] }

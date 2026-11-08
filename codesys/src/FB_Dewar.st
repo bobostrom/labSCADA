@@ -2,20 +2,16 @@
    FUNCTION BLOCK: FB_Dewar
    DESCRIPTION: Encapsulated clinical monitoring block for Liquid Nitrogen (LN2)
                 cryogenic storage vessels (dewars / freezers).
-                Features:
-                - Granular per-device Virtual Simulation Mode (bSimMode)
-                - Granular fault injection (bForceExcursion)
+                - Scaled raw integer input (iRawTempX10 / 10.0 -> °C)
                 - High threshold alarm with hysteresis & debounced pickup timing
-                - Direct physical terminal binding (rRawTemp)
+                - Clinical fault supervision (Open circuit, wiring short, comms loss)
+                - High-temperature excursion alarm gated off during hardware faults
+                - Wireless cleanroom health diagnostics (Battery, RSSI, Watchdog, Faults)
    ============================================================================== *)
 FUNCTION_BLOCK FB_Dewar
 VAR_INPUT
-    {attribute 'symbol' := 'none'}
-    rRawTemp            : REAL := -150.0;   (* Physical sensor terminal value (e.g. WAGO 750-461) *)
-    {attribute 'symbol' := 'none'}
-    bSimMode            : BOOL := FALSE;    (* TRUE = Ignore terminal, use realistic virtual physics *)
-    {attribute 'symbol' := 'none'}
-    rNominalTemp        : REAL := -150.0;   (* Typical vapor phase operating temperature (°C) *)
+    {attribute 'symbol' := 'readwrite'}
+    iRawTempX10         : INT := -1500;     (* Raw scaled temp * 10 (-1954 = -195.4 °C, -9999 = Disconnected) *)
     {attribute 'symbol' := 'none'}
     rHighTrip           : REAL := -135.0;   (* Critical specimen danger limit (°C) *)
     {attribute 'symbol' := 'none'}
@@ -24,14 +20,44 @@ VAR_INPUT
     tPickupDelay        : TIME := T#30S;    (* Sustained warm excursion required to trip *)
     {attribute 'symbol' := 'none'}
     tDropoutDelay       : TIME := T#10S;    (* Clean fill required to reset *)
+
+    (* --- Wireless Telemetry Inputs (Direct from Modbus Bridge) --- *)
+    {attribute 'symbol' := 'readwrite'}
+    uiRawBatteryMv      : UINT := 3850;     (* Battery health in millivolts *)
+    {attribute 'symbol' := 'readwrite'}
+    iRawRSSI            : INT := -50;       (* Link RSSI in dBm *)
+    {attribute 'symbol' := 'readwrite'}
+    uiRawFaultCode      : UINT := 0;        (* Probe fault: 0=OK, 1=Open, 2=Short GND, 3=Short VCC, 4=Hardware Error *)
+    {attribute 'symbol' := 'readwrite'}
+    uiRawAgeSec         : UINT := 0;        (* Seconds since last burst packet *)
+    {attribute 'symbol' := 'readwrite'}
+    wRawStatusFlags     : WORD := 16#0001;  (* Bit 0=Online, Bit 1=LowBatt, Bit 2=CommLoss *)
+    {attribute 'symbol' := 'none'}
+    bIsWireless         : BOOL := TRUE;     (* TRUE = Enable wireless diagnostics *)
+    {attribute 'symbol' := 'none'}
+    tCommLossTimeout    : TIME := T#60S;    (* Watchdog comms loss alarm threshold *)
 END_VAR
 VAR_OUTPUT
     {attribute 'symbol' := 'read'}
-    rProcessTemp        : REAL;             (* Published process temperature to SCADA & DB *)
+    rProcessTemp        : REAL;             (* Published process temperature to SCADA (°C) *)
     {attribute 'symbol' := 'read'}
-    bAlarm              : BOOL := FALSE;    (* Priority 2 Emergency Alarm flag *)
+    bAlarm              : BOOL := FALSE;    (* Priority 2 Emergency Temperature Alarm flag *)
     {attribute 'symbol' := 'read'}
     bWarn               : BOOL := FALSE;    (* Pre-alarm pickup delay warning flag *)
+    {attribute 'symbol' := 'read'}
+    rBatteryVolts       : REAL := 3.85;     (* Published battery voltage (V) *)
+    {attribute 'symbol' := 'read'}
+    bLowBattery         : BOOL := FALSE;    (* Low battery warning flag (< 3.4V) *)
+    {attribute 'symbol' := 'read'}
+    iRSSI               : INT := -50;       (* Published wireless link margin (dBm) *)
+    {attribute 'symbol' := 'read'}
+    bCommLoss           : BOOL := FALSE;    (* Comms loss watchdog alarm *)
+    {attribute 'symbol' := 'read'}
+    bProbeFault         : BOOL := FALSE;    (* Physical probe disconnected or shorted *)
+    {attribute 'symbol' := 'read'}
+    uiFaultCode         : UINT := 0;        (* Published probe fault reason (0=OK, 1=Open, 2=GND, 3=VCC) *)
+    {attribute 'symbol' := 'read'}
+    uiAgeSec            : UINT := 0;        (* Telemetry age in seconds *)
     {attribute 'symbol' := 'none'}
     bHighTrip           : BOOL := FALSE;    (* Instantaneous excursion indicator *)
     {attribute 'symbol' := 'none'}
@@ -40,39 +66,52 @@ VAR_OUTPUT
     tElapsedDO          : TIME := T#0S;     (* Time recovery has persisted *)
 END_VAR
 VAR
-    {attribute 'symbol' := 'readwrite'}
-    bForceExcursion     : BOOL := FALSE;    (* Injects critical excursion above -135°C in sim mode *)
     {attribute 'symbol' := 'none'}
     fbAlarmEval         : FB_AnalogAlarm;
-    {attribute 'symbol' := 'none'}
-    tonSimTick          : TON;
-    {attribute 'symbol' := 'none'}
-    iAngle              : INT := 0;
 END_VAR
 
-// 1. DYNAMICS SIMULATION GENERATOR (Runs if bSimMode is active)
-IF bSimMode THEN
-    tonSimTick(IN := NOT tonSimTick.Q, PT := T#1S);
-    IF tonSimTick.Q THEN
-        iAngle := (iAngle + 3) MOD 360;
-    END_IF;
+// ==============================================================================
+// 1. HARDWARE HEALTH & TELEMETRY DECODING
+// ==============================================================================
+IF bIsWireless THEN
+    rBatteryVolts := TO_REAL(uiRawBatteryMv) / 1000.0;
+    bLowBattery   := (uiRawBatteryMv < 3400) OR (wRawStatusFlags.1);
+    iRSSI         := iRawRSSI;
+    uiAgeSec      := uiRawAgeSec;
+    uiFaultCode   := uiRawFaultCode;
 
-    IF bForceExcursion THEN
-        // Boiling off / vacuum loss: temperature rises to -125.0 °C
-        rProcessTemp := -125.0 + 1.2 * COS(TO_REAL(iAngle) * 0.05);
-    ELSE
-        // Healthy cryogenic vapor phase: smooth breathing around nominal
-        rProcessTemp := rNominalTemp + 0.8 * SIN(TO_REAL(iAngle) * 0.04);
-    END_IF;
+    // Probe fault if hardware reported fault code or value is sentinel (<= -273°C or >= 900°C)
+    bProbeFault   := (uiRawFaultCode <> 0) OR (iRawTempX10 <= -2730) OR (iRawTempX10 >= 9000);
+
+    // Watchdog comms loss if bridge flagged or age exceeds timeout
+    bCommLoss     := (wRawStatusFlags.2) OR (uiRawAgeSec > (TIME_TO_UINT(tCommLossTimeout) / 1000));
 ELSE
-    // Read live physical probe from WAGO I/O terminal
-    rProcessTemp := rRawTemp;
+    rBatteryVolts := 0.0;
+    bLowBattery   := FALSE;
+    iRSSI         := 0;
+    bCommLoss     := FALSE;
+    uiFaultCode   := 0;
+    bProbeFault   := (iRawTempX10 <= -2730) OR (iRawTempX10 >= 9000);
+    uiAgeSec      := 0;
 END_IF;
 
-// 2. CLINICAL ALARM EVALUATION (Pickup / Dropout & Hysteresis)
+// ==============================================================================
+// 2. TEMPERATURE SENTINEL MAPPING
+// ==============================================================================
+// If probe is faulted or comms lost, output standard invalid sentinel (-999.0 °C)
+IF bProbeFault OR bCommLoss THEN
+    rProcessTemp := -999.0;
+ELSE
+    rProcessTemp := TO_REAL(iRawTempX10) / 10.0;
+END_IF;
+
+// ==============================================================================
+// 3. CLINICAL ALARM EVALUATION (Pickup / Dropout & Hysteresis)
+// ==============================================================================
+// Thermal excursion alarms are only evaluated when sensor data is valid
 fbAlarmEval(
     rVal          := rProcessTemp,
-    bEnableHigh   := TRUE,
+    bEnableHigh   := NOT (bProbeFault OR bCommLoss),
     rHighPickup   := rHighTrip,
     rHighDropout  := rHighTrip - rHysteresis,
     bEnableLow    := FALSE,
@@ -85,5 +124,3 @@ bWarn      := fbAlarmEval.bPickup AND NOT fbAlarmEval.bAlarm;
 bHighTrip  := fbAlarmEval.bHighTrip;
 tElapsedPU := fbAlarmEval.tElapsedPU;
 tElapsedDO := fbAlarmEval.tElapsedDO;
-
-END_FUNCTION_BLOCK

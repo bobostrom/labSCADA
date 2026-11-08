@@ -35,3 +35,8 @@ site.env
 
 backups/
 *.sql
+
+# Rust build artifacts
+target/
+**/target/
+*.bin
