@@ -7,6 +7,7 @@ use esp_backtrace as _;
 use esp_println::println;
 use esp_hal::efuse::{self, InterfaceMacAddress};
 use esp_hal::timer::timg::TimerGroup;
+use esp_hal::rtc_cntl::sleep::{LowPower, RtcSleepConfig};
 use esp_hal::analog::adc::{Adc, AdcConfig, Attenuation, AdcCalCurve};
 use esp_hal::peripherals::ADC1;
 use esp_radio::esp_now::BROADCAST_ADDRESS;
@@ -30,6 +31,7 @@ fn main() -> ! {
     esp_alloc::heap_allocator!(size: 64 * 1024);
 
     let peripherals = esp_hal::init(esp_hal::Config::default());
+    let mut lpwr = LowPower::new(peripherals.LPWR);
 
     println!("========================================");
     println!("  LabSCADA Wireless Node (ESP32-S3)     ");
@@ -242,8 +244,10 @@ fn main() -> ! {
             delay.delay_millis(1);
         }
 
-        // 4. Bench Debug Mode: Keep USB connection continuously active (no deep sleep)
-        println!("Cycle complete. Pausing 3s before next sample (USB active)...");
-        delay.delay_millis(3000);
+        // 4. Enter Ultra-Low-Power Deep Sleep for reporting interval (configured in equipment.json)
+        println!("Entering Ultra-Low-Power Deep Sleep ({}s)...", REPORT_INTERVAL_SECS);
+        let deadline = esp_hal::time::Instant::now() + esp_hal::time::Duration::from_secs(REPORT_INTERVAL_SECS);
+        lpwr.set_wakeup_deadline(deadline);
+        lpwr.sleep_deep(RtcSleepConfig::deep());
     }
 }
