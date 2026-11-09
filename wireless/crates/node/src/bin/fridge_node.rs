@@ -7,6 +7,8 @@ use esp_backtrace as _;
 use esp_println::println;
 use esp_hal::efuse::{self, InterfaceMacAddress};
 use esp_hal::timer::timg::TimerGroup;
+use esp_hal::rtc_cntl::sleep::{LowPower, RtcSleepConfig};
+use esp_hal::analog::adc::{Adc, AdcConfig, Attenuation};
 use esp_radio::esp_now::BROADCAST_ADDRESS;
 use wireless_protocol::{DeviceTelemetry, DownlinkPacket, UplinkPacket};
 use onecable::{OneWire, ds18b20::DS18B20, search_rom::OneWireRomIter};
@@ -15,12 +17,17 @@ esp_bootloader_esp_idf::esp_app_desc!();
 
 const MAX_SENSORS: usize = 3;
 const TEMP_SENTINEL_DISCONNECTED: i16 = -9999; // -999.9 °C
+const REPORT_INTERVAL_SECS: u64 = 20; // 20-second clinical reporting interval
+
+#[esp_hal::ram(unstable(rtc_fast, persistent))]
+static mut BOOT_SEQ: u32 = 1;
 
 #[esp_hal::main]
 fn main() -> ! {
     esp_alloc::heap_allocator!(size: 64 * 1024);
 
     let peripherals = esp_hal::init(esp_hal::Config::default());
+    let mut lpwr = LowPower::new(peripherals.LPWR);
 
     println!("========================================");
     println!("  LabSCADA Wireless Node (ESP32-S3)     ");
@@ -46,7 +53,11 @@ fn main() -> ! {
     mac_arr.copy_from_slice(mac_bytes);
 
     let mut delay = esp_hal::delay::Delay::new();
-    let mut seq: u32 = 1;
+    let seq = unsafe {
+        let s = BOOT_SEQ;
+        BOOT_SEQ = BOOT_SEQ.wrapping_add(1);
+        if s == 0 || s > 500_000_000 { 1 } else { s }
+    };
     let mut tx_buf = [0u8; 64];
 
     // Hardware pin mapping for Seeed Studio XIAO ESP32-S3:
@@ -158,13 +169,29 @@ fn main() -> ! {
             fault_code = 0xFF; // All sensors disconnected
         }
 
-        // 2. Broadcast Telemetry via ESP-NOW
+        // 2. Read Battery Voltage via ADC1 on GPIO 1 (A0)
+        let mut adc1_config = AdcConfig::new();
+        let mut batt_pin = adc1_config.enable_pin(peripherals.GPIO1, Attenuation::_11dB);
+        let mut adc1 = Adc::new(peripherals.ADC1, adc1_config);
+        let raw_adc: u16 = adc1.read_blocking(&mut batt_pin);
+        println!("Battery ADC (GPIO 1): raw = {}", raw_adc);
+
+        // 12-bit ADC (0..4095) with 11dB attenuation (~3100 mV full scale).
+        // External 2:1 divider: V_batt = V_pin * 2 = raw * (3100 * 2) / 4095 = raw * 6200 / 4095.
+        let calculated_mv = ((raw_adc as u32 * 6200) / 4095) as u16;
+        let battery_mv = if calculated_mv >= 2500 && calculated_mv <= 4500 {
+            calculated_mv
+        } else {
+            3820 // Nominal baseline fallback if on USB power or divider not fitted
+        };
+
+        // 3. Broadcast Telemetry via ESP-NOW
         // Slot 2 = Fridge/Freezer Node
         let telemetry = DeviceTelemetry::FridgeFreezer {
             fridge_temp_c_x10: fridge_temp,
             freezer_temp_c_x10: freezer_temp,
             ambient_temp_c_x10: ambient_temp,
-            battery_mv: 3820,
+            battery_mv,
             sensor_fault: fault_code,
         };
 
@@ -200,7 +227,10 @@ fn main() -> ! {
             delay.delay_millis(1);
         }
 
-        delay.delay_millis(3000);
-        seq = seq.wrapping_add(1);
+        // 4. Enter Low-Power Deep Sleep for reporting interval (20 seconds)
+        println!("Entering Ultra-Low-Power Deep Sleep ({}s)...", REPORT_INTERVAL_SECS);
+        let deadline = esp_hal::time::Instant::now() + esp_hal::time::Duration::from_secs(REPORT_INTERVAL_SECS);
+        lpwr.set_wakeup_deadline(deadline);
+        lpwr.sleep_deep(RtcSleepConfig::deep());
     }
 }
