@@ -95,3 +95,4 @@ pub const FRIDGE_BATT_CAL_DEN: u32 = {fridge_den};
 
     fs::write(&dest_path, code).unwrap();
 }
+
