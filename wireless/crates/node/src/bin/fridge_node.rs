@@ -7,7 +7,6 @@ use esp_backtrace as _;
 use esp_println::println;
 use esp_hal::efuse::{self, InterfaceMacAddress};
 use esp_hal::timer::timg::TimerGroup;
-use esp_hal::rtc_cntl::sleep::{LowPower, RtcSleepConfig};
 use esp_hal::analog::adc::{Adc, AdcConfig, Attenuation, AdcCalCurve};
 use esp_hal::peripherals::ADC1;
 use esp_radio::esp_now::BROADCAST_ADDRESS;
@@ -31,7 +30,6 @@ fn main() -> ! {
     esp_alloc::heap_allocator!(size: 64 * 1024);
 
     let peripherals = esp_hal::init(esp_hal::Config::default());
-    let mut lpwr = LowPower::new(peripherals.LPWR);
 
     println!("========================================");
     println!("  LabSCADA Wireless Node (ESP32-S3)     ");
@@ -84,6 +82,14 @@ fn main() -> ! {
     ow_pin.set_high();
 
     let mut led = esp_hal::gpio::Output::new(peripherals.GPIO21, esp_hal::gpio::Level::High, esp_hal::gpio::OutputConfig::default());
+
+    // Initialize ADC1 on GPIO 1 (A0) with factory curve calibration
+    let mut adc1_config = AdcConfig::new();
+    let mut batt_pin = adc1_config.enable_pin_with_cal::<_, AdcCalCurve<ADC1>>(
+        peripherals.GPIO1,
+        Attenuation::_11dB,
+    );
+    let mut adc1 = Adc::new(peripherals.ADC1, adc1_config);
 
     let mut sensors: heapless::Vec<DS18B20, MAX_SENSORS> = heapless::Vec::new();
 
@@ -188,13 +194,7 @@ fn main() -> ! {
             fault_code = 0xFF; // All sensors disconnected
         }
 
-        // 2. Read Battery Voltage via ADC1 on GPIO 1 (A0) with factory curve calibration
-        let mut adc1_config = AdcConfig::new();
-        let mut batt_pin = adc1_config.enable_pin_with_cal::<_, AdcCalCurve<ADC1>>(
-            peripherals.GPIO1,
-            Attenuation::_11dB,
-        );
-        let mut adc1 = Adc::new(peripherals.ADC1, adc1_config);
+        // 2. Read Battery Voltage via ADC1 on GPIO 1 (A0)
         let pin_mv: u16 = adc1.read_blocking(&mut batt_pin);
         println!("Battery ADC (GPIO 1): calibrated pin_mv = {} mV", pin_mv);
 
@@ -242,10 +242,8 @@ fn main() -> ! {
             delay.delay_millis(1);
         }
 
-        // 4. Enter Low-Power Deep Sleep for reporting interval (20 seconds)
-        println!("Entering Ultra-Low-Power Deep Sleep ({}s)...", REPORT_INTERVAL_SECS);
-        let deadline = esp_hal::time::Instant::now() + esp_hal::time::Duration::from_secs(REPORT_INTERVAL_SECS);
-        lpwr.set_wakeup_deadline(deadline);
-        lpwr.sleep_deep(RtcSleepConfig::deep());
+        // 4. Bench Debug Mode: Keep USB connection continuously active (no deep sleep)
+        println!("Cycle complete. Pausing 3s before next sample (USB active)...");
+        delay.delay_millis(3000);
     }
 }
