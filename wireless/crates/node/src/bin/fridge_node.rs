@@ -193,10 +193,12 @@ fn main() -> ! {
         let pin_mv: u16 = adc1.read_blocking(&mut batt_pin);
         println!("Battery ADC (GPIO 1): calibrated pin_mv = {} mV", pin_mv);
 
-        // Calibrated against user's multimeter measurements:
-        // Physical battery = 4053 mV; Physical pin A0 = 2200 mV
-        // Scaling factor = 4053 / 2200 = 1.8423
-        let battery_mv = ((pin_mv as u32 * 4053) / 2200) as u16;
+        // Calibrated against precision multimeter measurements:
+        // Physical battery = 4072 mV (4.072V)
+        // Physical pin A0  = 2020 mV (2.02V)
+        // ADC calibrated reading pin_mv = 2014 mV
+        // Divider scale factor: 4072 / 2014 = 2.0218 (true 2x 100k divider with resistor tolerance)
+        let battery_mv = ((pin_mv as u32 * 4072) / 2014) as u16;
 
         // 3. Broadcast Telemetry via ESP-NOW
         // Slot 2 = Fridge/Freezer Node
