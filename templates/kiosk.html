@@ -996,14 +996,22 @@
       <div class="card" id="card-cryo{{ d.id }}" style="border-top:3px solid {{ d.color | default('#00e5ff') }};">
         <div style="display:flex; justify-content:space-between; align-items:flex-start;">
           <div>
-            <div class="card-title">{{ d.label | default(d.name) }}</div>
+            <div style="display:flex; align-items:center; gap:6px;">
+              <div class="card-title" style="margin-bottom:0;">{{ d.label | default(d.name) }}</div>
+              {% if d.is_wireless and d.batt_cnl %}
+              <div id="dewar-batt-wrap-{{ d.id }}" style="display:inline-flex; align-items:center; gap:3px; font-size:10px; font-family:monospace; font-weight:700; color:#10b981; background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.3); padding:1px 6px; border-radius:10px;" title="Wireless Node Battery Voltage">
+                <span>🔋</span>
+                <span id="val-dewar-batt-{{ d.id }}">--</span><span style="font-size:8px; color:#8899a6;">V</span>
+              </div>
+              {% endif %}
+            </div>
             <div class="card-val"><span id="val-cryo{{ d.id }}">--</span><span class="card-unit">°C</span></div>
           </div>
           <span id="badge-cryo{{ d.id }}" class="status-badge status-normal">NORMAL</span>
         </div>
         <div class="card-sub">
           <span>Vapor Limit: &lt; {{ d.high_limit | default(-135.0) }}°C</span>
-          <span style="font-size:11px; color:#8899a6;">Pt100 Analog</span>
+          <span style="font-size:11px; color:#8899a6;">{% if d.is_wireless %}Wireless Sensor (Slot {{ d.id }}){% else %}Pt100 Analog{% endif %}</span>
         </div>
 
         <!-- Integrated Dipstick Sub-Panel -->
@@ -2122,6 +2130,32 @@
                     }
                     if (cardEl) {
                       cardEl.style.borderTopColor = isAlarm ? '#ff1744' : (isFault ? '#e11d48' : (isWarn ? '#ffab00' : defaultColor));
+                    }
+                  }
+
+                  // Battery monitoring for wireless dewars (only if configured with batt_cnl)
+                  if (cfg.batt_cnl) {
+                    const dewarBattEl = document.getElementById(`val-dewar-batt-${cfg.id}`);
+                    const dewarBattWrap = document.getElementById(`dewar-batt-wrap-${cfg.id}`);
+                    const dewarBattVal = r[cfg.batt_cnl];
+                    if (dewarBattVal !== undefined && dewarBattVal !== null) {
+                      const v = Number(dewarBattVal);
+                      if (dewarBattEl) dewarBattEl.innerText = v.toFixed(2);
+                      if (dewarBattWrap) {
+                        if (v < 3.4) {
+                          dewarBattWrap.style.color = '#ff1744';
+                          dewarBattWrap.style.borderColor = 'rgba(255,23,68,0.4)';
+                          dewarBattWrap.style.background = 'rgba(255,23,68,0.12)';
+                        } else if (v < 3.6) {
+                          dewarBattWrap.style.color = '#ffab00';
+                          dewarBattWrap.style.borderColor = 'rgba(255,171,0,0.4)';
+                          dewarBattWrap.style.background = 'rgba(255,171,0,0.12)';
+                        } else {
+                          dewarBattWrap.style.color = '#10b981';
+                          dewarBattWrap.style.borderColor = 'rgba(16,185,129,0.3)';
+                          dewarBattWrap.style.background = 'rgba(16,185,129,0.08)';
+                        }
+                      }
                     }
                   }
                 });
