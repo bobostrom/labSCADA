@@ -1033,12 +1033,36 @@
       </div>
       {% endfor %}
 
-      <!-- Combined Medical Cold Storage (0 to N Fridges & Freezers) -->
-      {% if (equipment.fridges | length + equipment.freezers | length) > 0 %}
+      <!-- Combined Medical Cold Storage (0 to N Fridges & Freezers + Ambient) -->
+      {% if (equipment.fridges | length + equipment.freezers | length + equipment.ambient | length) > 0 %}
       <div class="card" id="card-cold-storage" style="border-top:3px solid #00e676;">
-        <div class="card-title">Medical Cold Storage</div>
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div class="card-title" style="margin-bottom:0;">Medical Cold Storage</div>
+          <div id="cs-battery-indicator" style="display:flex; align-items:center; gap:4px; font-size:11px; font-family:monospace; font-weight:700; color:#10b981; background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.3); padding:2px 8px; border-radius:12px;" title="Wireless Node Battery Voltage">
+            <span>🔋</span>
+            <span id="val-cs-battery">--</span><span style="font-size:9px; color:#8899a6;">V</span>
+          </div>
+        </div>
+
+        <!-- Ambient Room Temperature Full-Width Strip (Above Fridge & Freezer) -->
+        {% for a in equipment.ambient %}
+        <div style="background:rgba(9,13,22,0.65); padding:10px 12px; border-radius:8px; border:1px solid rgba(255,255,255,0.06); margin-top:10px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+          <div>
+            <div style="font-size:11px; font-weight:700; color:#8899a6; text-transform:uppercase;">{{ a.name }}</div>
+            <div style="font-size:11px; color:#64748b; margin-top:2px;">{{ a.target_label | default('Comfort Target: ~25.0°C') }}</div>
+          </div>
+          <div style="display:flex; align-items:center; gap:10px;">
+            <div style="font-size:1.65rem; font-weight:800; font-family:monospace; color:#f0f4f8; line-height:1.1;">
+              <span id="val-{{ a.key }}">--</span><span class="card-unit">°C</span>
+            </div>
+            <span id="badge-{{ a.key }}" class="status-badge status-normal">COMFORT</span>
+          </div>
+        </div>
+        {% endfor %}
+
+        <!-- Fridge & Freezer Sub-Grid -->
         <div
-          style="display:grid; grid-template-columns:repeat(auto-fit, minmax(120px, 1fr)); gap:10px; margin-top:8px;">
+          style="display:grid; grid-template-columns:repeat(auto-fit, minmax(120px, 1fr)); gap:10px; margin-top:10px;">
           {% for f in equipment.fridges %}
           <div
             style="background:rgba(9,13,22,0.65); padding:10px 10px; border-radius:8px; border:1px solid rgba(255,255,255,0.06); min-width:0; overflow:hidden;">
@@ -1071,23 +1095,11 @@
             <div
               style="font-size:11px; color:#8899a6; margin-top:5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
               {{ fz.target_label | default('Limit: < -15.0°C') }}</div>
-            </div>
-            {% endfor %}
           </div>
+          {% endfor %}
         </div>
-        {% endif %}
-
-        <!-- Cleanroom Ambient Sensors (0 to N) -->
-        {% for a in equipment.ambient %}
-        <div class="card" id="card-{{ a.key }}">
-          <div class="card-title">{{ a.name }}</div>
-          <div class="card-val"><span id="val-{{ a.key }}">--</span><span class="card-unit">°C</span></div>
-          <div class="card-sub">
-            <span>{{ a.target_label | default('Comfort Target: ~25.0°C') }}</span>
-            <span id="badge-{{ a.key }}" class="status-badge status-normal">COMFORT</span>
-          </div>
-        </div>
-        {% endfor %}
+      </div>
+      {% endif %}
 
         <!-- Cleanroom Doors Card (0 to N) -->
         {% if equipment.doors | length > 0 %}
@@ -1955,6 +1967,7 @@
                 }
 
                 // 1. Ambient Sensors
+                let anyAmbientWarn = false;
                 (EQUIPMENT.ambient || []).forEach(a => {
                   const valEl = document.getElementById(`val-${a.key}`);
                   const badgeEl = document.getElementById(`badge-${a.key}`);
@@ -1967,12 +1980,14 @@
                     if (isFault) {
                       badgeEl.innerText = 'OFFLINE';
                       badgeEl.className = 'status-badge status-warn';
+                      anyAmbientWarn = true;
                     } else {
                       const low = a.low_limit !== undefined ? a.low_limit : 20.0;
                       const high = a.high_limit !== undefined ? a.high_limit : 27.0;
                       if (tempVal < low || tempVal > high) {
                         badgeEl.innerText = 'DRIFT';
                         badgeEl.className = 'status-badge status-warn';
+                        anyAmbientWarn = true;
                       } else {
                         badgeEl.innerText = 'COMFORT';
                         badgeEl.className = 'status-badge status-normal';
@@ -2014,7 +2029,31 @@
                 });
                 const cardCS = document.getElementById('card-cold-storage');
                 if (cardCS) {
-                  cardCS.style.borderTopColor = anyColdAlarm ? '#ff1744' : (anyColdWarn ? '#ffab00' : '#00e676');
+                  cardCS.style.borderTopColor = anyColdAlarm ? '#ff1744' : ((anyColdWarn || anyAmbientWarn) ? '#ffab00' : '#00e676');
+                }
+
+                // Update Cold Storage Wireless Node Battery Voltage (Channel 105)
+                const csBattEl = document.getElementById('val-cs-battery');
+                const csBattWrap = document.getElementById('cs-battery-indicator');
+                const csBattVal = r[105];
+                if (csBattVal !== undefined && csBattVal !== null) {
+                  const v = Number(csBattVal);
+                  if (csBattEl) csBattEl.innerText = v.toFixed(2);
+                  if (csBattWrap) {
+                    if (v < 3.4) {
+                      csBattWrap.style.color = '#ff1744';
+                      csBattWrap.style.borderColor = 'rgba(255,23,68,0.4)';
+                      csBattWrap.style.background = 'rgba(255,23,68,0.12)';
+                    } else if (v < 3.6) {
+                      csBattWrap.style.color = '#ffab00';
+                      csBattWrap.style.borderColor = 'rgba(255,171,0,0.4)';
+                      csBattWrap.style.background = 'rgba(255,171,0,0.12)';
+                    } else {
+                      csBattWrap.style.color = '#10b981';
+                      csBattWrap.style.borderColor = 'rgba(16,185,129,0.3)';
+                      csBattWrap.style.background = 'rgba(16,185,129,0.08)';
+                    }
+                  }
                 }
 
                 // 3. Monitored Dewars (0 to N)
