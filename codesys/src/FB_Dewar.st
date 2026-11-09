@@ -58,12 +58,6 @@ VAR_OUTPUT
     uiFaultCode         : UINT := 0;        (* Published probe fault reason (0=OK, 1=Open, 2=GND, 3=VCC) *)
     {attribute 'symbol' := 'read'}
     uiAgeSec            : UINT := 0;        (* Telemetry age in seconds *)
-    {attribute 'symbol' := 'none'}
-    bHighTrip           : BOOL := FALSE;    (* Instantaneous excursion indicator *)
-    {attribute 'symbol' := 'none'}
-    tElapsedPU          : TIME := T#0S;     (* Time excursion has persisted *)
-    {attribute 'symbol' := 'none'}
-    tElapsedDO          : TIME := T#0S;     (* Time recovery has persisted *)
 END_VAR
 VAR
     {attribute 'symbol' := 'none'}
@@ -120,7 +114,4 @@ fbAlarmEval(
 );
 
 bAlarm     := fbAlarmEval.bAlarm;
-bWarn      := fbAlarmEval.bPickup AND NOT fbAlarmEval.bAlarm;
-bHighTrip  := fbAlarmEval.bHighTrip;
-tElapsedPU := fbAlarmEval.tElapsedPU;
-tElapsedDO := fbAlarmEval.tElapsedDO;
+bWarn      := fbAlarmEval.bWarn;

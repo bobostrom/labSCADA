@@ -104,8 +104,9 @@ def update_cabinet_state(readings=None):
     if readings is None:
         readings = get_current_channel_values()
 
-    # PLC Channels: 108 (Door Open), 109 (Incubator Mute), 110 (Door Alarm)
-    is_open = bool(readings.get(door_cnl, 0) > 0) if door_cnl and door_cnl in readings else False
+    # PLC Channels: 132 (Door Closed DI), 133 (Incubator Mute), 134 (Door Alarm)
+    # Fail-safe NC contact: 1/TRUE = Closed, 0/FALSE/unwired = Open
+    is_open = bool(readings.get(door_cnl, 0) <= 0) if door_cnl and door_cnl in readings else True
     mute_active = bool(readings.get(mute_cnl, 0) > 0) if mute_cnl and mute_cnl in readings else is_open
     is_alarm = bool(readings.get(alarm_cnl, 0) > 0) if alarm_cnl and alarm_cnl in readings else False
 
@@ -706,7 +707,8 @@ def track_door_events(readings, current_mode):
     """Tracks physical door open/close transitions and duration in PostgreSQL."""
     now = time.time()
     for contact_cnl, st in door_event_states.items():
-        is_now_open = (readings.get(contact_cnl, 0) > 0)
+        # Fail-safe NC contact: 1/TRUE = Closed, 0/FALSE/unwired = Open
+        is_now_open = (readings.get(contact_cnl, 0) <= 0)
         is_now_alarm = (readings.get(st["alarm_cnl"], 0) > 0) if st.get("alarm_cnl") else False
         door_name = st["name"]
 

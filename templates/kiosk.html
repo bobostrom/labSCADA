@@ -1959,18 +1959,24 @@
                   const valEl = document.getElementById(`val-${a.key}`);
                   const badgeEl = document.getElementById(`badge-${a.key}`);
                   const tempVal = a.temp_cnl ? r[a.temp_cnl] : undefined;
-                  if (tempVal !== undefined && valEl) {
-                    valEl.innerText = tempVal.toFixed(1);
+                  const isFault = (tempVal === undefined || tempVal <= -900.0 || tempVal >= 900.0 || tempVal <= -273.0);
+                  if (valEl) {
+                    valEl.innerText = isFault ? '--.-' : tempVal.toFixed(1);
                   }
-                  if (badgeEl && tempVal !== undefined) {
-                    const low = a.low_limit !== undefined ? a.low_limit : 20.0;
-                    const high = a.high_limit !== undefined ? a.high_limit : 27.0;
-                    if (tempVal < low || tempVal > high) {
-                      badgeEl.innerText = 'DRIFT';
+                  if (badgeEl) {
+                    if (isFault) {
+                      badgeEl.innerText = 'OFFLINE';
                       badgeEl.className = 'status-badge status-warn';
                     } else {
-                      badgeEl.innerText = 'COMFORT';
-                      badgeEl.className = 'status-badge status-normal';
+                      const low = a.low_limit !== undefined ? a.low_limit : 20.0;
+                      const high = a.high_limit !== undefined ? a.high_limit : 27.0;
+                      if (tempVal < low || tempVal > high) {
+                        badgeEl.innerText = 'DRIFT';
+                        badgeEl.className = 'status-badge status-warn';
+                      } else {
+                        badgeEl.innerText = 'COMFORT';
+                        badgeEl.className = 'status-badge status-normal';
+                      }
                     }
                   }
                 });
@@ -1982,17 +1988,21 @@
                   const valEl = document.getElementById(`val-${unit.key}`);
                   const badgeEl = document.getElementById(`badge-${unit.key}`);
                   const tempVal = unit.temp_cnl ? r[unit.temp_cnl] : undefined;
-                  if (tempVal !== undefined && valEl) {
-                    valEl.innerText = tempVal.toFixed(1);
+                  const isFault = (tempVal === undefined || tempVal <= -900.0 || tempVal >= 900.0 || tempVal <= -273.0);
+                  if (valEl) {
+                    valEl.innerText = isFault ? '--.-' : tempVal.toFixed(1);
                   }
                   const isAlarm = unit.alarm_cnl ? (r[unit.alarm_cnl] > 0) : false;
                   const isWarn = !isAlarm && unit.warn_cnl ? (r[unit.warn_cnl] > 0) : false;
                   if (isAlarm) anyColdAlarm = true;
-                  if (isWarn) anyColdWarn = true;
+                  if (isWarn || isFault) anyColdWarn = true;
                   if (badgeEl) {
                     if (isAlarm) {
                       badgeEl.innerText = 'EXCURSION';
                       badgeEl.className = 'status-badge status-alert';
+                    } else if (isFault) {
+                      badgeEl.innerText = 'PROBE FAULT';
+                      badgeEl.className = 'status-badge status-warn';
                     } else if (isWarn) {
                       badgeEl.innerText = 'DELAY';
                       badgeEl.className = 'status-badge status-warn';
@@ -2081,8 +2091,10 @@
                 let anyDoorAlarm = false;
                 let anyDoorOpen = false;
                 (EQUIPMENT.doors || []).forEach(dr => {
-                  const dAlarm = dr.alarm_cnl ? (r[dr.alarm_cnl] > 0) : false;
-                  const dOpen = dr.contact_cnl ? (r[dr.contact_cnl] > 0) : false;
+                  const dAlarm = dr.alarm_cnl ? (Number(r[dr.alarm_cnl]) > 0) : false;
+                  // Fail-safe NC contact: Closed if strictly > 0. Open if 0, undefined, null, or unwired.
+                  const isClosed = dr.contact_cnl && (r[dr.contact_cnl] !== undefined) && (r[dr.contact_cnl] !== null) && (Number(r[dr.contact_cnl]) > 0);
+                  const dOpen = !isClosed;
                   if (dAlarm) anyDoorAlarm = true;
                   if (dOpen) anyDoorOpen = true;
                   const valEl = document.getElementById(`val-${dr.key}`);

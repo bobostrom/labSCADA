@@ -4,9 +4,7 @@
                 Configured with IVF Laboratory telemetry points, modular clinical
                 equipment function blocks, and debounced pickup/dropout timing filters.
                 OPC UA clients subscribe directly to the Function Block outputs
-                (e.g. fbDewar1.rProcessTemp, fbDewar1.bAlarm, fbDewar1.bWarn).
-                Simulation fault injection is encapsulated inside each Function Block
-                (e.g. fbDewar1.bForceExcursion) and only active when bSimMode is TRUE.
+                (e.g. fbDewar1.rProcessTemp, fbColdStorage.rFridgeTemp, fbColdStorage.rFreezerTemp).
    ============================================================================== *)
 PROGRAM PLC_PRG
 VAR
@@ -18,26 +16,11 @@ VAR
 
     (* --- Analog Telemetry: Room Ambient Published over OPC UA --- *)
     {attribute 'symbol' := 'read'}
-    rLabAmbientTemp         : REAL := 25.0;     (* Target ~25.0 °C *)
-
-    (* --- Discrete Telemetry: Physical Door Contacts Published over OPC UA --- *)
-    {attribute 'symbol' := 'read'}
-    bDoor01                 : BOOL := FALSE;    (* FALSE = Closed, TRUE = Open *)
-    {attribute 'symbol' := 'read'}
-    bDoor02                 : BOOL := FALSE;    (* FALSE = Closed, TRUE = Open *)
-
-    (* --- Discrete Hardware Inputs (Mapped from afoa-node00 750-341 via Modbus TCP) --- *)
-    {attribute 'symbol' := 'none'}
-    bIncubator01_RawContact : BOOL := FALSE;    (* DI 1 on afoa-node00 750-436 *)
-    {attribute 'symbol' := 'none'}
-    bIncubator02_RawContact : BOOL := FALSE;    (* DI 2 on afoa-node00 750-436 *)
-    {attribute 'symbol' := 'none'}
-    bCabinetDoor_RawContact : BOOL := FALSE;    (* DI 8 on afoa-node00 750-436 *)
+    rLabAmbientTemp         : REAL := 25.0;     (* Target ~25.0 °C (derived from fbColdStorage.rAmbientTemp) *)
 
     (* --- Encapsulated Clinical Equipment Function Blocks (Published over OPC UA) --- *)
-    fbFridge                : FB_MedFridge;
-    fbFreezer               : FB_MedFreezer;
-    fbDewar1                : FB_Dewar;
+    fbColdStorage           : FB_MedColdStorage; (* Live Wireless Node Slot 2: Fridge, Freezer & Ambient *)
+    fbDewar1                : FB_Dewar;          (* Live Wireless Node Slot 1: Cryo LN2 Dewar 1 *)
     fbDewar2                : FB_Dewar;
     fbDewar3                : FB_Dewar;
     fbDewar4                : FB_Dewar;
@@ -45,33 +28,9 @@ VAR
     fbCabinet01             : FB_IncubatorCabinet;
     fbIncubator1            : FB_G210_Incubator;
     fbIncubator2            : FB_G210_Incubator;
-    fbDoor01                : FB_PickupDropout;
-    fbDoor02                : FB_PickupDropout;
+    fbDoor01                : FB_FacilityDoor;
+    fbDoor02                : FB_FacilityDoor;
     fbUPS01                 : FB_APC_SmartUPS;
-
-    (* --- Modbus TCP Mapped Inputs from demo-ups (192.168.10.32:502) --- *)
-    {attribute 'symbol' := 'none'}
-    wUPS_StatusWord         : WORD := 16#0001;  (* Register 40001: Bit 0=Online, Bit 1=On Battery *)
-    {attribute 'symbol' := 'none'}
-    wUPS_BatteryPct         : WORD := 100;     (* Register 40002: Charge % *)
-    {attribute 'symbol' := 'none'}
-    wUPS_RuntimeSec         : WORD := 0;       (* Register 40003: Seconds *)
-    {attribute 'symbol' := 'none'}
-    wUPS_LineVoltageX10     : WORD := 1200;    (* Register 40004: Volts * 10 *)
-    {attribute 'symbol' := 'none'}
-    wUPS_LoadPct            : WORD := 0;       (* Register 40005: Load % *)
-    {attribute 'symbol' := 'none'}
-    wUPS_RuntimeMin         : WORD := 60;      (* Register 40007: Minutes *)
-
-    (* --- Ambient Room Drift Dynamics --- *)
-    {attribute 'symbol' := 'none'}
-    tonAmbientTick          : TON;
-    {attribute 'symbol' := 'none'}
-    iAmbientStep            : INT := 0;
-
-    (* --- Master Simulation Control --- *)
-    {attribute 'symbol' := 'readwrite'}
-    bGlobalSimMode          : BOOL := TRUE;     (* TRUE = Demo Virtual Simulation; FALSE = Live Hardware Probes *)
 END_VAR
 
 // ==============================================================================
@@ -83,82 +42,48 @@ IF tonBlink.Q THEN
 END_IF;
 
 // ==============================================================================
-// 2. LAB AMBIENT TEMPERATURE SIMULATION
+// 2. MEDICAL COLD STORAGE & AMBIENT (Live Wireless Node Slot 2 via Modbus RTU COM1)
 // ==============================================================================
-tonAmbientTick(IN := NOT tonAmbientTick.Q, PT := T#1S);
-IF tonAmbientTick.Q THEN
-    iAmbientStep := (iAmbientStep + 1) MOD 360;
-    rLabAmbientTemp := 25.0 + 0.3 * SIN(TO_REAL(iAmbientStep) * 0.05);
-END_IF;
+// Modbus RTU I/O mapped directly into fbColdStorage (Holding Registers 0..9)
+fbColdStorage();
+rLabAmbientTemp := fbColdStorage.rAmbientTemp;
 
 // ==============================================================================
-// 3. ENCAPSULATED CLINICAL EQUIPMENT BLOCKS
+// 3. CRYOGENIC LN2 DEWARS 1 - 5 (< -135.0°C, 30s pickup, 10s dropout)
 // ==============================================================================
-
-// --- A. Medical Refrigerator (2.0°C to 8.0°C, 2m pickup, 10s dropout) ---
-fbFridge(
-    rRawTemp     := 3.5,
-    rNominalTemp := 3.5,
-    bSimMode     := bGlobalSimMode
-);
-
-// --- B. Medical Freezer (< -15.0°C, 3m pickup, 10s dropout) ---
-fbFreezer(
-    rRawTemp     := -20.0,
-    rNominalTemp := -20.0,
-    bSimMode     := bGlobalSimMode
-);
-
-// --- C. Cryogenic LN2 Dewars 1 - 5 (< -135.0°C, 30s pickup, 10s dropout) ---
-// Dewar 1 is live wireless sensor node (I/O mapped directly from Modbus RTU COM1)
+// Dewar 1 is live wireless sensor node (I/O mapped directly from Modbus RTU COM1 Slot 1)
 fbDewar1();
 
-// Dewars 2 - 5 (Unassigned slots default to nominal -150.0°C)
-fbDewar2(iRawTempX10 := -1500, bIsWireless := FALSE);
-fbDewar3(iRawTempX10 := -1500, bIsWireless := FALSE);
-fbDewar4(iRawTempX10 := -1500, bIsWireless := FALSE);
-fbDewar5(iRawTempX10 := -1500, bIsWireless := FALSE);
+// Dewars 2 - 5 (Unassigned slots default to sentinel -9999 / disconnected)
+fbDewar2();
+fbDewar3();
+fbDewar4();
+fbDewar5();
 
-// --- D. Incubator Cabinet 01 & Incubators (Muted when door open + 3m recovery grace) ---
-fbCabinet01(
-    bRawDoorContact     := bCabinetDoor_RawContact,
-    bDoorNormallyClosed := TRUE,    (* TRUE = Contact closes at 0V when door is closed *)
-    bSimMode            := bGlobalSimMode,
-    tDoorAlarmDelay     := T#3M,    (* Alarm if cabinet door left open > 3 minutes *)
-    tPostCloseGrace     := T#3M     (* Keep incubator alarms muted for 3 minutes after closing *)
-);
+// ==============================================================================
+// 4. INCUBATOR CABINET 01 & CHAMBER INCUBATORS
+// ==============================================================================
+fbCabinet01();
 
 fbIncubator1(
-    bAlarmContact := bIncubator01_RawContact,
-    bMute         := fbCabinet01.bIncubatorMute
+    bMute := fbCabinet01.bIncubatorMute
 );
 
 fbIncubator2(
-    bAlarmContact := bIncubator02_RawContact,
-    bMute         := fbCabinet01.bIncubatorMute
+    bMute := fbCabinet01.bIncubatorMute
 );
 
-// --- E. Facility Doors 01 & 02 (60-minute open timer) ---
-fbDoor01(
-    IN            := bDoor01,
-    tPickupDelay  := T#60M,
-    tDropoutDelay := T#5S
-);
+// ==============================================================================
+// 5. FACILITY DOORS 01 & 02 (60-minute open timer)
+// ==============================================================================
+fbDoor01();
+fbDoor02();
 
-fbDoor02(
-    IN            := bDoor02,
-    tPickupDelay  := T#60M,
-    tDropoutDelay := T#5S
-);
-
-// --- F. Facility UPS Power Subsystem (demo-ups via Modbus TCP) ---
+// ==============================================================================
+// 6. FACILITY UPS POWER SUBSYSTEM (demo-ups via Modbus TCP)
+// ==============================================================================
+// Modbus TCP I/O is mapped directly into fbUPS01 member inputs (wStatusWord, wBatteryPct, etc.)
 fbUPS01(
-    wStatusWord         := wUPS_StatusWord,
-    wBatteryPct         := wUPS_BatteryPct,
-    wRuntimeSec         := wUPS_RuntimeSec,
-    wLineVoltageX10     := wUPS_LineVoltageX10,
-    wLoadPct            := wUPS_LoadPct,
-    wRuntimeMin         := wUPS_RuntimeMin,
     tPowerLossDelay     := T#10S,   (* 10-second debounce for utility flickers *)
     wLowBatteryLimit    := 20,      (* Critical alarm threshold at 20% *)
     wLowRuntimeLimitMin := 15       (* Critical alarm threshold at 15 min *)

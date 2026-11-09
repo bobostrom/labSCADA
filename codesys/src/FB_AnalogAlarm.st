@@ -39,6 +39,8 @@ VAR_OUTPUT
     {attribute 'symbol' := 'read'}
 	bAlarm          : BOOL := FALSE;    (* Filtered alarm output (Active Alarm) *)
     {attribute 'symbol' := 'read'}
+    bWarn           : BOOL := FALSE;    (* Pre-alarm warning: In excursion (pickup), timing towards alarm *)
+    {attribute 'symbol' := 'read'}
     bPickup         : BOOL := FALSE;    (* Instantaneous pickup status (pre-timer) *)
     {attribute 'symbol' := 'none'}
     bHighTrip       : BOOL := FALSE;    (* TRUE if High Alarm condition caused/maintains trip *)
@@ -114,6 +116,7 @@ fbTimer(
 
 bAlarm     := fbTimer.Q;
 bPickup    := fbTimer.bPickup;
+bWarn      := fbTimer.bPickup AND NOT fbTimer.Q;
 tElapsedPU := fbTimer.tElapsedPU;
 tElapsedDO := fbTimer.tElapsedDO;
 

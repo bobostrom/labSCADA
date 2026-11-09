@@ -3,7 +3,7 @@
    DESCRIPTION: Enclosure microclimate and access supervision for benchtop
                 incubator cabinet.
                 Features:
-                - Door switch monitoring with selectable polarity (NC / NO)
+                - Standardized fail-safe door contact supervision (Closed loop = Closed, Open loop = Open)
                 - Autonomous incubator alarm muting while door is open
                 - Post-closure recovery grace timer (TOF) to prevent nuisance alarms
                 - Cabinet door left open alarm (TON)
@@ -11,12 +11,8 @@
    ============================================================================== *)
 FUNCTION_BLOCK FB_IncubatorCabinet
 VAR_INPUT
-    {attribute 'symbol' := 'none'}
-    bRawDoorContact     : BOOL := FALSE;    (* Physical DI from 750-436 (Terminal 8 / DI 8) *)
-    {attribute 'symbol' := 'none'}
-    bDoorNormallyClosed : BOOL := TRUE;     (* TRUE = Closed loop (0V at DI when door closed) *)
-    {attribute 'symbol' := 'none'}
-    bSimMode            : BOOL := FALSE;    (* Virtual simulation mode *)
+    {attribute 'symbol' := 'readwrite'}
+    bDoorClosed         : BOOL := FALSE;    (* Hardware DI: 24V/TRUE = Closed, 0V/FALSE = Open / Disconnected *)
     {attribute 'symbol' := 'none'}
     tDoorAlarmDelay     : TIME := T#3M;     (* Alarm if cabinet door left open longer than this *)
     {attribute 'symbol' := 'none'}
@@ -30,8 +26,6 @@ VAR_INPUT
 END_VAR
 VAR_OUTPUT
     {attribute 'symbol' := 'read'}
-    bDoorOpen           : BOOL := FALSE;    (* Normalized door status: TRUE = Open, FALSE = Closed *)
-    {attribute 'symbol' := 'read'}
     bDoorAlarm          : BOOL := FALSE;    (* Alarm: Cabinet door held open past delay *)
     {attribute 'symbol' := 'read'}
     bIncubatorMute      : BOOL := FALSE;    (* TRUE while door is open OR during post-closure grace *)
@@ -43,8 +37,6 @@ VAR_OUTPUT
     bCabinetOvertemp    : BOOL := FALSE;    (* Alarm: Cabinet internal temp > 32°C *)
 END_VAR
 VAR
-    {attribute 'symbol' := 'readwrite'}
-    bSimDoorOpen        : BOOL := FALSE;
     {attribute 'symbol' := 'none'}
     tonDoorOpen         : TON;              (* Timer for door held open alert *)
     {attribute 'symbol' := 'none'}
@@ -52,44 +44,28 @@ VAR
 END_VAR
 
 // ==============================================================================
-// 1. NORMALIZE DOOR CONTACT
-// ==============================================================================
-IF bSimMode THEN
-    bDoorOpen := bSimDoorOpen;
-ELSE
-    IF bDoorNormallyClosed THEN
-        // On 750-436 sink input:
-        // Closed loop pulls DI to 0V (TRUE). When door opens, contact opens (FALSE).
-        // Therefore, bDoorOpen is TRUE when bRawDoorContact is FALSE.
-        bDoorOpen := NOT bRawDoorContact;
-    ELSE
-        // Open loop (closes when door opens)
-        bDoorOpen := bRawDoorContact;
-    END_IF;
-END_IF;
-
-// ==============================================================================
-// 2. CABINET DOOR HELD OPEN ALARM
+// 1. CABINET DOOR HELD OPEN ALARM
+//    Fail-safe hardware: 24V (TRUE) when closed, 0V (FALSE) when open/cut.
 // ==============================================================================
 tonDoorOpen(
-    IN := bDoorOpen,
+    IN := NOT bDoorClosed,
     PT := tDoorAlarmDelay
 );
 bDoorAlarm := tonDoorOpen.Q;
 
 // ==============================================================================
-// 3. INCUBATOR ALARM MUTING & POST-CLOSE RECOVERY GRACE (TOF)
+// 2. INCUBATOR ALARM MUTING & POST-CLOSE RECOVERY GRACE (TOF)
 // ==============================================================================
-// While bDoorOpen is TRUE, tofGrace.Q is TRUE.
-// When bDoorOpen transitions to FALSE, tofGrace.Q STAYS TRUE for tPostCloseGrace.
+// While bDoorClosed is FALSE (door open), tofGrace.Q is TRUE.
+// When bDoorClosed transitions to TRUE, tofGrace.Q STAYS TRUE for tPostCloseGrace.
 tofGrace(
-    IN := bDoorOpen,
+    IN := NOT bDoorClosed,
     PT := tPostCloseGrace
 );
 bIncubatorMute := tofGrace.Q;
 
 // Compute remaining grace time while door is closed but timer is still running
-IF (NOT bDoorOpen) AND tofGrace.Q THEN
+IF bDoorClosed AND tofGrace.Q THEN
     tGraceRemaining := tPostCloseGrace - tofGrace.ET;
 ELSE
     tGraceRemaining := T#0S;

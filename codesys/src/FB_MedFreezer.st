@@ -2,20 +2,15 @@
    FUNCTION BLOCK: FB_MedFreezer
    DESCRIPTION: Encapsulated clinical monitoring block for Medical Freezers
                 (-20°C sperm/media or -80°C ultra-low freezers).
-                Features:
-                - Granular per-device Virtual Simulation Mode (bSimMode)
-                - Granular fault injection (bForceExcursion)
+                - Scaled raw integer input (iRawTempX10 / 10.0 -> °C)
                 - High temperature threshold alarm with debounce pickup
-                - Direct physical terminal binding (rRawTemp)
+                - Clinical fault supervision (Open circuit, wiring short, comms loss)
+                - Temperature excursion alarm gated off during hardware faults
    ============================================================================== *)
 FUNCTION_BLOCK FB_MedFreezer
 VAR_INPUT
-    {attribute 'symbol' := 'none'}
-    rRawTemp            : REAL := -20.0;    (* Physical sensor terminal value *)
-    {attribute 'symbol' := 'none'}
-    bSimMode            : BOOL := FALSE;    (* TRUE = Ignore terminal, use realistic compressor physics *)
-    {attribute 'symbol' := 'none'}
-    rNominalTemp        : REAL := -20.0;    (* Target operating point (°C) *)
+    {attribute 'symbol' := 'readwrite'}
+    iRawTempX10         : INT := -9999;     (* Raw scaled temp * 10 (-180 = -18.0 °C, -9999 = Sentinel / Disconnected) *)
     {attribute 'symbol' := 'none'}
     rHighTrip           : REAL := -15.0;    (* Warm alarm threshold (°C) *)
     {attribute 'symbol' := 'none'}
@@ -27,52 +22,31 @@ VAR_INPUT
 END_VAR
 VAR_OUTPUT
     {attribute 'symbol' := 'read'}
-    rProcessTemp        : REAL;             (* Published process temperature to SCADA & DB *)
+    rProcessTemp        : REAL := -999.0;   (* Published process temperature to SCADA & DB *)
     {attribute 'symbol' := 'read'}
     bAlarm              : BOOL := FALSE;    (* Priority 2 Emergency Alarm flag *)
     {attribute 'symbol' := 'read'}
     bWarn               : BOOL := FALSE;    (* Pre-alarm pickup delay warning flag *)
-    {attribute 'symbol' := 'none'}
-    bHighTrip           : BOOL := FALSE;
-    {attribute 'symbol' := 'none'}
-    tElapsedPU          : TIME := T#0S;
-    {attribute 'symbol' := 'none'}
-    tElapsedDO          : TIME := T#0S;
+    {attribute 'symbol' := 'read'}
+    bProbeFault         : BOOL := TRUE;     (* Probe disconnected or hardware fault *)
 END_VAR
 VAR
-    {attribute 'symbol' := 'readwrite'}
-    bForceExcursion     : BOOL := FALSE;    (* Injects warm excursion above -15.0°C in sim mode *)
     {attribute 'symbol' := 'none'}
     fbAlarmEval         : FB_AnalogAlarm;
-    {attribute 'symbol' := 'none'}
-    tonSimTick          : TON;
-    {attribute 'symbol' := 'none'}
-    iAngle              : INT := 0;
 END_VAR
 
-// 1. DYNAMICS SIMULATION GENERATOR (Runs if bSimMode is active)
-IF bSimMode THEN
-    tonSimTick(IN := NOT tonSimTick.Q, PT := T#1S);
-    IF tonSimTick.Q THEN
-        iAngle := (iAngle + 2) MOD 360;
-    END_IF;
+// ==============================================================================
+// 1. HARDWARE HEALTH & PROCESS TEMPERATURE SCALING
+// ==============================================================================
+bProbeFault  := (iRawTempX10 <= -9000);
+rProcessTemp := TO_REAL(iRawTempX10) / 10.0;
 
-    IF bForceExcursion THEN
-        // Compressor failure or defrost stall: warms up to -12.0 °C
-        rProcessTemp := -12.0 + 0.6 * SIN(TO_REAL(iAngle) * 0.06);
-    ELSE
-        // Healthy freezer compressor cycle: cycling gently around -20.0 °C
-        rProcessTemp := rNominalTemp + 0.6 * SIN(TO_REAL(iAngle) * 0.06);
-    END_IF;
-ELSE
-    // Read live physical probe from WAGO I/O terminal
-    rProcessTemp := rRawTemp;
-END_IF;
-
+// ==============================================================================
 // 2. CLINICAL ALARM EVALUATION
+// ==============================================================================
 fbAlarmEval(
     rVal          := rProcessTemp,
-    bEnableHigh   := TRUE,
+    bEnableHigh   := NOT bProbeFault,
     rHighPickup   := rHighTrip,
     rHighDropout  := rHighTrip - rHysteresis,
     bEnableLow    := FALSE,
@@ -81,7 +55,5 @@ fbAlarmEval(
 );
 
 bAlarm     := fbAlarmEval.bAlarm;
-bWarn      := fbAlarmEval.bPickup AND NOT fbAlarmEval.bAlarm;
-bHighTrip  := fbAlarmEval.bHighTrip;
-tElapsedPU := fbAlarmEval.tElapsedPU;
-tElapsedDO := fbAlarmEval.tElapsedDO;
+bWarn      := fbAlarmEval.bWarn;
+

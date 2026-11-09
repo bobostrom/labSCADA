@@ -56,30 +56,48 @@
       <UserDefElement iecname="uiFaultCode" type="T_UINT" byteoffset="30" vartype="VAR_OUTPUT" access="Read" />
       <UserDefElement iecname="uiAgeSec" type="T_UINT" byteoffset="32" vartype="VAR_OUTPUT" access="Read" />
     </TypeUserDef>
-    <TypeUserDef name="T_FB_IncubatorCabinet" size="15" nativesize="112" typeclass="Userdef" pouclass="FUNCTION_BLOCK" iecname="FB_IncubatorCabinet">
-      <UserDefElement iecname="rCabinetTemp" type="T_REAL" byteoffset="0" vartype="VAR_INPUT" access="Read" />
-      <UserDefElement iecname="bDoorOpen" type="T_BOOL" byteoffset="4" vartype="VAR_OUTPUT" access="Read" />
-      <UserDefElement iecname="bDoorAlarm" type="T_BOOL" byteoffset="5" vartype="VAR_OUTPUT" access="Read" />
-      <UserDefElement iecname="bIncubatorMute" type="T_BOOL" byteoffset="6" vartype="VAR_OUTPUT" access="Read" />
-      <UserDefElement iecname="tGraceRemaining" type="T_TIME" byteoffset="8" vartype="VAR_OUTPUT" access="Read" />
-      <UserDefElement iecname="bFanCommand" type="T_BOOL" byteoffset="12" vartype="VAR_OUTPUT" access="Read" />
-      <UserDefElement iecname="bCabinetOvertemp" type="T_BOOL" byteoffset="13" vartype="VAR_OUTPUT" access="Read" />
-      <UserDefElement iecname="bSimDoorOpen" type="T_BOOL" byteoffset="14" vartype="VAR" access="ReadWrite" />
+    <TypeUserDef name="T_FB_FacilityDoor" size="2" nativesize="120" typeclass="Userdef" pouclass="FUNCTION_BLOCK" iecname="FB_FacilityDoor">
+      <UserDefElement iecname="bDoorClosed" type="T_BOOL" byteoffset="0" vartype="VAR_INPUT" access="ReadWrite" />
+      <UserDefElement iecname="bDoorAlarm" type="T_BOOL" byteoffset="1" vartype="VAR_OUTPUT" access="Read" />
     </TypeUserDef>
-    <TypeUserDef name="T_FB_MedFreezer" size="7" nativesize="264" typeclass="Userdef" pouclass="FUNCTION_BLOCK" iecname="FB_MedFreezer">
-      <UserDefElement iecname="rProcessTemp" type="T_REAL" byteoffset="0" vartype="VAR_OUTPUT" access="Read" />
-      <UserDefElement iecname="bAlarm" type="T_BOOL" byteoffset="4" vartype="VAR_OUTPUT" access="Read" />
-      <UserDefElement iecname="bWarn" type="T_BOOL" byteoffset="5" vartype="VAR_OUTPUT" access="Read" />
-      <UserDefElement iecname="bForceExcursion" type="T_BOOL" byteoffset="6" vartype="VAR" access="ReadWrite" />
+    <TypeUserDef name="T_FB_IncubatorCabinet" size="18" nativesize="112" typeclass="Userdef" pouclass="FUNCTION_BLOCK" iecname="FB_IncubatorCabinet">
+      <UserDefElement iecname="bDoorClosed" type="T_BOOL" byteoffset="0" vartype="VAR_INPUT" access="ReadWrite" />
+      <UserDefElement iecname="rCabinetTemp" type="T_REAL" byteoffset="4" vartype="VAR_INPUT" access="Read" />
+      <UserDefElement iecname="bDoorAlarm" type="T_BOOL" byteoffset="8" vartype="VAR_OUTPUT" access="Read" />
+      <UserDefElement iecname="bIncubatorMute" type="T_BOOL" byteoffset="9" vartype="VAR_OUTPUT" access="Read" />
+      <UserDefElement iecname="tGraceRemaining" type="T_TIME" byteoffset="12" vartype="VAR_OUTPUT" access="Read" />
+      <UserDefElement iecname="bFanCommand" type="T_BOOL" byteoffset="16" vartype="VAR_OUTPUT" access="Read" />
+      <UserDefElement iecname="bCabinetOvertemp" type="T_BOOL" byteoffset="17" vartype="VAR_OUTPUT" access="Read" />
     </TypeUserDef>
-    <TypeUserDef name="T_FB_MedFridge" size="7" nativesize="272" typeclass="Userdef" pouclass="FUNCTION_BLOCK" iecname="FB_MedFridge">
-      <UserDefElement iecname="rProcessTemp" type="T_REAL" byteoffset="0" vartype="VAR_OUTPUT" access="Read" />
-      <UserDefElement iecname="bAlarm" type="T_BOOL" byteoffset="4" vartype="VAR_OUTPUT" access="Read" />
-      <UserDefElement iecname="bWarn" type="T_BOOL" byteoffset="5" vartype="VAR_OUTPUT" access="Read" />
-      <UserDefElement iecname="bForceExcursion" type="T_BOOL" byteoffset="6" vartype="VAR" access="ReadWrite" />
-    </TypeUserDef>
-    <TypeUserDef name="T_FB_PickupDropout" size="1" nativesize="96" typeclass="Userdef" pouclass="FUNCTION_BLOCK" iecname="FB_PickupDropout">
-      <UserDefElement iecname="Q" type="T_BOOL" byteoffset="0" vartype="VAR_OUTPUT" access="Read" />
+    <TypeUserDef name="T_FB_MedColdStorage" size="58" nativesize="664" typeclass="Userdef" pouclass="FUNCTION_BLOCK" iecname="FB_MedColdStorage">
+      <UserDefElement iecname="iRawFridgeTempX10" type="T_INT" byteoffset="0" vartype="VAR_INPUT" access="ReadWrite" />
+      <UserDefElement iecname="uiRawBatteryMv" type="T_UINT" byteoffset="2" vartype="VAR_INPUT" access="ReadWrite" />
+      <UserDefElement iecname="uiRawFaultCode" type="T_UINT" byteoffset="4" vartype="VAR_INPUT" access="ReadWrite" />
+      <UserDefElement iecname="iRawRSSI" type="T_INT" byteoffset="6" vartype="VAR_INPUT" access="ReadWrite" />
+      <UserDefElement iecname="wRawSeqLow" type="T_WORD" byteoffset="8" vartype="VAR_INPUT" access="ReadWrite" />
+      <UserDefElement iecname="wRawSeqHigh" type="T_WORD" byteoffset="10" vartype="VAR_INPUT" access="ReadWrite" />
+      <UserDefElement iecname="uiRawAgeSec" type="T_UINT" byteoffset="12" vartype="VAR_INPUT" access="ReadWrite" />
+      <UserDefElement iecname="wRawStatusFlags" type="T_WORD" byteoffset="14" vartype="VAR_INPUT" access="ReadWrite" />
+      <UserDefElement iecname="iRawFreezerTempX10" type="T_INT" byteoffset="16" vartype="VAR_INPUT" access="ReadWrite" />
+      <UserDefElement iecname="iRawAmbientTempX10" type="T_INT" byteoffset="18" vartype="VAR_INPUT" access="ReadWrite" />
+      <UserDefElement iecname="rFridgeTemp" type="T_REAL" byteoffset="20" vartype="VAR_OUTPUT" access="Read" />
+      <UserDefElement iecname="rFreezerTemp" type="T_REAL" byteoffset="24" vartype="VAR_OUTPUT" access="Read" />
+      <UserDefElement iecname="rAmbientTemp" type="T_REAL" byteoffset="28" vartype="VAR_OUTPUT" access="Read" />
+      <UserDefElement iecname="bFridgeAlarm" type="T_BOOL" byteoffset="32" vartype="VAR_OUTPUT" access="Read" />
+      <UserDefElement iecname="bFridgeWarn" type="T_BOOL" byteoffset="33" vartype="VAR_OUTPUT" access="Read" />
+      <UserDefElement iecname="bFridgeProbeFault" type="T_BOOL" byteoffset="34" vartype="VAR_OUTPUT" access="Read" />
+      <UserDefElement iecname="bFreezerAlarm" type="T_BOOL" byteoffset="35" vartype="VAR_OUTPUT" access="Read" />
+      <UserDefElement iecname="bFreezerWarn" type="T_BOOL" byteoffset="36" vartype="VAR_OUTPUT" access="Read" />
+      <UserDefElement iecname="bFreezerProbeFault" type="T_BOOL" byteoffset="37" vartype="VAR_OUTPUT" access="Read" />
+      <UserDefElement iecname="bAmbientAlarm" type="T_BOOL" byteoffset="38" vartype="VAR_OUTPUT" access="Read" />
+      <UserDefElement iecname="bAmbientWarn" type="T_BOOL" byteoffset="39" vartype="VAR_OUTPUT" access="Read" />
+      <UserDefElement iecname="bAmbientProbeFault" type="T_BOOL" byteoffset="40" vartype="VAR_OUTPUT" access="Read" />
+      <UserDefElement iecname="rBatteryVolts" type="T_REAL" byteoffset="44" vartype="VAR_OUTPUT" access="Read" />
+      <UserDefElement iecname="bLowBattery" type="T_BOOL" byteoffset="48" vartype="VAR_OUTPUT" access="Read" />
+      <UserDefElement iecname="iRSSI" type="T_INT" byteoffset="50" vartype="VAR_OUTPUT" access="Read" />
+      <UserDefElement iecname="bCommLoss" type="T_BOOL" byteoffset="52" vartype="VAR_OUTPUT" access="Read" />
+      <UserDefElement iecname="uiFaultCode" type="T_UINT" byteoffset="54" vartype="VAR_OUTPUT" access="Read" />
+      <UserDefElement iecname="uiAgeSec" type="T_UINT" byteoffset="56" vartype="VAR_OUTPUT" access="Read" />
     </TypeUserDef>
     <TypeUserDef name="T_FB_G210_Incubator" size="44" nativesize="160" typeclass="Userdef" pouclass="FUNCTION_BLOCK" iecname="FB_G210_Incubator">
       <UserDefElement iecname="bAlarmContact" type="T_BOOL" byteoffset="0" vartype="VAR_INPUT" access="ReadWrite" />
@@ -92,17 +110,16 @@
   <NodeList>
     <Node name="Application">
       <Node name="PLC_PRG">
-        <Node name="bDoor01" type="T_BOOL" access="ReadWrite" />
-        <Node name="bDoor02" type="T_BOOL" access="ReadWrite" />
-        <Node name="bGlobalSimMode" type="T_BOOL" access="ReadWrite" />
         <Node name="bHeartbeat" type="T_BOOL" access="Read" />
         <Node name="fbCabinet01" type="T_FB_IncubatorCabinet" access="ReadWrite" />
+        <Node name="fbColdStorage" type="T_FB_MedColdStorage" access="ReadWrite" />
         <Node name="fbDewar1" type="T_FB_Dewar" access="ReadWrite" />
         <Node name="fbDewar2" type="T_FB_Dewar" access="ReadWrite" />
-        <Node name="fbDoor01" type="T_FB_PickupDropout" access="Read" />
-        <Node name="fbDoor02" type="T_FB_PickupDropout" access="Read" />
-        <Node name="fbFreezer" type="T_FB_MedFreezer" access="ReadWrite" />
-        <Node name="fbFridge" type="T_FB_MedFridge" access="ReadWrite" />
+        <Node name="fbDewar3" type="T_FB_Dewar" access="ReadWrite" />
+        <Node name="fbDewar4" type="T_FB_Dewar" access="ReadWrite" />
+        <Node name="fbDewar5" type="T_FB_Dewar" access="ReadWrite" />
+        <Node name="fbDoor01" type="T_FB_FacilityDoor" access="ReadWrite" />
+        <Node name="fbDoor02" type="T_FB_FacilityDoor" access="ReadWrite" />
         <Node name="fbIncubator1" type="T_FB_G210_Incubator" access="ReadWrite" />
         <Node name="fbIncubator2" type="T_FB_G210_Incubator" access="ReadWrite" />
         <Node name="fbUPS01" type="T_FB_APC_SmartUPS" access="ReadWrite" />
