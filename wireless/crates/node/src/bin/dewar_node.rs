@@ -87,9 +87,10 @@ fn main() -> ! {
         let raw_adc: u16 = adc1.read_blocking(&mut batt_pin);
         println!("Battery ADC (GPIO 1): raw = {}", raw_adc);
 
-        // 12-bit ADC (0..4095) with 11dB attenuation (~3100 mV full scale).
-        // External 2:1 divider: V_batt = V_pin * 2 = raw * (3100 * 2) / 4095 = raw * 6200 / 4095.
-        let calculated_mv = ((raw_adc as u32 * 6200) / 4095) as u16;
+        // 12-bit ADC (0..4095) with 11dB attenuation and 2x 100k divider.
+        // Calibrated against precision multimeter (4.053V actual vs 2523 ADC counts):
+        // Scale constant = 6578 mV full scale.
+        let calculated_mv = ((raw_adc as u32 * 6578) / 4095) as u16;
         let battery_mv = if calculated_mv >= 2500 && calculated_mv <= 4500 {
             calculated_mv
         } else {
