@@ -8,7 +8,8 @@ use esp_println::println;
 use esp_hal::efuse::{self, InterfaceMacAddress};
 use esp_hal::timer::timg::TimerGroup;
 use esp_hal::rtc_cntl::sleep::{LowPower, RtcSleepConfig};
-use esp_hal::analog::adc::{Adc, AdcConfig, Attenuation};
+use esp_hal::analog::adc::{Adc, AdcConfig, Attenuation, AdcCalCurve};
+use esp_hal::peripherals::ADC1;
 use esp_radio::esp_now::BROADCAST_ADDRESS;
 use wireless_protocol::{DeviceTelemetry, DownlinkPacket, UplinkPacket};
 use wireless_node::max31855;
@@ -80,22 +81,19 @@ fn main() -> ! {
         println!("MAX31855 [0x{:08X}]: Temp={}/10 C, Ambient={}/10 C, Fault={:?}",
             reading.raw, reading.temp_c_x10, reading.ambient_c_x10, reading.fault);
 
-        // Read Battery Voltage via ADC1 on GPIO 1 (A0)
+        // Read Battery Voltage via ADC1 on GPIO 1 (A0) with factory curve calibration
         let mut adc1_config = AdcConfig::new();
-        let mut batt_pin = adc1_config.enable_pin(peripherals.GPIO1, Attenuation::_11dB);
+        let mut batt_pin = adc1_config.enable_pin_with_cal::<_, AdcCalCurve<ADC1>>(
+            peripherals.GPIO1,
+            Attenuation::_11dB,
+        );
         let mut adc1 = Adc::new(peripherals.ADC1, adc1_config);
-        let raw_adc: u16 = adc1.read_blocking(&mut batt_pin);
-        println!("Battery ADC (GPIO 1): raw = {}", raw_adc);
+        let pin_mv: u16 = adc1.read_blocking(&mut batt_pin);
+        println!("Battery ADC (GPIO 1): calibrated pin_mv = {} mV", pin_mv);
 
-        // 12-bit ADC (0..4095) with 11dB attenuation and 2x 100k divider.
-        // Calibrated against precision multimeter (4.053V actual vs 2523 ADC counts):
-        // Scale constant = 6578 mV full scale.
-        let calculated_mv = ((raw_adc as u32 * 6578) / 4095) as u16;
-        let battery_mv = if calculated_mv >= 2500 && calculated_mv <= 4500 {
-            calculated_mv
-        } else {
-            3845 // Nominal baseline fallback if on USB power or divider not fitted
-        };
+        // Calibrated against multimeter reference:
+        // Physical battery = 4053 mV; Physical pin A0 = 2200 mV (ratio = 1.8423)
+        let battery_mv = ((pin_mv as u32 * 4053) / 2200) as u16;
 
         let telemetry = DeviceTelemetry::Dewar {
             temp_c_x10: reading.temp_c_x10,
