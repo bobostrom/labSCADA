@@ -60,6 +60,10 @@ fn main() -> ! {
     // Auto-bind Slot 1 for Dewar 1 with known Node MAC: 1C:DB:D4:A8:8A:64
     let node_mac = [0x1C, 0xDB, 0xD4, 0xA8, 0x8A, 0x64];
     gw.slots[0].bind(node_mac, wireless_protocol::DeviceType::DewarCryo);
+
+    // Auto-bind Slot 2 for Fridge/Freezer with known Node MAC: 20:6E:F1:86:F2:C8
+    let fridge_mac = [0x20, 0x6E, 0xF1, 0x86, 0xF2, 0xC8];
+    gw.slots[1].bind(fridge_mac, wireless_protocol::DeviceType::FridgeFreezer);
     gw.pairing_enabled = true;
 
     // Initial baseline: -195.6 C, 3.82V

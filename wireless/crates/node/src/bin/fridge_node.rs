@@ -50,21 +50,37 @@ fn main() -> ! {
     let mut tx_buf = [0u8; 64];
 
     // Hardware pin mapping for Seeed Studio XIAO ESP32-S3:
-    // One-Wire bus is on D5 = GPIO 6 (Open-Drain with external 4.7k pullup)
+    // One-Wire bus is on D5 = GPIO 6 (Open-Drain with internal Pull::Up backup)
+    // User LED = GPIO 21 (Active-Low: Low = ON, High = OFF)
     let mut ow_pin = esp_hal::gpio::Flex::new(peripherals.GPIO6);
     ow_pin.apply_output_config(
         &esp_hal::gpio::OutputConfig::default()
-            .with_drive_mode(esp_hal::gpio::DriveMode::OpenDrain),
+            .with_drive_mode(esp_hal::gpio::DriveMode::OpenDrain)
+            .with_pull(esp_hal::gpio::Pull::Up),
+    );
+    ow_pin.apply_input_config(
+        &esp_hal::gpio::InputConfig::default()
+            .with_pull(esp_hal::gpio::Pull::Up),
     );
     ow_pin.set_input_enable(true);
     ow_pin.set_output_enable(true);
     ow_pin.set_high();
 
+    let mut led = esp_hal::gpio::Output::new(peripherals.GPIO21, esp_hal::gpio::Level::High, esp_hal::gpio::OutputConfig::default());
+
     let mut sensors: heapless::Vec<DS18B20, MAX_SENSORS> = heapless::Vec::new();
 
     loop {
+        // Ensure pin is released high and verify line is not pulled to ground
+        ow_pin.set_high();
+        delay.delay_micros(10);
+        let bus_high = ow_pin.is_high();
+
         // 1. Bus Discovery if no sensors currently enumerated
-        if sensors.is_empty() {
+        if !bus_high {
+            println!("1-Wire: Line D5 (GPIO 6) is held LOW (shorted or floating). Waiting for pullup/sensor...");
+            sensors.clear();
+        } else if sensors.is_empty() {
             let mut wire = OneWire::new(&mut ow_pin);
             match wire.initialize_bus(&mut delay) {
                 Ok(true) => {
@@ -80,7 +96,7 @@ fn main() -> ! {
                     println!("1-Wire: Enumerated {} DS18B20 sensor(s)", sensors.len());
                 }
                 Ok(false) => {
-                    println!("1-Wire: No presence pulse on Pin D5 (GPIO 6) - check wiring / pullup");
+                    println!("1-Wire: No presence pulse on Pin D5 (GPIO 6) - no sensor responded");
                 }
                 Err(_) => {
                     println!("1-Wire: Bus error during initialization");
@@ -152,6 +168,9 @@ fn main() -> ! {
             sensor_fault: fault_code,
         };
 
+        // Activity pulse: LED ON during transmit
+        led.set_level(esp_hal::gpio::Level::Low);
+
         let uplink = UplinkPacket::new(2, mac_arr, seq, telemetry);
         if let Ok(payload) = uplink.serialize(&mut tx_buf) {
             println!("Transmitting ESP-NOW packet #{} (Fridge: {}/10 C, Freezer: {}/10 C, Ambient: {}/10 C)...",
@@ -166,6 +185,10 @@ fn main() -> ! {
                 }
             }
         }
+
+        // 40ms pulse duration, then turn LED OFF
+        delay.delay_millis(40);
+        led.set_level(esp_hal::gpio::Level::High);
 
         // 3. Check for Downlink Response from Bridge for 20ms
         for _ in 0..20 {
