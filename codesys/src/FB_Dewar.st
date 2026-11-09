@@ -11,7 +11,7 @@
 FUNCTION_BLOCK FB_Dewar
 VAR_INPUT
     {attribute 'symbol' := 'readwrite'}
-    iRawTempX10         : INT := -1500;     (* Raw scaled temp * 10 (-1954 = -195.4 °C, -9999 = Disconnected) *)
+    iRawTempX10         : INT := -9999;     (* Raw scaled temp * 10 (-1954 = -195.4 °C, -9999 = Sentinel / Disconnected) *)
     {attribute 'symbol' := 'none'}
     rHighTrip           : REAL := -135.0;   (* Critical specimen danger limit (°C) *)
     {attribute 'symbol' := 'none'}
@@ -39,7 +39,7 @@ VAR_INPUT
 END_VAR
 VAR_OUTPUT
     {attribute 'symbol' := 'read'}
-    rProcessTemp        : REAL;             (* Published process temperature to SCADA (°C) *)
+    rProcessTemp        : REAL := -999.0;   (* Published process temperature to SCADA (°C) *)
     {attribute 'symbol' := 'read'}
     bAlarm              : BOOL := FALSE;    (* Priority 2 Emergency Temperature Alarm flag *)
     {attribute 'symbol' := 'read'}
@@ -53,7 +53,7 @@ VAR_OUTPUT
     {attribute 'symbol' := 'read'}
     bCommLoss           : BOOL := FALSE;    (* Comms loss watchdog alarm *)
     {attribute 'symbol' := 'read'}
-    bProbeFault         : BOOL := FALSE;    (* Physical probe disconnected or shorted *)
+    bProbeFault         : BOOL := TRUE;     (* Physical probe disconnected or shorted (defaults TRUE on cold boot) *)
     {attribute 'symbol' := 'read'}
     uiFaultCode         : UINT := 0;        (* Published probe fault reason (0=OK, 1=Open, 2=GND, 3=VCC) *)
     {attribute 'symbol' := 'read'}

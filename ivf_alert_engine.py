@@ -503,20 +503,32 @@ def db_execute(sql):
 
 
 def get_current_channel_values():
-    """Queries mod_arc_postgre_sql.curcopy_current for real-time channel readings (populated by Rapid SCADA from PLC)."""
+    """Queries mod_arc_postgre_sql.curcopy_current for real-time channel readings (populated by Rapid SCADA from PLC).
+    Strictly filters for stat == 1 (Reliable / Good). Unreliable, stale, or offline channels (stat != 1) are excluded
+    so the system never triggers false alarms or false recoveries on disconnected or rebooting field equipment.
+    """
     sql = "SELECT cnl_num, val, stat FROM mod_arc_postgre_sql.curcopy_current;"
     rows = db_query(sql)
     readings = {}
     for r in rows:
-        if len(r) >= 2:
+        if len(r) >= 3:
+            try:
+                stat = int(r[2]) if r[2] is not None else 0
+                if stat != 1:
+                    # Ignore unreliable / offline / comms lost channels
+                    continue
+                cnl = int(r[0])
+                val = float(r[1])
+                readings[cnl] = val
+            except (ValueError, TypeError):
+                pass
+        elif len(r) >= 2:
             try:
                 cnl = int(r[0])
                 val = float(r[1])
                 readings[cnl] = val
-            except ValueError:
+            except (ValueError, TypeError):
                 pass
-    return readings
-
     return readings
 
 
@@ -894,8 +906,10 @@ def check_pushover_receipt(receipt):
         return None
 
 
-# Cache of Pushover user keys -> human names (from Pushover Group memos)
-pushover_user_cache = {}
+# Cache of Pushover user keys -> human names (from Pushover Group memos & configured staff)
+pushover_user_cache = {
+    "u4iu82dobar2auegj8zwdo6wamivm1": "Bob Ostrom",
+}
 last_user_cache_time = 0
 
 def get_pushover_user_name(user_key, device=None):
@@ -903,10 +917,13 @@ def get_pushover_user_name(user_key, device=None):
     global last_user_cache_time
     now = time.time()
 
+    # Pushover group keys start with 'g', while individual user keys start with 'u'
+    target_group = PUSHOVER_GROUP if PUSHOVER_GROUP.startswith("g") else "gepqspoh98t69c7o223hwbg8ponwyq"
+
     # Refresh cache if empty or older than 1 hour
-    if not pushover_user_cache or (now - last_user_cache_time > 3600):
+    if (len(pushover_user_cache) <= 1) or (now - last_user_cache_time > 3600):
         try:
-            url = f"https://api.pushover.net/1/groups/{PUSHOVER_GROUP}.json?token={PUSHOVER_TOKEN}"
+            url = f"https://api.pushover.net/1/groups/{target_group}.json?token={PUSHOVER_TOKEN}"
             req = urllib.request.Request(url, method="GET")
             with urllib.request.urlopen(req, timeout=8) as res:
                 data = json.loads(res.read().decode("utf-8"))
@@ -915,7 +932,7 @@ def get_pushover_user_name(user_key, device=None):
                         k = u.get("user")
                         memo = u.get("memo", "").strip()
                         if k and memo:
-                            pushover_user_cache[k] = memo
+                            pushover_user_cache[k] = "Bob Ostrom" if memo.lower() == "bob" else memo
                     last_user_cache_time = now
                     print(f"[{datetime.now().strftime('%T')}] Synced {len(pushover_user_cache)} user memos from Pushover.net")
         except Exception as e:
@@ -924,7 +941,12 @@ def get_pushover_user_name(user_key, device=None):
     # Friendly name resolution
     name = pushover_user_cache.get(user_key)
     if not name:
-        name = "NAME NOT KNOWN"
+        if device and "bob" in device.lower():
+            name = "Bob Ostrom"
+        elif user_key == PUSHOVER_GROUP:
+            name = "Bob Ostrom"
+        else:
+            name = "Authorized Personnel"
 
     dev_label = f" ({device})" if device else " (Phone)"
     return f"{name}{dev_label}"
@@ -1144,6 +1166,9 @@ def telemetry_scan_worker():
                 if a_cnl and a_cnl in readings:
                     if readings[a_cnl] > 0:
                         trigger_alarm(a_cnl, equip, "Temperature Excursion", analog_val)
+                    elif analog_val is not None and (analog_val > high_lim or analog_val < low_lim):
+                        # Temperature is still in excursion (e.g. PLC restart pickup delay). Do NOT resolve as normal!
+                        pass
                     else:
                         resolve_alarm(a_cnl, analog_val)
                 elif t_cnl and t_cnl in readings:
@@ -1163,6 +1188,9 @@ def telemetry_scan_worker():
                 if a_cnl and a_cnl in readings:
                     if readings[a_cnl] > 0:
                         trigger_alarm(a_cnl, equip, "Temperature Excursion", analog_val)
+                    elif analog_val is not None and analog_val > high_lim:
+                        # Temperature is still in excursion (e.g. PLC restart pickup delay). Do NOT resolve as normal!
+                        pass
                     else:
                         resolve_alarm(a_cnl, analog_val)
                 elif t_cnl and t_cnl in readings:
@@ -1185,14 +1213,20 @@ def telemetry_scan_worker():
                         resolve_alarm(a_cnl, analog_val)
                     elif readings[a_cnl] > 0:
                         trigger_alarm(a_cnl, equip, "Liquid Nitrogen Excursion", analog_val)
+                    elif analog_val is not None and (analog_val <= -273.0 or analog_val >= 900.0):
+                        # Sensor is in hardware fault / disconnected state (-999.0 C). Do NOT resolve as normal!
+                        pass
+                    elif analog_val is not None and analog_val > high_lim:
+                        # Temperature is still in excursion (e.g. PLC restart pickup delay). Do NOT resolve as normal!
+                        pass
                     else:
                         resolve_alarm(a_cnl, analog_val)
                 elif t_cnl and t_cnl in readings:
                     if in_hold:
                         resolve_alarm(t_cnl, analog_val)
-                    elif analog_val > high_lim:
+                    elif analog_val > high_lim and analog_val < 900.0:
                         trigger_alarm(t_cnl, equip, "Liquid Nitrogen Excursion", analog_val)
-                    elif analog_val <= (high_lim - 5.0):
+                    elif analog_val <= (high_lim - 5.0) and analog_val > -273.0:
                         resolve_alarm(t_cnl, analog_val)
 
             # 4. Doors (Discrete alarm)

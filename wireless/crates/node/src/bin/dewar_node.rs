@@ -9,9 +9,7 @@ use esp_hal::efuse::{self, InterfaceMacAddress};
 use esp_hal::timer::timg::TimerGroup;
 use esp_radio::esp_now::BROADCAST_ADDRESS;
 use wireless_protocol::{DeviceTelemetry, DownlinkPacket, UplinkPacket};
-
-pub mod config;
-pub mod max31855;
+use wireless_node::max31855;
 
 esp_bootloader_esp_idf::esp_app_desc!();
 
@@ -23,7 +21,7 @@ fn main() -> ! {
 
     println!("========================================");
     println!("  LabSCADA Wireless Node (ESP32-S3)     ");
-    println!("  Universal Clinical Sensor Node        ");
+    println!("  Profile: Cryogenic Dewar (MAX31855)   ");
     println!("========================================");
 
     // Initialize RTOS task scheduler required by esp-radio
@@ -52,12 +50,18 @@ fn main() -> ! {
     // D8 = GPIO 7 (SCK)
     // D9 = GPIO 8 (MISO / SO)
     // D1 = GPIO 2 (CS)
+    // User LED = GPIO 21 (Active-Low: Low = ON, High = OFF)
     let sck = esp_hal::gpio::Output::new(peripherals.GPIO7, esp_hal::gpio::Level::Low, esp_hal::gpio::OutputConfig::default());
     let cs = esp_hal::gpio::Output::new(peripherals.GPIO2, esp_hal::gpio::Level::High, esp_hal::gpio::OutputConfig::default());
     let miso = esp_hal::gpio::Input::new(peripherals.GPIO8, esp_hal::gpio::InputConfig::default());
     let mut sensor = max31855::Max31855::new(sck, cs, miso);
 
+    let mut led = esp_hal::gpio::Output::new(peripherals.GPIO21, esp_hal::gpio::Level::High, esp_hal::gpio::OutputConfig::default());
+
     loop {
+        // Activity pulse: LED ON during sample & transmit
+        led.set_level(esp_hal::gpio::Level::Low);
+
         let reading = sensor.read(&delay);
         println!("MAX31855 [0x{:08X}]: Temp={}/10 C, Ambient={}/10 C, Fault={:?}",
             reading.raw, reading.temp_c_x10, reading.ambient_c_x10, reading.fault);
@@ -82,6 +86,10 @@ fn main() -> ! {
             }
         }
 
+        // Brief 40ms pulse duration, then turn LED OFF
+        delay.delay_millis(40);
+        led.set_level(esp_hal::gpio::Level::High);
+
         // Check for downlink response from bridge for 20ms
         for _ in 0..20 {
             if let Some(rx_data) = receiver.receive() {
@@ -96,3 +104,4 @@ fn main() -> ! {
         seq = seq.wrapping_add(1);
     }
 }
+

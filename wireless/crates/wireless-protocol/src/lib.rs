@@ -17,6 +17,7 @@ pub enum DeviceType {
     DewarCryo = 1,
     CleanroomDoor = 2,
     AmbientSensor = 3,
+    FridgeFreezer = 4,
 }
 
 impl Default for DeviceType {
@@ -34,6 +35,18 @@ pub enum DeviceTelemetry {
         /// Battery voltage in millivolts (e.g. 3850 = 3.85V)
         battery_mv: u16,
         /// Sensor health: 0 = OK, 1 = Probe Disconnected, 2 = Short, 3 = Hardware Fault
+        sensor_fault: u8,
+    },
+    FridgeFreezer {
+        /// Primary fridge temperature in Celsius * 10 (35 = +3.5 C)
+        fridge_temp_c_x10: i16,
+        /// Secondary freezer temperature in Celsius * 10 (-180 = -18.0 C)
+        freezer_temp_c_x10: i16,
+        /// Tertiary ambient room temperature in Celsius * 10 (245 = +24.5 C)
+        ambient_temp_c_x10: i16,
+        /// Battery voltage in millivolts
+        battery_mv: u16,
+        /// Sensor health bitfield / fault code
         sensor_fault: u8,
     },
     Door {
@@ -142,6 +155,8 @@ pub mod modbus_map {
     pub const REG_SEQ_HIGH: usize = 5;       // Sequence counter high word
     pub const REG_AGE_SECONDS: usize = 6;    // Seconds since last received packet (watchdog)
     pub const REG_STATUS_FLAGS: usize = 7;   // Bit 0 = Online, Bit 1 = Low Battery, Bit 2 = Comm Loss
+    pub const REG_SECONDARY_VAL: usize = 8;  // Secondary Temp * 10 (e.g. Freezer)
+    pub const REG_TERTIARY_VAL: usize = 9;   // Tertiary Temp * 10 (e.g. Ambient Room)
 
     pub const REG_COMMAND_MAILBOX: usize = 10; // Supervisory command written by PLC
     pub const REG_COMMAND_PARAM: usize = 11;   // Supervisory command parameter
@@ -169,6 +184,29 @@ mod tests {
 
         // Ensure compact size (< 25 bytes)
         assert!(bytes.len() <= 25, "Packet too large: {} bytes", bytes.len());
+
+        let decoded = UplinkPacket::deserialize(bytes).unwrap();
+        assert_eq!(pkt, decoded);
+    }
+
+    #[test]
+    fn test_serialization_roundtrip_fridge_freezer() {
+        let pkt = UplinkPacket::new(
+            2,
+            [0x24, 0xDC, 0xC3, 0x9A, 0x12, 0x50],
+            205,
+            DeviceTelemetry::FridgeFreezer {
+                fridge_temp_c_x10: 38,
+                freezer_temp_c_x10: -185,
+                ambient_temp_c_x10: 242,
+                battery_mv: 3750,
+                sensor_fault: 0,
+            },
+        );
+
+        let mut buf = [0u8; MAX_PACKET_LEN];
+        let bytes = pkt.serialize(&mut buf).unwrap();
+        assert!(bytes.len() <= 30, "Packet too large: {} bytes", bytes.len());
 
         let decoded = UplinkPacket::deserialize(bytes).unwrap();
         assert_eq!(pkt, decoded);

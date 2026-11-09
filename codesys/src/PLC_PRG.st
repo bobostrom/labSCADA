@@ -110,35 +110,14 @@ fbFreezer(
 );
 
 // --- C. Cryogenic LN2 Dewars 1 - 5 (< -135.0°C, 30s pickup, 10s dropout) ---
-fbDewar1(
-    rRawTemp     := -150.0,
-    rNominalTemp := -150.0,
-    bSimMode     := bGlobalSimMode
-);
+// Dewar 1 is live wireless sensor node (I/O mapped directly from Modbus RTU COM1)
+fbDewar1();
 
-fbDewar2(
-    rRawTemp     := -150.0,
-    rNominalTemp := -150.0,
-    bSimMode     := bGlobalSimMode
-);
-
-fbDewar3(
-    rRawTemp     := -150.0,
-    rNominalTemp := -150.0,
-    bSimMode     := bGlobalSimMode
-);
-
-fbDewar4(
-    rRawTemp     := -150.0,
-    rNominalTemp := -150.0,
-    bSimMode     := bGlobalSimMode
-);
-
-fbDewar5(
-    rRawTemp     := -150.0,
-    rNominalTemp := -150.0,
-    bSimMode     := bGlobalSimMode
-);
+// Dewars 2 - 5 (Unassigned slots default to nominal -150.0°C)
+fbDewar2(iRawTempX10 := -1500, bIsWireless := FALSE);
+fbDewar3(iRawTempX10 := -1500, bIsWireless := FALSE);
+fbDewar4(iRawTempX10 := -1500, bIsWireless := FALSE);
+fbDewar5(iRawTempX10 := -1500, bIsWireless := FALSE);
 
 // --- D. Incubator Cabinet 01 & Incubators (Muted when door open + 3m recovery grace) ---
 fbCabinet01(

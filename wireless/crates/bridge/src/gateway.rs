@@ -35,6 +35,8 @@ impl DeviceSlot {
         let mut ctx = ModbusContext::new();
         // Default unassigned slots to sentinel -9999 (-999.9 °C) and Comm Loss flag
         let _ = ctx.set_holding(REG_PRIMARY_VAL as u16, (-9999i16) as u16);
+        let _ = ctx.set_holding(REG_SECONDARY_VAL as u16, (-9999i16) as u16);
+        let _ = ctx.set_holding(REG_TERTIARY_VAL as u16, (-9999i16) as u16);
         let _ = ctx.set_holding(REG_STATUS_FLAGS as u16, 0x0004); // Bit 2: Comm Loss
         let _ = ctx.set_holding(REG_AGE_SECONDS as u16, 65535);
 
@@ -64,6 +66,8 @@ impl DeviceSlot {
         self.pending_cmd = None;
         let mut ctx = ModbusContext::new();
         let _ = ctx.set_holding(REG_PRIMARY_VAL as u16, (-9999i16) as u16);
+        let _ = ctx.set_holding(REG_SECONDARY_VAL as u16, (-9999i16) as u16);
+        let _ = ctx.set_holding(REG_TERTIARY_VAL as u16, (-9999i16) as u16);
         let _ = ctx.set_holding(REG_STATUS_FLAGS as u16, 0x0004);
         let _ = ctx.set_holding(REG_AGE_SECONDS as u16, 65535);
         self.modbus_ctx = ctx;
@@ -117,6 +121,7 @@ impl WirelessGateway {
                 if self.pairing_enabled && (self.pairing_target_slot.is_none() || self.pairing_target_slot == Some(packet.slot_id)) {
                     let dev_type = match packet.telemetry {
                         DeviceTelemetry::Dewar { .. } => DeviceType::DewarCryo,
+                        DeviceTelemetry::FridgeFreezer { .. } => DeviceType::FridgeFreezer,
                         DeviceTelemetry::Door { .. } => DeviceType::CleanroomDoor,
                         DeviceTelemetry::Ambient { .. } => DeviceType::AmbientSensor,
                     };
@@ -139,6 +144,12 @@ impl WirelessGateway {
             DeviceTelemetry::Dewar { temp_c_x10, battery_mv, sensor_fault } => {
                 let low = battery_mv < 3400;
                 (temp_c_x10 as u16, battery_mv, sensor_fault as u16, low)
+            }
+            DeviceTelemetry::FridgeFreezer { fridge_temp_c_x10, freezer_temp_c_x10, ambient_temp_c_x10, battery_mv, sensor_fault } => {
+                let low = battery_mv < 3400;
+                let _ = ctx.set_holding(REG_SECONDARY_VAL as u16, freezer_temp_c_x10 as u16);
+                let _ = ctx.set_holding(REG_TERTIARY_VAL as u16, ambient_temp_c_x10 as u16);
+                (fridge_temp_c_x10 as u16, battery_mv, sensor_fault as u16, low)
             }
             DeviceTelemetry::Door { is_open, battery_mv, tamper } => {
                 let low = battery_mv < 3400;

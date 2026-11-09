@@ -5,11 +5,24 @@ edition = "2021"
 authors = ["LabSCADA Automation Team"]
 description = "Universal Low-Power Clinical Sensor Node (Dewar / Door / Ambient) for XIAO ESP32-S3"
 
+[lib]
+name = "wireless_node"
+path = "src/lib.rs"
+
+[[bin]]
+name = "dewar_node"
+path = "src/bin/dewar_node.rs"
+
+[[bin]]
+name = "fridge_node"
+path = "src/bin/fridge_node.rs"
+
 [dependencies]
 wireless-protocol = { path = "../wireless-protocol", default-features = false }
 serde = { version = "1.0", default-features = false, features = ["derive"] }
 postcard = { version = "1.0", default-features = false }
 heapless = "0.8"
+onecable = "0.2.0"
 
 esp-hal = { version = "1.2.2", features = ["esp32s3", "unstable"] }
 esp32s3 = "0.36.0"
