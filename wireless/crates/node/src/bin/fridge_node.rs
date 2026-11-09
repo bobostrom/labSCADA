@@ -193,11 +193,7 @@ fn main() -> ! {
         // Calibrated to match physical multimeter reference (4.053V actual at raw = 2523):
         // Calibration scale factor: (4053 * 4095) / 2523 = 6578 mV full-scale.
         let calculated_mv = ((raw_adc as u32 * 6578) / 4095) as u16;
-        let battery_mv = if calculated_mv >= 2500 && calculated_mv <= 4500 {
-            calculated_mv
-        } else {
-            3820 // Nominal baseline fallback if on USB power or divider not fitted
-        };
+        let battery_mv = calculated_mv;
 
         // 3. Broadcast Telemetry via ESP-NOW
         // Slot 2 = Fridge/Freezer Node
