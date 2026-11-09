@@ -11,7 +11,7 @@ use esp_hal::rtc_cntl::sleep::{LowPower, RtcSleepConfig};
 use esp_hal::analog::adc::{Adc, AdcConfig, Attenuation};
 use esp_radio::esp_now::BROADCAST_ADDRESS;
 use wireless_protocol::{DeviceTelemetry, DownlinkPacket, UplinkPacket};
-use onecable::{OneWire, ds18b20::DS18B20, search_rom::OneWireRomIter};
+use onecable::{OneWire, ds18b20::DS18B20, search_rom::OneWireRomIter, rom_code::RomCode};
 
 esp_bootloader_esp_idf::esp_app_desc!();
 
@@ -96,15 +96,28 @@ fn main() -> ! {
             match wire.initialize_bus(&mut delay) {
                 Ok(true) => {
                     println!("1-Wire: Presence pulse detected on Pin D5 (GPIO 6). Scanning ROMs...");
+                    let mut roms: heapless::Vec<RomCode, MAX_SENSORS> = heapless::Vec::new();
                     for rom in OneWireRomIter::from_wire(&mut wire, &mut delay) {
-                        println!("  -> Discovered 1-Wire ROM: {:02X?}", rom.bytes);
-                        if let Ok(ds) = DS18B20::try_from(rom) {
-                            if sensors.push(ds).is_err() {
-                                break;
-                            }
+                        if roms.push(rom).is_err() {
+                            break;
                         }
                     }
-                    println!("1-Wire: Enumerated {} DS18B20 sensor(s)", sensors.len());
+                    // Deterministic ordering: sort strictly ascending by 64-bit ROM code
+                    roms.sort_by(|a, b| a.bytes.cmp(&b.bytes));
+
+                    for (idx, rom) in roms.iter().enumerate() {
+                        let label = match idx {
+                            0 => "Probe 1 (Fridge)",
+                            1 => "Probe 2 (Freezer)",
+                            2 => "Probe 3 (Ambient)",
+                            _ => "Aux Probe",
+                        };
+                        println!("  -> Assigned {}: ROM {:02X?}", label, rom.bytes);
+                        if let Ok(ds) = DS18B20::try_from(*rom) {
+                            let _ = sensors.push(ds);
+                        }
+                    }
+                    println!("1-Wire: Enumerated {} DS18B20 sensor(s) in deterministic order", sensors.len());
                 }
                 Ok(false) => {
                     println!("1-Wire: No presence pulse on Pin D5 (GPIO 6) - no sensor responded");
