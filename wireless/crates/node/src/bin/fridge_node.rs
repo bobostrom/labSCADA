@@ -16,9 +16,12 @@ use onecable::{OneWire, ds18b20::DS18B20, search_rom::OneWireRomIter, rom_code::
 
 esp_bootloader_esp_idf::esp_app_desc!();
 
+// Node configuration auto-generated from equipment manifest by build.rs
+include!(concat!(env!("OUT_DIR"), "/node_config.rs"));
+
 const MAX_SENSORS: usize = 3;
 const TEMP_SENTINEL_DISCONNECTED: i16 = -9999; // -999.9 °C
-const REPORT_INTERVAL_SECS: u64 = 20; // 20-second clinical reporting interval
+const REPORT_INTERVAL_SECS: u64 = FRIDGE_REPORT_INTERVAL_SECS;
 
 #[esp_hal::ram(unstable(rtc_fast, persistent))]
 static mut BOOT_SEQ: u32 = 1;
@@ -33,6 +36,8 @@ fn main() -> ! {
     println!("========================================");
     println!("  LabSCADA Wireless Node (ESP32-S3)     ");
     println!("  Profile: Fridge/Freezer/Ambient 1-Wire");
+    println!("  Site: {} (Slot {})", SITE_NAME, FRIDGE_SLOT);
+    println!("  Batt Cal: {}/{} | Sleep: {}s", FRIDGE_BATT_CAL_NUM, FRIDGE_BATT_CAL_DEN, FRIDGE_REPORT_INTERVAL_SECS);
     println!("========================================");
 
     // Initialize RTOS task scheduler required by esp-radio
@@ -193,15 +198,10 @@ fn main() -> ! {
         let pin_mv: u16 = adc1.read_blocking(&mut batt_pin);
         println!("Battery ADC (GPIO 1): calibrated pin_mv = {} mV", pin_mv);
 
-        // Calibrated against precision multimeter measurements:
-        // Physical battery = 4072 mV (4.072V)
-        // Physical pin A0  = 2020 mV (2.02V)
-        // ADC calibrated reading pin_mv = 2014 mV
-        // Divider scale factor: 4072 / 2014 = 2.0218 (true 2x 100k divider with resistor tolerance)
-        let battery_mv = ((pin_mv as u32 * 4072) / 2014) as u16;
+        // Calibrated against manifest parameters (FRIDGE_BATT_CAL_NUM / FRIDGE_BATT_CAL_DEN)
+        let battery_mv = ((pin_mv as u32 * FRIDGE_BATT_CAL_NUM) / FRIDGE_BATT_CAL_DEN) as u16;
 
         // 3. Broadcast Telemetry via ESP-NOW
-        // Slot 2 = Fridge/Freezer Node
         let telemetry = DeviceTelemetry::FridgeFreezer {
             fridge_temp_c_x10: fridge_temp,
             freezer_temp_c_x10: freezer_temp,
@@ -213,7 +213,7 @@ fn main() -> ! {
         // Activity pulse: LED ON during transmit
         led.set_level(esp_hal::gpio::Level::Low);
 
-        let uplink = UplinkPacket::new(2, mac_arr, seq, telemetry);
+        let uplink = UplinkPacket::new(FRIDGE_SLOT, mac_arr, seq, telemetry);
         if let Ok(payload) = uplink.serialize(&mut tx_buf) {
             println!("Transmitting ESP-NOW packet #{} (Fridge: {}/10 C, Freezer: {}/10 C, Ambient: {}/10 C)...",
                 seq, fridge_temp, freezer_temp, ambient_temp);

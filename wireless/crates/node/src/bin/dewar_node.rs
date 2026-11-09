@@ -16,7 +16,10 @@ use wireless_node::max31855;
 
 esp_bootloader_esp_idf::esp_app_desc!();
 
-const REPORT_INTERVAL_SECS: u64 = 20; // 20-second clinical reporting interval
+// Node configuration auto-generated from equipment manifest by build.rs
+include!(concat!(env!("OUT_DIR"), "/node_config.rs"));
+
+const REPORT_INTERVAL_SECS: u64 = DEWAR_REPORT_INTERVAL_SECS;
 
 #[esp_hal::ram(unstable(rtc_fast, persistent))]
 static mut BOOT_SEQ: u32 = 1;
@@ -91,12 +94,8 @@ fn main() -> ! {
         let pin_mv: u16 = adc1.read_blocking(&mut batt_pin);
         println!("Battery ADC (GPIO 1): calibrated pin_mv = {} mV", pin_mv);
 
-        // Calibrated against precision multimeter measurements:
-        // Physical battery = 4072 mV (4.072V)
-        // Physical pin A0  = 2020 mV (2.02V)
-        // ADC calibrated reading pin_mv = 2014 mV
-        // Divider scale factor: 4072 / 2014 = 2.0218 (true 2x 100k divider with resistor tolerance)
-        let battery_mv = ((pin_mv as u32 * 4072) / 2014) as u16;
+        // Calibrated against manifest parameters (DEWAR_BATT_CAL_NUM / DEWAR_BATT_CAL_DEN)
+        let battery_mv = ((pin_mv as u32 * DEWAR_BATT_CAL_NUM) / DEWAR_BATT_CAL_DEN) as u16;
 
         let telemetry = DeviceTelemetry::Dewar {
             temp_c_x10: reading.temp_c_x10,
@@ -104,7 +103,7 @@ fn main() -> ! {
             sensor_fault: reading.fault as u8,
         };
 
-        let uplink = UplinkPacket::new(1, mac_arr, seq, telemetry);
+        let uplink = UplinkPacket::new(DEWAR_SLOT, mac_arr, seq, telemetry);
         if let Ok(payload) = uplink.serialize(&mut tx_buf) {
             println!("Transmitting ESP-NOW packet #{} (temp: {}/10 C, batt: {} mV)...", seq, reading.temp_c_x10, battery_mv);
             match sender.send(&BROADCAST_ADDRESS, payload) {

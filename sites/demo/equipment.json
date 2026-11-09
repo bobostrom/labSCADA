@@ -7,10 +7,11 @@
       "label": "Dewar 1 (Embryos)",
       "subtitle": "Embryos",
       "desc": "Embryology Specimen Storage",
-      "icon": "🥚",
+      "icon": "\ud83e\udd5a",
       "color": "#00e5ff",
       "plc_fb": "fbDewar1",
       "is_wireless": true,
+      "wireless_node": "dewar_node_01",
       "batt_cnl": 106,
       "temp_cnl": 125,
       "alarm_cnl": 113,
@@ -25,7 +26,7 @@
       "label": "Dewar 2 (Sperm)",
       "subtitle": "Sperm",
       "desc": "Andrology Specimen Storage",
-      "icon": "🧬",
+      "icon": "\ud83e\uddec",
       "color": "#00b0ff",
       "plc_fb": "fbDewar2",
       "is_wireless": false,
@@ -42,8 +43,11 @@
       "key": "fridge",
       "name": "Medical Fridge",
       "short_name": "Fridge",
-      "target_label": "Target: 2.0°C – 8.0°C",
+      "target_label": "Target: 2.0\u00b0C \u2013 8.0\u00b0C",
       "plc_fb": "fbColdStorage",
+      "is_wireless": true,
+      "wireless_node": "cold_storage_node_01",
+      "batt_cnl": 105,
       "temp_cnl": 102,
       "alarm_cnl": 111,
       "warn_cnl": 115,
@@ -57,8 +61,11 @@
       "key": "freezer",
       "name": "Medical Freezer",
       "short_name": "Freezer",
-      "target_label": "Limit: < -15.0°C",
+      "target_label": "Limit: < -15.0\u00b0C",
       "plc_fb": "fbColdStorage",
+      "is_wireless": true,
+      "wireless_node": "cold_storage_node_01",
+      "batt_cnl": 105,
       "temp_cnl": 103,
       "alarm_cnl": 112,
       "warn_cnl": 116,
@@ -82,7 +89,7 @@
       "fan_command_cnl": null,
       "fan_setpoint": 28.0,
       "post_close_grace_sec": 180,
-      "target_temp_label": "Cabinet Limit: < 28.0°C"
+      "target_temp_label": "Cabinet Limit: < 28.0\u00b0C"
     }
   ],
   "incubators": [
@@ -93,7 +100,7 @@
       "bay_number": 1,
       "name": "Incubator 01",
       "model": "K-Systems G210",
-      "subtitle": "Bay 1 • G210 InviCell",
+      "subtitle": "Bay 1 \u2022 G210 InviCell",
       "plc_fb": "fbIncubator1",
       "alarm_cnl": 123,
       "has_zone_temps": true,
@@ -120,7 +127,7 @@
       "bay_number": 2,
       "name": "Incubator 02",
       "model": "K-Systems G210",
-      "subtitle": "Bay 2 • G210 InviCell",
+      "subtitle": "Bay 2 \u2022 G210 InviCell",
       "plc_fb": "fbIncubator2",
       "alarm_cnl": 124,
       "has_zone_temps": true,
@@ -168,8 +175,10 @@
       "id": 1,
       "key": "ambient",
       "name": "Cleanroom Ambient",
-      "target_label": "Comfort Target: ~25.0°C",
+      "target_label": "Comfort Target: ~25.0\u00b0C",
       "plc_var": "rLabAmbientTemp",
+      "is_wireless": true,
+      "wireless_node": "cold_storage_node_01",
       "temp_cnl": 101,
       "low_limit": 20.0,
       "high_limit": 27.0
@@ -193,6 +202,58 @@
       "low_batt_alarm_cnl": 177,
       "beeper_muted_cnl": 178,
       "mute_cmd_cnl": 179
+    }
+  ],
+  "wireless_nodes": [
+    {
+      "slot": 1,
+      "key": "dewar_node_01",
+      "name": "Dewar 1 Cryo Monitor",
+      "hardware": "Seeed Studio XIAO ESP32-S3",
+      "equipment_keys": [
+        "dewar1"
+      ],
+      "report_interval_secs": 20,
+      "channels": {
+        "temperature": 125,
+        "battery": 106
+      },
+      "calibration": {
+        "battery_scale_num": 4072,
+        "battery_scale_den": 2014,
+        "battery_ref_v": 4.072,
+        "pin_measured_mv": 2014,
+        "calibrated_at": "2026-11-09T08:47:00Z",
+        "verified_by": "BO",
+        "notes": "Multimeter bench calibration (4.072V batt, 2.02V pin)"
+      }
+    },
+    {
+      "slot": 2,
+      "key": "cold_storage_node_01",
+      "name": "Medical Cold Storage & Ambient Monitor",
+      "hardware": "Seeed Studio XIAO ESP32-S3",
+      "equipment_keys": [
+        "fridge",
+        "freezer",
+        "ambient"
+      ],
+      "report_interval_secs": 20,
+      "channels": {
+        "ambient": 101,
+        "fridge": 102,
+        "freezer": 103,
+        "battery": 105
+      },
+      "calibration": {
+        "battery_scale_num": 4072,
+        "battery_scale_den": 2014,
+        "battery_ref_v": 4.072,
+        "pin_measured_mv": 2014,
+        "calibrated_at": "2026-11-09T09:12:21Z",
+        "verified_by": "BO",
+        "notes": "Bench multimeter calibration (4.072V batt, 2.02V pin)"
+      }
     }
   ]
 }
