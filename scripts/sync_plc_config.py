@@ -142,16 +142,19 @@ def extract_plc_setpoints(cfg: Dict[str, Any]) -> List[Dict[str, Any]]:
     return setpoints
 
 
-async def run_opc_sync(setpoints: List[Dict[str, Any]], plc_url: str, user: str, password: str, mode: str):
+async def run_opc_sync(setpoints: List[Dict[str, Any]], plc_url: str, user: str, password: str, mode: str, quiet: bool = False) -> Dict[str, Any]:
     """Connects to CODESYS OPC UA server, reads current values, and writes targets if mode == 'write'."""
     try:
         from asyncua import Client, ua
         from asyncua.crypto.security_policies import SecurityPolicyBasic256Sha256
     except ImportError:
-        print("[!] ERROR: 'asyncua' library is required. Install via: pip install asyncua")
-        sys.exit(1)
+        err = "ERROR: 'asyncua' library is required. Install via: pip install asyncua"
+        if not quiet:
+            print(f"[!] {err}")
+        return {"success": False, "error": err, "updated_count": 0, "match_count": 0, "results": []}
 
-    print(f"\n[*] Connecting to CODESYS OPC UA Server at {plc_url}...")
+    if not quiet:
+        print(f"\n[*] Connecting to CODESYS OPC UA Server at {plc_url}...")
     client = Client(plc_url, timeout=5)
 
     if os.path.exists(CERT_FILE) and os.path.exists(KEY_FILE):
@@ -162,15 +165,18 @@ async def run_opc_sync(setpoints: List[Dict[str, Any]], plc_url: str, user: str,
             private_key=KEY_FILE,
             mode=3  # SignAndEncrypt
         )
-        print(f"[*] Security configured: Basic256Sha256 (SignAndEncrypt) with {CERT_FILE}")
+        if not quiet:
+            print(f"[*] Security configured: Basic256Sha256 (SignAndEncrypt) with {CERT_FILE}")
     
     if user:
         client.set_user(user)
         if password:
             client.set_password(password)
 
+    results = []
     async with client:
-        print("[+] Connected to OPC UA Server successfully.\n")
+        if not quiet:
+            print("[+] Connected to OPC UA Server successfully.\n")
 
         # Discover active prefix
         active_prefix = None
@@ -187,9 +193,10 @@ async def run_opc_sync(setpoints: List[Dict[str, Any]], plc_url: str, user: str,
         if not active_prefix:
             active_prefix = DEVICE_PREFIXES[1]  # Default to Raspberry Pi
 
-        print(f"[*] Detected Device Prefix: {active_prefix}\n")
-        print(f"{'PARAMETER':<32} | {'PLC CURRENT':<12} | {'TARGET (JSON)':<14} | {'STATUS'}")
-        print("-" * 75)
+        if not quiet:
+            print(f"[*] Detected Device Prefix: {active_prefix}\n")
+            print(f"{'PARAMETER':<32} | {'PLC CURRENT':<12} | {'TARGET (JSON)':<14} | {'STATUS'}")
+            print("-" * 75)
 
         updated_count = 0
         match_count = 0
@@ -227,16 +234,55 @@ async def run_opc_sync(setpoints: List[Dict[str, Any]], plc_url: str, user: str,
 
                 current_str = f"{current_float:+.1f} {unit}"
                 target_str = f"{target_float:+.1f} {unit}"
-                print(f"{name:<32} | {current_str:<12} | {target_str:<14} | {status}")
+                results.append({
+                    "name": name,
+                    "node_id": node_id,
+                    "current": current_float,
+                    "target": target_float,
+                    "unit": unit,
+                    "status": status,
+                })
+                if not quiet or (quiet and status in ("UPDATED & VERIFIED", "WRITE FAILED")):
+                    print(f"{name:<32} | {current_str:<12} | {target_str:<14} | {status}")
 
             except Exception as e:
-                print(f"{name:<32} | {'ERR':<12} | {target:+.1f} {unit:<10} | Node Error: {e}")
+                err_status = f"Node Error: {e}"
+                results.append({
+                    "name": name,
+                    "node_id": node_id,
+                    "target": target,
+                    "unit": unit,
+                    "status": err_status,
+                })
+                if not quiet:
+                    print(f"{name:<32} | {'ERR':<12} | {target:+.1f} {unit:<10} | {err_status}")
 
-        print("-" * 75)
-        if mode == "write":
-            print(f"[+] Summary: {updated_count} parameters updated, {match_count} already in sync.\n")
-        elif mode == "dry-run":
-            print(f"[*] Dry-run complete. Run without --dry-run to apply changes to PLC.\n")
+        if not quiet:
+            print("-" * 75)
+            if mode == "write":
+                print(f"[+] Summary: {updated_count} parameters updated, {match_count} already in sync.\n")
+            elif mode == "dry-run":
+                print(f"[*] Dry-run complete. Run without --dry-run to apply changes to PLC.\n")
+
+        return {
+            "success": True,
+            "active_prefix": active_prefix,
+            "updated_count": updated_count,
+            "match_count": match_count,
+            "results": results,
+        }
+
+
+def sync_equipment_to_plc(config_path: str = None, plc_url: str = DEFAULT_PLC_URL, mode: str = "write", quiet: bool = False) -> Dict[str, Any]:
+    """Synchronous helper function to run OPC UA sync directly from equipment.json."""
+    try:
+        path, cfg = find_equipment_config(config_path)
+        setpoints = extract_plc_setpoints(cfg)
+        return asyncio.run(run_opc_sync(setpoints, plc_url, DEFAULT_USER, DEFAULT_PASS, mode, quiet=quiet))
+    except Exception as e:
+        if not quiet:
+            print(f"[!] sync_equipment_to_plc failed: {e}")
+        return {"success": False, "error": str(e), "updated_count": 0, "match_count": 0, "results": []}
 
 
 def main():

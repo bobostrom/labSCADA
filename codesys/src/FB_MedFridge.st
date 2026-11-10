@@ -11,7 +11,7 @@ FUNCTION_BLOCK FB_MedFridge
 VAR_INPUT
     wRawTempX10         : WORD := 16#D8F0;  (* Raw Modbus register (Fridge scaled temp * 10, -9999 = 16#D8F0) *)
     rHighTrip           : REAL := 8.5;      (* CAP excursion threshold (standard 8.0°C + 0.5 buffer) *)
-    rLowTrip            : REAL := 2.0;      (* Freezing prevention threshold *)
+    rLowTrip            : REAL := 1.0;      (* Freezing prevention threshold (1.0°C clinical alarm per equipment.json) *)
     rHysteresis         : REAL := 0.5;      (* Anti-chatter deadband (°C) *)
     tPickupDelay        : TIME := T#2M;     (* 2-minute sustained delay to suppress door-opening noise *)
     tDropoutDelay       : TIME := T#10S;    (* 10-second clean recovery required to reset *)

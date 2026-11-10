@@ -1640,6 +1640,78 @@ def ln2_schedule_watcher():
         time.sleep(60.0)
 
 
+def plc_config_sync_worker():
+    """Background worker monitoring equipment.json for changes (via st_mtime)
+    and periodically verifying that CODESYS PLC runtime limits match equipment.json.
+    Automatically pushes limits to the PLC if equipment.json is edited or if the
+    PLC reboots and reverts to compiled defaults.
+    """
+    try:
+        from scripts.sync_plc_config import sync_equipment_to_plc, find_equipment_config
+    except ImportError:
+        # Fallback if imported from different working directory
+        import sys
+        sys.path.insert(0, REPO_DIR)
+        from scripts.sync_plc_config import sync_equipment_to_plc, find_equipment_config
+
+    last_mtime = 0.0
+    last_periodic_check = 0.0
+    target_manifest = None
+
+    try:
+        target_manifest, _ = find_equipment_config()
+    except Exception:
+        pass
+
+    # Initial boot delay to let PLC connection stabilize
+    time.sleep(3.0)
+
+    while True:
+        try:
+            now = time.time()
+            mtime_changed = False
+
+            if target_manifest and os.path.exists(target_manifest):
+                current_mtime = os.path.getmtime(target_manifest)
+                if current_mtime > last_mtime:
+                    mtime_changed = True
+                    last_mtime = current_mtime
+            else:
+                try:
+                    target_manifest, _ = find_equipment_config()
+                    if target_manifest and os.path.exists(target_manifest):
+                        current_mtime = os.path.getmtime(target_manifest)
+                        mtime_changed = True
+                        last_mtime = current_mtime
+                except Exception:
+                    pass
+
+            # Sync if file was modified or periodic 60s consistency check elapsed
+            periodic_due = (now - last_periodic_check) >= 60.0
+
+            if mtime_changed or periodic_due:
+                last_periodic_check = now
+                is_quiet = not mtime_changed
+
+                # If manifest modified, reload global EQUIPMENT_CONFIG
+                if mtime_changed and last_mtime > 0:
+                    global EQUIPMENT_CONFIG
+                    print(f"[{datetime.now().strftime('%T')}] [PLC-SYNC] equipment.json change detected ({target_manifest}). Reloading config & enforcing limits...")
+                    try:
+                        EQUIPMENT_CONFIG = load_equipment_config()
+                    except Exception as e:
+                        print(f"[!] Warning: failed to reload EQUIPMENT_CONFIG: {e}")
+
+                res = sync_equipment_to_plc(config_path=target_manifest, plc_url=PLC_OPC_URL, mode="write", quiet=is_quiet)
+                if res.get("updated_count", 0) > 0:
+                    print(f"[{datetime.now().strftime('%T')}] [PLC-SYNC] Auto-synchronized {res['updated_count']} setpoint(s) to PLC runtime.")
+        except Exception as e:
+            # Keep worker resilient
+            pass
+
+        time.sleep(5.0)
+
+
 # ==============================================================================
 # QR CODE PLACARD & MOBILE ENTRY GENERATORS
 # ==============================================================================
@@ -2404,6 +2476,9 @@ def main():
 
     t_ln2 = threading.Thread(target=ln2_schedule_watcher, daemon=True)
     t_ln2.start()
+
+    t_plc_sync = threading.Thread(target=plc_config_sync_worker, daemon=True)
+    t_plc_sync.start()
 
     # Start Multi-Threaded HTTP server (prevents hung/slow requests from blocking the engine)
     http.server.ThreadingHTTPServer.allow_reuse_address = True
