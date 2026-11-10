@@ -10,15 +10,19 @@
 FUNCTION_BLOCK FB_MedFreezer
 VAR_INPUT
     {attribute 'symbol' := 'readwrite'}
-    iRawTempX10         : INT := -9999;     (* Raw scaled temp * 10 (-180 = -18.0 °C, -9999 = Sentinel / Disconnected) *)
+    wRawTempX10         : WORD := 16#D8F0;  (* Offset 0: Raw Modbus register (-9999 = 16#D8F0 Sentinel / Disconnected) *)
     {attribute 'symbol' := 'none'}
-    rHighTrip           : REAL := -15.0;    (* Warm alarm threshold (°C) *)
+    rHighTrip           : REAL := -10.0;    (* Medications/consumables warm alarm threshold (°C) per USP <1079> *)
     {attribute 'symbol' := 'none'}
-    rHysteresis         : REAL := 1.5;      (* Anti-chatter deadband (°C) *)
+    rHysteresis         : REAL := 0.5;      (* Anti-chatter deadband (°C) - resets at -10.5°C *)
     {attribute 'symbol' := 'none'}
     tPickupDelay        : TIME := T#3M;     (* 3-minute sustained delay to suppress defrost cycles *)
     {attribute 'symbol' := 'none'}
     tDropoutDelay       : TIME := T#10S;    (* 10-second clean recovery required to reset *)
+    {attribute 'symbol' := 'none'}
+    uiRawFaultCode      : UINT := 0;        (* Probe fault code: 0=OK, 0xFF=Unpopulated *)
+    {attribute 'symbol' := 'none'}
+    bCommLoss           : BOOL := FALSE;    (* Watchdog comms loss flag *)
 END_VAR
 VAR_OUTPUT
     {attribute 'symbol' := 'read'}
@@ -32,21 +36,29 @@ VAR_OUTPUT
 END_VAR
 VAR
     {attribute 'symbol' := 'none'}
+    iTempX10            : INT;
+    {attribute 'symbol' := 'none'}
     fbAlarmEval         : FB_AnalogAlarm;
 END_VAR
 
 // ==============================================================================
 // 1. HARDWARE HEALTH & PROCESS TEMPERATURE SCALING
 // ==============================================================================
-bProbeFault  := (iRawTempX10 <= -9000);
-rProcessTemp := TO_REAL(iRawTempX10) / 10.0;
+iTempX10     := TO_INT(wRawTempX10);
+bProbeFault  := (uiRawFaultCode <> 0) OR (iTempX10 <= -9000) OR (iTempX10 >= 9000);
+
+IF bProbeFault OR bCommLoss THEN
+    rProcessTemp := -999.0;
+ELSE
+    rProcessTemp := TO_REAL(iTempX10) / 10.0;
+END_IF;
 
 // ==============================================================================
 // 2. CLINICAL ALARM EVALUATION
 // ==============================================================================
 fbAlarmEval(
     rVal          := rProcessTemp,
-    bEnableHigh   := NOT bProbeFault,
+    bEnableHigh   := NOT (bProbeFault OR bCommLoss),
     rHighPickup   := rHighTrip,
     rHighDropout  := rHighTrip - rHysteresis,
     bEnableLow    := FALSE,

@@ -10,8 +10,7 @@
    ============================================================================== *)
 FUNCTION_BLOCK FB_Dewar
 VAR_INPUT
-    {attribute 'symbol' := 'readwrite'}
-    iRawTempX10         : INT := -9999;     (* Raw scaled temp * 10 (-1954 = -195.4 °C, -9999 = Sentinel / Disconnected) *)
+    (* --- Operational Alarm Thresholds & Delays --- *)
     {attribute 'symbol' := 'none'}
     rHighTrip           : REAL := -135.0;   (* Critical specimen danger limit (°C) *)
     {attribute 'symbol' := 'none'}
@@ -21,17 +20,23 @@ VAR_INPUT
     {attribute 'symbol' := 'none'}
     tDropoutDelay       : TIME := T#10S;    (* Clean fill required to reset *)
 
-    (* --- Wireless Telemetry Inputs (Direct from Modbus Bridge) --- *)
+    (* --- 8 Modbus Holding Registers (Direct from Bridge Slot 1) --- *)
     {attribute 'symbol' := 'readwrite'}
-    uiRawBatteryMv      : UINT := 3850;     (* Battery health in millivolts *)
+    wRawTempX10         : WORD := 16#D8F0;  (* Offset 0: Dewar scaled temp * 10 (-1954 = -195.4 °C, -9999 = Sentinel) *)
     {attribute 'symbol' := 'readwrite'}
-    iRawRSSI            : INT := -50;       (* Link RSSI in dBm *)
+    uiRawBatteryMv      : UINT := 3850;     (* Offset 1: Battery health in millivolts *)
     {attribute 'symbol' := 'readwrite'}
-    uiRawFaultCode      : UINT := 0;        (* Probe fault: 0=OK, 1=Open, 2=Short GND, 3=Short VCC, 4=Hardware Error *)
+    uiRawFaultCode      : UINT := 0;        (* Offset 2: Probe fault (0=OK, 1=Open, 2=GND, 3=VCC, 4=Hardware Error) *)
     {attribute 'symbol' := 'readwrite'}
-    uiRawAgeSec         : UINT := 0;        (* Seconds since last burst packet *)
+    wRawRSSI            : WORD := 16#FFCE;  (* Offset 3: Wireless link margin in dBm (-50 = 16#FFCE) *)
     {attribute 'symbol' := 'readwrite'}
-    wRawStatusFlags     : WORD := 16#0001;  (* Bit 0=Online, Bit 1=LowBatt, Bit 2=CommLoss *)
+    wRawSeqLow          : WORD := 0;        (* Offset 4: Sequence counter low word *)
+    {attribute 'symbol' := 'readwrite'}
+    wRawSeqHigh         : WORD := 0;        (* Offset 5: Sequence counter high word *)
+    {attribute 'symbol' := 'readwrite'}
+    uiRawAgeSec         : UINT := 0;        (* Offset 6: Telemetry age in seconds *)
+    {attribute 'symbol' := 'readwrite'}
+    wRawStatusFlags     : WORD := 16#0001;  (* Offset 7: Bit 0=Online, Bit 1=LowBatt, Bit 2=CommLoss *)
     {attribute 'symbol' := 'none'}
     bIsWireless         : BOOL := TRUE;     (* TRUE = Enable wireless diagnostics *)
     {attribute 'symbol' := 'none'}
@@ -61,21 +66,26 @@ VAR_OUTPUT
 END_VAR
 VAR
     {attribute 'symbol' := 'none'}
+    iTempX10            : INT;
+    {attribute 'symbol' := 'none'}
     fbAlarmEval         : FB_AnalogAlarm;
 END_VAR
 
 // ==============================================================================
 // 1. HARDWARE HEALTH & TELEMETRY DECODING
 // ==============================================================================
+// Explicitly cast Modbus unsigned WORD inputs to signed two's complement INT
+iTempX10 := TO_INT(wRawTempX10);
+
 IF bIsWireless THEN
     rBatteryVolts := TO_REAL(uiRawBatteryMv) / 1000.0;
     bLowBattery   := (uiRawBatteryMv < 3400) OR (wRawStatusFlags.1);
-    iRSSI         := iRawRSSI;
+    iRSSI         := TO_INT(wRawRSSI);
     uiAgeSec      := uiRawAgeSec;
     uiFaultCode   := uiRawFaultCode;
 
     // Probe fault if hardware reported fault code or value is sentinel (<= -273°C or >= 900°C)
-    bProbeFault   := (uiRawFaultCode <> 0) OR (iRawTempX10 <= -2730) OR (iRawTempX10 >= 9000);
+    bProbeFault   := (uiRawFaultCode <> 0) OR (iTempX10 <= -2730) OR (iTempX10 >= 9000);
 
     // Watchdog comms loss if bridge flagged or age exceeds timeout
     bCommLoss     := (wRawStatusFlags.2) OR (uiRawAgeSec > (TIME_TO_UINT(tCommLossTimeout) / 1000));
@@ -85,7 +95,7 @@ ELSE
     iRSSI         := 0;
     bCommLoss     := FALSE;
     uiFaultCode   := 0;
-    bProbeFault   := (iRawTempX10 <= -2730) OR (iRawTempX10 >= 9000);
+    bProbeFault   := (iTempX10 <= -2730) OR (iTempX10 >= 9000);
     uiAgeSec      := 0;
 END_IF;
 
@@ -96,7 +106,7 @@ END_IF;
 IF bProbeFault OR bCommLoss THEN
     rProcessTemp := -999.0;
 ELSE
-    rProcessTemp := TO_REAL(iRawTempX10) / 10.0;
+    rProcessTemp := TO_REAL(iTempX10) / 10.0;
 END_IF;
 
 // ==============================================================================

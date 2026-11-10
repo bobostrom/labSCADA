@@ -348,7 +348,7 @@ def build_channels_from_equipment(eq):
             cnls[t_cnl] = {
                 "name": fz["name"],
                 "type": "freezer",
-                "high": fz.get("high_limit", -15.0),
+                "high": fz.get("high_limit", -10.0),
                 "priority": 2,
             }
         if fz.get("alarm_cnl"):
@@ -1185,7 +1185,7 @@ def telemetry_scan_worker():
                 t_cnl = int(fz["temp_cnl"]) if fz.get("temp_cnl") else None
                 a_cnl = int(fz["alarm_cnl"]) if fz.get("alarm_cnl") else None
                 analog_val = readings.get(t_cnl) if t_cnl else None
-                high_lim = fz.get("high_limit", -15.0)
+                high_lim = fz.get("high_limit", -10.0)
 
                 if a_cnl and a_cnl in readings:
                     if readings[a_cnl] > 0:
@@ -1198,7 +1198,7 @@ def telemetry_scan_worker():
                 elif t_cnl and t_cnl in readings:
                     if analog_val > high_lim:
                         trigger_alarm(t_cnl, equip, "Temperature Excursion", analog_val)
-                    elif analog_val <= (high_lim - 1.5):
+                    elif analog_val <= (high_lim - 0.5):
                         resolve_alarm(t_cnl, analog_val)
 
             # 3. Dewars (Discrete alarm or analog limit fallback, respecting Cryo Hold)

@@ -86,12 +86,12 @@
       "key": "freezer",
       "name": "Medical Freezer",
       "short_name": "Freezer",
-      "target_label": "Limit: < -15.0°C",
+      "target_label": "Limit: < -10.0°C",
       "plc_fb": "fbFreezer",
       "temp_cnl": 103,
       "alarm_cnl": 112,
       "warn_cnl": 116,
-      "high_limit": -15.0
+      "high_limit": -10.0
     }
   ],
   "cabinets": [

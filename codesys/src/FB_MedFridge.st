@@ -2,16 +2,15 @@
    FUNCTION BLOCK: FB_MedFridge
    DESCRIPTION: Encapsulated clinical monitoring block for Medical Refrigerators
                 (embryo media, medications, specimens).
-                - Scaled raw integer input (iRawTempX10 / 10.0 -> °C)
+                - Scaled raw integer input (wRawTempX10 / 10.0 -> °C)
                 - Dual-limit Window Alarm (2.0°C to 8.5°C) with debounced pickup
                 - Clinical fault supervision (Open circuit, wiring short, comms loss)
                 - Temperature excursion alarm gated off during hardware faults
-                - Wireless cleanroom health diagnostics (Battery, RSSI, Watchdog, Faults)
    ============================================================================== *)
 FUNCTION_BLOCK FB_MedFridge
 VAR_INPUT
     {attribute 'symbol' := 'readwrite'}
-    iRawTempX10         : INT := -9999;     (* Raw scaled temp * 10 (35 = +3.5 °C, -9999 = Sentinel / Disconnected) *)
+    wRawTempX10         : WORD := 16#D8F0;  (* Raw Modbus register (Fridge scaled temp * 10, -9999 = 16#D8F0) *)
     {attribute 'symbol' := 'none'}
     rHighTrip           : REAL := 8.5;      (* CAP excursion threshold (standard 8.0°C + 0.5 buffer) *)
     {attribute 'symbol' := 'none'}
@@ -22,22 +21,10 @@ VAR_INPUT
     tPickupDelay        : TIME := T#2M;     (* 2-minute sustained delay to suppress door-opening noise *)
     {attribute 'symbol' := 'none'}
     tDropoutDelay       : TIME := T#10S;    (* 10-second clean recovery required to reset *)
-
-    (* --- Wireless Telemetry Inputs (Direct from Modbus Bridge Slot 2) --- *)
-    {attribute 'symbol' := 'readwrite'}
-    uiRawBatteryMv      : UINT := 3820;     (* Battery health in millivolts *)
-    {attribute 'symbol' := 'readwrite'}
-    iRawRSSI            : INT := -50;       (* Link RSSI in dBm *)
-    {attribute 'symbol' := 'readwrite'}
+    {attribute 'symbol' := 'none'}
     uiRawFaultCode      : UINT := 0;        (* Probe fault code: 0=OK, 0xFF=Unpopulated *)
-    {attribute 'symbol' := 'readwrite'}
-    uiRawAgeSec         : UINT := 0;        (* Seconds since last burst packet *)
-    {attribute 'symbol' := 'readwrite'}
-    wRawStatusFlags     : WORD := 16#0001;  (* Bit 0=Online, Bit 1=LowBatt, Bit 2=CommLoss *)
     {attribute 'symbol' := 'none'}
-    bIsWireless         : BOOL := TRUE;     (* TRUE = Enable wireless diagnostics *)
-    {attribute 'symbol' := 'none'}
-    tCommLossTimeout    : TIME := T#60S;    (* Watchdog comms loss alarm threshold *)
+    bCommLoss           : BOOL := FALSE;    (* Watchdog comms loss flag *)
 END_VAR
 VAR_OUTPUT
     {attribute 'symbol' := 'read'}
@@ -47,59 +34,41 @@ VAR_OUTPUT
     {attribute 'symbol' := 'read'}
     bWarn               : BOOL := FALSE;    (* Pre-alarm pickup delay warning flag *)
     {attribute 'symbol' := 'read'}
-    rBatteryVolts       : REAL := 3.82;     (* Published battery voltage (V) *)
-    {attribute 'symbol' := 'read'}
-    bLowBattery         : BOOL := FALSE;    (* Low battery warning flag (< 3.4V) *)
-    {attribute 'symbol' := 'read'}
-    iRSSI               : INT := -50;       (* Published wireless link margin (dBm) *)
-    {attribute 'symbol' := 'read'}
-    bCommLoss           : BOOL := FALSE;    (* Comms loss watchdog alarm *)
-    {attribute 'symbol' := 'read'}
     bProbeFault         : BOOL := TRUE;     (* Physical probe disconnected or shorted *)
-    {attribute 'symbol' := 'read'}
-    uiFaultCode         : UINT := 0;        (* Published probe fault reason *)
-    {attribute 'symbol' := 'read'}
-    uiAgeSec            : UINT := 0;        (* Telemetry age in seconds *)
 END_VAR
 VAR
+    {attribute 'symbol' := 'none'}
+    iTempX10            : INT;
     {attribute 'symbol' := 'none'}
     fbAlarmEval         : FB_AnalogAlarm;
 END_VAR
 
 // ==============================================================================
-// 1. HARDWARE HEALTH & TELEMETRY DECODING
+// 1. HARDWARE HEALTH & PROCESS TEMPERATURE SCALING
 // ==============================================================================
-IF bIsWireless THEN
-    rBatteryVolts := TO_REAL(uiRawBatteryMv) / 1000.0;
-    bLowBattery   := (uiRawBatteryMv < 3400) OR (wRawStatusFlags.1);
-    iRSSI         := iRawRSSI;
-    uiAgeSec      := uiRawAgeSec;
-    uiFaultCode   := uiRawFaultCode;
+iTempX10    := TO_INT(wRawTempX10);
+bProbeFault := (uiRawFaultCode <> 0) OR (iTempX10 <= -9000) OR (iTempX10 >= 9000);
 
-    // Probe fault if hardware reported fault (0xFF) or value is sentinel (-999.9 °C)
-    bProbeFault   := (uiRawFaultCode <> 0) OR (iRawTempX10 <= -9000);
-    bCommLoss     := (uiRawAgeSec >= 60) OR (wRawStatusFlags.2);
+IF bProbeFault OR bCommLoss THEN
+    rProcessTemp := -999.0;
+ELSE
+    rProcessTemp := TO_REAL(iTempX10) / 10.0;
 END_IF;
 
 // ==============================================================================
-// 2. PROCESS TEMPERATURE SCALING
-// ==============================================================================
-rProcessTemp := TO_REAL(iRawTempX10) / 10.0;
-
-// ==============================================================================
-// 3. CLINICAL ALARM EVALUATION (Dual-Limit Window Alarm)
+// 2. CLINICAL ALARM EVALUATION (Dual-Limit Window Alarm)
 // ==============================================================================
 fbAlarmEval(
     rVal          := rProcessTemp,
-    bEnableHigh   := NOT (bIsWireless AND (bProbeFault OR bCommLoss)),
+    bEnableHigh   := NOT (bProbeFault OR bCommLoss),
     rHighPickup   := rHighTrip,
     rHighDropout  := rHighTrip - rHysteresis,
-    bEnableLow    := NOT (bIsWireless AND (bProbeFault OR bCommLoss)),
+    bEnableLow    := NOT (bProbeFault OR bCommLoss),
     rLowPickup    := rLowTrip,
     rLowDropout   := rLowTrip + rHysteresis,
     tPickupDelay  := tPickupDelay,
     tDropoutDelay := tDropoutDelay
 );
 
-bAlarm     := fbAlarmEval.bAlarm;
-bWarn      := fbAlarmEval.bWarn;
+bAlarm := fbAlarmEval.bAlarm;
+bWarn  := fbAlarmEval.bWarn;

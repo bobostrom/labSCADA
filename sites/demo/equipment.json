@@ -61,7 +61,7 @@
       "key": "freezer",
       "name": "Medical Freezer",
       "short_name": "Freezer",
-      "target_label": "Limit: < -15.0\u00b0C",
+      "target_label": "Limit: < -10.0\u00b0C",
       "plc_fb": "fbColdStorage",
       "is_wireless": true,
       "wireless_node": "cold_storage_node_01",
@@ -69,7 +69,7 @@
       "temp_cnl": 103,
       "alarm_cnl": 112,
       "warn_cnl": 116,
-      "high_limit": -15.0
+      "high_limit": -10.0
     }
   ],
   "cabinets": [
