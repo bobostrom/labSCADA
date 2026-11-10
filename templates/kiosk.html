@@ -231,8 +231,8 @@
     }
 
     .banner-reports {
-      border-left: 5px solid #0284c7;
-      border-color: rgba(2, 132, 199, 0.35);
+      border-left: 5px solid var(--brand-blue);
+      border-color: rgba(3, 126, 171, 0.35);
     }
 
     .banner-title {
@@ -272,7 +272,7 @@
     }
 
     .btn-report-hub {
-      background: #0284c7;
+      background: var(--brand-blue);
       color: #ffffff;
       font-size: 13.5px;
       font-weight: 800;
@@ -282,13 +282,13 @@
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      box-shadow: 0 4px 14px rgba(2, 132, 199, 0.35);
+      box-shadow: 0 4px 14px rgba(3, 126, 171, 0.35);
       transition: all 0.15s;
       white-space: nowrap;
     }
 
     .btn-report-hub:hover {
-      background: #0369a1;
+      background: var(--brand-navy);
       transform: translateY(-1px);
       color: #ffffff;
     }
@@ -975,7 +975,7 @@
           <div class="banner-title">
             <span>Clinical Compliance &amp; Regulatory Audits</span>
             <span class="status-badge"
-              style="background:rgba(2,132,199,0.18); color:#38bdf8; border:1px solid rgba(2,132,199,0.35); font-size:11px;">CAP
+              style="background:rgba(3,126,171,0.18); color:var(--brand-glacier); border:1px solid rgba(3,126,171,0.35); font-size:11px;">CAP
               / CLIA</span>
           </div>
           <p class="banner-desc">
@@ -1033,7 +1033,7 @@
           </div>
           <div class="dip-actions">
             <button class="btn-mini" onclick="openLn2ModalFor('{{ d.name }}')">🧊 Log Check</button>
-            <button class="btn-mini" id="btn-hold-cryo{{ d.id }}" style="background:#0284c7;"
+            <button class="btn-mini" id="btn-hold-cryo{{ d.id }}"
               onclick="toggleCryoHoldKiosk('{{ d.name }}')">⏱️ Mute (15m)</button>
             <button class="btn-mini-subtle" onclick="switchTab('cryo')">Audit Trail →</button>
           </div>
@@ -1633,7 +1633,7 @@
 
         <div style="display:flex; justify-content:flex-end; margin-top:16px;">
           <button type="button" class="btn"
-            style="background:#0284c7; color:#fff; font-weight:700; padding:8px 20px; border-radius:6px;"
+            style="color:#fff; font-weight:700; padding:8px 20px; border-radius:6px;"
             onclick="closeIncubatorModal()">Close Inspector</button>
         </div>
       </div>
@@ -2126,7 +2126,7 @@
                   } else {
                     if (btnHold) {
                       btnHold.innerText = '⏱️ Mute (15m)';
-                      btnHold.style.background = '#0284c7';
+                      btnHold.style.background = '';
                     }
                     if (cardEl) {
                       cardEl.style.borderTopColor = isAlarm ? '#ff1744' : (isFault ? '#e11d48' : (isWarn ? '#ffab00' : defaultColor));
