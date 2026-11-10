@@ -300,9 +300,13 @@ impl<'d> Ili9341<'d> {
         self.draw_str(12, 214, rf_str, COLOR_LIGHT_GRAY, COLOR_DARK_GRAY, 1);
 
         // Interactive Touch Button on right side of footer
-        let btn_color = if hold_active { COLOR_AMBER } else { COLOR_BLUE };
-        self.fill_rect(205, 192, 105, 42, btn_color);
-        self.draw_str(212, 204, "FILL HOLD", COLOR_WHITE, btn_color, 1);
+        let (btn_color, btn_label) = if hold_active {
+            (COLOR_AMBER, "HOLD ACTIVE")
+        } else {
+            (COLOR_BLUE, "FILL HOLD")
+        };
+        self.fill_rect(200, 190, 112, 44, btn_color);
+        self.draw_str(206, 204, btn_label, COLOR_WHITE, btn_color, 1);
     }
 }
 

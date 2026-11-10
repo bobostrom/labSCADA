@@ -37,6 +37,7 @@ fn main() -> ! {
     println!("==================================================");
     println!("  LabSCADA Smart Cryo Dewar Touch Node (ESP32-S3) ");
     println!("  Hardware: 2.8\" IPS Touch Display + MAX31865     ");
+    println!("  Mode: Bench Test (-140.0 C Simulated Baseline)  ");
     println!("==================================================");
 
     // 1. Initialize RTOS timer required by esp-radio
@@ -83,27 +84,7 @@ fn main() -> ! {
 
     let mut touch = touch::Ft6336::new(tp_scl, tp_sda, tp_int, tp_rst, &delay);
 
-    // 5. Initialize Sensor Bus on the 4-Pin Back Header
-    // - IO2:  SCK
-    // - IO3:  MOSI (SDI)
-    // - IO14: MISO (SDO)
-    // - IO21: CS
-    let rtd_sck = esp_hal::gpio::Output::new(peripherals.GPIO2, esp_hal::gpio::Level::Low, esp_hal::gpio::OutputConfig::default());
-    let rtd_mosi = esp_hal::gpio::Output::new(peripherals.GPIO3, esp_hal::gpio::Level::Low, esp_hal::gpio::OutputConfig::default());
-    let rtd_miso = esp_hal::gpio::Input::new(peripherals.GPIO14, esp_hal::gpio::InputConfig::default());
-    let rtd_cs = esp_hal::gpio::Output::new(peripherals.GPIO21, esp_hal::gpio::Level::High, esp_hal::gpio::OutputConfig::default());
-
-    let mut rtd = max31865::Max31865::new(
-        rtd_sck,
-        rtd_mosi,
-        rtd_miso,
-        rtd_cs,
-        max31865::RtdType::Pt100Rref430,
-        max31865::WireMode::TwoOrFourWire,
-    );
-    rtd.init(&delay);
-
-    // 6. Battery ADC on internal GPIO 9 (BAT_ADC)
+    // 5. Battery ADC on internal GPIO 9 (BAT_ADC)
     let mut adc1_config = AdcConfig::new();
     let mut batt_pin = adc1_config.enable_pin_with_cal::<_, AdcCalCurve<ADC1>>(
         peripherals.GPIO9,
@@ -111,11 +92,15 @@ fn main() -> ! {
     );
     let mut adc1 = Adc::new(peripherals.ADC1, adc1_config);
 
+    // Assumed cryogenic temperature per user request (-140.0 C)
+    let assumed_temp_c_x10: i16 = -1400;
+    let is_alarm: bool = false; // -140.0 C is safely below the -135.0 C alarm threshold
+
     // Boot splash for 3 seconds then screen powers down
     screen.backlight_on();
     screen.clear(display::COLOR_NAVY);
     screen.draw_str(20, 80, "LabSCADA DEWAR NODE", display::COLOR_WHITE, display::COLOR_NAVY, 2);
-    screen.draw_str(20, 120, "2.8\" Touch + MAX31865", display::COLOR_CYAN, display::COLOR_NAVY, 1);
+    screen.draw_str(20, 120, "2.8\" Touch Display", display::COLOR_CYAN, display::COLOR_NAVY, 1);
     screen.draw_str(20, 140, "ESP-NOW Telemetry Ready", display::COLOR_GREEN, display::COLOR_NAVY, 1);
     delay.delay_millis(3000);
     screen.backlight_off();
@@ -126,34 +111,45 @@ fn main() -> ! {
     let mut report_counter: u32 = 0;
     let mut screen_timer: u32 = 0;
     let mut hold_timer: u32 = 0;
-    let mut latest_temp: i16 = -1960;
     let mut latest_batt: u16 = 4100;
-    let mut is_alarm: bool = false;
+    let mut debounce_ticks: u32 = 0;
 
     loop {
-        // A. Check Touch: Hardware INT pin (active low)
+        if debounce_ticks > 0 {
+            debounce_ticks -= 1;
+        }
+
+        // A. Check Touch
         if touch.is_touch_active() {
             let pt = touch.read_touch(&delay);
-            println!("[TOUCH] Touch event detected: is_touched={}, X={}, Y={}", pt.is_touched, pt.x, pt.y);
 
             if !screen.is_backlight_on() {
                 // Wake screen upon first touch
                 println!("[DISPLAY] >>> WAKING BACKLIGHT ON <<<");
                 screen.backlight_on();
                 screen_timer = DISPLAY_TIMEOUT_TICKS;
-                screen.draw_cryo_screen("Dewar 1 (Embryos)", latest_temp, latest_batt, seq, is_alarm, hold_timer > 0);
+                screen.draw_cryo_screen("Dewar 1 (Embryos)", assumed_temp_c_x10, latest_batt, seq, is_alarm, hold_timer > 0);
+                debounce_ticks = 25; // 250ms debounce
             } else {
                 // Screen is already awake: reset sleep timer and check button
                 screen_timer = DISPLAY_TIMEOUT_TICKS;
-                if pt.is_touched && pt.x >= 200 && pt.y >= 185 {
-                    if hold_timer == 0 {
-                        hold_timer = CRYO_HOLD_TICKS;
-                        println!("[+] Tank Fill Hold Activated (30 minutes)");
-                    } else {
-                        hold_timer = 0;
-                        println!("[-] Tank Fill Hold Cancelled");
+
+                // Check tap on "FILL HOLD" button (lower right region)
+                if pt.is_touched && debounce_ticks == 0 {
+                    println!("[TOUCH] Tap at X={}, Y={}", pt.x, pt.y);
+                    // Match the right side of the screen or bottom quadrant
+                    if pt.x >= 180 && pt.y >= 160 {
+                        debounce_ticks = 35; // 350ms debounce
+                        if hold_timer == 0 {
+                            hold_timer = CRYO_HOLD_TICKS;
+                            println!("[+] Tank Fill Hold ACTIVATED (30 minutes hold)");
+                        } else {
+                            hold_timer = 0;
+                            println!("[-] Tank Fill Hold CANCELLED (Normal monitoring resumed)");
+                        }
+                        // Instantly re-render screen with updated button and banner color
+                        screen.draw_cryo_screen("Dewar 1 (Embryos)", assumed_temp_c_x10, latest_batt, seq, is_alarm, hold_timer > 0);
                     }
-                    screen.draw_cryo_screen("Dewar 1 (Embryos)", latest_temp, latest_batt, seq, is_alarm, hold_timer > 0);
                 }
             }
         }
@@ -177,30 +173,18 @@ fn main() -> ! {
         if report_counter >= REPORT_INTERVAL_TICKS {
             report_counter = 0;
 
-            // 1. Read RTD
-            let reading = rtd.read_temperature(&delay);
-            latest_temp = reading.temp_c_x10;
-
-            // 2. Read Battery ADC (GPIO 9 has 2:1 onboard resistor divider)
+            // Read Battery ADC (GPIO 9 has 2:1 onboard resistor divider)
             let pin_mv: u16 = adc1.read_blocking(&mut batt_pin);
             latest_batt = pin_mv * 2; // Scaled by 2:1 onboard divider
 
-            // 3. Clinical Excursion Evaluation (USP <1079> Alarm at > -135.0 C)
-            is_alarm = latest_temp > -1350 && latest_temp > -9000;
+            println!("TELEMETRY: Temp=-140.0 C (Assumed), Batt={}mV, FillHold={}, INT_low={}",
+                latest_batt, hold_timer > 0, touch.is_touch_active());
 
-            println!("TELEMETRY: Temp={}/10 C, Res={}/100 Ohm, Fault={}, Batt={}mV, INT_pin_low={}",
-                latest_temp, reading.resistance_x100, reading.is_fault, latest_batt, touch.is_touch_active());
-
-            // 4. If an excursion is occurring, force screen on immediately
-            if is_alarm && !screen.is_backlight_on() {
-                screen.backlight_on();
-            }
-
-            // 5. Build Telemetry Packet
+            // Build Telemetry Packet
             let telemetry = DeviceTelemetry::Dewar {
-                temp_c_x10: latest_temp,
+                temp_c_x10: assumed_temp_c_x10, // -1400 = -140.0 C
                 battery_mv: latest_batt,
-                sensor_fault: if reading.is_fault { 1 } else { 0 },
+                sensor_fault: 0, // Clean status
             };
 
             let packet = UplinkPacket {
@@ -214,14 +198,14 @@ fn main() -> ! {
 
             seq = seq.wrapping_add(1);
 
-            // 6. Send over ESP-NOW
+            // Send over ESP-NOW
             if let Ok(encoded) = postcard::to_slice(&packet, &mut tx_buf) {
                 let _ = sender.send(&BROADCAST_ADDRESS, encoded);
             }
 
-            // 7. Refresh display if awake
+            // Refresh display if awake
             if screen.is_backlight_on() {
-                screen.draw_cryo_screen("Dewar 1 (Embryos)", latest_temp, latest_batt, seq, is_alarm, hold_timer > 0);
+                screen.draw_cryo_screen("Dewar 1 (Embryos)", assumed_temp_c_x10, latest_batt, seq, is_alarm, hold_timer > 0);
             }
         }
 
