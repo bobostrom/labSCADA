@@ -1083,12 +1083,8 @@
             <div style="font-size:1.65rem; font-weight:800; font-family:monospace; color:#f0f4f8; line-height:1.1;">
               <span id="val-{{ f.key }}">--</span><span class="card-unit">°C</span>
             </div>
-            <div style="font-size:10.5px; color:#8899a6; margin-top:4px; line-height:1.25;">
-              {% if f.target_label and 'Target:' in f.target_label %}
-                <span style="color:#64748b;">Target:</span> <span style="white-space:nowrap;">{{ f.target_label.split('Target:')[1].strip() }}</span>
-              {% else %}
-                {{ f.target_label | default('Target: 2.0°C – 8.0°C') }}
-              {% endif %}
+            <div style="font-size:10.5px; color:#8899a6; margin-top:4px; line-height:1.25; overflow-wrap:break-word; word-break:normal;">
+              {{ f.target_label | default('Target: 2.0°C – 8.0°C') }}
             </div>
           </div>
           {% endfor %}
@@ -1104,12 +1100,8 @@
             <div style="font-size:1.65rem; font-weight:800; font-family:monospace; color:#f0f4f8; line-height:1.1;">
               <span id="val-{{ fz.key }}">--</span><span class="card-unit">°C</span>
             </div>
-            <div style="font-size:10.5px; color:#8899a6; margin-top:4px; line-height:1.25;">
-              {% if fz.target_label and 'Limit:' in fz.target_label %}
-                <span style="color:#64748b;">Limit:</span> <span style="white-space:nowrap;">{{ fz.target_label.split('Limit:')[1].strip() }}</span>
-              {% else %}
-                {{ fz.target_label | default('Limit: < -15.0°C') }}
-              {% endif %}
+            <div style="font-size:10.5px; color:#8899a6; margin-top:4px; line-height:1.25; overflow-wrap:break-word; word-break:normal;">
+              {{ fz.target_label | default('Limit: < -15.0°C') }}
             </div>
           </div>
           {% endfor %}
