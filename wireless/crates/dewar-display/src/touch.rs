@@ -50,9 +50,21 @@ impl<'d> Ft6336<'d> {
         // 2. Query Vendor / Chip ID
         let chip_id = dev.read_register(0xA6, delay);
         let vendor_id = dev.read_register(0xA8, delay);
-        println!("[+] FT6336 Touch Controller online: ChipID=0x{:02X}, VendorID=0x{:02X}", chip_id, vendor_id);
+        let default_th = dev.read_register(0x80, delay);
+        println!("[+] FT6336 online: ChipID=0x{:02X}, VendorID=0x{:02X}, Factory TH_GROUP={}", chip_id, vendor_id, default_th);
 
-        // 3. Clear any initial startup interrupt
+        // 3. Tune Sensitivity Threshold (Register 0x80 - TH_GROUP)
+        // Lower value = HIGHER sensitivity (requires lighter touch)
+        // Factory default is usually 34-55 (stiff/hard press).
+        // Setting to 18 provides effortless, light fingertip detection without phantom clicks.
+        dev.write_register(0x80, 18, delay);
+        let tuned_th = dev.read_register(0x80, delay);
+        println!("[+] Adjusted Touch Sensitivity: TH_GROUP (0x80) set to {}", tuned_th);
+
+        // 4. Set Active Scan Period (Register 0x86) to 10ms for fast detection
+        dev.write_register(0x86, 10, delay);
+
+        // 5. Clear any startup interrupt
         let _ = dev.read_touch(delay);
 
         dev
@@ -66,13 +78,11 @@ impl<'d> Ft6336<'d> {
 
     #[inline(always)]
     fn sda_high(&mut self) {
-        // Release line to float high
         self.sda.set_output_enable(false);
     }
 
     #[inline(always)]
     fn sda_low(&mut self) {
-        // Pull line low
         self.sda.set_low();
         self.sda.set_output_enable(true);
     }
@@ -146,6 +156,17 @@ impl<'d> Ft6336<'d> {
         self.sda_high();
         delay.delay_micros(2);
         byte
+    }
+
+    pub fn write_register(&mut self, reg: u8, val: u8, delay: &Delay) {
+        self.i2c_start(delay);
+        if !self.i2c_write_byte(FT6336_I2C_ADDR << 1, delay) {
+            self.i2c_stop(delay);
+            return;
+        }
+        self.i2c_write_byte(reg, delay);
+        self.i2c_write_byte(val, delay);
+        self.i2c_stop(delay);
     }
 
     pub fn read_register(&mut self, reg: u8, delay: &Delay) -> u8 {
