@@ -7,7 +7,7 @@ use esp_hal::delay::Delay;
 use esp_hal::gpio::Output;
 use esp_hal::spi::master::Spi;
 use esp_hal::Blocking;
-use crate::handel_font::{FontDef, FONT_HANDEL_11, FONT_HANDEL_14, FONT_HANDEL_18, FONT_HANDEL_HERO};
+use crate::kiosk_font::{FontDef, FONT_INTER_11, FONT_INTER_14, FONT_INTER_18, FONT_HERO_TEMP};
 
 pub const LCD_WIDTH: u16 = 320;
 pub const LCD_HEIGHT: u16 = 240;
@@ -338,7 +338,7 @@ impl<'d> Ili9341<'d> {
         }
     }
 
-    pub fn draw_handel_char(
+    pub fn draw_kiosk_char(
         &mut self,
         x: u16,
         y: u16,
@@ -400,7 +400,7 @@ impl<'d> Ili9341<'d> {
         w
     }
 
-    pub fn draw_handel_str(
+    pub fn draw_kiosk_str(
         &mut self,
         mut x: u16,
         y: u16,
@@ -410,14 +410,14 @@ impl<'d> Ili9341<'d> {
         bg: u16,
     ) -> u16 {
         for c in s.chars() {
-            let adv = self.draw_handel_char(x, y, c, font, fg, bg);
+            let adv = self.draw_kiosk_char(x, y, c, font, fg, bg);
             x += adv;
         }
         x
     }
 
     // ==============================================================================
-    // Dashboard Kiosk Card Screen (Handel Gothic Typography)
+    // Dashboard Kiosk Card Screen (Exact Kiosk Inter & Consolas Bold Monospace)
     // ==============================================================================
     pub fn draw_cryo_screen(
         &mut self,
@@ -448,10 +448,10 @@ impl<'d> Ili9341<'d> {
         // 2. Card Header (#041b2b)
         self.fill_rect(4, 7, LCD_WIDTH - 8, 34, COLOR_BG_CARD);
 
-        // Tank Label: "Dewar 1 (Embryos)" - in Handel Gothic 18pt
-        self.draw_handel_str(14, 15, tank_name, &FONT_HANDEL_18, COLOR_TEXT_MAIN, COLOR_BG_CARD);
+        // Tank Label: "Dewar 1 (Embryos)" - in Inter 18pt
+        self.draw_kiosk_str(14, 15, tank_name, &FONT_INTER_18, COLOR_TEXT_MAIN, COLOR_BG_CARD);
 
-        // Battery Pill in Header - in Handel Gothic 11pt
+        // Battery Pill in Header - in Inter 11pt
         let batt_pct = if batt_mv >= 4200 { 100 } else if batt_mv <= 3500 { 0 } else { ((batt_mv - 3500) * 100) / 700 };
         let mut b_buf = [0u8; 24];
         let b_str = format_buf(
@@ -464,26 +464,26 @@ impl<'d> Ili9341<'d> {
             0,
             "",
         );
-        let b_w = FONT_HANDEL_11.string_width(b_str);
+        let b_w = FONT_INTER_11.string_width(b_str);
         let pill_w = b_w + 16;
         let pill_x = LCD_WIDTH - 8 - pill_w - 4;
         self.fill_rect(pill_x, 13, pill_w, 22, COLOR_BG_CARD_SUB);
         self.fill_rect(pill_x, 13, pill_w, 1, COLOR_BORDER_SUBTLE);
-        self.draw_handel_str(pill_x + 8, 17, b_str, &FONT_HANDEL_11, COLOR_STATUS_GREEN, COLOR_BG_CARD_SUB);
+        self.draw_kiosk_str(pill_x + 8, 17, b_str, &FONT_INTER_11, COLOR_STATUS_GREEN, COLOR_BG_CARD_SUB);
 
         // 3. Main Hero Panel (#02121e with Subtle Glacier Border)
         self.fill_rect(4, 41, LCD_WIDTH - 8, 102, COLOR_BG_CARD_SUB);
         self.fill_rect(4, 41, LCD_WIDTH - 8, 1, COLOR_BORDER_SUBTLE);
 
-        // Hero Temperature digits in Handel Gothic 48pt Hero ("-140.0 ^C")
+        // Hero Temperature digits in Kiosk .card-val Consolas Bold 48pt Monospace ("-140.0 ^C")
         let hero_color = if is_alarm { COLOR_STATUS_RED } else { COLOR_CRYO_CYAN };
         let hero_bg = COLOR_BG_CARD_SUB;
         let mut hero_buf = [0u8; 16];
         let hero_str = format_temp(&mut hero_buf, temp_c_x10);
-        let hero_w = FONT_HANDEL_HERO.string_width(hero_str);
+        let hero_w = FONT_HERO_TEMP.string_width(hero_str);
         let hero_x = (LCD_WIDTH.saturating_sub(hero_w)) / 2;
-        let hero_y = 41 + (102 - FONT_HANDEL_HERO.height as u16) / 2;
-        self.draw_handel_str(hero_x, hero_y, hero_str, &FONT_HANDEL_HERO, hero_color, hero_bg);
+        let hero_y = 41 + (102 - FONT_HERO_TEMP.height as u16) / 2;
+        self.draw_kiosk_str(hero_x, hero_y, hero_str, &FONT_HERO_TEMP, hero_color, hero_bg);
 
         // 4. Clinical Status Ribbon
         let ribbon_color = if is_alarm {
@@ -502,21 +502,21 @@ impl<'d> Ili9341<'d> {
         } else {
             "VAPOR LIMIT: < -135.0 ^C [NORMAL]"
         };
-        let ribbon_w = FONT_HANDEL_14.string_width(ribbon_text);
+        let ribbon_w = FONT_INTER_14.string_width(ribbon_text);
         let ribbon_x = (LCD_WIDTH.saturating_sub(ribbon_w)) / 2;
-        let ribbon_y = 143 + (28 - FONT_HANDEL_14.height as u16) / 2;
-        self.draw_handel_str(ribbon_x, ribbon_y, ribbon_text, &FONT_HANDEL_14, 0x0000, ribbon_color);
+        let ribbon_y = 143 + (28 - FONT_INTER_14.height as u16) / 2;
+        self.draw_kiosk_str(ribbon_x, ribbon_y, ribbon_text, &FONT_INTER_14, 0x0000, ribbon_color);
 
         // 5. Action Bar & Footer (#041b2b)
         self.fill_rect(4, 171, LCD_WIDTH - 8, 65, COLOR_BG_CARD);
 
         let mut rf_buf = [0u8; 32];
         let rf_str = format_buf(&mut rf_buf, "RADIO: ESP-NOW #", tx_seq, " [OK]", 0, "", 0, "");
-        self.draw_handel_str(14, 181, rf_str, &FONT_HANDEL_11, COLOR_TEXT_MUTED, COLOR_BG_CARD);
+        self.draw_kiosk_str(14, 181, rf_str, &FONT_INTER_11, COLOR_TEXT_MUTED, COLOR_BG_CARD);
 
         let mut sub_buf = [0u8; 32];
         let sub_str = format_buf(&mut sub_buf, "SLOT 1 | BATT: ", batt_pct as u32, "% | USP 1079", 0, "", 0, "");
-        self.draw_handel_str(14, 203, sub_str, &FONT_HANDEL_11, COLOR_TEXT_MUTED, COLOR_BG_CARD);
+        self.draw_kiosk_str(14, 203, sub_str, &FONT_INTER_11, COLOR_TEXT_MUTED, COLOR_BG_CARD);
 
         // Interactive Kiosk Touch Button (Lower Right)
         let (btn_bg, btn_txt) = if hold_active {
@@ -525,10 +525,10 @@ impl<'d> Ili9341<'d> {
             (COLOR_BTN_BLUE, "FILL HOLD")
         };
         self.fill_rect(196, 179, 114, 47, btn_bg);
-        let btn_w = FONT_HANDEL_14.string_width(btn_txt);
+        let btn_w = FONT_INTER_14.string_width(btn_txt);
         let btn_x = 196 + (114u16.saturating_sub(btn_w)) / 2;
-        let btn_y = 179 + (47 - FONT_HANDEL_14.height as u16) / 2;
-        self.draw_handel_str(btn_x, btn_y, btn_txt, &FONT_HANDEL_14, COLOR_TEXT_MAIN, btn_bg);
+        let btn_y = 179 + (47 - FONT_INTER_14.height as u16) / 2;
+        self.draw_kiosk_str(btn_x, btn_y, btn_txt, &FONT_INTER_14, COLOR_TEXT_MAIN, btn_bg);
     }
 }
 

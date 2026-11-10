@@ -4,7 +4,7 @@
 extern crate alloc;
 
 mod display;
-mod handel_font;
+mod kiosk_font;
 mod max31855;
 mod max31865;
 mod touch;
