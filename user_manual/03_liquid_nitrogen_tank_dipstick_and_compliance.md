@@ -240,7 +240,7 @@ A background thread (`ln2_schedule_watcher`) in [ivf_alert_engine.py](file:///ho
 
 | Priority Level | Classification | Trigger Scenarios | Mobile & Kiosk Behavior |
 | :--- | :--- | :--- | :--- |
-| **`Priority 2` (Emergency)** | Critical Specimen Excursion | Chamber temp excursion (Fridge > 8°C, Freezer > -15°C, Cryo Tank > -135°C), Door open > 3m. | **Continuous repeating siren** (retries every 60s for 2h until phone lock-screen ack). Escalate after 30 min if chamber remains out of range. |
+| **`Priority 2` (Emergency)** | Critical Excursion | Chamber temp excursion (Fridge > 8.5°C, Freezer > -10.0°C [USP <1079>], Cryo Tank > -135°C), Door open > 3m. | **Continuous repeating siren** (retries every 60s for 2h until phone lock-screen ack). Escalate after 30 min if chamber remains out of range. |
 | **`Priority 1` (High)** | Operational & Compliance Warning | Mon/Wed/Fri LN2 dipstick check unlogged by 5:00 PM; Cleanroom ambient drift. | **Single distinct warning chime** (`intermission`). Rings once, bypasses quiet hours, **no repeating siren**. Re-alerted via **8:00 AM Morning Shift Sweep** if unlogged. |
 | **`Priority 0` (Normal)** | Shift Hand-offs & Resolutions | Dipstick check logged, alarm resolved (`🟢 RESOLVED`), daily 9:00 AM QA pathway test. | Single pleasant chime (`magic`). Respects device quiet hours. |
 | **`Priority -1` (Low/Silent)** | Diagnostic Telemetry & Audits | Background watchdog pings, backup completions. | Silent badge update in Pushover app; no vibration or screen wake. |

@@ -9,11 +9,21 @@ This directory stores the CODESYS project, exported IEC 61131-3 Structured Text 
 ```
 codesys/
 ├── README.md               # Architecture, setup instructions, and troubleshooting
-├── projects/               # CODESYS binary project archives (*.project, *.projectarchive)
+├── library/                # Reusable clinical SCADA compiled libraries (*.library)
+├── projects/               # CODESYS binary project archives (*.project, *.xml)
 └── src/                    # Exported Structured Text (*.st) source files for Git version control
-    ├── FB_PickupDropout.st # Reusable digital pickup/dropout timer (PU_DO)
-    ├── FB_AnalogAlarm.st   # Reusable analog alarm with pickup/dropout hysteresis & delay
-    └── PLC_PRG.st          # Main program (LED heartbeat, telemetry simulation, alarm instances)
+    ├── FB_APC_SmartUPS.st       # Modbus TCP power monitoring, battery %, runtime & beeper control
+    ├── FB_AnalogAlarm.st        # Reusable analog alarm with pickup/dropout hysteresis & delay
+    ├── FB_Dewar.st              # LN2 Cryo dewar monitoring (Slot 1 Modbus RTU, 8 holding registers)
+    ├── FB_FacilityDoor.st       # Cleanroom perimeter door debounce & alarm tracking
+    ├── FB_G210_Incubator.st     # K-Systems G210 10-zone chamber incubator telemetry & alarm contact
+    ├── FB_IncubatorCabinet.st   # 3-bay slide-out cabinet door contact & 180s post-close grace mute
+    ├── FB_MedColdStorage.st     # Hierarchical Cold Storage & Ambient subsystem (Slot 2 Modbus RTU)
+    ├── FB_MedFreezer.st         # Medical Freezer (< -10.0°C per USP <1079> for medications/consumables)
+    ├── FB_MedFridge.st          # Medical Refrigerator (2.0°C - 8.5°C dual-limit window alarm)
+    ├── FB_PickupDropout.st      # Reusable digital pickup/dropout timer (PU_DO)
+    ├── FB_RandomGenerator.st    # Continuous LCG pseudo-random generator for bench simulation
+    └── PLC_PRG.st               # Main program calling encapsulated equipment blocks & publishing OPC UA
 ```
 
 
@@ -193,21 +203,19 @@ To maintain version history:
    - Add **Symbol Configuration** under the Application.
    - Check the top-level equipment Function Blocks and discrete contacts:
      * **Direct Variables:**
-       - `PLC_PRG.rLabAmbientTemp` (~25°C)
-       - `PLC_PRG.bDoor01_MainDoor` (BOOL: False=Closed, True=Open)
-       - `PLC_PRG.bDoor02_CryoLabDoor` (BOOL: False=Closed, True=Open)
-       - `PLC_PRG.bHeartbeat` (Heartbeat BOOL)
-     * **Encapsulated Equipment Function Blocks (exposing `.rProcessTemp`, `.bAlarm`, `.bWarn`, etc. directly):**
-       - `PLC_PRG.fbFridge` (`FB_MedFridge`: `.rProcessTemp`, `.bAlarm`, `.bWarn`)
-       - `PLC_PRG.fbFreezer` (`FB_MedFreezer`: `.rProcessTemp`, `.bAlarm`, `.bWarn`)
-       - `PLC_PRG.fbDewar1` .. `PLC_PRG.fbDewar5` (`FB_Dewar`: `.rProcessTemp`, `.bAlarm`, `.bWarn`)
-       - `PLC_PRG.fbIncubator1` & `PLC_PRG.fbIncubator2` (`FB_Incubator`: `.bAlarm`)
-       - `PLC_PRG.fbDoor01` & `PLC_PRG.fbDoor02` (`FB_PickupDropout`: `.Q`)
-     * **Testing & Fault-Injection Switches (For Instant Simulation):**
-       - `PLC_PRG.bForceFridgeExcursion` (Forces fridge to 9.5°C)
-       - `PLC_PRG.bForceFreezerExcursion` (Forces freezer to -12.0°C)
-       - `PLC_PRG.bForceDewar1Excursion` .. `PLC_PRG.bForceDewar5Excursion` (Forces dewar to -125.0°C)
-       - `PLC_PRG.bForceIncubator01Alarm` & `PLC_PRG.bForceIncubator02Alarm` (Forces Incubator alarm contact)
+       - `PLC_PRG.rLabAmbientTemp` (~25°C ambient comfort target)
+       - `PLC_PRG.bHeartbeat` (1 Hz Heartbeat BOOL)
+     * **Encapsulated Equipment Function Blocks (published hierarchically over OPC UA):**
+       - `PLC_PRG.fbColdStorage` (`FB_MedColdStorage`):
+         - `.fbFridge.rProcessTemp`, `.fbFridge.bAlarm`, `.fbFridge.bWarn`, `.fbFridge.bProbeFault`
+         - `.fbFreezer.rProcessTemp`, `.fbFreezer.bAlarm`, `.fbFreezer.bWarn`, `.fbFreezer.bProbeFault`
+         - `.rAmbientTemp`, `.bAmbientAlarm`, `.bAmbientWarn`, `.bAmbientProbeFault`
+         - `.rBatteryVolts`, `.bLowBattery`, `.iRSSI`, `.bCommLoss`, `.uiFaultCode`
+       - `PLC_PRG.fbDewar1` .. `PLC_PRG.fbDewar5` (`FB_Dewar`: `.rProcessTemp`, `.bAlarm`, `.bWarn`, `.rBatteryVolts`, `.bLowBattery`, `.iRSSI`, `.bCommLoss`, `.bProbeFault`)
+       - `PLC_PRG.fbCabinet01` (`FB_IncubatorCabinet`: `.bDoorClosed`, `.bDoorAlarm`, `.bIncubatorMute`, `.tGraceRemaining`)
+       - `PLC_PRG.fbIncubator1` & `PLC_PRG.fbIncubator2` (`FB_G210_Incubator`: `.bAlarm`, `.bMuted`, `.rZoneTemps`)
+       - `PLC_PRG.fbDoor01` & `PLC_PRG.fbDoor02` (`FB_FacilityDoor`: `.bDoorClosed`, `.bDoorAlarm`)
+       - `PLC_PRG.fbUPS01` (`FB_APC_SmartUPS`: `.bOnline`, `.rBatteryPct`, `.rRuntimeMinutes`, `.rLineVoltage`, `.bAlarmPowerLost`, `.bAlarmLowBattery`)
    - Internal state variables inside each Function Block use `{attribute 'symbol' := 'none'}` so only clean `VAR_INPUT` and `VAR_OUTPUT` pins are published over OPC UA on port `4840`.
 2. **Rapid SCADA Integration:**
    - Configure Rapid SCADA's `DrvOpcUa` to connect to `opc.tcp://codesyspi02.local:4840`.

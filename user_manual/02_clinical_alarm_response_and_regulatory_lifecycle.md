@@ -51,17 +51,18 @@ To eliminate false emergency alerts while ensuring fail-safe detection of genuin
                └───────────────────────┘ └───────────────────────────┘
 ```
 
-### Configured Equipment Delay Filters
+### Configured Equipment Delay Filters & Trip Limits
 
-| Equipment | Analog Temp Channel | Warning Pickup Channel | Discrete Alarm Channel | Pickup Delay (`tPickupDelay`) | Clinical Rationale |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| **Medical Refrigerator** | Ch 102 (`rMedFridgeTemp`) | Ch 115 (`bMedFridgeWarn`) | Ch 111 (`bMedFridgeAlarm`) | **2 Minutes** (`T#2M`) | Refrigerator air mix recovers rapidly; 2 minutes filters normal door access. |
-| **Medical Freezer** | Ch 103 (`rMedFreezerTemp`) | Ch 116 (`bMedFreezerWarn`) | Ch 112 (`bMedFreezerAlarm`) | **3 Minutes** (`T#3M`) | Deep cold storage thermal inertia; accommodates daily inventory checks. |
-| **Cryo Tank 1 (Embryos)** | Ch 125 (`rCryoTank1Temp`) | Ch 117 (`bCryoTank1Warn`) | Ch 113 (`bCryoTank1Alarm`) | **30 Seconds** (`T#30S`) | Liquid nitrogen vapor requires immediate warning upon thermal rise. |
-| **Cryo Tank 2 (Sperm)** | Ch 104 (`rCryoTank2Temp`) | Ch 118 (`bCryoTank2Warn`) | Ch 114 (`bCryoTank2Alarm`) | **30 Seconds** (`T#30S`) | Immediate warning upon vapor elevation or level depletion. |
-| **Cleanroom Doors** | — (Ch 119/120 Contacts) | — | Ch 121 / Ch 122 (`bDoor01/02_Alarm`) | **3 Minutes** (`T#3M`) | Allows standard personnel entry/exit and cart transfer without nuisance sirens. |
-| **Chamber Incubator 01** | — (Chamber A Contact) | — | Ch 123 (`bIncubator01_Alarm`) | Instant Relay Trip | Chamber A internal gas/temp alarm; active `IN_SESSION`, suppressed `OFF_SESSION`. |
-| **Chamber Incubator 02** | — (Chamber B Contact) | — | Ch 124 (`bIncubator02_Alarm`) | Instant Relay Trip | Chamber B internal gas/temp alarm; active `IN_SESSION`, suppressed `OFF_SESSION`. |
+| Equipment | Analog Temp Channel | Operational Target / Limit | Warning Pickup Channel | Discrete Alarm Channel | Pickup Delay (`tPickupDelay`) | Clinical & Regulatory Rationale |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **Medical Refrigerator** | Ch 102 (`rProcessTemp`) | **2.0°C – 8.5°C** (Window) | Ch 115 (`bWarn`) | Ch 111 (`bAlarm`) | **2 Minutes** (`T#2M`) | Refrigerator air mix recovers rapidly; 2 minutes filters normal door access per CAP guidelines. |
+| **Medical Freezer** | Ch 103 (`rProcessTemp`) | **< -10.0°C** (Resets $\le -10.5^\circ\text{C}$) | Ch 116 (`bWarn`) | Ch 112 (`bAlarm`) | **3 Minutes** (`T#3M`) | Storing medications, reagents & consumables. Governed by **USP <1079> / CDC frozen storage standards**. |
+| **Cryo Tank 1 (Embryos)** | Ch 125 (`rProcessTemp`) | **< -135.0°C** | Ch 117 (`bWarn`) | Ch 113 (`bAlarm`) | **30 Seconds** (`T#30S`) | Liquid nitrogen vapor requires immediate warning upon thermal rise. Specimen safety critical. |
+| **Cryo Tank 2 (Sperm)** | Ch 104 (`rProcessTemp`) | **< -135.0°C** | Ch 118 (`bWarn`) | Ch 114 (`bAlarm`) | **30 Seconds** (`T#30S`) | Immediate warning upon vapor elevation or level depletion. Specimen safety critical. |
+| **Cleanroom Doors** | — | Closed Contact (Ch 119/120) | — | Ch 121 / Ch 122 (`bDoorAlarm`) | **3 Minutes** (`T#3M`) | Allows standard personnel entry/exit and cart transfer without nuisance sirens. Zero-delay in `OFF_SESSION`. |
+| **Incubator Cabinet 01** | — | Closed Contact (Ch 132) | Ch 133 (Mute Active) | Ch 134 (`bDoorAlarm`) | **3 Minutes** + **180s Grace** | 3-bay slide-out cabinet. Door open > 3m trips alarm; closing door activates 180s post-close grace mute. |
+| **Chamber Incubator 01** | Ch 141–150 (Zones) | 37.0°C Nominal | — | Ch 123 (`bAlarm`) | Instant Relay Trip | Chamber A internal gas/temp alarm; active `IN_SESSION`, suppressed during cabinet grace or `OFF_SESSION`. |
+| **Chamber Incubator 02** | Ch 151–160 (Zones) | 37.0°C Nominal | — | Ch 124 (`bAlarm`) | Instant Relay Trip | Chamber B internal gas/temp alarm; active `IN_SESSION`, suppressed during cabinet grace or `OFF_SESSION`. |
 
 ### Transient Dip Suppression Policy
 * **Regulatory Consensus:** Thermal fluctuations that recover within the PLC pickup delay window are intentionally **suppressed from generating entries in `mod_arc_postgre_sql.alarm_events`**.

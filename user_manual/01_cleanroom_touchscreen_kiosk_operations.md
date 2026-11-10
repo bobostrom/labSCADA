@@ -64,7 +64,7 @@ The main operational screen (`/`) presents the cleanroom status in a responsive,
 │  ❄️ CRYO TANK 1 (EMBRYOS)     │  ❄️ CRYO TANK 2 (SPERM)       │  🧊 MEDICAL COLD STORAGE     │
 │  -196.2 °C   🟢 NORMAL       │  -196.0 °C   🟢 NORMAL       │  Fridge: +4.2 °C  🟢 NORMAL  │
 │  Level: 14.5 cm (Safe)       │  Level: 16.8 cm (Safe)       │  Freezer: -19.1°C 🟢 NORMAL  │
-│  Dipstick: Today 08:30 (OK)  │  Dipstick: Today 08:35 (OK)  │  Threshold: +2..+8 / <-15°C  │
+│  Dipstick: Today 08:30 (OK)  │  Dipstick: Today 08:35 (OK)  │  Threshold: +2..+8 / <-10°C  │
 ├──────────────────────────────┼──────────────────────────────┼──────────────────────────────┤
 │  🌡️ CLEANROOM AMBIENT        │  🚪 CLEANROOM DOORS & ACCESS │  🔬 CHAMBER INCUBATORS       │
 │  Temp: 21.4 °C  (20..24 °C)  │  Main Door: Closed 🟢        │  Incubator 01: 37.0 °C 🟢    │
@@ -77,10 +77,15 @@ The main operational screen (`/`) presents the cleanroom status in a responsive,
 
 1. **Cryo Tank 1 (Embryos):** Monitored on Channels 125/113 (Temp) and 199 (Level). Displays live temperature, vapor level, the timestamp of the last manual dipstick verification, and a green `🟢 ON SCHEDULE` badge.
 2. **Cryo Tank 2 (Sperm):** Monitored on Channels 104/114 (Temp) and 198 (Level). Mirrors Tank 1 with independent sensor validation and compliance verification.
-3. **Medical Cold Storage (Consolidated Card):** Combines the Medical Refrigerator (Ch 112) and Medical Freezer (Ch 111) into a single cohesive card. Displays separate live readouts and status badges for both chambers.
-4. **Cleanroom Ambient:** Tracks laboratory environmental parameters ensuring strict compliance with cleanroom ventilation, positive differential pressure, and humidity standards.
-5. **Cleanroom Doors & Access (Consolidated Card):** Integrates Main Cleanroom Door (Ch 121) and Cryo Lab Door (Ch 122). Shows live contact status and suppresses door sirens until the PLC 3-minute on-delay timer expires.
-6. **Chamber Incubators (Dual Split Card):** Separated into independent side-by-side sub-cards for **Incubator 01 (Chamber A, Channel 123)** and **Incubator 02 (Chamber B, Channel 124)**:
+3. **Medical Cold Storage (Consolidated Card):** Combines the Medical Refrigerator (Ch 102, Alarm Ch 111) and Medical Freezer (Ch 103, Alarm Ch 112) into a single cohesive card with Slot 2 Wireless Battery health (Ch 105):
+   * **Medical Refrigerator:** Clinical culture media & medication storage, monitored with a dual-limit window alarm (2.0°C – 8.5°C, 2-minute pickup delay).
+   * **Medical Freezer:** Dedicated to frozen pharmaceuticals, reagents, culture dish supplements, and consumables. Monitored per **USP <1079> / CDC Standards** with high alarm limit at **< -10.0°C** (resets below -10.5°C with a 3-minute pickup delay).
+   * *Note:* Specimen cryopreservation (embryos/oocytes/semen) is exclusively housed in the Cryo LN2 Dewars.
+4. **Cleanroom Ambient:** Tracks laboratory environmental parameters ensuring strict compliance with cleanroom ventilation, comfort range (20.0°C – 27.0°C), positive differential pressure, and humidity standards.
+5. **Cleanroom Doors & Access (Consolidated Card):** Integrates Main Cleanroom Door (Ch 119 contact / Ch 121 alarm) and Procedure Room Door (Ch 120 contact / Ch 122 alarm). Shows live contact status and suppresses door sirens until the PLC 3-minute on-delay timer expires.
+6. **Incubator Cabinet Subsystem & Chamber Incubators:**
+   * **Incubator Slide-Out Cabinet 01:** Monitored via door closed contact (Ch 132), automatic 180-second post-close grace mute (Ch 133), and cabinet over-temp / door alarm (Ch 134).
+   * **Dual Chamber Incubators:** Separated into independent side-by-side sub-cards for **Incubator 01 (Chamber A, Channel 123)** and **Incubator 02 (Chamber B, Channel 124)**:
    * **Individual Status Badges:** Independent `CLEAR` 🟢 vs. `TRIPPED` 🔴 indicators for each culture chamber.
    * **Live Values & Subtext:** Displays `NORMAL` vs. `ALARM`, alongside `Chamber A • In-Range` or `Chamber Trip Active`.
    * **Dynamic Card Accent:** The top card border turns crimson (`#ff1744`) if either chamber trips, cyan (`#00b0ff`) when both are clear, and slate (`#64748b`) when off-session.
