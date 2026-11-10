@@ -119,10 +119,32 @@ impl<'d> Ili9341<'d> {
         self.write_cmd(0xC1);
         self.write_data(0x10);
 
-        // VCOM Control 1
+        // VCOM Control 1: tuned for deep blacks and rich contrast on IPS panels
         self.write_cmd(0xC5);
-        self.write_data(0x31);
-        self.write_data(0x3C);
+        self.write_data(0x3E); // VCOMH = 4.25V
+        self.write_data(0x28); // VCOML = -1.5V
+
+        // Select Gamma Curve 1
+        self.write_cmd(0x26);
+        self.write_data(0x01);
+
+        // Positive Gamma Correction (0xE0) - Calibrated IPS Curve
+        self.write_cmd(0xE0);
+        for &val in &[
+            0x0F, 0x31, 0x2B, 0x0C, 0x0E, 0x08, 0x4E, 0xF1,
+            0x37, 0x07, 0x10, 0x03, 0x0E, 0x09, 0x00,
+        ] {
+            self.write_data(val);
+        }
+
+        // Negative Gamma Correction (0xE1) - Calibrated IPS Curve
+        self.write_cmd(0xE1);
+        for &val in &[
+            0x00, 0x0E, 0x14, 0x03, 0x11, 0x07, 0x31, 0xC1,
+            0x48, 0x08, 0x0F, 0x0C, 0x31, 0x36, 0x0F,
+        ] {
+            self.write_data(val);
+        }
 
         // Display ON
         self.write_cmd(0x29);
