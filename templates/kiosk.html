@@ -1068,9 +1068,9 @@
         </div>
         {% endfor %}
 
-        <!-- Fridge & Freezer Sub-Grid -->
+        <!-- Fridge & Freezer Sub-Grid (Always side-by-side 2-column) -->
         <div
-          style="display:grid; grid-template-columns:repeat(auto-fit, minmax(135px, 1fr)); gap:10px; margin-top:10px;">
+          style="display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:8px; margin-top:10px;">
           {% for f in equipment.fridges %}
           <div
             style="background:rgba(9,13,22,0.65); padding:10px 10px; border-radius:8px; border:1px solid rgba(255,255,255,0.06); min-width:0;">
@@ -1083,9 +1083,13 @@
             <div style="font-size:1.65rem; font-weight:800; font-family:monospace; color:#f0f4f8; line-height:1.1;">
               <span id="val-{{ f.key }}">--</span><span class="card-unit">°C</span>
             </div>
-            <div
-              style="font-size:11px; color:#8899a6; margin-top:5px; line-height:1.25; word-wrap:break-word;">
-              {{ f.target_label | default('Target: 2.0°C – 8.0°C') }}</div>
+            <div style="font-size:10.5px; color:#8899a6; margin-top:4px; line-height:1.25;">
+              {% if f.target_label and 'Target:' in f.target_label %}
+                <span style="color:#64748b;">Target:</span> <span style="white-space:nowrap;">{{ f.target_label.split('Target:')[1].strip() }}</span>
+              {% else %}
+                {{ f.target_label | default('Target: 2.0°C – 8.0°C') }}
+              {% endif %}
+            </div>
           </div>
           {% endfor %}
           {% for fz in equipment.freezers %}
@@ -1100,9 +1104,13 @@
             <div style="font-size:1.65rem; font-weight:800; font-family:monospace; color:#f0f4f8; line-height:1.1;">
               <span id="val-{{ fz.key }}">--</span><span class="card-unit">°C</span>
             </div>
-            <div
-              style="font-size:11px; color:#8899a6; margin-top:5px; line-height:1.25; word-wrap:break-word;">
-              {{ fz.target_label | default('Limit: < -15.0°C') }}</div>
+            <div style="font-size:10.5px; color:#8899a6; margin-top:4px; line-height:1.25;">
+              {% if fz.target_label and 'Limit:' in fz.target_label %}
+                <span style="color:#64748b;">Limit:</span> <span style="white-space:nowrap;">{{ fz.target_label.split('Limit:')[1].strip() }}</span>
+              {% else %}
+                {{ fz.target_label | default('Limit: < -15.0°C') }}
+              {% endif %}
+            </div>
           </div>
           {% endfor %}
         </div>
