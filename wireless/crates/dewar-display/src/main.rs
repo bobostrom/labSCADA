@@ -19,12 +19,13 @@ use wireless_protocol::{DeviceTelemetry, UplinkPacket, PROTOCOL_MAGIC, PROTOCOL_
 
 esp_bootloader_esp_idf::esp_app_desc!();
 
-// 20-second background reporting interval
-const REPORT_INTERVAL_TICKS: u32 = 400; // 400 * 50ms = 20,000ms
-// Screen stays on for 15 seconds after touch
-const DISPLAY_TIMEOUT_TICKS: u32 = 300; // 300 * 50ms = 15,000ms
-// Cryo Hold duration: 30 minutes (36,000 ticks)
-const CRYO_HOLD_TICKS: u32 = 36000;
+// 10ms loop tick
+// 20-second background reporting interval (2000 * 10ms = 20,000ms)
+const REPORT_INTERVAL_TICKS: u32 = 2000;
+// Screen stays on for 15 seconds after touch (1500 * 10ms = 15,000ms)
+const DISPLAY_TIMEOUT_TICKS: u32 = 1500;
+// Cryo Hold duration: 30 minutes (180,000 ticks)
+const CRYO_HOLD_TICKS: u32 = 180000;
 
 #[esp_hal::main]
 fn main() -> ! {
@@ -74,11 +75,13 @@ fn main() -> ! {
     // - TP_SCL: GPIO 15
     // - TP_SDA: GPIO 16
     // - TP_INT: GPIO 17 (Active Low interrupt)
+    // - TP_RST: GPIO 18 (Active Low hardware reset)
     let tp_scl = esp_hal::gpio::Output::new(peripherals.GPIO15, esp_hal::gpio::Level::High, esp_hal::gpio::OutputConfig::default());
     let tp_sda = esp_hal::gpio::Flex::new(peripherals.GPIO16);
     let tp_int = esp_hal::gpio::Input::new(peripherals.GPIO17, esp_hal::gpio::InputConfig::default().with_pull(esp_hal::gpio::Pull::Up));
+    let tp_rst = esp_hal::gpio::Output::new(peripherals.GPIO18, esp_hal::gpio::Level::High, esp_hal::gpio::OutputConfig::default());
 
-    let mut touch = touch::Ft6336::new(tp_scl, tp_sda, tp_int);
+    let mut touch = touch::Ft6336::new(tp_scl, tp_sda, tp_int, tp_rst, &delay);
 
     // 5. Initialize Sensor Bus on the 4-Pin Back Header
     // - IO2:  SCK
@@ -95,7 +98,7 @@ fn main() -> ! {
         rtd_mosi,
         rtd_miso,
         rtd_cs,
-        max31865::RtdType::Pt100Rref430, // Default PT100 with 430 Ohm reference
+        max31865::RtdType::Pt100Rref430,
         max31865::WireMode::TwoOrFourWire,
     );
     rtd.init(&delay);
@@ -116,6 +119,7 @@ fn main() -> ! {
     screen.draw_str(20, 140, "ESP-NOW Telemetry Ready", display::COLOR_GREEN, display::COLOR_NAVY, 1);
     delay.delay_millis(3000);
     screen.backlight_off();
+    println!("[DISPLAY] Boot splash complete -> Backlight OFF (touch glass to wake)");
 
     let mut tx_buf = [0u8; 64];
     let mut seq: u32 = 1;
@@ -127,19 +131,21 @@ fn main() -> ! {
     let mut is_alarm: bool = false;
 
     loop {
-        // A. Check Touch Interrupt (GPIO 17 went LOW)
+        // A. Check Touch: Hardware INT pin (active low)
         if touch.is_touch_active() {
             let pt = touch.read_touch(&delay);
+            println!("[TOUCH] Touch event detected: is_touched={}, X={}, Y={}", pt.is_touched, pt.x, pt.y);
+
             if !screen.is_backlight_on() {
                 // Wake screen upon first touch
+                println!("[DISPLAY] >>> WAKING BACKLIGHT ON <<<");
                 screen.backlight_on();
                 screen_timer = DISPLAY_TIMEOUT_TICKS;
                 screen.draw_cryo_screen("Dewar 1 (Embryos)", latest_temp, latest_batt, seq, is_alarm, hold_timer > 0);
             } else {
-                // Screen is already awake: check for button tap
-                screen_timer = DISPLAY_TIMEOUT_TICKS; // Reset inactivity timer
+                // Screen is already awake: reset sleep timer and check button
+                screen_timer = DISPLAY_TIMEOUT_TICKS;
                 if pt.is_touched && pt.x >= 200 && pt.y >= 185 {
-                    // Tap on "FILL HOLD" button toggles 30-min LN2 fill hold mode
                     if hold_timer == 0 {
                         hold_timer = CRYO_HOLD_TICKS;
                         println!("[+] Tank Fill Hold Activated (30 minutes)");
@@ -161,6 +167,7 @@ fn main() -> ! {
         if screen_timer > 0 && !is_alarm {
             screen_timer -= 1;
             if screen_timer == 0 {
+                println!("[DISPLAY] 15s timeout reached -> Backlight OFF");
                 screen.backlight_off();
             }
         }
@@ -181,8 +188,8 @@ fn main() -> ! {
             // 3. Clinical Excursion Evaluation (USP <1079> Alarm at > -135.0 C)
             is_alarm = latest_temp > -1350 && latest_temp > -9000;
 
-            println!("MAX31865: Temp={}/10 C, Res={}/100 Ohm, Fault={}, Batt={}mV",
-                latest_temp, reading.resistance_x100, reading.is_fault, latest_batt);
+            println!("TELEMETRY: Temp={}/10 C, Res={}/100 Ohm, Fault={}, Batt={}mV, INT_pin_low={}",
+                latest_temp, reading.resistance_x100, reading.is_fault, latest_batt, touch.is_touch_active());
 
             // 4. If an excursion is occurring, force screen on immediately
             if is_alarm && !screen.is_backlight_on() {
@@ -218,7 +225,7 @@ fn main() -> ! {
             }
         }
 
-        // Loop tick ~50ms
-        delay.delay_millis(50);
+        // Loop tick: 10ms for snappy touch detection
+        delay.delay_millis(10);
     }
 }

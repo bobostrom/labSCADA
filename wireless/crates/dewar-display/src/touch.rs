@@ -1,8 +1,10 @@
 //! FT6336G Capacitive Touch Controller Driver
-//! I2C on GPIO 15 (SCL) & GPIO 16 (SDA via Flex), Touch Interrupt on GPIO 17 (Active LOW)
+//! I2C on GPIO 15 (SCL) & GPIO 16 (SDA via Flex), Touch Interrupt on GPIO 17 (Active LOW),
+//! Hardware Reset on GPIO 18 (Active LOW)
 
 use esp_hal::delay::Delay;
 use esp_hal::gpio::{Flex, Input, Output};
+use esp_println::println;
 
 pub const FT6336_I2C_ADDR: u8 = 0x38;
 
@@ -17,6 +19,7 @@ pub struct Ft6336<'d> {
     scl: Output<'d>,
     sda: Flex<'d>,
     int_pin: Input<'d>,
+    rst: Output<'d>,
 }
 
 impl<'d> Ft6336<'d> {
@@ -24,16 +27,35 @@ impl<'d> Ft6336<'d> {
         mut scl: Output<'d>,
         mut sda: Flex<'d>,
         int_pin: Input<'d>,
+        mut rst: Output<'d>,
+        delay: &Delay,
     ) -> Self {
         scl.set_high();
         sda.set_input_enable(true);
-        sda.set_output_enable(false); // Float high (external/internal pullup)
+        sda.set_output_enable(false); // Float high (pullup)
 
-        Self {
+        // 1. Hardware Reset sequence for FT6336 (GPIO 18)
+        rst.set_low();
+        delay.delay_millis(15);
+        rst.set_high();
+        delay.delay_millis(100); // Wait for FT6336 internal boot
+
+        let mut dev = Self {
             scl,
             sda,
             int_pin,
-        }
+            rst,
+        };
+
+        // 2. Query Vendor / Chip ID
+        let chip_id = dev.read_register(0xA6, delay);
+        let vendor_id = dev.read_register(0xA8, delay);
+        println!("[+] FT6336 Touch Controller online: ChipID=0x{:02X}, VendorID=0x{:02X}", chip_id, vendor_id);
+
+        // 3. Clear any initial startup interrupt
+        let _ = dev.read_touch(delay);
+
+        dev
     }
 
     /// Fast check if the user is touching the screen glass (hardware interrupt pin)
@@ -124,6 +146,24 @@ impl<'d> Ft6336<'d> {
         self.sda_high();
         delay.delay_micros(2);
         byte
+    }
+
+    pub fn read_register(&mut self, reg: u8, delay: &Delay) -> u8 {
+        self.i2c_start(delay);
+        if !self.i2c_write_byte(FT6336_I2C_ADDR << 1, delay) {
+            self.i2c_stop(delay);
+            return 0xFF;
+        }
+        self.i2c_write_byte(reg, delay);
+
+        self.i2c_start(delay);
+        if !self.i2c_write_byte((FT6336_I2C_ADDR << 1) | 0x01, delay) {
+            self.i2c_stop(delay);
+            return 0xFF;
+        }
+        let val = self.i2c_read_byte(false, delay);
+        self.i2c_stop(delay);
+        val
     }
 
     /// Read touch coordinates and clear interrupt on FT6336

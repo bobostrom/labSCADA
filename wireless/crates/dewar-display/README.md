@@ -60,3 +60,4 @@ cargo +esp build --release -p dewar-display
 # 3. Flash to board over USB Type-C and monitor serial output
 espflash flash target/xtensa-esp32s3-none-elf/release/dewar-display --monitor
 ```
+
