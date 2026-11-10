@@ -185,7 +185,7 @@ fn main() -> ! {
             latest_batt = pin_mv * 2; // Scaled by 2:1 onboard divider
 
             println!("TELEMETRY: Temp=-140.0 C (Assumed), Batt={}mV, FillHold={}, INT_low={}",
-                latest_batt, hold_timer > 0, touch.is_touch_active());
+                latest_batt, hold_timer > 0, touch.is_pin_low());
 
             // Build Telemetry Packet
             let telemetry = DeviceTelemetry::Dewar {

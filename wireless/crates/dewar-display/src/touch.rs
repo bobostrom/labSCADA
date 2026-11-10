@@ -26,7 +26,7 @@ impl<'d> Ft6336<'d> {
     pub fn new(
         mut scl: Output<'d>,
         mut sda: Flex<'d>,
-        int_pin: Input<'d>,
+        mut int_pin: Input<'d>,
         mut rst: Output<'d>,
         delay: &Delay,
     ) -> Self {
@@ -39,6 +39,8 @@ impl<'d> Ft6336<'d> {
         delay.delay_millis(15);
         rst.set_high();
         delay.delay_millis(100); // Wait for FT6336 internal boot
+
+        int_pin.listen(esp_hal::gpio::Event::FallingEdge);
 
         let mut dev = Self {
             scl,
@@ -56,23 +58,37 @@ impl<'d> Ft6336<'d> {
         // 3. Tune Sensitivity Threshold (Register 0x80 - TH_GROUP)
         // Lower value = HIGHER sensitivity (requires lighter touch)
         // Factory default is usually 34-55 (stiff/hard press).
-        // Setting to 18 provides effortless, light fingertip detection without phantom clicks.
-        dev.write_register(0x80, 18, delay);
+        // Setting to 14 provides light fingertip tap detection.
+        dev.write_register(0x80, 14, delay);
         let tuned_th = dev.read_register(0x80, delay);
         println!("[+] Adjusted Touch Sensitivity: TH_GROUP (0x80) set to {}", tuned_th);
 
         // 4. Set Active Scan Period (Register 0x86) to 10ms for fast detection
         dev.write_register(0x86, 10, delay);
 
-        // 5. Clear any startup interrupt
+        // 5. Configure Interrupt Mode (Register 0xA4 - G_MODE)
+        // 0x00 = Level mode (holds INT low as long as finger is on glass, eliminating "touch and drag" requirement)
+        dev.write_register(0xA4, 0x00, delay);
+
+        // 6. Clear any startup interrupt
         let _ = dev.read_touch(delay);
 
         dev
     }
 
-    /// Fast check if the user is touching the screen glass (hardware interrupt pin)
+    /// Fast check if the user is touching the screen glass (hardware interrupt latch + level)
     #[inline(always)]
-    pub fn is_touch_active(&self) -> bool {
+    pub fn is_touch_active(&mut self) -> bool {
+        if self.int_pin.is_interrupt_set() {
+            self.int_pin.clear_interrupt();
+            true
+        } else {
+            self.int_pin.is_low()
+        }
+    }
+
+    #[inline(always)]
+    pub fn is_pin_low(&self) -> bool {
         self.int_pin.is_low()
     }
 
