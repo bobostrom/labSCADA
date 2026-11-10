@@ -1070,10 +1070,10 @@
 
         <!-- Fridge & Freezer Sub-Grid -->
         <div
-          style="display:grid; grid-template-columns:repeat(auto-fit, minmax(120px, 1fr)); gap:10px; margin-top:10px;">
+          style="display:grid; grid-template-columns:repeat(auto-fit, minmax(135px, 1fr)); gap:10px; margin-top:10px;">
           {% for f in equipment.fridges %}
           <div
-            style="background:rgba(9,13,22,0.65); padding:10px 10px; border-radius:8px; border:1px solid rgba(255,255,255,0.06); min-width:0; overflow:hidden;">
+            style="background:rgba(9,13,22,0.65); padding:10px 10px; border-radius:8px; border:1px solid rgba(255,255,255,0.06); min-width:0;">
             <div
               style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:4px; margin-bottom:4px;">
               <span style="font-size:11px; font-weight:700; color:#8899a6; text-transform:uppercase;">{{ f.short_name |
@@ -1084,13 +1084,13 @@
               <span id="val-{{ f.key }}">--</span><span class="card-unit">°C</span>
             </div>
             <div
-              style="font-size:11px; color:#8899a6; margin-top:5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+              style="font-size:11px; color:#8899a6; margin-top:5px; line-height:1.25; word-wrap:break-word;">
               {{ f.target_label | default('Target: 2.0°C – 8.0°C') }}</div>
           </div>
           {% endfor %}
           {% for fz in equipment.freezers %}
           <div
-            style="background:rgba(9,13,22,0.65); padding:10px 10px; border-radius:8px; border:1px solid rgba(255,255,255,0.06); min-width:0; overflow:hidden;">
+            style="background:rgba(9,13,22,0.65); padding:10px 10px; border-radius:8px; border:1px solid rgba(255,255,255,0.06); min-width:0;">
             <div
               style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:4px; margin-bottom:4px;">
               <span style="font-size:11px; font-weight:700; color:#8899a6; text-transform:uppercase;">{{ fz.short_name |
@@ -1101,7 +1101,7 @@
               <span id="val-{{ fz.key }}">--</span><span class="card-unit">°C</span>
             </div>
             <div
-              style="font-size:11px; color:#8899a6; margin-top:5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+              style="font-size:11px; color:#8899a6; margin-top:5px; line-height:1.25; word-wrap:break-word;">
               {{ fz.target_label | default('Limit: < -15.0°C') }}</div>
           </div>
           {% endfor %}
