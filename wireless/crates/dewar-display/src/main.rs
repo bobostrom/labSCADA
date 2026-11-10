@@ -3,6 +3,7 @@
 
 extern crate alloc;
 
+mod audio;
 mod display;
 mod kiosk_font;
 mod max31855;
@@ -104,13 +105,17 @@ fn main() -> ! {
     let assumed_temp_c_x10: i16 = -1400;
     let is_alarm: bool = false; // -140.0 C is safely below the -135.0 C alarm threshold
 
-    // Boot splash for 3 seconds then screen powers down
+    // Boot splash & Imperial Legion Fanfare audio
     screen.backlight_on();
     screen.clear(display::COLOR_BG_APP);
-    screen.draw_str(20, 80, "LabSCADA DEWAR NODE", display::COLOR_TEXT_MAIN, display::COLOR_BG_APP, 2);
-    screen.draw_str(20, 120, "2.8\" Touch Display", display::COLOR_CRYO_CYAN, display::COLOR_BG_APP, 1);
-    screen.draw_str(20, 140, "ESP-NOW Telemetry Ready", display::COLOR_STATUS_GREEN, display::COLOR_BG_APP, 1);
-    delay.delay_millis(3000);
+    screen.draw_kiosk_str(20, 70, "LabSCADA Cryo Node", &kiosk_font::FONT_INTER_18, display::COLOR_TEXT_MAIN, display::COLOR_BG_APP);
+    screen.draw_kiosk_str(20, 105, "2.8\" IPS Touch Display", &kiosk_font::FONT_INTER_14, display::COLOR_CRYO_CYAN, display::COLOR_BG_APP);
+    screen.draw_kiosk_str(20, 130, "ESP-NOW Telemetry Ready", &kiosk_font::FONT_INTER_14, display::COLOR_STATUS_GREEN, display::COLOR_BG_APP);
+
+    println!("[AUDIO] Playing Imperial Legion Fanfare on GPIO 4...");
+    audio::play_startup_fanfare(peripherals.LEDC, peripherals.GPIO4, &delay);
+    delay.delay_millis(1500);
+
     screen.backlight_off();
     println!("[DISPLAY] Boot splash complete -> Backlight OFF (touch glass to wake)");
 
