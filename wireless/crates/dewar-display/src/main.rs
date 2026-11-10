@@ -57,19 +57,26 @@ fn main() -> ! {
     println!("MAC: {:02X}:{:02X}:{:02X}:{:02X}:{:02X}:{:02X}",
         mac_arr[0], mac_arr[1], mac_arr[2], mac_arr[3], mac_arr[4], mac_arr[5]);
 
-    // 3. Initialize ILI9341 Display on hardware SPI pins
+    // 3. Initialize ILI9341 Display on hardware SPI2 (40 MHz)
     // - TFT_SCK:  GPIO 12
     // - TFT_MOSI: GPIO 11
     // - TFT_CS:   GPIO 10
     // - TFT_DC:   GPIO 46
     // - TFT_BL:   GPIO 45 (Backlight)
-    let tft_sck = esp_hal::gpio::Output::new(peripherals.GPIO12, esp_hal::gpio::Level::Low, esp_hal::gpio::OutputConfig::default());
-    let tft_mosi = esp_hal::gpio::Output::new(peripherals.GPIO11, esp_hal::gpio::Level::Low, esp_hal::gpio::OutputConfig::default());
+    use esp_hal::time::Rate;
+    let spi = esp_hal::spi::master::Spi::new(
+        peripherals.SPI2,
+        esp_hal::spi::master::Config::default().with_frequency(Rate::from_mhz(40)),
+    )
+    .unwrap()
+    .with_sck(peripherals.GPIO12)
+    .with_mosi(peripherals.GPIO11);
+
     let tft_cs = esp_hal::gpio::Output::new(peripherals.GPIO10, esp_hal::gpio::Level::High, esp_hal::gpio::OutputConfig::default());
     let tft_dc = esp_hal::gpio::Output::new(peripherals.GPIO46, esp_hal::gpio::Level::High, esp_hal::gpio::OutputConfig::default());
     let tft_bl = esp_hal::gpio::Output::new(peripherals.GPIO45, esp_hal::gpio::Level::Low, esp_hal::gpio::OutputConfig::default());
 
-    let mut screen = display::Ili9341::new(tft_sck, tft_mosi, tft_cs, tft_dc, tft_bl);
+    let mut screen = display::Ili9341::new(spi, tft_cs, tft_dc, tft_bl);
     screen.init(&delay);
 
     // 4. Initialize FT6336G Capacitive Touch

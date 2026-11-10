@@ -5,6 +5,8 @@
 
 use esp_hal::delay::Delay;
 use esp_hal::gpio::Output;
+use esp_hal::spi::master::Spi;
+use esp_hal::Blocking;
 
 pub const LCD_WIDTH: u16 = 320;
 pub const LCD_HEIGHT: u16 = 240;
@@ -26,8 +28,7 @@ pub const COLOR_STATUS_RED: u16    = 0xEA28; // #EF4444 - Excursion Emergency Re
 pub const COLOR_BTN_BLUE: u16      = 0x0438; // #0284C7 - Kiosk Action Button Sky Blue
 
 pub struct Ili9341<'d> {
-    sck: Output<'d>,
-    mosi: Output<'d>,
+    spi: Spi<'d, Blocking>,
     cs: Output<'d>,
     dc: Output<'d>,
     backlight: Output<'d>,
@@ -36,21 +37,17 @@ pub struct Ili9341<'d> {
 
 impl<'d> Ili9341<'d> {
     pub fn new(
-        mut sck: Output<'d>,
-        mut mosi: Output<'d>,
+        spi: Spi<'d, Blocking>,
         mut cs: Output<'d>,
         mut dc: Output<'d>,
         mut backlight: Output<'d>,
     ) -> Self {
-        sck.set_low();
-        mosi.set_low();
         cs.set_high();
         dc.set_high();
         backlight.set_low();
 
         Self {
-            sck,
-            mosi,
+            spi,
             cs,
             dc,
             backlight,
@@ -59,29 +56,18 @@ impl<'d> Ili9341<'d> {
     }
 
     #[inline(always)]
-    fn send_byte(&mut self, byte: u8) {
-        for i in 0..8 {
-            if (byte >> (7 - i)) & 0x01 != 0 {
-                self.mosi.set_high();
-            } else {
-                self.mosi.set_low();
-            }
-            self.sck.set_high();
-            self.sck.set_low();
-        }
-    }
-
     fn write_cmd(&mut self, cmd: u8) {
         self.dc.set_low();
         self.cs.set_low();
-        self.send_byte(cmd);
+        let _ = self.spi.write(&[cmd]);
         self.cs.set_high();
     }
 
+    #[inline(always)]
     fn write_data(&mut self, data: u8) {
         self.dc.set_high();
         self.cs.set_low();
-        self.send_byte(data);
+        let _ = self.spi.write(&[data]);
         self.cs.set_high();
     }
 
@@ -169,14 +155,24 @@ impl<'d> Ili9341<'d> {
         let y1 = (y + h - 1).min(LCD_HEIGHT - 1);
         self.set_window(x, y, x1, y1);
 
-        let count = (x1 - x + 1) as u32 * (y1 - y + 1) as u32;
+        let mut count = (x1 - x + 1) as usize * (y1 - y + 1) as usize;
         self.dc.set_high();
         self.cs.set_low();
+
         let hi = (color >> 8) as u8;
         let lo = (color & 0xFF) as u8;
-        for _ in 0..count {
-            self.send_byte(hi);
-            self.send_byte(lo);
+
+        // Fast burst buffer of 64 pixels (128 bytes)
+        let mut buf = [0u8; 128];
+        for i in 0..64 {
+            buf[i * 2] = hi;
+            buf[i * 2 + 1] = lo;
+        }
+
+        while count > 0 {
+            let chunk_pixels = count.min(64);
+            let _ = self.spi.write(&buf[..chunk_pixels * 2]);
+            count -= chunk_pixels;
         }
         self.cs.set_high();
     }
@@ -248,19 +244,30 @@ impl<'d> Ili9341<'d> {
         let glyph = get_glyph_6x10(c);
         let s = scale.max(1) as u16;
 
-        for row in 0..10u16 {
-            let bits = glyph[row as usize];
-            for col in 0..6u16 {
-                let pixel_on = (bits >> (5 - col)) & 0x01 != 0;
-                let color = if pixel_on { fg } else { bg };
-                if s == 1 {
-                    self.set_window(x + col, y + row, x + col, y + row);
-                    self.dc.set_high();
-                    self.cs.set_low();
-                    self.send_byte((color >> 8) as u8);
-                    self.send_byte((color & 0xFF) as u8);
-                    self.cs.set_high();
-                } else {
+        if s == 1 {
+            self.set_window(x, y, x + 5, y + 9);
+            self.dc.set_high();
+            self.cs.set_low();
+            let mut char_buf = [0u8; 120];
+            let mut idx = 0;
+            for row in 0..10usize {
+                let bits = glyph[row];
+                for col in 0..6u16 {
+                    let pixel_on = (bits >> (5 - col)) & 0x01 != 0;
+                    let color = if pixel_on { fg } else { bg };
+                    char_buf[idx] = (color >> 8) as u8;
+                    char_buf[idx + 1] = (color & 0xFF) as u8;
+                    idx += 2;
+                }
+            }
+            let _ = self.spi.write(&char_buf);
+            self.cs.set_high();
+        } else {
+            for row in 0..10u16 {
+                let bits = glyph[row as usize];
+                for col in 0..6u16 {
+                    let pixel_on = (bits >> (5 - col)) & 0x01 != 0;
+                    let color = if pixel_on { fg } else { bg };
                     self.fill_rect(x + col * s, y + row * s, s, s, color);
                 }
             }
