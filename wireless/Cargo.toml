@@ -4,5 +4,6 @@ members = [
     "crates/wireless-protocol",
     "crates/bridge",
     "crates/node",
+    "crates/dewar-display",
 ]
 
