@@ -98,10 +98,10 @@ fn main() -> ! {
 
     // Boot splash for 3 seconds then screen powers down
     screen.backlight_on();
-    screen.clear(display::COLOR_NAVY);
-    screen.draw_str(20, 80, "LabSCADA DEWAR NODE", display::COLOR_WHITE, display::COLOR_NAVY, 2);
-    screen.draw_str(20, 120, "2.8\" Touch Display", display::COLOR_CYAN, display::COLOR_NAVY, 1);
-    screen.draw_str(20, 140, "ESP-NOW Telemetry Ready", display::COLOR_GREEN, display::COLOR_NAVY, 1);
+    screen.clear(display::COLOR_BG_APP);
+    screen.draw_str(20, 80, "LabSCADA DEWAR NODE", display::COLOR_TEXT_MAIN, display::COLOR_BG_APP, 2);
+    screen.draw_str(20, 120, "2.8\" Touch Display", display::COLOR_CRYO_CYAN, display::COLOR_BG_APP, 1);
+    screen.draw_str(20, 140, "ESP-NOW Telemetry Ready", display::COLOR_STATUS_GREEN, display::COLOR_BG_APP, 1);
     delay.delay_millis(3000);
     screen.backlight_off();
     println!("[DISPLAY] Boot splash complete -> Backlight OFF (touch glass to wake)");
