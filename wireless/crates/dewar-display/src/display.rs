@@ -192,40 +192,70 @@ impl<'d> Ili9341<'d> {
 
         match c {
             '0' => {
-                // Outer rounded rectangle
                 self.fill_rect(x + 4, y, 24, t, fg);         // Top
                 self.fill_rect(x + 4, y + 46, 24, t, fg);    // Bottom
                 self.fill_rect(x, y + 4, t, 44, fg);         // Left
                 self.fill_rect(x + 26, y + 4, t, 44, fg);    // Right
-                // Smooth chamfered corners
-                self.fill_rect(x + 2, y + 2, 3, 3, fg);
-                self.fill_rect(x + 27, y + 2, 3, 3, fg);
-                self.fill_rect(x + 2, y + 47, 3, 3, fg);
-                self.fill_rect(x + 27, y + 47, 3, 3, fg);
             }
             '1' => {
-                // Vertical stem
                 self.fill_rect(x + 14, y, 7, 52, fg);
-                // Top angled serif
                 self.fill_rect(x + 6, y + 2, 8, 6, fg);
-                self.fill_rect(x + 4, y + 6, 4, 6, fg);
-                // Base
                 self.fill_rect(x + 6, y + 46, 22, 6, fg);
             }
+            '2' => {
+                self.fill_rect(x + 4, y, 24, t, fg);         // Top
+                self.fill_rect(x + 26, y + 4, t, 20, fg);     // Top Right
+                self.fill_rect(x + 4, y + 23, 24, t, fg);    // Middle
+                self.fill_rect(x, y + 26, t, 20, fg);        // Bottom Left
+                self.fill_rect(x, y + 46, 32, t, fg);        // Bottom
+            }
+            '3' => {
+                self.fill_rect(x + 4, y, 24, t, fg);         // Top
+                self.fill_rect(x + 26, y + 4, t, 44, fg);     // Right
+                self.fill_rect(x + 8, y + 23, 20, t, fg);    // Middle
+                self.fill_rect(x + 4, y + 46, 24, t, fg);    // Bottom
+            }
             '4' => {
-                // Right vertical stem
                 self.fill_rect(x + 20, y, 7, 52, fg);
-                // Left diagonal / vertical
-                self.fill_rect(x + 2, y + 2, 7, 32, fg);
-                // Horizontal crossbar
-                self.fill_rect(x + 2, y + 28, 28, 7, fg);
+                self.fill_rect(x + 2, y + 2, 7, 30, fg);
+                self.fill_rect(x + 2, y + 26, 28, 7, fg);
+            }
+            '5' => {
+                self.fill_rect(x, y, 32, t, fg);             // Top
+                self.fill_rect(x, y + 4, t, 20, fg);         // Top Left
+                self.fill_rect(x, y + 23, 28, t, fg);        // Middle
+                self.fill_rect(x + 26, y + 26, t, 20, fg);    // Bottom Right
+                self.fill_rect(x + 4, y + 46, 24, t, fg);    // Bottom
+            }
+            '6' => {
+                self.fill_rect(x + 4, y, 24, t, fg);         // Top
+                self.fill_rect(x, y + 4, t, 44, fg);         // Left
+                self.fill_rect(x + 4, y + 23, 24, t, fg);    // Middle
+                self.fill_rect(x + 26, y + 26, t, 20, fg);    // Bottom Right
+                self.fill_rect(x + 4, y + 46, 24, t, fg);    // Bottom
+            }
+            '7' => {
+                self.fill_rect(x, y, 32, t, fg);             // Top
+                self.fill_rect(x + 24, y + 4, 8, 48, fg);    // Right
+            }
+            '8' => {
+                self.fill_rect(x + 4, y, 24, t, fg);         // Top
+                self.fill_rect(x + 4, y + 23, 24, t, fg);    // Middle
+                self.fill_rect(x + 4, y + 46, 24, t, fg);    // Bottom
+                self.fill_rect(x, y + 4, t, 44, fg);         // Left
+                self.fill_rect(x + 26, y + 4, t, 44, fg);    // Right
+            }
+            '9' => {
+                self.fill_rect(x + 4, y, 24, t, fg);         // Top
+                self.fill_rect(x, y + 4, t, 22, fg);         // Top Left
+                self.fill_rect(x + 4, y + 23, 24, t, fg);    // Middle
+                self.fill_rect(x + 26, y + 4, t, 44, fg);    // Right
+                self.fill_rect(x + 4, y + 46, 24, t, fg);    // Bottom
             }
             '-' => {
-                // Centered minus bar
                 self.fill_rect(x + 4, y + 23, 24, 7, fg);
             }
             _ => {
-                // Fallback: simple bar
                 self.fill_rect(x + 6, y + 6, 20, 40, fg);
             }
         }
@@ -507,7 +537,33 @@ fn get_glyph_6x10(c: char) -> [u8; 10] {
         'X' => [0x21, 0x12, 0x0C, 0x0C, 0x12, 0x21, 0x21, 0x21, 0x00, 0x00],
         'Y' => [0x21, 0x21, 0x12, 0x0C, 0x04, 0x04, 0x04, 0x04, 0x00, 0x00],
         'Z' => [0x3F, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x3F, 0x00, 0x00],
-        'o' => [0x00, 0x18, 0x24, 0x24, 0x18, 0x00, 0x00, 0x00, 0x00, 0x00],
-        _   => [0x00, 0x3F, 0x21, 0x21, 0x21, 0x3F, 0x00, 0x00, 0x00, 0x00],
+        '°' => [0x00, 0x18, 0x24, 0x24, 0x18, 0x00, 0x00, 0x00, 0x00, 0x00],
+        'a' => [0x00, 0x00, 0x1E, 0x01, 0x1F, 0x21, 0x21, 0x1F, 0x00, 0x00],
+        'b' => [0x20, 0x20, 0x3E, 0x21, 0x21, 0x21, 0x21, 0x3E, 0x00, 0x00],
+        'c' => [0x00, 0x00, 0x1E, 0x21, 0x20, 0x20, 0x21, 0x1E, 0x00, 0x00],
+        'd' => [0x01, 0x01, 0x1F, 0x21, 0x21, 0x21, 0x21, 0x1F, 0x00, 0x00],
+        'e' => [0x00, 0x00, 0x1E, 0x21, 0x3F, 0x20, 0x21, 0x1E, 0x00, 0x00],
+        'f' => [0x0E, 0x11, 0x10, 0x3C, 0x10, 0x10, 0x10, 0x10, 0x00, 0x00],
+        'g' => [0x00, 0x00, 0x1F, 0x21, 0x21, 0x1F, 0x01, 0x1E, 0x00, 0x00],
+        'h' => [0x20, 0x20, 0x3E, 0x21, 0x21, 0x21, 0x21, 0x21, 0x00, 0x00],
+        'i' => [0x08, 0x00, 0x18, 0x08, 0x08, 0x08, 0x08, 0x1C, 0x00, 0x00],
+        'j' => [0x02, 0x00, 0x06, 0x02, 0x02, 0x02, 0x22, 0x1C, 0x00, 0x00],
+        'k' => [0x20, 0x20, 0x22, 0x24, 0x38, 0x24, 0x22, 0x21, 0x00, 0x00],
+        'l' => [0x18, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x1C, 0x00, 0x00],
+        'm' => [0x00, 0x00, 0x36, 0x2B, 0x29, 0x29, 0x29, 0x29, 0x00, 0x00],
+        'n' => [0x00, 0x00, 0x3E, 0x21, 0x21, 0x21, 0x21, 0x21, 0x00, 0x00],
+        'o' => [0x00, 0x00, 0x1E, 0x21, 0x21, 0x21, 0x21, 0x1E, 0x00, 0x00],
+        'p' => [0x00, 0x00, 0x3E, 0x21, 0x21, 0x3E, 0x20, 0x20, 0x00, 0x00],
+        'q' => [0x00, 0x00, 0x1F, 0x21, 0x21, 0x1F, 0x01, 0x01, 0x00, 0x00],
+        'r' => [0x00, 0x00, 0x2E, 0x31, 0x20, 0x20, 0x20, 0x20, 0x00, 0x00],
+        's' => [0x00, 0x00, 0x1E, 0x20, 0x1E, 0x01, 0x21, 0x1E, 0x00, 0x00],
+        't' => [0x10, 0x10, 0x3C, 0x10, 0x10, 0x10, 0x11, 0x0E, 0x00, 0x00],
+        'u' => [0x00, 0x00, 0x21, 0x21, 0x21, 0x21, 0x23, 0x1D, 0x00, 0x00],
+        'v' => [0x00, 0x00, 0x21, 0x21, 0x21, 0x12, 0x12, 0x0C, 0x00, 0x00],
+        'w' => [0x00, 0x00, 0x21, 0x21, 0x25, 0x25, 0x2D, 0x12, 0x00, 0x00],
+        'x' => [0x00, 0x00, 0x21, 0x12, 0x0C, 0x0C, 0x12, 0x21, 0x00, 0x00],
+        'y' => [0x00, 0x00, 0x21, 0x21, 0x21, 0x1F, 0x01, 0x1E, 0x00, 0x00],
+        'z' => [0x00, 0x00, 0x3F, 0x02, 0x04, 0x08, 0x10, 0x3F, 0x00, 0x00],
+        _   => [0x00; 10], // Default to space/blank instead of an ugly box!
     }
 }
