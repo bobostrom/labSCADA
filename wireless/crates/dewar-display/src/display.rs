@@ -7,6 +7,7 @@ use esp_hal::delay::Delay;
 use esp_hal::gpio::Output;
 use esp_hal::spi::master::Spi;
 use esp_hal::Blocking;
+use crate::handel_font::{FontDef, FONT_HANDEL_11, FONT_HANDEL_14, FONT_HANDEL_18, FONT_HANDEL_HERO};
 
 pub const LCD_WIDTH: u16 = 320;
 pub const LCD_HEIGHT: u16 = 240;
@@ -337,8 +338,86 @@ impl<'d> Ili9341<'d> {
         }
     }
 
+    pub fn draw_handel_char(
+        &mut self,
+        x: u16,
+        y: u16,
+        c: char,
+        font: &FontDef,
+        fg: u16,
+        bg: u16,
+    ) -> u16 {
+        let glyph = match font.get_glyph(c) {
+            Some(g) => g,
+            None => return 0,
+        };
+        let w = glyph.width as u16;
+        let h = font.height as u16;
+        if w == 0 || x + w > LCD_WIDTH || y + h > LCD_HEIGHT {
+            return w;
+        }
+
+        self.set_window(x, y, x + w - 1, y + h - 1);
+        self.dc.set_high();
+        self.cs.set_low();
+
+        let bytes_per_row = ((w + 7) / 8) as usize;
+        let hi_fg = (fg >> 8) as u8;
+        let lo_fg = (fg & 0xFF) as u8;
+        let hi_bg = (bg >> 8) as u8;
+        let lo_bg = (bg & 0xFF) as u8;
+
+        let mut burst_buf = [0u8; 128];
+        let mut burst_idx = 0;
+
+        for row in 0..h as usize {
+            let row_offset = glyph.bitmap_offset as usize + row * bytes_per_row;
+            for col in 0..w as usize {
+                let byte_idx = row_offset + (col / 8);
+                let bit_mask = 1 << (7 - (col % 8));
+                let is_on = (font.bitmaps[byte_idx] & bit_mask) != 0;
+
+                if is_on {
+                    burst_buf[burst_idx] = hi_fg;
+                    burst_buf[burst_idx + 1] = lo_fg;
+                } else {
+                    burst_buf[burst_idx] = hi_bg;
+                    burst_buf[burst_idx + 1] = lo_bg;
+                }
+                burst_idx += 2;
+
+                if burst_idx == 128 {
+                    let _ = self.spi.write(&burst_buf);
+                    burst_idx = 0;
+                }
+            }
+        }
+        if burst_idx > 0 {
+            let _ = self.spi.write(&burst_buf[..burst_idx]);
+        }
+        self.cs.set_high();
+
+        w
+    }
+
+    pub fn draw_handel_str(
+        &mut self,
+        mut x: u16,
+        y: u16,
+        s: &str,
+        font: &FontDef,
+        fg: u16,
+        bg: u16,
+    ) -> u16 {
+        for c in s.chars() {
+            let adv = self.draw_handel_char(x, y, c, font, fg, bg);
+            x += adv;
+        }
+        x
+    }
+
     // ==============================================================================
-    // Dashboard Kiosk Card Screen
+    // Dashboard Kiosk Card Screen (Handel Gothic Typography)
     // ==============================================================================
     pub fn draw_cryo_screen(
         &mut self,
@@ -369,15 +448,15 @@ impl<'d> Ili9341<'d> {
         // 2. Card Header (#041b2b)
         self.fill_rect(4, 7, LCD_WIDTH - 8, 34, COLOR_BG_CARD);
 
-        // Tank Label: "Dewar 1 (Embryos)"
-        self.draw_str(14, 16, tank_name, COLOR_TEXT_MAIN, COLOR_BG_CARD, 2);
+        // Tank Label: "Dewar 1 (Embryos)" - in Handel Gothic 18pt
+        self.draw_handel_str(14, 15, tank_name, &FONT_HANDEL_18, COLOR_TEXT_MAIN, COLOR_BG_CARD);
 
-        // Battery Pill in Header
+        // Battery Pill in Header - in Handel Gothic 11pt
         let batt_pct = if batt_mv >= 4200 { 100 } else if batt_mv <= 3500 { 0 } else { ((batt_mv - 3500) * 100) / 700 };
         let mut b_buf = [0u8; 24];
         let b_str = format_buf(
             &mut b_buf,
-            "BAT:",
+            "BAT: ",
             (batt_mv / 1000) as u32,
             ".",
             ((batt_mv % 1000) / 100) as u32,
@@ -385,32 +464,26 @@ impl<'d> Ili9341<'d> {
             0,
             "",
         );
-        self.fill_rect(234, 13, 76, 22, COLOR_BG_CARD_SUB);
-        self.fill_rect(234, 13, 76, 1, COLOR_BORDER_SUBTLE);
-        self.draw_str(240, 19, b_str, COLOR_STATUS_GREEN, COLOR_BG_CARD_SUB, 1);
+        let b_w = FONT_HANDEL_11.string_width(b_str);
+        let pill_w = b_w + 16;
+        let pill_x = LCD_WIDTH - 8 - pill_w - 4;
+        self.fill_rect(pill_x, 13, pill_w, 22, COLOR_BG_CARD_SUB);
+        self.fill_rect(pill_x, 13, pill_w, 1, COLOR_BORDER_SUBTLE);
+        self.draw_handel_str(pill_x + 8, 17, b_str, &FONT_HANDEL_11, COLOR_STATUS_GREEN, COLOR_BG_CARD_SUB);
 
         // 3. Main Hero Panel (#02121e with Subtle Glacier Border)
         self.fill_rect(4, 41, LCD_WIDTH - 8, 102, COLOR_BG_CARD_SUB);
         self.fill_rect(4, 41, LCD_WIDTH - 8, 1, COLOR_BORDER_SUBTLE);
 
-        // Hero Temperature digits in clean Inter sans-serif: "-140.0 °C"
+        // Hero Temperature digits in Handel Gothic 48pt Hero ("-140.0 ^C")
         let hero_color = if is_alarm { COLOR_STATUS_RED } else { COLOR_CRYO_CYAN };
         let hero_bg = COLOR_BG_CARD_SUB;
-        let start_x: u16 = 24;
-        let hero_y: u16 = 64;
-
-        if temp_c_x10 < 0 {
-            self.draw_sans_hero_digit(start_x, hero_y, '-', hero_color, hero_bg);
-        }
-        self.draw_sans_hero_digit(start_x + 36, hero_y, '1', hero_color, hero_bg);
-        self.draw_sans_hero_digit(start_x + 72, hero_y, '4', hero_color, hero_bg);
-        self.draw_sans_hero_digit(start_x + 108, hero_y, '0', hero_color, hero_bg);
-        self.draw_sans_dp(start_x + 142, hero_y, hero_color, hero_bg);
-        self.draw_sans_hero_digit(start_x + 156, hero_y, '0', hero_color, hero_bg);
-
-        // Unit '°C'
-        self.draw_str(start_x + 196, hero_y + 8, "o", hero_color, hero_bg, 1);
-        self.draw_str(start_x + 204, hero_y + 14, "C", hero_color, hero_bg, 3);
+        let mut hero_buf = [0u8; 16];
+        let hero_str = format_temp(&mut hero_buf, temp_c_x10);
+        let hero_w = FONT_HANDEL_HERO.string_width(hero_str);
+        let hero_x = (LCD_WIDTH.saturating_sub(hero_w)) / 2;
+        let hero_y = 41 + (102 - FONT_HANDEL_HERO.height as u16) / 2;
+        self.draw_handel_str(hero_x, hero_y, hero_str, &FONT_HANDEL_HERO, hero_color, hero_bg);
 
         // 4. Clinical Status Ribbon
         let ribbon_color = if is_alarm {
@@ -427,20 +500,23 @@ impl<'d> Ili9341<'d> {
         } else if hold_active {
             "LN2 FILL MODE (HOLD 30M ACTIVE)"
         } else {
-            "VAPOR LIMIT: < -135.0 C [NORMAL]"
+            "VAPOR LIMIT: < -135.0 ^C [NORMAL]"
         };
-        self.draw_str(16, 151, ribbon_text, 0x0000, ribbon_color, 2);
+        let ribbon_w = FONT_HANDEL_14.string_width(ribbon_text);
+        let ribbon_x = (LCD_WIDTH.saturating_sub(ribbon_w)) / 2;
+        let ribbon_y = 143 + (28 - FONT_HANDEL_14.height as u16) / 2;
+        self.draw_handel_str(ribbon_x, ribbon_y, ribbon_text, &FONT_HANDEL_14, 0x0000, ribbon_color);
 
         // 5. Action Bar & Footer (#041b2b)
         self.fill_rect(4, 171, LCD_WIDTH - 8, 65, COLOR_BG_CARD);
 
         let mut rf_buf = [0u8; 32];
         let rf_str = format_buf(&mut rf_buf, "RADIO: ESP-NOW #", tx_seq, " [OK]", 0, "", 0, "");
-        self.draw_str(14, 183, rf_str, COLOR_TEXT_MUTED, COLOR_BG_CARD, 1);
+        self.draw_handel_str(14, 181, rf_str, &FONT_HANDEL_11, COLOR_TEXT_MUTED, COLOR_BG_CARD);
 
         let mut sub_buf = [0u8; 32];
         let sub_str = format_buf(&mut sub_buf, "SLOT 1 | BATT: ", batt_pct as u32, "% | USP 1079", 0, "", 0, "");
-        self.draw_str(14, 203, sub_str, COLOR_TEXT_MUTED, COLOR_BG_CARD, 1);
+        self.draw_handel_str(14, 203, sub_str, &FONT_HANDEL_11, COLOR_TEXT_MUTED, COLOR_BG_CARD);
 
         // Interactive Kiosk Touch Button (Lower Right)
         let (btn_bg, btn_txt) = if hold_active {
@@ -449,8 +525,65 @@ impl<'d> Ili9341<'d> {
             (COLOR_BTN_BLUE, "FILL HOLD")
         };
         self.fill_rect(196, 179, 114, 47, btn_bg);
-        self.draw_str(204, 195, btn_txt, COLOR_TEXT_MAIN, btn_bg, 2);
+        let btn_w = FONT_HANDEL_14.string_width(btn_txt);
+        let btn_x = 196 + (114u16.saturating_sub(btn_w)) / 2;
+        let btn_y = 179 + (47 - FONT_HANDEL_14.height as u16) / 2;
+        self.draw_handel_str(btn_x, btn_y, btn_txt, &FONT_HANDEL_14, COLOR_TEXT_MAIN, btn_bg);
     }
+}
+
+fn format_temp<'a>(buf: &'a mut [u8], temp_c_x10: i16) -> &'a str {
+    let mut idx = 0;
+    let is_neg = temp_c_x10 < 0;
+    let val = if is_neg { (-temp_c_x10) as u32 } else { temp_c_x10 as u32 };
+    let whole = val / 10;
+    let frac = val % 10;
+
+    if is_neg && idx < buf.len() {
+        buf[idx] = b'-';
+        idx += 1;
+    }
+
+    let mut num_buf = [0u8; 8];
+    let mut num_idx = 0;
+    let mut n = whole;
+    if n == 0 {
+        num_buf[0] = b'0';
+        num_idx = 1;
+    } else {
+        while n > 0 && num_idx < num_buf.len() {
+            num_buf[num_idx] = b'0' + (n % 10) as u8;
+            num_idx += 1;
+            n /= 10;
+        }
+    }
+    for i in (0..num_idx).rev() {
+        if idx < buf.len() {
+            buf[idx] = num_buf[i];
+            idx += 1;
+        }
+    }
+    if idx < buf.len() {
+        buf[idx] = b'.';
+        idx += 1;
+    }
+    if idx < buf.len() {
+        buf[idx] = b'0' + frac as u8;
+        idx += 1;
+    }
+    if idx < buf.len() {
+        buf[idx] = b' ';
+        idx += 1;
+    }
+    if idx < buf.len() {
+        buf[idx] = b'^'; // Raised degree symbol in FONT_HANDEL
+        idx += 1;
+    }
+    if idx < buf.len() {
+        buf[idx] = b'C';
+        idx += 1;
+    }
+    core::str::from_utf8(&buf[..idx]).unwrap_or("")
 }
 
 fn format_buf<'a>(
