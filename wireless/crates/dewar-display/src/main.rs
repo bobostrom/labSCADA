@@ -143,10 +143,10 @@ fn main() -> ! {
 
                 // Check tap on "FILL HOLD" button (lower right region)
                 if pt.is_touched && debounce_ticks == 0 {
+                    debounce_ticks = 25; // 250ms debounce across any tap
                     println!("[TOUCH] Tap at X={}, Y={}", pt.x, pt.y);
                     // Match the right side of the screen or bottom quadrant
                     if pt.x >= 180 && pt.y >= 160 {
-                        debounce_ticks = 35; // 350ms debounce
                         if hold_timer == 0 {
                             hold_timer = CRYO_HOLD_TICKS;
                             println!("[+] Tank Fill Hold ACTIVATED (30 minutes hold)");

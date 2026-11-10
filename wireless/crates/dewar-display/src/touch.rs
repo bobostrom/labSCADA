@@ -67,8 +67,8 @@ impl<'d> Ft6336<'d> {
         dev.write_register(0x86, 10, delay);
 
         // 5. Configure Interrupt Mode (Register 0xA4 - G_MODE)
-        // 0x00 = Level mode (holds INT low as long as finger is on glass, eliminating "touch and drag" requirement)
-        dev.write_register(0xA4, 0x00, delay);
+        // 0x01 = Trigger / Edge pulse mode (clean single interrupt per touch event)
+        dev.write_register(0xA4, 0x01, delay);
 
         // 6. Clear any startup interrupt
         let _ = dev.read_touch(delay);
@@ -76,14 +76,14 @@ impl<'d> Ft6336<'d> {
         dev
     }
 
-    /// Fast check if the user is touching the screen glass (hardware interrupt latch + level)
+    /// Fast check if the user is touching the screen glass (hardware falling-edge interrupt latch)
     #[inline(always)]
     pub fn is_touch_active(&mut self) -> bool {
         if self.int_pin.is_interrupt_set() {
             self.int_pin.clear_interrupt();
             true
         } else {
-            self.int_pin.is_low()
+            false
         }
     }
 
