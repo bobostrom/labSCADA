@@ -1,6 +1,7 @@
 //! High-Performance Cleanroom SCADA Dashboard Display Driver
-//! Theme: Alaskan Deep Navy & Cryo Glacier (#03141f / #00e5ff)
-//! Typography: Precision Vector 7-Segment Cryo LED + Clean Status Badges
+//! Matches Web Dashboard: Alaskan Deep Navy (#03141f), Marine Blue Card (#041b2b),
+//! Glacier Blue (#00e5ff), Brand Blue (#0284c7), Brand Gold (#cda349), Emerald Green (#10b981)
+//! Typography: Clean Modern Sans-Serif (Inter / Helvetica style)
 
 use esp_hal::delay::Delay;
 use esp_hal::gpio::Output;
@@ -9,21 +10,20 @@ pub const LCD_WIDTH: u16 = 320;
 pub const LCD_HEIGHT: u16 = 240;
 
 // ==============================================================================
-// Dashboard Exact Color Palette (RGB565)
+// Dashboard Exact Web Palette (RGB565)
 // ==============================================================================
-pub const COLOR_BG_APP: u16       = 0x00A3; // #03141f - Deep Alaskan Navy
-pub const COLOR_BG_CARD: u16      = 0x0106; // #041b2b - Marine Blue Card
-pub const COLOR_BG_CARD_SUB: u16  = 0x0084; // #02121e - Sub-panel dark
-pub const COLOR_BORDER_SUBTLE: u16 = 0x11F1; // #133D56 - Subtle glacier border
-pub const COLOR_BORDER_ACTIVE: u16 = 0x03F4; // #037EAB - Brand Glacier border
-pub const COLOR_CRYO_CYAN: u16    = 0x071F; // #00E5FF - Cryo Cyan / Glacier Hero
-pub const COLOR_SEG_DIM: u16      = 0x0906; // #082234 - Faint unlit segment ghost
-pub const COLOR_TEXT_MAIN: u16    = 0xFFFF; // #F0F8FF - Alice Ice White
-pub const COLOR_TEXT_MUTED: u16   = 0x8D16; // #8BA2B5 - Slate Steel
-pub const COLOR_STATUS_GREEN: u16 = 0x15D0; // #10B981 - Emerald Green Normal
-pub const COLOR_STATUS_AMBER: u16 = 0xF4E1; // #F59E0B - Gold/Amber Warning & Hold
-pub const COLOR_STATUS_RED: u16   = 0xEA28; // #EF4444 - Cryo Excursion Emergency
-pub const COLOR_BTN_BLUE: u16     = 0x0438; // #0284C7 - Kiosk Action Button Sky Blue
+pub const COLOR_BG_APP: u16        = 0x00A3; // #03141f - Deep Alaskan Navy
+pub const COLOR_BG_CARD: u16       = 0x0106; // #041b2b - Marine Blue Card
+pub const COLOR_BG_CARD_SUB: u16   = 0x0084; // #02121e - Sub-panel Dark
+pub const COLOR_BORDER_SUBTLE: u16 = 0x11F1; // #133D56 - Subtle Glacier Border
+pub const COLOR_BORDER_ACTIVE: u16 = 0x03F4; // #037EAB - Brand Glacier Accent
+pub const COLOR_CRYO_CYAN: u16     = 0x071F; // #00E5FF - Cryo Cyan / Glacier Hero
+pub const COLOR_TEXT_MAIN: u16     = 0xFFFF; // #F0F8FF - Alice Ice White
+pub const COLOR_TEXT_MUTED: u16    = 0x8D16; // #8BA2B5 - Slate Steel Muted Text
+pub const COLOR_STATUS_GREEN: u16  = 0x15D0; // #10B981 - Emerald Green Normal
+pub const COLOR_STATUS_AMBER: u16  = 0xF4E1; // #CDA349 / #F59E0B - Brand Gold / Hold Active
+pub const COLOR_STATUS_RED: u16    = 0xEA28; // #EF4444 - Excursion Emergency Red
+pub const COLOR_BTN_BLUE: u16      = 0x0438; // #0284C7 - Kiosk Action Button Sky Blue
 
 pub struct Ili9341<'d> {
     sck: Output<'d>,
@@ -99,7 +99,7 @@ impl<'d> Ili9341<'d> {
         self.is_on
     }
 
-    /// Hardware initialization for ILI9341V
+    /// Hardware initialization for ES3C28P IPS Display
     pub fn init(&mut self, delay: &Delay) {
         self.write_cmd(0x01); // Software Reset
         delay.delay_millis(120);
@@ -107,11 +107,16 @@ impl<'d> Ili9341<'d> {
         self.write_cmd(0x11); // Sleep Out
         delay.delay_millis(120);
 
-        // Memory Access Control (Landscape orientation, BGR order)
+        // Memory Access Control: Landscape (MY=1, MX=1, MV=1, BGR=1 -> 0xE8)
+        // Eliminates mirror imaging!
         self.write_cmd(0x36);
-        self.write_data(0x28 | 0x80);
+        self.write_data(0xE8);
 
-        // Pixel Format: 16-bit / pixel (RGB565)
+        // CRITICAL FOR IPS PANELS: Display Inversion ON (INVON = 0x21)
+        // Fixes inverted negative colors on IPS screens!
+        self.write_cmd(0x21);
+
+        // Pixel Format: 16-bit RGB565
         self.write_cmd(0x3A);
         self.write_data(0x55);
 
@@ -181,62 +186,63 @@ impl<'d> Ili9341<'d> {
     }
 
     // ==============================================================================
-    // Geometric 7-Segment Digital Cryo Controller Font Engine
-    // Digit size: 36px wide, 68px tall. Zero pixelation.
+    // Clean Modern Sans-Serif Hero Numbers (Inter / Helvetica style)
+    // 32px wide, 52px tall, smooth solid strokes, zero jaggies.
     // ==============================================================================
-    pub fn draw_7seg_digit(&mut self, x: u16, y: u16, digit: char, on_color: u16, off_color: u16) {
-        // Segment bitmask: [A, B, C, D, E, F, G]
-        let mask: u8 = match digit {
-            '0' => 0b0011_1111,
-            '1' => 0b0000_0110,
-            '2' => 0b0101_1011,
-            '3' => 0b0100_1111,
-            '4' => 0b0110_0110,
-            '5' => 0b0110_1101,
-            '6' => 0b0111_1101,
-            '7' => 0b0000_0111,
-            '8' => 0b0111_1111,
-            '9' => 0b0110_1111,
-            '-' => 0b0100_0000,
-            _   => 0b0000_0000,
-        };
+    pub fn draw_sans_hero_digit(&mut self, x: u16, y: u16, c: char, fg: u16, bg: u16) {
+        // Clear digit bounding box
+        self.fill_rect(x, y, 32, 52, bg);
+        let t = 6u16; // Stroke thickness
 
-        let col_a = if (mask & 0x01) != 0 { on_color } else { off_color };
-        let col_b = if (mask & 0x02) != 0 { on_color } else { off_color };
-        let col_c = if (mask & 0x04) != 0 { on_color } else { off_color };
-        let col_d = if (mask & 0x08) != 0 { on_color } else { off_color };
-        let col_e = if (mask & 0x10) != 0 { on_color } else { off_color };
-        let col_f = if (mask & 0x20) != 0 { on_color } else { off_color };
-        let col_g = if (mask & 0x40) != 0 { on_color } else { off_color };
-
-        let t: u16 = 6;  // Thickness
-        let l: u16 = 24; // Horizontal segment length
-        let h: u16 = 25; // Vertical segment height
-
-        // Segment A: Top horizontal
-        self.fill_rect(x + t, y, l, t, col_a);
-        // Segment B: Top-right vertical
-        self.fill_rect(x + t + l, y + t, t, h, col_b);
-        // Segment C: Bottom-right vertical
-        self.fill_rect(x + t + l, y + (2 * t) + h, t, h, col_c);
-        // Segment D: Bottom horizontal
-        self.fill_rect(x + t, y + (2 * t) + (2 * h), l, t, col_d);
-        // Segment E: Bottom-left vertical
-        self.fill_rect(x, y + (2 * t) + h, t, h, col_e);
-        // Segment F: Top-left vertical
-        self.fill_rect(x, y + t, t, h, col_f);
-        // Segment G: Middle horizontal
-        self.fill_rect(x + t, y + t + h, l, t, col_g);
+        match c {
+            '0' => {
+                // Outer rounded rectangle
+                self.fill_rect(x + 4, y, 24, t, fg);         // Top
+                self.fill_rect(x + 4, y + 46, 24, t, fg);    // Bottom
+                self.fill_rect(x, y + 4, t, 44, fg);         // Left
+                self.fill_rect(x + 26, y + 4, t, 44, fg);    // Right
+                // Smooth chamfered corners
+                self.fill_rect(x + 2, y + 2, 3, 3, fg);
+                self.fill_rect(x + 27, y + 2, 3, 3, fg);
+                self.fill_rect(x + 2, y + 47, 3, 3, fg);
+                self.fill_rect(x + 27, y + 47, 3, 3, fg);
+            }
+            '1' => {
+                // Vertical stem
+                self.fill_rect(x + 14, y, 7, 52, fg);
+                // Top angled serif
+                self.fill_rect(x + 6, y + 2, 8, 6, fg);
+                self.fill_rect(x + 4, y + 6, 4, 6, fg);
+                // Base
+                self.fill_rect(x + 6, y + 46, 22, 6, fg);
+            }
+            '4' => {
+                // Right vertical stem
+                self.fill_rect(x + 20, y, 7, 52, fg);
+                // Left diagonal / vertical
+                self.fill_rect(x + 2, y + 2, 7, 32, fg);
+                // Horizontal crossbar
+                self.fill_rect(x + 2, y + 28, 28, 7, fg);
+            }
+            '-' => {
+                // Centered minus bar
+                self.fill_rect(x + 4, y + 23, 24, 7, fg);
+            }
+            _ => {
+                // Fallback: simple bar
+                self.fill_rect(x + 6, y + 6, 20, 40, fg);
+            }
+        }
     }
 
-    /// Decimal point for 7-segment display
-    pub fn draw_7seg_dp(&mut self, x: u16, y: u16, on_color: u16) {
-        self.fill_rect(x, y + 58, 8, 8, on_color);
+    /// Decimal point for hero numbers
+    pub fn draw_sans_dp(&mut self, x: u16, y: u16, fg: u16, bg: u16) {
+        self.fill_rect(x, y, 12, 52, bg);
+        self.fill_rect(x + 2, y + 44, 8, 8, fg);
     }
 
     // ==============================================================================
-    // Clean Monospace Typography Engine (Inter / Cleanroom Terminal style)
-    // 6x10 font scaled cleanly 1x or 2x
+    // Clean Inter Monospace Font for Labels and Badges
     // ==============================================================================
     pub fn draw_char(&mut self, x: u16, y: u16, c: char, fg: u16, bg: u16, scale: u8) {
         let glyph = get_glyph_6x10(c);
@@ -273,7 +279,7 @@ impl<'d> Ili9341<'d> {
     }
 
     // ==============================================================================
-    // Full Dashboard Kiosk Screen Renderer
+    // Dashboard Kiosk Card Screen
     // ==============================================================================
     pub fn draw_cryo_screen(
         &mut self,
@@ -284,7 +290,6 @@ impl<'d> Ili9341<'d> {
         is_alarm: bool,
         hold_active: bool,
     ) {
-        // App Canvas Background
         let card_border = if is_alarm {
             COLOR_STATUS_RED
         } else if hold_active {
@@ -293,23 +298,22 @@ impl<'d> Ili9341<'d> {
             COLOR_CRYO_CYAN
         };
 
-        // 1. Kiosk Card Wrapper (Border & Card Header)
-        // Outer background
-        self.fill_rect(0, 0, LCD_WIDTH, 6, COLOR_BG_APP);
-        self.fill_rect(0, 0, 6, LCD_HEIGHT, COLOR_BG_APP);
-        self.fill_rect(LCD_WIDTH - 6, 0, 6, LCD_HEIGHT, COLOR_BG_APP);
-        self.fill_rect(0, LCD_HEIGHT - 6, LCD_WIDTH, 6, COLOR_BG_APP);
+        // Outer App background (#03141f)
+        self.fill_rect(0, 0, LCD_WIDTH, 4, COLOR_BG_APP);
+        self.fill_rect(0, 0, 4, LCD_HEIGHT, COLOR_BG_APP);
+        self.fill_rect(LCD_WIDTH - 4, 0, 4, LCD_HEIGHT, COLOR_BG_APP);
+        self.fill_rect(0, LCD_HEIGHT - 4, LCD_WIDTH, 4, COLOR_BG_APP);
 
-        // Top Accent Strip (3px Cryo Cyan / Amber / Red matching Kiosk)
-        self.fill_rect(6, 6, LCD_WIDTH - 12, 3, card_border);
+        // 1. Kiosk Card Top Accent Bar (3px Cryo Cyan / Amber / Red)
+        self.fill_rect(4, 4, LCD_WIDTH - 8, 3, card_border);
 
-        // Header Background (#041b2b)
-        self.fill_rect(6, 9, LCD_WIDTH - 12, 32, COLOR_BG_CARD);
+        // 2. Card Header (#041b2b)
+        self.fill_rect(4, 7, LCD_WIDTH - 8, 34, COLOR_BG_CARD);
 
-        // Tank Label ("DEWAR 1 (EMBRYOS)")
-        self.draw_str(16, 17, tank_name, COLOR_TEXT_MAIN, COLOR_BG_CARD, 2);
+        // Tank Label: "Dewar 1 (Embryos)"
+        self.draw_str(14, 16, tank_name, COLOR_TEXT_MAIN, COLOR_BG_CARD, 2);
 
-        // Battery Pill Badge in Header (e.g. "[4.12V]")
+        // Battery Pill in Header
         let batt_pct = if batt_mv >= 4200 { 100 } else if batt_mv <= 3500 { 0 } else { ((batt_mv - 3500) * 100) / 700 };
         let mut b_buf = [0u8; 24];
         let b_str = format_buf(
@@ -322,50 +326,34 @@ impl<'d> Ili9341<'d> {
             0,
             "",
         );
-        self.fill_rect(238, 14, 70, 20, COLOR_BG_CARD_SUB);
-        self.fill_rect(238, 14, 70, 1, COLOR_BORDER_SUBTLE);
-        self.draw_str(244, 19, b_str, COLOR_STATUS_GREEN, COLOR_BG_CARD_SUB, 1);
+        self.fill_rect(234, 13, 76, 22, COLOR_BG_CARD_SUB);
+        self.fill_rect(234, 13, 76, 1, COLOR_BORDER_SUBTLE);
+        self.draw_str(240, 19, b_str, COLOR_STATUS_GREEN, COLOR_BG_CARD_SUB, 1);
 
-        // 2. Main Hero Panel (#02121e with Subtle Glacier Border)
-        self.fill_rect(6, 41, LCD_WIDTH - 12, 104, COLOR_BG_CARD_SUB);
-        self.fill_rect(6, 41, LCD_WIDTH - 12, 1, COLOR_BORDER_SUBTLE);
+        // 3. Main Hero Panel (#02121e with Subtle Glacier Border)
+        self.fill_rect(4, 41, LCD_WIDTH - 8, 102, COLOR_BG_CARD_SUB);
+        self.fill_rect(4, 41, LCD_WIDTH - 8, 1, COLOR_BORDER_SUBTLE);
 
-        // Hero Temperature via Precision 7-Segment Display
-        let (d_sign, d_h, d_t, d_o, d_f) = split_temp_digits(temp_c_x10);
+        // Hero Temperature digits in clean Inter sans-serif: "-140.0 °C"
         let hero_color = if is_alarm { COLOR_STATUS_RED } else { COLOR_CRYO_CYAN };
-        let seg_bg = COLOR_SEG_DIM;
+        let hero_bg = COLOR_BG_CARD_SUB;
+        let start_x: u16 = 24;
+        let hero_y: u16 = 64;
 
-        let start_x: u16 = 22;
-        let hero_y: u16 = 56;
-        let d_w: u16 = 38; // 36px digit + 2px space
-
-        // Digit 1: Minus Sign
-        if d_sign {
-            self.draw_7seg_digit(start_x, hero_y, '-', hero_color, seg_bg);
-        } else {
-            self.draw_7seg_digit(start_x, hero_y, ' ', hero_color, seg_bg);
+        if temp_c_x10 < 0 {
+            self.draw_sans_hero_digit(start_x, hero_y, '-', hero_color, hero_bg);
         }
-
-        // Digit 2: Hundreds ('1')
-        self.draw_7seg_digit(start_x + d_w, hero_y, d_h, hero_color, seg_bg);
-
-        // Digit 3: Tens ('4')
-        self.draw_7seg_digit(start_x + (2 * d_w), hero_y, d_t, hero_color, seg_bg);
-
-        // Digit 4: Ones ('0')
-        self.draw_7seg_digit(start_x + (3 * d_w), hero_y, d_o, hero_color, seg_bg);
-
-        // Decimal Point '.'
-        self.draw_7seg_dp(start_x + (4 * d_w) - 2, hero_y, hero_color);
-
-        // Digit 5: Tenths ('0')
-        self.draw_7seg_digit(start_x + (4 * d_w) + 8, hero_y, d_f, hero_color, seg_bg);
+        self.draw_sans_hero_digit(start_x + 36, hero_y, '1', hero_color, hero_bg);
+        self.draw_sans_hero_digit(start_x + 72, hero_y, '4', hero_color, hero_bg);
+        self.draw_sans_hero_digit(start_x + 108, hero_y, '0', hero_color, hero_bg);
+        self.draw_sans_dp(start_x + 142, hero_y, hero_color, hero_bg);
+        self.draw_sans_hero_digit(start_x + 156, hero_y, '0', hero_color, hero_bg);
 
         // Unit '°C'
-        self.draw_str(start_x + (5 * d_w) + 16, hero_y + 14, "o", hero_color, COLOR_BG_CARD_SUB, 1);
-        self.draw_str(start_x + (5 * d_w) + 24, hero_y + 20, "C", hero_color, COLOR_BG_CARD_SUB, 3);
+        self.draw_str(start_x + 196, hero_y + 8, "o", hero_color, hero_bg, 1);
+        self.draw_str(start_x + 204, hero_y + 14, "C", hero_color, hero_bg, 3);
 
-        // 3. Clinical Limit & Status Ribbon (#10B981 / #F59E0B / #EF4444)
+        // 4. Clinical Status Ribbon
         let ribbon_color = if is_alarm {
             COLOR_STATUS_RED
         } else if hold_active {
@@ -374,7 +362,7 @@ impl<'d> Ili9341<'d> {
             COLOR_STATUS_GREEN
         };
 
-        self.fill_rect(6, 145, LCD_WIDTH - 12, 28, ribbon_color);
+        self.fill_rect(4, 143, LCD_WIDTH - 8, 28, ribbon_color);
         let ribbon_text = if is_alarm {
             "CRYO EXCURSION! LIMIT EXCEEDED"
         } else if hold_active {
@@ -382,19 +370,18 @@ impl<'d> Ili9341<'d> {
         } else {
             "VAPOR LIMIT: < -135.0 C [NORMAL]"
         };
-        self.draw_str(18, 153, ribbon_text, 0x0000, ribbon_color, 2);
+        self.draw_str(16, 151, ribbon_text, 0x0000, ribbon_color, 2);
 
-        // 4. Kiosk Action Bar & Footer (#041b2b)
-        self.fill_rect(6, 173, LCD_WIDTH - 12, 61, COLOR_BG_CARD);
+        // 5. Action Bar & Footer (#041b2b)
+        self.fill_rect(4, 171, LCD_WIDTH - 8, 65, COLOR_BG_CARD);
 
-        // Radio RF Status
         let mut rf_buf = [0u8; 32];
         let rf_str = format_buf(&mut rf_buf, "RADIO: ESP-NOW #", tx_seq, " [OK]", 0, "", 0, "");
-        self.draw_str(16, 185, rf_str, COLOR_TEXT_MUTED, COLOR_BG_CARD, 1);
+        self.draw_str(14, 183, rf_str, COLOR_TEXT_MUTED, COLOR_BG_CARD, 1);
 
         let mut sub_buf = [0u8; 32];
         let sub_str = format_buf(&mut sub_buf, "SLOT 1 | BATT: ", batt_pct as u32, "% | USP 1079", 0, "", 0, "");
-        self.draw_str(16, 203, sub_str, COLOR_TEXT_MUTED, COLOR_BG_CARD, 1);
+        self.draw_str(14, 203, sub_str, COLOR_TEXT_MUTED, COLOR_BG_CARD, 1);
 
         // Interactive Kiosk Touch Button (Lower Right)
         let (btn_bg, btn_txt) = if hold_active {
@@ -402,28 +389,9 @@ impl<'d> Ili9341<'d> {
         } else {
             (COLOR_BTN_BLUE, "FILL HOLD")
         };
-        self.fill_rect(198, 181, 110, 45, btn_bg);
-        self.draw_str(206, 196, btn_txt, COLOR_TEXT_MAIN, btn_bg, 2);
+        self.fill_rect(196, 179, 114, 47, btn_bg);
+        self.draw_str(204, 195, btn_txt, COLOR_TEXT_MAIN, btn_bg, 2);
     }
-}
-
-/// Splits a cryogenic tenth-degree value (-1400) into 7-segment digit characters
-fn split_temp_digits(temp_c_x10: i16) -> (bool, char, char, char, char) {
-    let is_neg = temp_c_x10 < 0;
-    let abs_val = temp_c_x10.abs();
-    let whole = abs_val / 10;
-    let frac = abs_val % 10;
-
-    let hundreds = ((whole / 100) % 10) as u8;
-    let tens = ((whole / 10) % 10) as u8;
-    let ones = (whole % 10) as u8;
-
-    let c_h = if hundreds > 0 { (b'0' + hundreds) as char } else { ' ' };
-    let c_t = (b'0' + tens) as char;
-    let c_o = (b'0' + ones) as char;
-    let c_f = (b'0' + (frac as u8)) as char;
-
-    (is_neg, c_h, c_t, c_o, c_f)
 }
 
 fn format_buf<'a>(
@@ -480,7 +448,7 @@ fn format_buf<'a>(
     core::str::from_utf8(&buf[..idx]).unwrap_or("")
 }
 
-/// Pixel-perfect 6x10 Monospace Cleanroom Font
+/// Clean 6x10 Monospace Cleanroom Font
 fn get_glyph_6x10(c: char) -> [u8; 10] {
     match c {
         '0' => [0x1E, 0x21, 0x23, 0x25, 0x29, 0x31, 0x21, 0x1E, 0x00, 0x00],
@@ -532,7 +500,7 @@ fn get_glyph_6x10(c: char) -> [u8; 10] {
         'X' => [0x21, 0x12, 0x0C, 0x0C, 0x12, 0x21, 0x21, 0x21, 0x00, 0x00],
         'Y' => [0x21, 0x21, 0x12, 0x0C, 0x04, 0x04, 0x04, 0x04, 0x00, 0x00],
         'Z' => [0x3F, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x3F, 0x00, 0x00],
-        'o' => [0x00, 0x18, 0x24, 0x24, 0x18, 0x00, 0x00, 0x00, 0x00, 0x00], // Degree circle
-        _   => [0x00, 0x3F, 0x21, 0x21, 0x21, 0x3F, 0x00, 0x00, 0x00, 0x00], // Box fallback
+        'o' => [0x00, 0x18, 0x24, 0x24, 0x18, 0x00, 0x00, 0x00, 0x00, 0x00],
+        _   => [0x00, 0x3F, 0x21, 0x21, 0x21, 0x3F, 0x00, 0x00, 0x00, 0x00],
     }
 }
