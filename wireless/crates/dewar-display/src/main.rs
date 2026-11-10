@@ -3,7 +3,6 @@
 
 extern crate alloc;
 
-mod audio;
 mod display;
 mod kiosk_font;
 mod max31855;
@@ -105,26 +104,24 @@ fn main() -> ! {
     let assumed_temp_c_x10: i16 = -1400;
     let is_alarm: bool = false; // -140.0 C is safely below the -135.0 C alarm threshold
 
-    // Boot splash & Imperial Legion Fanfare audio
+    // Boot splash screen
     screen.backlight_on();
     screen.clear(display::COLOR_BG_APP);
     screen.draw_kiosk_str(20, 70, "LabSCADA Cryo Node", &kiosk_font::FONT_INTER_18, display::COLOR_TEXT_MAIN, display::COLOR_BG_APP);
     screen.draw_kiosk_str(20, 105, "2.8\" IPS Touch Display", &kiosk_font::FONT_INTER_14, display::COLOR_CRYO_CYAN, display::COLOR_BG_APP);
     screen.draw_kiosk_str(20, 130, "ESP-NOW Telemetry Ready", &kiosk_font::FONT_INTER_14, display::COLOR_STATUS_GREEN, display::COLOR_BG_APP);
-
-    println!("[AUDIO] Playing Imperial Legion Fanfare on GPIO 4...");
-    audio::play_startup_fanfare(peripherals.LEDC, peripherals.GPIO4, &delay);
     delay.delay_millis(1500);
 
-    screen.backlight_off();
-    println!("[DISPLAY] Boot splash complete -> Backlight OFF (touch glass to wake)");
-
-    let mut tx_buf = [0u8; 64];
-    let mut seq: u32 = 1;
-    let mut report_counter: u32 = 0;
-    let mut screen_timer: u32 = 0;
+    // Transition directly to Dewar Monitoring screen
     let mut hold_timer: u32 = 0;
     let mut latest_batt: u16 = 4100;
+    let mut seq: u32 = 1;
+    screen.draw_cryo_screen("Dewar 1 (Embryos)", assumed_temp_c_x10, latest_batt, seq, is_alarm, hold_timer > 0);
+    println!("[DISPLAY] Active Dewar monitoring initialized");
+
+    let mut tx_buf = [0u8; 64];
+    let mut report_counter: u32 = 0;
+    let mut screen_timer: u32 = DISPLAY_TIMEOUT_TICKS; // Stays on for 15 seconds
     let mut debounce_ticks: u32 = 0;
 
     loop {
@@ -137,7 +134,7 @@ fn main() -> ! {
             let pt = touch.read_touch(&delay);
 
             if !screen.is_backlight_on() {
-                // Wake screen upon first touch
+                // Wake screen upon touch
                 println!("[DISPLAY] >>> WAKING BACKLIGHT ON <<<");
                 screen.backlight_on();
                 screen_timer = DISPLAY_TIMEOUT_TICKS;

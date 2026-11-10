@@ -166,3 +166,4 @@ def write_font_def(out, var_name, font_data, first_char, last_char):
 
 if __name__ == "__main__":
     main()
+

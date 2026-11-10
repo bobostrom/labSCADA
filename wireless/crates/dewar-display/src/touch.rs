@@ -175,26 +175,35 @@ impl<'d> Ft6336<'d> {
     }
 
     pub fn write_register(&mut self, reg: u8, val: u8, delay: &Delay) {
+        self.write_device_reg(FT6336_I2C_ADDR, reg, val, delay);
+    }
+
+    pub fn read_register(&mut self, reg: u8, delay: &Delay) -> u8 {
+        self.read_device_reg(FT6336_I2C_ADDR, reg, delay)
+    }
+
+    pub fn write_device_reg(&mut self, addr: u8, reg: u8, val: u8, delay: &Delay) -> bool {
         self.i2c_start(delay);
-        if !self.i2c_write_byte(FT6336_I2C_ADDR << 1, delay) {
+        if !self.i2c_write_byte(addr << 1, delay) {
             self.i2c_stop(delay);
-            return;
+            return false;
         }
         self.i2c_write_byte(reg, delay);
         self.i2c_write_byte(val, delay);
         self.i2c_stop(delay);
+        true
     }
 
-    pub fn read_register(&mut self, reg: u8, delay: &Delay) -> u8 {
+    pub fn read_device_reg(&mut self, addr: u8, reg: u8, delay: &Delay) -> u8 {
         self.i2c_start(delay);
-        if !self.i2c_write_byte(FT6336_I2C_ADDR << 1, delay) {
+        if !self.i2c_write_byte(addr << 1, delay) {
             self.i2c_stop(delay);
             return 0xFF;
         }
         self.i2c_write_byte(reg, delay);
 
         self.i2c_start(delay);
-        if !self.i2c_write_byte((FT6336_I2C_ADDR << 1) | 0x01, delay) {
+        if !self.i2c_write_byte((addr << 1) | 0x01, delay) {
             self.i2c_stop(delay);
             return 0xFF;
         }
@@ -231,8 +240,10 @@ impl<'d> Ft6336<'d> {
             let raw_y = (((y_h as u16) & 0x0F) << 8) | (y_l as u16);
 
             // Map coordinate space to landscape (320 x 240)
-            let x = raw_y.min(320);
-            let y = (240 - raw_x.min(240)).min(240);
+            // Display is rotated 0xE8 (Landscape).
+            // Sensor raw_y runs 320 (left) -> 0 (right), raw_x runs 0 (top) -> 240 (bottom).
+            let x = 320u16.saturating_sub(raw_y);
+            let y = raw_x.min(240);
 
             TouchPoint {
                 x,
