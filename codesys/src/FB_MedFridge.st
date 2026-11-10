@@ -9,37 +9,23 @@
    ============================================================================== *)
 FUNCTION_BLOCK FB_MedFridge
 VAR_INPUT
-    {attribute 'symbol' := 'readwrite'}
     wRawTempX10         : WORD := 16#D8F0;  (* Raw Modbus register (Fridge scaled temp * 10, -9999 = 16#D8F0) *)
-    {attribute 'symbol' := 'none'}
     rHighTrip           : REAL := 8.5;      (* CAP excursion threshold (standard 8.0°C + 0.5 buffer) *)
-    {attribute 'symbol' := 'none'}
     rLowTrip            : REAL := 2.0;      (* Freezing prevention threshold *)
-    {attribute 'symbol' := 'none'}
     rHysteresis         : REAL := 0.5;      (* Anti-chatter deadband (°C) *)
-    {attribute 'symbol' := 'none'}
     tPickupDelay        : TIME := T#2M;     (* 2-minute sustained delay to suppress door-opening noise *)
-    {attribute 'symbol' := 'none'}
     tDropoutDelay       : TIME := T#10S;    (* 10-second clean recovery required to reset *)
-    {attribute 'symbol' := 'none'}
     uiRawFaultCode      : UINT := 0;        (* Probe fault code: 0=OK, 0xFF=Unpopulated *)
-    {attribute 'symbol' := 'none'}
     bCommLoss           : BOOL := FALSE;    (* Watchdog comms loss flag *)
 END_VAR
 VAR_OUTPUT
-    {attribute 'symbol' := 'read'}
     rProcessTemp        : REAL := -999.0;   (* Published process temperature to SCADA & DB *)
-    {attribute 'symbol' := 'read'}
     bAlarm              : BOOL := FALSE;    (* Priority 2 Emergency Alarm flag *)
-    {attribute 'symbol' := 'read'}
     bWarn               : BOOL := FALSE;    (* Pre-alarm pickup delay warning flag *)
-    {attribute 'symbol' := 'read'}
     bProbeFault         : BOOL := TRUE;     (* Physical probe disconnected or shorted *)
 END_VAR
 VAR
-    {attribute 'symbol' := 'none'}
     iTempX10            : INT;
-    {attribute 'symbol' := 'none'}
     fbAlarmEval         : FB_AnalogAlarm;
 END_VAR
 

@@ -10,19 +10,14 @@
    ============================================================================== *)
 FUNCTION_BLOCK FB_FacilityDoor
 VAR_INPUT
-    {attribute 'symbol' := 'readwrite'}
     bDoorClosed         : BOOL := FALSE;    (* Hardware DI: 24V/TRUE = Closed, 0V/FALSE = Open / Unwired *)
-    {attribute 'symbol' := 'none'}
     tOpenAlarmDelay     : TIME := T#60M;    (* Sustained open threshold before alarm asserts *)
-    {attribute 'symbol' := 'none'}
     tDropoutDelay       : TIME := T#5S;     (* Anti-chatter filter on door closure *)
 END_VAR
 VAR_OUTPUT
-    {attribute 'symbol' := 'read'}
     bDoorAlarm          : BOOL := FALSE;    (* Filtered Priority 2 Alarm output to SCADA *)
 END_VAR
 VAR
-    {attribute 'symbol' := 'none'}
     fbFilter            : FB_PickupDropout;
 END_VAR
 

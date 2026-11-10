@@ -9,25 +9,17 @@
    ============================================================================== *)
 FUNCTION_BLOCK FB_G210_Incubator
 VAR_INPUT
-    {attribute 'symbol' := 'readwrite'}
     bAlarmContact       : BOOL := FALSE;    (* Physical dry alarm contact from incubator (FALSE = Normal, TRUE = Alarm) *)
-    {attribute 'symbol' := 'read'}
     bMute               : BOOL := FALSE;    (* TRUE = Suppress alarm (Cabinet door open or recovery grace) *)
-    {attribute 'symbol' := 'none'}
     tPickupDelay        : TIME := T#15S;    (* Contact bounce filter *)
-    {attribute 'symbol' := 'none'}
     tDropoutDelay       : TIME := T#5S;     (* Recovery confirmation filter *)
 END_VAR
 VAR_OUTPUT
-    {attribute 'symbol' := 'read'}
     bAlarm              : BOOL := FALSE;    (* Filtered Priority 2 Alarm output to SCADA *)
-    {attribute 'symbol' := 'read'}
     bMuted              : BOOL := FALSE;    (* Contact is tripped but actively suppressed by cabinet mute *)
-    {attribute 'symbol' := 'read'}
     rZoneTemps          : ARRAY[1..10] OF REAL := [10(-99.0)];  (* 10 Heated Chambers, Default -99.0 °C (Unwired Sentinel) *)
 END_VAR
 VAR
-    {attribute 'symbol' := 'none'}
     fbFilter            : FB_PickupDropout;
 END_VAR
 
@@ -47,4 +39,3 @@ IF bMute THEN
 ELSE
     bAlarm := fbFilter.Q;
 END_IF;
-

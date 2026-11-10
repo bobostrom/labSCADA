@@ -11,35 +11,22 @@
    ============================================================================== *)
 FUNCTION_BLOCK FB_IncubatorCabinet
 VAR_INPUT
-    {attribute 'symbol' := 'readwrite'}
     bDoorClosed         : BOOL := FALSE;    (* Hardware DI: 24V/TRUE = Closed, 0V/FALSE = Open / Disconnected *)
-    {attribute 'symbol' := 'none'}
     tDoorAlarmDelay     : TIME := T#3M;     (* Alarm if cabinet door left open longer than this *)
-    {attribute 'symbol' := 'none'}
     tPostCloseGrace     : TIME := T#3M;     (* Time to keep incubator alarms muted after door closes *)
-    {attribute 'symbol' := 'read'}
     rCabinetTemp        : REAL := 24.5;     (* Interior ambient temp (°C) *)
-    {attribute 'symbol' := 'none'}
     rFanOnSetpoint      : REAL := 28.0;     (* Exhaust fan ON setpoint in °C *)
-    {attribute 'symbol' := 'none'}
     rFanHysteresis      : REAL := 1.5;      (* Deadband in °C (turns off at 26.5°C) *)
 END_VAR
 VAR_OUTPUT
-    {attribute 'symbol' := 'read'}
     bDoorAlarm          : BOOL := FALSE;    (* Alarm: Cabinet door held open past delay *)
-    {attribute 'symbol' := 'read'}
     bIncubatorMute      : BOOL := FALSE;    (* TRUE while door is open OR during post-closure grace *)
-    {attribute 'symbol' := 'read'}
     tGraceRemaining     : TIME := T#0S;     (* Time remaining in post-close recovery grace *)
-    {attribute 'symbol' := 'read'}
     bFanCommand         : BOOL := FALSE;    (* Command to future DO fan relay *)
-    {attribute 'symbol' := 'read'}
     bCabinetOvertemp    : BOOL := FALSE;    (* Alarm: Cabinet internal temp > 32°C *)
 END_VAR
 VAR
-    {attribute 'symbol' := 'none'}
     tonDoorOpen         : TON;              (* Timer for door held open alert *)
-    {attribute 'symbol' := 'none'}
     tofGrace            : TOF;              (* Off-delay timer keeping mute active post-closure *)
 END_VAR
 
@@ -84,4 +71,3 @@ END_IF;
 // 5. CABINET OVERTEMPERATURE SUPERVISION
 // ==============================================================================
 bCabinetOvertemp := (rCabinetTemp >= 32.0);
-

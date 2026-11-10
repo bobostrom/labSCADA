@@ -11,63 +11,37 @@
 FUNCTION_BLOCK FB_Dewar
 VAR_INPUT
     (* --- Operational Alarm Thresholds & Delays --- *)
-    {attribute 'symbol' := 'none'}
     rHighTrip           : REAL := -135.0;   (* Critical specimen danger limit (°C) *)
-    {attribute 'symbol' := 'none'}
     rHysteresis         : REAL := 5.0;      (* Reset deadband (°C) *)
-    {attribute 'symbol' := 'none'}
     tPickupDelay        : TIME := T#30S;    (* Sustained warm excursion required to trip *)
-    {attribute 'symbol' := 'none'}
     tDropoutDelay       : TIME := T#10S;    (* Clean fill required to reset *)
 
     (* --- 8 Modbus Holding Registers (Direct from Bridge Slot 1) --- *)
-    {attribute 'symbol' := 'readwrite'}
     wRawTempX10         : WORD := 16#D8F0;  (* Offset 0: Dewar scaled temp * 10 (-1954 = -195.4 °C, -9999 = Sentinel) *)
-    {attribute 'symbol' := 'readwrite'}
     uiRawBatteryMv      : UINT := 3850;     (* Offset 1: Battery health in millivolts *)
-    {attribute 'symbol' := 'readwrite'}
     uiRawFaultCode      : UINT := 0;        (* Offset 2: Probe fault (0=OK, 1=Open, 2=GND, 3=VCC, 4=Hardware Error) *)
-    {attribute 'symbol' := 'readwrite'}
     wRawRSSI            : WORD := 16#FFCE;  (* Offset 3: Wireless link margin in dBm (-50 = 16#FFCE) *)
-    {attribute 'symbol' := 'readwrite'}
     wRawSeqLow          : WORD := 0;        (* Offset 4: Sequence counter low word *)
-    {attribute 'symbol' := 'readwrite'}
     wRawSeqHigh         : WORD := 0;        (* Offset 5: Sequence counter high word *)
-    {attribute 'symbol' := 'readwrite'}
     uiRawAgeSec         : UINT := 0;        (* Offset 6: Telemetry age in seconds *)
-    {attribute 'symbol' := 'readwrite'}
     wRawStatusFlags     : WORD := 16#0001;  (* Offset 7: Bit 0=Online, Bit 1=LowBatt, Bit 2=CommLoss *)
-    {attribute 'symbol' := 'none'}
     bIsWireless         : BOOL := TRUE;     (* TRUE = Enable wireless diagnostics *)
-    {attribute 'symbol' := 'none'}
     tCommLossTimeout    : TIME := T#60S;    (* Watchdog comms loss alarm threshold *)
 END_VAR
 VAR_OUTPUT
-    {attribute 'symbol' := 'read'}
     rProcessTemp        : REAL := -999.0;   (* Published process temperature to SCADA (°C) *)
-    {attribute 'symbol' := 'read'}
     bAlarm              : BOOL := FALSE;    (* Priority 2 Emergency Temperature Alarm flag *)
-    {attribute 'symbol' := 'read'}
     bWarn               : BOOL := FALSE;    (* Pre-alarm pickup delay warning flag *)
-    {attribute 'symbol' := 'read'}
     rBatteryVolts       : REAL := 3.85;     (* Published battery voltage (V) *)
-    {attribute 'symbol' := 'read'}
     bLowBattery         : BOOL := FALSE;    (* Low battery warning flag (< 3.4V) *)
-    {attribute 'symbol' := 'read'}
     iRSSI               : INT := -50;       (* Published wireless link margin (dBm) *)
-    {attribute 'symbol' := 'read'}
     bCommLoss           : BOOL := FALSE;    (* Comms loss watchdog alarm *)
-    {attribute 'symbol' := 'read'}
     bProbeFault         : BOOL := TRUE;     (* Physical probe disconnected or shorted (defaults TRUE on cold boot) *)
-    {attribute 'symbol' := 'read'}
     uiFaultCode         : UINT := 0;        (* Published probe fault reason (0=OK, 1=Open, 2=GND, 3=VCC) *)
-    {attribute 'symbol' := 'read'}
     uiAgeSec            : UINT := 0;        (* Telemetry age in seconds *)
 END_VAR
 VAR
-    {attribute 'symbol' := 'none'}
     iTempX10            : INT;
-    {attribute 'symbol' := 'none'}
     fbAlarmEval         : FB_AnalogAlarm;
 END_VAR
 

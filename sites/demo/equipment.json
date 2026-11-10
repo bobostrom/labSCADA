@@ -51,7 +51,7 @@
       "temp_cnl": 102,
       "alarm_cnl": 111,
       "warn_cnl": 115,
-      "low_limit": 2.0,
+      "low_limit": 1.0,
       "high_limit": 8.5
     }
   ],

@@ -9,23 +9,16 @@
    ============================================================================== *)
 FUNCTION_BLOCK FB_Incubator
 VAR_INPUT
-    {attribute 'symbol' := 'none'}
     bAlarmContact       : BOOL := FALSE;    (* Physical dry alarm contact from incubator (FALSE = Normal, TRUE = Alarm) *)
-    {attribute 'symbol' := 'read'}
     bMute               : BOOL := FALSE;    (* TRUE = Suppress alarm (Cabinet door open or recovery grace) *)
-    {attribute 'symbol' := 'none'}
     tPickupDelay        : TIME := T#15S;    (* Contact bounce suppression filter *)
-    {attribute 'symbol' := 'none'}
     tDropoutDelay       : TIME := T#5S;     (* Recovery confirmation filter *)
 END_VAR
 VAR_OUTPUT
-    {attribute 'symbol' := 'read'}
     bAlarm              : BOOL := FALSE;    (* Filtered Priority 2 Alarm output to SCADA *)
-    {attribute 'symbol' := 'read'}
     bMuted              : BOOL := FALSE;    (* Contact is tripped but suppressed by active mute *)
 END_VAR
 VAR
-    {attribute 'symbol' := 'none'}
     fbFilter            : FB_PickupDropout;
 END_VAR
 

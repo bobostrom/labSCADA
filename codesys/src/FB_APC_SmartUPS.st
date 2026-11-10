@@ -10,74 +10,44 @@
    ============================================================================== *)
 FUNCTION_BLOCK FB_APC_SmartUPS
 VAR_INPUT
-    {attribute 'symbol' := 'readwrite'}
     wStatusWord         : WORD := 16#0001;  (* Register 40001: Bit 0=Online, Bit 1=On Battery, Bit 4=Low Battery *)
-    {attribute 'symbol' := 'readwrite'}
     wBatteryPct         : WORD := 100;     (* Register 40002: Battery Charge (0-100%) *)
-    {attribute 'symbol' := 'readwrite'}
     wRuntimeSec         : WORD := 0;       (* Register 40003: Runtime in seconds *)
-    {attribute 'symbol' := 'readwrite'}
     wLineVoltageX10     : WORD := 1200;    (* Register 40004: Line Voltage * 10 (1200 = 120.0 V) *)
-    {attribute 'symbol' := 'readwrite'}
     wLoadPct            : WORD := 0;       (* Register 40005: Inverter Load (0-100%) *)
-    {attribute 'symbol' := 'readwrite'}
     wRuntimeMin         : WORD := 60;      (* Register 40007: Runtime in minutes *)
-    {attribute 'symbol' := 'readwrite'}
     wBeeperStatus       : WORD := 1;       (* Register 40008: 1=Enabled, 2=Muted, 3=Disabled *)
 
     (* --- Interactive Operator Commands (from Kiosk UI or PLC) --- *)
-    {attribute 'symbol' := 'readwrite'}
     bCmdMuteBeeper      : BOOL := FALSE;   (* TRUE pulse: Temporarily mute beeper for current power loss *)
-    {attribute 'symbol' := 'readwrite'}
     bCmdDisableBeeper   : BOOL := FALSE;   (* TRUE pulse: Disable beeper speaker *)
-    {attribute 'symbol' := 'readwrite'}
     bCmdEnableBeeper    : BOOL := FALSE;   (* TRUE pulse: Enable beeper speaker *)
 
-    {attribute 'symbol' := 'none'}
     tPowerLossDelay     : TIME := T#10S;   (* Debounce filter to ignore momentary utility grid flickers *)
-    {attribute 'symbol' := 'none'}
     wLowBatteryLimit    : WORD := 20;      (* Low battery alarm threshold (%) *)
-    {attribute 'symbol' := 'none'}
     wLowRuntimeLimitMin : WORD := 15;      (* Low runtime alarm threshold (minutes) *)
 END_VAR
 VAR_OUTPUT
-    {attribute 'symbol' := 'read'}
     bOnline             : BOOL := TRUE;    (* TRUE = Grid utility power is normal *)
-    {attribute 'symbol' := 'read'}
     bOnBattery          : BOOL := FALSE;   (* TRUE = Running on battery inverter *)
-    {attribute 'symbol' := 'read'}
     bAlarmPowerLost     : BOOL := FALSE;   (* Priority 2: Utility grid dropped -> Manual generator required *)
-    {attribute 'symbol' := 'read'}
     bAlarmLowBattery    : BOOL := FALSE;   (* Priority 1: Battery reserve critically low *)
-    {attribute 'symbol' := 'read'}
     rBatteryPct         : REAL := 100.0;   (* Battery % (0.0 - 100.0) *)
-    {attribute 'symbol' := 'read'}
     rLineVoltage        : REAL := 120.0;   (* Utility line voltage in Volts RMS *)
-    {attribute 'symbol' := 'read'}
     rRuntimeMinutes     : REAL := 60.0;    (* Estimated remaining runtime in minutes *)
-    {attribute 'symbol' := 'read'}
     rLoadPct            : REAL := 0.0;     (* Current load percentage *)
-    {attribute 'symbol' := 'read'}
     bBeeperMuted        : BOOL := FALSE;   (* Beeper is currently muted *)
-    {attribute 'symbol' := 'read'}
     bBeeperDisabled     : BOOL := FALSE;   (* Beeper is disabled *)
 
     (* --- Modbus Command Output (Mapped to Holding Register 40010 / Offset 9) --- *)
-    {attribute 'symbol' := 'readwrite'}
     wCommandOut         : WORD := 0;       (* 1=Mute, 2=Disable, 3=Enable *)
 END_VAR
 VAR
-    {attribute 'symbol' := 'none'}
     fbFilterPowerLoss   : FB_PickupDropout;
-    {attribute 'symbol' := 'none'}
     tonCmdPulse         : TON;
-    {attribute 'symbol' := 'none'}
     wActiveCmd          : WORD := 0;
-    {attribute 'symbol' := 'none'}
     bPrevMute           : BOOL := FALSE;
-    {attribute 'symbol' := 'none'}
     bPrevDisable        : BOOL := FALSE;
-    {attribute 'symbol' := 'none'}
     bPrevEnable         : BOOL := FALSE;
 END_VAR
 

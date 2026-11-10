@@ -10,13 +10,10 @@ PROGRAM PLC_PRG
 VAR
 	fbRandomNumber: FB_RandomGenerator;
     (* --- System Heartbeat Blinker (Pure IEC 61131-3) --- *)
-    {attribute 'symbol' := 'none'}
     tonBlink: TON;
-    {attribute 'symbol' := 'read'}
     bHeartbeat: BOOL := FALSE;
 
     (* --- Analog Telemetry: Room Ambient Published over OPC UA --- *)
-    {attribute 'symbol' := 'read'}
     rLabAmbientTemp: REAL := 25.0; (* Target ~25.0 °C (derived from fbColdStorage.rAmbientTemp) *)
 
     (* --- Encapsulated Clinical Equipment Function Blocks (Published over OPC UA) --- *)
