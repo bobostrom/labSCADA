@@ -43,7 +43,7 @@
       "key": "fridge",
       "name": "Medical Fridge",
       "short_name": "Fridge",
-      "target_label": "Target: 2.0\u00b0C \u2013 8.0\u00b0C",
+      "target_label": "Target: 1.0°C – 8.0°C",
       "plc_fb": "fbColdStorage",
       "is_wireless": true,
       "wireless_node": "cold_storage_node_01",
