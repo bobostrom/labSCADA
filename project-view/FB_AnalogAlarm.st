@@ -41,7 +41,7 @@ VAR
     bLowCondition   : BOOL := FALSE;
     fbTimer         : FB_PickupDropout;
 END_VAR
-
+// --- implementation ---
 // 1. Calculate effective dropout thresholds
 IF rHighDropout <> 0.0 THEN
     rEffHighDO := rHighDropout;
@@ -102,5 +102,4 @@ ELSE
     bHighTrip := FALSE;
     bLowTrip  := FALSE;
 END_IF;
-
-END_FUNCTION_BLOCK
+END_FUNCTION

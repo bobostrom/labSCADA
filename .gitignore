@@ -41,3 +41,8 @@ target/
 **/target/
 *.bin
 *_RECOVERED_*.project
+.cts-docs/
+*.~u
+*.~u~
+*.compileinfo~
+~cts-*.tmp

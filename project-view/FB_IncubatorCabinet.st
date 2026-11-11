@@ -29,7 +29,7 @@ VAR
     tonDoorOpen         : TON;              (* Timer for door held open alert *)
     tofGrace            : TOF;              (* Off-delay timer keeping mute active post-closure *)
 END_VAR
-
+// --- implementation ---
 // ==============================================================================
 // 1. CABINET DOOR HELD OPEN ALARM
 //    Fail-safe hardware: 24V (TRUE) when closed, 0V (FALSE) when open/cut.
@@ -71,3 +71,4 @@ END_IF;
 // 5. CABINET OVERTEMPERATURE SUPERVISION
 // ==============================================================================
 bCabinetOvertemp := (rCabinetTemp >= 32.0);
+END_FUNCTION

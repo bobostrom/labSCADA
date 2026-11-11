@@ -58,7 +58,7 @@ VAR
     bPrevCancelAccess   : BOOL := FALSE;
     tonCmdPulse         : TON;
 END_VAR
-
+// --- implementation ---
 // ==============================================================================
 // 1. HARDWARE HEALTH & TELEMETRY DECODING
 // ==============================================================================
@@ -149,3 +149,4 @@ END_IF;
 
 wCommandMailboxOut := wActiveCmdCode;
 wCommandParamOut   := wActiveCmdParam;
+END_FUNCTION

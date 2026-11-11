@@ -31,7 +31,7 @@ VAR
 	tonPickup       : TON;
     tonDropout      : TON;
 END_VAR
-
+// --- implementation ---
 // Track raw instantaneous input
 bPickup := IN;
 
@@ -58,5 +58,4 @@ ELSE
         Q := FALSE;
     END_IF;
 END_IF;
-
-END_FUNCTION_BLOCK
+END_FUNCTION

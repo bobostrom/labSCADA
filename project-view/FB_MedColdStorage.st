@@ -58,7 +58,7 @@ VAR
     fbAmbientAlarmEval  : FB_AnalogAlarm;   (* Cleanroom Ambient Comfort Window Evaluator *)
     iAmbientTempX10     : INT;
 END_VAR
-
+// --- implementation ---
 // ==============================================================================
 // 1. SHARED WIRELESS CLEANROOM HEALTH & TELEMETRY DECODING
 // ==============================================================================
@@ -121,3 +121,4 @@ fbAmbientAlarmEval(
 );
 bAmbientAlarm := fbAmbientAlarmEval.bAlarm;
 bAmbientWarn  := fbAmbientAlarmEval.bWarn;
+END_FUNCTION

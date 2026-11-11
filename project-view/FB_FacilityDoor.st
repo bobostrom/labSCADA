@@ -20,7 +20,7 @@ END_VAR
 VAR
     fbFilter            : FB_PickupDropout;
 END_VAR
-
+// --- implementation ---
 // TIMED DEBOUNCE FILTER FOR DOOR HELD OPEN ALARM
 fbFilter(
     IN            := NOT bDoorClosed,
@@ -28,3 +28,4 @@ fbFilter(
     tDropoutDelay := tDropoutDelay
 );
 bDoorAlarm := fbFilter.Q;
+END_FUNCTION

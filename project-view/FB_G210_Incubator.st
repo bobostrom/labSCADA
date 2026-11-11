@@ -22,7 +22,7 @@ END_VAR
 VAR
     fbFilter            : FB_PickupDropout;
 END_VAR
-
+// --- implementation ---
 // 1. TIMED DEBOUNCE FILTER DIRECTLY ON ALARM CONTACT
 fbFilter(
     IN            := bAlarmContact,
@@ -39,3 +39,4 @@ IF bMute THEN
 ELSE
     bAlarm := fbFilter.Q;
 END_IF;
+END_FUNCTION

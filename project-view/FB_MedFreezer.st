@@ -27,7 +27,7 @@ VAR
     iTempX10            : INT;
     fbAlarmEval         : FB_AnalogAlarm;
 END_VAR
-
+// --- implementation ---
 // ==============================================================================
 // 1. HARDWARE HEALTH & PROCESS TEMPERATURE SCALING
 // ==============================================================================
@@ -55,3 +55,4 @@ fbAlarmEval(
 
 bAlarm     := fbAlarmEval.bAlarm;
 bWarn      := fbAlarmEval.bWarn;
+END_FUNCTION

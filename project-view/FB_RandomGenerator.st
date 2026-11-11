@@ -11,7 +11,7 @@ VAR
     udiSeed: UDINT := 123456789; (* Initial non-zero seed *)
     udiRange: UDINT;
 END_VAR
-
+// --- implementation ---
 IF bExecute THEN
     (* LCG Formula: X_{n+1} = (a * X_n + c) mod 2^32 *)
     udiSeed := (udiSeed * 1664525) + 1013904223;
@@ -24,3 +24,4 @@ IF bExecute THEN
         diResult := diMin;
     END_IF;
 END_IF;
+END_FUNCTION_BLOCK

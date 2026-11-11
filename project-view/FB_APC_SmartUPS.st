@@ -50,7 +50,7 @@ VAR
     bPrevDisable        : BOOL := FALSE;
     bPrevEnable         : BOOL := FALSE;
 END_VAR
-
+// --- implementation ---
 // 1. DECODE APC SMART-UPS STATUS WORD (Register 40001)
 // Bit 0 = State Online (Grid OK)
 // Bit 1 = State On Battery (Power Failure)
@@ -116,3 +116,4 @@ IF tonCmdPulse.Q THEN
 END_IF;
 
 wCommandOut := wActiveCmd;
+END_FUNCTION
