@@ -456,23 +456,29 @@ impl<'d> Ili9341<'d> {
 
         // Battery Pill in Header - in Inter 11pt
         let batt_pct = if batt_mv >= 4200 { 100 } else if batt_mv <= 3500 { 0 } else { ((batt_mv - 3500) * 100) / 700 };
+        let is_usb_power = batt_mv >= 4040;
         let mut b_buf = [0u8; 24];
-        let b_str = format_buf(
-            &mut b_buf,
-            "BAT: ",
-            (batt_mv / 1000) as u32,
-            ".",
-            ((batt_mv % 1000) / 100) as u32,
-            "V",
-            0,
-            "",
-        );
+        let b_str = if is_usb_power {
+            "PWR: USB"
+        } else {
+            format_buf(
+                &mut b_buf,
+                "BAT: ",
+                (batt_mv / 1000) as u32,
+                ".",
+                ((batt_mv % 1000) / 100) as u32,
+                "V",
+                0,
+                "",
+            )
+        };
+        let b_color = if is_usb_power { COLOR_CRYO_CYAN } else { COLOR_STATUS_GREEN };
         let b_w = FONT_INTER_11.string_width(b_str);
         let pill_w = b_w + 16;
         let pill_x = LCD_WIDTH - 8 - pill_w - 4;
         self.fill_rect(pill_x, 13, pill_w, 22, COLOR_BG_CARD_SUB);
         self.fill_rect(pill_x, 13, pill_w, 1, COLOR_BORDER_SUBTLE);
-        self.draw_kiosk_str(pill_x + 8, 17, b_str, &FONT_INTER_11, COLOR_STATUS_GREEN, COLOR_BG_CARD_SUB);
+        self.draw_kiosk_str(pill_x + 8, 17, b_str, &FONT_INTER_11, b_color, COLOR_BG_CARD_SUB);
 
         // 3. Main Hero Panel (#02121e with Subtle Glacier Border)
         self.fill_rect(4, 41, LCD_WIDTH - 8, 102, COLOR_BG_CARD_SUB);

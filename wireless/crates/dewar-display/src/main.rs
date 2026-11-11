@@ -125,28 +125,48 @@ fn main() -> ! {
     delay.delay_millis(1500);
 
     // Transition directly to Dewar Monitoring screen
+    let pin_mv: u16 = adc1.read_blocking(&mut batt_pin);
+    let mut latest_batt: u16 = pin_mv * 2;
     let mut hold_timer: u32 = 0;
-    let mut latest_batt: u16 = 4100;
     let mut seq: u32 = 1;
     screen.draw_cryo_screen("Dewar 1 (Embryos)", current_temp_c_x10, latest_batt, seq, is_alarm, hold_timer > 0);
-    println!("[DISPLAY] Active Dewar monitoring initialized (Initial Temp: {} dC, Fault: {})",
-        current_temp_c_x10, sensor_fault_code);
+    println!("[DISPLAY] Active Dewar monitoring initialized (Initial Temp: {} dC, Batt: {} mV, Fault: {})",
+        current_temp_c_x10, latest_batt, sensor_fault_code);
 
     let mut tx_buf = [0u8; 64];
     let mut report_counter: u32 = 0;
     let mut sensor_read_counter: u32 = 0;
-    let mut screen_timer: u32 = DISPLAY_TIMEOUT_TICKS; // Stays on for 15 seconds
+    let mut screen_timer: u32 = DISPLAY_TIMEOUT_TICKS; // Stays on for 15 seconds on battery
     let mut debounce_ticks: u32 = 0;
+    let usb_regs = esp_hal::peripherals::USB_DEVICE::regs();
+    let mut last_sof: u16 = 0;
+    let mut is_usb_connected: bool = false;
 
     loop {
         if debounce_ticks > 0 {
             debounce_ticks -= 1;
         }
 
-        // A. Periodic Temperature Measurement (every 500ms / 50 ticks)
+        // A. Periodic Temperature, Battery & USB Measurement (every 500ms / 50 ticks)
         sensor_read_counter += 1;
         if sensor_read_counter >= 50 {
             sensor_read_counter = 0;
+
+            // Check hardware USB Start-Of-Frame (SOF) packet counter
+            // USB Host sends 1 frame every 1ms; if counter changes, USB data connection is live!
+            let cur_sof = usb_regs.fram_num().read().sof_frame_index().bits();
+            let is_usb_data = cur_sof != last_sof;
+            last_sof = cur_sof;
+
+            // Read Battery ADC (GPIO 9 has 2:1 onboard resistor divider)
+            let pin_mv: u16 = adc1.read_blocking(&mut batt_pin);
+            let new_batt = pin_mv * 2;
+            let batt_changed = (new_batt / 50) != (latest_batt / 50); // Redraw if shifted by >50mV
+            latest_batt = new_batt;
+
+            // Unit is USB-powered if rail >= 4040mV (charge/float rail is ~4.07V-4.2V) or USB SOF active
+            is_usb_connected = latest_batt >= 4040 || is_usb_data;
+
             let reading = max31855.read(&delay);
             let (new_temp, new_fault) = if reading.fault == max31855::FaultType::None {
                 (reading.temp_c_x10, 0u8)
@@ -169,7 +189,7 @@ fn main() -> ! {
             prev_alarm = is_alarm;
 
             // If screen is on and data changed, redraw screen
-            if screen.is_backlight_on() && temp_changed {
+            if screen.is_backlight_on() && (temp_changed || batt_changed) {
                 screen.draw_cryo_screen("Dewar 1 (Embryos)", current_temp_c_x10, latest_batt, seq, is_alarm, hold_timer > 0);
             }
         }
@@ -215,11 +235,18 @@ fn main() -> ! {
             hold_timer -= 1;
         }
 
-        // D. Decrement Screen Inactivity Timer (15s sleep timeout)
-        if screen_timer > 0 {
+        // D. Screen Inactivity / USB Power Management
+        // If USB is connected (rail >= 4040mV or USB host SOF), screen stays awake permanently.
+        // On battery power (< 4040mV), screen times out after 15 seconds to conserve LiPo.
+        if is_usb_connected {
+            screen_timer = DISPLAY_TIMEOUT_TICKS;
+            if !screen.is_backlight_on() {
+                screen.backlight_on();
+            }
+        } else if screen_timer > 0 {
             screen_timer -= 1;
             if screen_timer == 0 {
-                println!("[DISPLAY] 15s timeout reached -> Backlight OFF");
+                println!("[DISPLAY] 15s timeout reached (Battery mode) -> Backlight OFF");
                 screen.backlight_off();
             }
         }
