@@ -3,9 +3,8 @@
   <Subscriptions>
     <Subscription active="true" displayName="IVF_Telemetry" publishingInterval="1000">
       <Item active="true" nodeID="ns=4;s=|var|WAGO 750-8212 PFC200 G2 2ETH RS.Application.PLC_PRG.rLabAmbientTemp" displayName="Lab Ambient Temp" tagCode="Temperature_01" dataType="System.Double" isArray="false" />
-      <Item active="true" nodeID="ns=4;s=|var|WAGO 750-8212 PFC200 G2 2ETH RS.Application.PLC_PRG.fbFridge.rProcessTemp" displayName="Medical Fridge" tagCode="Temperature_02" dataType="System.Double" isArray="false" />
-      <Item active="true" nodeID="ns=4;s=|var|WAGO 750-8212 PFC200 G2 2ETH RS.Application.PLC_PRG.fbFreezer.rProcessTemp" displayName="Medical Freezer" tagCode="Temperature_03" dataType="System.Double" isArray="false" />
-      <Item active="true" nodeID="ns=4;s=|var|WAGO 750-8212 PFC200 G2 2ETH RS.Application.PLC_PRG.fbDewar1.rProcessTemp" displayName="Dewar 1" tagCode="TC_Temperature" dataType="System.Double" isArray="false" />
+      <Item active="true" nodeID="ns=4;s=|var|WAGO 750-8212 PFC200 G2 2ETH RS.Application.PLC_PRG.fbColdStorage.fbFridge.rProcessTemp" displayName="Medical Fridge" tagCode="Temperature_02" dataType="System.Double" isArray="false" />
+      <Item active="true" nodeID="ns=4;s=|var|WAGO 750-8212 PFC200 G2 2ETH RS.Application.PLC_PRG.fbColdStorage.fbFreezer.rProcessTemp" displayName="Medical Freezer" tagCode="Temperature_03" dataType="System.Double" isArray="false" />
       <Item active="true" nodeID="ns=4;s=|var|WAGO 750-8212 PFC200 G2 2ETH RS.Application.PLC_PRG.fbDewar2.rProcessTemp" displayName="Dewar 2" tagCode="Temperature_04" dataType="System.Double" isArray="false" />
       <Item active="true" nodeID="ns=4;s=|var|WAGO 750-8212 PFC200 G2 2ETH RS.Application.PLC_PRG.fbDewar3.rProcessTemp" displayName="Dewar 3" tagCode="Temperature_05" dataType="System.Double" isArray="false" />
       <Item active="true" nodeID="ns=4;s=|var|WAGO 750-8212 PFC200 G2 2ETH RS.Application.PLC_PRG.fbDewar4.rProcessTemp" displayName="Dewar 4" tagCode="Temperature_06" dataType="System.Double" isArray="false" />
@@ -16,13 +15,11 @@
       <Item active="true" nodeID="ns=4;s=|var|WAGO 750-8212 PFC200 G2 2ETH RS.Application.PLC_PRG.fbDewar3.bWarn" displayName="Dewar 3 Warn" tagCode="Dewar3_Warn" dataType="System.Boolean" isArray="false" />
       <Item active="true" nodeID="ns=4;s=|var|WAGO 750-8212 PFC200 G2 2ETH RS.Application.PLC_PRG.fbDewar4.bWarn" displayName="Dewar 4 Warn" tagCode="Dewar4_Warn" dataType="System.Boolean" isArray="false" />
       <Item active="true" nodeID="ns=4;s=|var|WAGO 750-8212 PFC200 G2 2ETH RS.Application.PLC_PRG.fbDewar5.bWarn" displayName="Dewar 5 Warn" tagCode="Dewar5_Warn" dataType="System.Boolean" isArray="false" />
-      <Item active="true" nodeID="ns=4;s=|var|WAGO 750-8212 PFC200 G2 2ETH RS.Application.PLC_PRG.fbFridge.bAlarm" displayName="Medical Fridge Alarm" tagCode="SensorStatus_01" dataType="System.Boolean" isArray="false" />
-      <Item active="true" nodeID="ns=4;s=|var|WAGO 750-8212 PFC200 G2 2ETH RS.Application.PLC_PRG.fbFreezer.bAlarm" displayName="Medical Freezer Alarm" tagCode="SensorStatus_02" dataType="System.Boolean" isArray="false" />
-      <Item active="true" nodeID="ns=4;s=|var|WAGO 750-8212 PFC200 G2 2ETH RS.Application.PLC_PRG.fbDewar1.bAlarm" displayName="Dewar 1 Alarm" tagCode="SensorStatus_03" dataType="System.Boolean" isArray="false" />
+      <Item active="true" nodeID="ns=4;s=|var|WAGO 750-8212 PFC200 G2 2ETH RS.Application.PLC_PRG.fbColdStorage.fbFridge.bAlarm" displayName="Medical Fridge Alarm" tagCode="SensorStatus_01" dataType="System.Boolean" isArray="false" />
+      <Item active="true" nodeID="ns=4;s=|var|WAGO 750-8212 PFC200 G2 2ETH RS.Application.PLC_PRG.fbColdStorage.fbFreezer.bAlarm" displayName="Medical Freezer Alarm" tagCode="SensorStatus_02" dataType="System.Boolean" isArray="false" />
       <Item active="true" nodeID="ns=4;s=|var|WAGO 750-8212 PFC200 G2 2ETH RS.Application.PLC_PRG.fbDewar2.bAlarm" displayName="Dewar 2 Alarm" tagCode="SensorStatus_04" dataType="System.Boolean" isArray="false" />
-      <Item active="true" nodeID="ns=4;s=|var|WAGO 750-8212 PFC200 G2 2ETH RS.Application.PLC_PRG.fbFridge.bWarn" displayName="Medical Fridge Warn" tagCode="SensorStatus_05" dataType="System.Boolean" isArray="false" />
-      <Item active="true" nodeID="ns=4;s=|var|WAGO 750-8212 PFC200 G2 2ETH RS.Application.PLC_PRG.fbFreezer.bWarn" displayName="Medical Freezer Warn" tagCode="SensorStatus_06" dataType="System.Boolean" isArray="false" />
-      <Item active="true" nodeID="ns=4;s=|var|WAGO 750-8212 PFC200 G2 2ETH RS.Application.PLC_PRG.fbDewar1.bWarn" displayName="Dewar 1 Warn" tagCode="SensorStatus_07" dataType="System.Boolean" isArray="false" />
+      <Item active="true" nodeID="ns=4;s=|var|WAGO 750-8212 PFC200 G2 2ETH RS.Application.PLC_PRG.fbColdStorage.fbFridge.bWarn" displayName="Medical Fridge Warn" tagCode="SensorStatus_05" dataType="System.Boolean" isArray="false" />
+      <Item active="true" nodeID="ns=4;s=|var|WAGO 750-8212 PFC200 G2 2ETH RS.Application.PLC_PRG.fbColdStorage.fbFreezer.bWarn" displayName="Medical Freezer Warn" tagCode="SensorStatus_06" dataType="System.Boolean" isArray="false" />
       <Item active="true" nodeID="ns=4;s=|var|WAGO 750-8212 PFC200 G2 2ETH RS.Application.PLC_PRG.fbDewar2.bWarn" displayName="Dewar 2 Warn" tagCode="SensorStatus_08" dataType="System.Boolean" isArray="false" />
       <Item active="true" nodeID="ns=4;s=|var|WAGO 750-8212 PFC200 G2 2ETH RS.Application.PLC_PRG.fbDoor01.bDoorClosed" displayName="Door 01 Contact" tagCode="SensorStatus_09" dataType="System.Boolean" isArray="false" />
       <Item active="true" nodeID="ns=4;s=|var|WAGO 750-8212 PFC200 G2 2ETH RS.Application.PLC_PRG.fbDoor02.bDoorClosed" displayName="Door 02 Contact" tagCode="SensorStatus_10" dataType="System.Boolean" isArray="false" />

@@ -1046,10 +1046,13 @@
       <div class="card" id="card-cold-storage" style="border-top:3px solid #00e676;">
         <div style="display:flex; justify-content:space-between; align-items:center;">
           <div class="card-title" style="margin-bottom:0;">Medical Cold Storage</div>
+          {% set cs_wireless_units = (equipment.fridges | selectattr('is_wireless', 'defined') | selectattr('is_wireless') | selectattr('batt_cnl', 'defined') | selectattr('batt_cnl') | list) + (equipment.freezers | selectattr('is_wireless', 'defined') | selectattr('is_wireless') | selectattr('batt_cnl', 'defined') | selectattr('batt_cnl') | list) %}
+          {% if cs_wireless_units | length > 0 %}
           <div id="cs-battery-indicator" style="display:flex; align-items:center; gap:4px; font-size:11px; font-family:monospace; font-weight:700; color:#10b981; background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.3); padding:2px 8px; border-radius:12px;" title="Wireless Node Battery Voltage">
             <span>🔋</span>
             <span id="val-cs-battery">--</span><span style="font-size:9px; color:#8899a6;">V</span>
           </div>
+          {% endif %}
         </div>
 
         <!-- Ambient Room Temperature Full-Width Strip (Above Fridge & Freezer) -->
@@ -1154,15 +1157,20 @@
               </div>
             </div>
             <!-- Cabinet Environmental Microclimate Badges -->
+            {% set cab_cfg = equipment.cabinets[0] if (equipment.cabinets and equipment.cabinets | length > 0) else {} %}
             <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
               <span class="status-badge status-normal" id="cab-door-badge" style="font-size:10px; padding:3px 8px;">🚪
                 DOOR CLOSED</span>
+              {% if cab_cfg.temp_cnl %}
               <span
                 style="font-size:11px; font-family:monospace; color:#38bdf8; font-weight:700; background:rgba(56,189,248,0.12); padding:3px 7px; border-radius:4px; border:1px solid rgba(56,189,248,0.25);"
-                id="cab-temp-val" title="Cabinet Interior Temperature">24.5°C</span>
+                id="cab-temp-val" title="Cabinet Interior Temperature">--.-°C</span>
+              {% endif %}
+              {% if cab_cfg.fan_command_cnl %}
               <span
                 style="font-size:10px; color:#94a3b8; background:rgba(255,255,255,0.06); padding:3px 7px; border-radius:4px; border:1px solid rgba(255,255,255,0.08);"
                 id="cab-fan-val" title="Thermostatic Exhaust Fan">🌀 FAN OFF</span>
+              {% endif %}
             </div>
           </div>
 
@@ -2040,10 +2048,11 @@
                   cardCS.style.borderTopColor = anyColdAlarm ? '#ff1744' : ((anyColdWarn || anyAmbientWarn) ? '#ffab00' : '#00e676');
                 }
 
-                // Update Cold Storage Wireless Node Battery Voltage (Channel 105)
+                // Update Cold Storage Wireless Node Battery Voltage (from configured batt_cnl)
                 const csBattEl = document.getElementById('val-cs-battery');
                 const csBattWrap = document.getElementById('cs-battery-indicator');
-                const csBattVal = r[105];
+                const csBattUnit = ((EQUIPMENT.fridges || []).concat(EQUIPMENT.freezers || [])).find(u => u.is_wireless && u.batt_cnl);
+                const csBattVal = csBattUnit ? r[csBattUnit.batt_cnl] : undefined;
                 if (csBattVal !== undefined && csBattVal !== null) {
                   const v = Number(csBattVal);
                   if (csBattEl) csBattEl.innerText = v.toFixed(2);
@@ -2315,11 +2324,12 @@
                   }
                 }
 
-                // Cabinet Microclimate Readouts
+                // Cabinet Microclimate Readouts (only when temp_cnl is configured)
                 const cabTemp = document.getElementById('cab-temp-val');
-                if (cabTemp) {
-                  const amb = r[101] ? (r[101] - 0.4).toFixed(1) : '24.5';
-                  cabTemp.innerText = `${amb}°C`;
+                const cabCfg = (EQUIPMENT.cabinets && EQUIPMENT.cabinets.length > 0) ? EQUIPMENT.cabinets[0] : null;
+                if (cabTemp && cabCfg && cabCfg.temp_cnl) {
+                  const t = r[cabCfg.temp_cnl];
+                  cabTemp.innerText = (t !== undefined && t !== null) ? `${Number(t).toFixed(1)}°C` : '--.-°C';
                 }
 
                 // 6. Facility UPS Systems (0 to N, populated from PLC via curcopy_current)
