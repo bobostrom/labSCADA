@@ -40,3 +40,4 @@ backups/
 target/
 **/target/
 *.bin
+*_RECOVERED_*.project

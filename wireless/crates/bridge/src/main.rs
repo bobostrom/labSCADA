@@ -6,6 +6,7 @@ extern crate alloc;
 use alloc::vec::Vec;
 use esp_backtrace as _;
 use esp_hal::timer::timg::TimerGroup;
+use esp_radio::esp_now::BROADCAST_ADDRESS;
 use wireless_protocol::{DeviceTelemetry, DownlinkPacket, UplinkPacket};
 
 pub mod gateway;
@@ -57,8 +58,8 @@ fn main() -> ! {
     let usb = DirectUsbSerial::new();
     let mut gw = gateway::WirelessGateway::new();
 
-    // Auto-bind Slot 1 for Dewar 1 with known Node MAC: 1C:DB:D4:A8:8A:64
-    let node_mac = [0x1C, 0xDB, 0xD4, 0xA8, 0x8A, 0x64];
+    // Auto-bind Slot 1 for Dewar 1 with 2.8" Touch Display Node MAC: B8:1F:3F:C3:A0:CC
+    let node_mac = [0xB8, 0x1F, 0x3F, 0xC3, 0xA0, 0xCC];
     gw.slots[0].bind(node_mac, wireless_protocol::DeviceType::DewarCryo);
 
     // Auto-bind Slot 2 for Fridge/Freezer with known Node MAC: 20:6E:F1:86:F2:C8
@@ -75,6 +76,7 @@ fn main() -> ! {
             temp_c_x10: -1956,
             battery_mv: 3820,
             sensor_fault: 0,
+            access_mode: false,
         },
     );
     let _ = gw.handle_uplink(&initial_pkt, -58, 1);
@@ -101,6 +103,7 @@ fn main() -> ! {
                     if let Some(downlink) = downlink_opt {
                         if let Ok(payload) = downlink.serialize(&mut downlink_buf) {
                             let _ = sender.send(&pkt.mac_address, payload);
+                            let _ = sender.send(&BROADCAST_ADDRESS, payload);
                         }
                     }
                 }
@@ -121,6 +124,19 @@ fn main() -> ! {
                     tx_buf.clear();
                     if let Ok(true) = gw.process_modbus_rtu(&rx_buf[..rx_len], &mut tx_buf) {
                         usb.write_bytes(&tx_buf);
+
+                        // If Modbus write queued a pending command in any slot, transmit immediately!
+                        for slot in &mut gw.slots {
+                            if let Some(downlink) = slot.pending_cmd.take() {
+                                if let Ok(payload) = downlink.serialize(&mut downlink_buf) {
+                                    if let Some(mac) = slot.bound_mac {
+                                        let _ = sender.send(&mac, payload);
+                                    }
+                                    let _ = sender.send(&BROADCAST_ADDRESS, payload);
+                                }
+                                let _ = slot.modbus_ctx.set_holding(wireless_protocol::modbus_map::REG_COMMAND_MAILBOX as u16, 0);
+                            }
+                        }
                     }
                 }
                 rx_len = 0;

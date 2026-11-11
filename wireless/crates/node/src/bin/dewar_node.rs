@@ -101,6 +101,7 @@ fn main() -> ! {
             temp_c_x10: reading.temp_c_x10,
             battery_mv,
             sensor_fault: reading.fault as u8,
+            access_mode: false,
         };
 
         let uplink = UplinkPacket::new(DEWAR_SLOT, mac_arr, seq, telemetry);

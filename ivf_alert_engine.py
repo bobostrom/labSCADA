@@ -775,8 +775,39 @@ def is_cryo_hold_active(equipment_name):
                     active_cryo_holds.pop(k, None)
     return False
 
+def sync_cryo_holds_with_plc(readings=None):
+    """Reconciles in-memory hold state with live PLC hardware status flags (e.g. Channel 126)."""
+    if readings is None:
+        readings = get_current_channel_values()
+    now = time.time()
+    for d in EQUIPMENT_CONFIG.get("dewars", []):
+        cnl = d.get("access_mode_cnl")
+        if not cnl:
+            continue
+        is_plc_active = bool(readings.get(cnl, 0) > 0)
+        tank_name = d.get("name", "Dewar 1")
+        with state_lock:
+            has_hold = tank_name in active_cryo_holds
+            if is_plc_active and not has_hold:
+                # Activated from physical node touchscreen
+                active_cryo_holds[tank_name] = {
+                    "expires_at": now + (30 * 60),
+                    "started_at": now,
+                    "user": "Touchscreen Node",
+                    "db_id": None
+                }
+            elif not is_plc_active and has_hold:
+                # Cancelled from physical node touchscreen or timer expired
+                hold = active_cryo_holds.pop(tank_name, None)
+                if hold and hold.get("db_id"):
+                    db_execute(f"UPDATE mod_arc_postgre_sql.cryo_maintenance_holds SET ended_at = NOW(), cancelled_early = TRUE WHERE id = {hold['db_id']};")
+
 def get_active_cryo_holds():
     """Returns dict of active holds with remaining seconds."""
+    try:
+        sync_cryo_holds_with_plc()
+    except Exception:
+        pass
     now = time.time()
     holds_info = {}
     with state_lock:
@@ -822,6 +853,12 @@ def start_cryo_hold(equipment_name, duration_minutes=15, user="Lab Staff"):
                 "db_id": db_id
             }
 
+        # Route supervisory command to CODESYS PLC via OPC UA
+        matching_dewar = next((d for d in EQUIPMENT_CONFIG.get("dewars", []) if d.get("name") == target or d.get("label") == target or d.get("key") == target), None)
+        if matching_dewar and matching_dewar.get("plc_fb"):
+            fb = matching_dewar["plc_fb"]
+            write_plc_bool(f"PLC_PRG.{fb}.bCmdSetAccessMode", True)
+
     # Resolve any currently active alarms on target units
     mute_cnls = []
     dewar_mute_map = {
@@ -845,6 +882,12 @@ def cancel_cryo_hold(equipment_name, user="Lab Staff"):
             hold = active_cryo_holds.pop(target, None)
         if hold and hold.get("db_id"):
             db_execute(f"UPDATE mod_arc_postgre_sql.cryo_maintenance_holds SET ended_at = NOW(), cancelled_early = TRUE WHERE id = {hold['db_id']};")
+
+        # Route cancel supervisory command to CODESYS PLC via OPC UA
+        matching_dewar = next((d for d in EQUIPMENT_CONFIG.get("dewars", []) if d.get("name") == target or d.get("label") == target or d.get("key") == target), None)
+        if matching_dewar and matching_dewar.get("plc_fb"):
+            fb = matching_dewar["plc_fb"]
+            write_plc_bool(f"PLC_PRG.{fb}.bCmdCancelAccessMode", True)
     return True
 
 

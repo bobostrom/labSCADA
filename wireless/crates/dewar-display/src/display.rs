@@ -517,7 +517,7 @@ impl<'d> Ili9341<'d> {
         } else if is_alarm {
             "CRYO EXCURSION! LIMIT EXCEEDED"
         } else if hold_active {
-            "LN2 FILL MODE (HOLD 30M ACTIVE)"
+            "Access Mode: Alarms Paused 30 min"
         } else {
             "VAPOR LIMIT: < -135.0 ^C [NORMAL]"
         };
@@ -538,16 +538,16 @@ impl<'d> Ili9341<'d> {
         self.draw_kiosk_str(14, 203, sub_str, &FONT_INTER_11, COLOR_TEXT_MUTED, COLOR_BG_CARD);
 
         // Interactive Kiosk Touch Button (Lower Right)
-        let (btn_bg, btn_txt) = if hold_active {
-            (COLOR_STATUS_AMBER, "HOLD ACTIVE")
+        let (btn_bg, btn_fg, btn_txt) = if hold_active {
+            (COLOR_STATUS_AMBER, 0x0000, "ACCESS ACTIVE")
         } else {
-            (COLOR_BTN_BLUE, "FILL HOLD")
+            (COLOR_BTN_BLUE, COLOR_TEXT_MAIN, "ACCESS MODE")
         };
         self.fill_rect(196, 179, 114, 47, btn_bg);
         let btn_w = FONT_INTER_14.string_width(btn_txt);
         let btn_x = 196 + (114u16.saturating_sub(btn_w)) / 2;
         let btn_y = 179 + (47 - FONT_INTER_14.height as u16) / 2;
-        self.draw_kiosk_str(btn_x, btn_y, btn_txt, &FONT_INTER_14, COLOR_TEXT_MAIN, btn_bg);
+        self.draw_kiosk_str(btn_x, btn_y, btn_txt, &FONT_INTER_14, btn_fg, btn_bg);
     }
 }
 

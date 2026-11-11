@@ -140,30 +140,33 @@ impl WirelessGateway {
         // 3. Populate Modbus Holding Registers
         let ctx = &mut slot.modbus_ctx;
 
-        let (val0, val1, val2, low_batt) = match packet.telemetry {
-            DeviceTelemetry::Dewar { temp_c_x10, battery_mv, sensor_fault } => {
+        let (val0, val1, val2, low_batt, access_mode) = match packet.telemetry {
+            DeviceTelemetry::Dewar { temp_c_x10, battery_mv, sensor_fault, access_mode } => {
                 let low = battery_mv < 3400;
-                (temp_c_x10 as u16, battery_mv, sensor_fault as u16, low)
+                (temp_c_x10 as u16, battery_mv, sensor_fault as u16, low, access_mode)
             }
             DeviceTelemetry::FridgeFreezer { fridge_temp_c_x10, freezer_temp_c_x10, ambient_temp_c_x10, battery_mv, sensor_fault } => {
                 let low = battery_mv < 3400;
                 let _ = ctx.set_holding(REG_SECONDARY_VAL as u16, freezer_temp_c_x10 as u16);
                 let _ = ctx.set_holding(REG_TERTIARY_VAL as u16, ambient_temp_c_x10 as u16);
-                (fridge_temp_c_x10 as u16, battery_mv, sensor_fault as u16, low)
+                (fridge_temp_c_x10 as u16, battery_mv, sensor_fault as u16, low, false)
             }
             DeviceTelemetry::Door { is_open, battery_mv, tamper } => {
                 let low = battery_mv < 3400;
-                (if is_open { 1 } else { 0 }, battery_mv, if tamper { 1 } else { 0 }, low)
+                (if is_open { 1 } else { 0 }, battery_mv, if tamper { 1 } else { 0 }, low, false)
             }
             DeviceTelemetry::Ambient { temp_c_x10, humidity_pct, battery_mv } => {
                 let low = battery_mv < 3400;
-                (temp_c_x10 as u16, battery_mv, humidity_pct as u16, low)
+                (temp_c_x10 as u16, battery_mv, humidity_pct as u16, low, false)
             }
         };
 
         let mut flags: u16 = 0x0001; // Bit 0: Online
         if low_batt {
             flags |= 0x0002; // Bit 1: Low Battery
+        }
+        if access_mode {
+            flags |= 0x0008; // Bit 3: Access Mode (Alarms Paused)
         }
 
         let _ = ctx.set_holding(REG_PRIMARY_VAL as u16, val0);
@@ -240,6 +243,7 @@ impl WirelessGateway {
                                 2 => DownlinkCommand::IdentifyLed,
                                 3 => DownlinkCommand::SetReportIntervalSec,
                                 4 => DownlinkCommand::ForceCalibrateOffset,
+                                5 => DownlinkCommand::SetAccessMode,
                                 _ => DownlinkCommand::None,
                             };
                             if cmd != DownlinkCommand::None {
@@ -279,6 +283,7 @@ mod tests {
                 temp_c_x10: -1956, // -195.6 C
                 battery_mv: 3820,
                 sensor_fault: 0,
+                access_mode: false,
             },
         );
 
@@ -305,6 +310,7 @@ mod tests {
                 temp_c_x10: -200,
                 battery_mv: 3300,
                 sensor_fault: 0,
+                access_mode: false,
             },
         );
         let rogue_res = gw.handle_uplink(&rogue_pkt, -80, 105);
@@ -335,6 +341,7 @@ mod tests {
                 temp_c_x10: -1960,
                 battery_mv: 3900,
                 sensor_fault: 0,
+                access_mode: false,
             },
         );
 
@@ -346,5 +353,31 @@ mod tests {
         // Verify mailbox was cleared
         assert!(gw.slots[0].pending_cmd.is_none());
         assert_eq!(gw.slots[0].modbus_ctx.get_holding(REG_COMMAND_MAILBOX as u16).unwrap(), 0);
+    }
+
+    #[test]
+    fn test_access_mode_flag_mapping() {
+        let mut gw = WirelessGateway::new();
+        let mac = [1, 2, 3, 4, 5, 6];
+        gw.slots[0].bind(mac, DeviceType::DewarCryo);
+
+        // Packet with access_mode: true
+        let pkt = UplinkPacket::new(
+            1,
+            mac,
+            1,
+            DeviceTelemetry::Dewar {
+                temp_c_x10: -1960,
+                battery_mv: 3900,
+                sensor_fault: 0,
+                access_mode: true,
+            },
+        );
+
+        gw.handle_uplink(&pkt, -50, 100).unwrap();
+        let flags = gw.slots[0].modbus_ctx.get_holding(REG_STATUS_FLAGS as u16).unwrap();
+        // Bit 0 = 0x0001 (Online), Bit 3 = 0x0008 (Access Mode Active) -> 0x0009
+        assert_eq!(flags & 0x0008, 0x0008, "Bit 3 (Access Mode) must be set in status flags");
+        assert_eq!(flags & 0x0001, 0x0001, "Bit 0 (Online) must be set");
     }
 }

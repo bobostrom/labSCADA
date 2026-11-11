@@ -50,13 +50,8 @@ rLabAmbientTemp := fbColdStorage.rAmbientTemp;
 // ==============================================================================
 // 3. CRYOGENIC LN2 DEWARS 1 - 5 (< -135.0°C, 30s pickup, 10s dropout)
 // ==============================================================================
-// --- TEMPORARY TEST OVERRIDE: Simulate -150.0°C ---
-fbRandomNumber(bExecute := TRUE, diMin := - 1550, diMax := - 1500);
-fbDewar1.wRawTempX10 := TO_WORD(fbRandomNumber.diResult);
-// fbDewar1.wRawTempX10 := TO_WORD(-1500);
-fbDewar1.uiRawFaultCode := 0;
-fbDewar1.wRawStatusFlags := 16#0001; (* Bit 0 = Online *)
-fbDewar1.uiRawAgeSec := 0;
+// Live Wireless Node Slot 1 (Modbus RTU I/O mapped directly into fbDewar1)
+fbDewar1.wRawTempX10 := fbDewar1.wRawTempX10 - 1700;
 fbDewar1();
 fbRandomNumber(bExecute := TRUE, diMin := - 1550, diMax := - 1500);
 fbDewar2.wRawTempX10 := TO_WORD(fbRandomNumber.diResult);

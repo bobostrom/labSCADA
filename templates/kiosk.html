@@ -1034,7 +1034,7 @@
           <div class="dip-actions">
             <button class="btn-mini" onclick="openLn2ModalFor('{{ d.name }}')">🧊 Log Check</button>
             <button class="btn-mini" id="btn-hold-cryo{{ d.id }}"
-              onclick="toggleCryoHoldKiosk('{{ d.name }}')">⏱️ Mute (15m)</button>
+              onclick="toggleCryoHoldKiosk('{{ d.name }}')">⏱️ Access Mode</button>
             <button class="btn-mini-subtle" onclick="switchTab('cryo')">Audit Trail →</button>
           </div>
         </div>
@@ -2109,23 +2109,26 @@
                     }
                   }
 
-                  // Holds
+                  // Holds & Access Mode (From Web or Physical Node via PLC Ch 126)
                   const hold = holds[cfg.name] || holds[`Cryo Tank ${cfg.id}`] || holds["All Dewars"] || holds["All Cryo Tanks"] || holds["ALL"];
+                  const isPlcAccess = cfg.access_mode_cnl ? (r[cfg.access_mode_cnl] > 0) : false;
+                  const isHolding = (hold && hold.remaining_seconds > 0) || isPlcAccess;
                   const defaultColor = cfg.color || '#00e5ff';
-                  if (hold && hold.remaining_seconds > 0) {
-                    const m = Math.ceil(hold.remaining_seconds / 60);
+
+                  if (isHolding) {
+                    const m = (hold && hold.remaining_seconds > 0) ? Math.ceil(hold.remaining_seconds / 60) : 30;
                     if (b) {
-                      b.innerText = `HOLD (${m}m)`;
+                      b.innerText = `ACCESS (${m}m)`;
                       b.className = 'status-badge status-warn';
                     }
                     if (btnHold) {
-                      btnHold.innerText = `🟡 Muted (${m}m)`;
+                      btnHold.innerText = `🟡 Access Mode (${m}m)`;
                       btnHold.style.background = '#d97706';
                     }
                     if (cardEl && !isAlarm) cardEl.style.borderTopColor = '#f59e0b';
                   } else {
                     if (btnHold) {
-                      btnHold.innerText = '⏱️ Mute (15m)';
+                      btnHold.innerText = '⏱️ Access Mode';
                       btnHold.style.background = '';
                     }
                     if (cardEl) {
@@ -2871,20 +2874,22 @@
               .then(r => r.json())
               .then(d => {
                 const holds = d.cryo_holds || {};
-                const isHolding = !!(holds[tank] || holds["All Dewars"] || holds["All Cryo Tanks"] || holds["ALL"]);
+                const readings = d.readings || {};
+                const dewarCfg = (EQUIPMENT.dewars || []).find(x => x.name === tank || x.label === tank);
+                const isPlcAccess = (dewarCfg && dewarCfg.access_mode_cnl) ? (readings[dewarCfg.access_mode_cnl] > 0) : false;
+                const isHolding = isPlcAccess || !!(holds[tank] || holds["All Dewars"] || holds["All Cryo Tanks"] || holds["ALL"]);
                 if (isHolding) {
-                  if (confirm(`Resume live alarms and sirens for ${tank} now?`)) {
-                    fetch('/api/cryo-hold/cancel', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ tank: tank, user: 'Kiosk Staff' })
-                    }).then(() => updateTelemetry());
-                  }
+                  // Direct resume without blocking confirmation popup
+                  fetch('/api/cryo-hold/cancel', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ tank: tank, user: 'Kiosk Staff' })
+                  }).then(() => updateTelemetry());
                 } else {
                   fetch('/api/cryo-hold', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ tank: tank, duration_minutes: 15, user: 'Kiosk Staff' })
+                    body: JSON.stringify({ tank: tank, duration_minutes: 30, user: 'Kiosk Staff' })
                   }).then(() => updateTelemetry());
                 }
               });

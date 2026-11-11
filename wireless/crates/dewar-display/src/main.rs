@@ -16,7 +16,7 @@ use esp_hal::timer::timg::TimerGroup;
 use esp_hal::analog::adc::{Adc, AdcConfig, Attenuation, AdcCalCurve};
 use esp_hal::peripherals::ADC1;
 use esp_radio::esp_now::BROADCAST_ADDRESS;
-use wireless_protocol::{DeviceTelemetry, UplinkPacket, PROTOCOL_MAGIC, PROTOCOL_VERSION};
+use wireless_protocol::{DeviceTelemetry, DownlinkCommand, DownlinkPacket, UplinkPacket, PROTOCOL_MAGIC, PROTOCOL_VERSION};
 
 esp_bootloader_esp_idf::esp_app_desc!();
 
@@ -209,7 +209,7 @@ fn main() -> ! {
                 // Screen is already awake: reset sleep timer and check button
                 screen_timer = DISPLAY_TIMEOUT_TICKS;
 
-                // Check tap on "FILL HOLD" button (lower right region)
+                // Check tap on "ACCESS MODE" button (lower right region)
                 if pt.is_touched && debounce_ticks == 0 {
                     debounce_ticks = 25; // 250ms debounce across any tap
                     println!("[TOUCH] Tap at X={}, Y={}", pt.x, pt.y);
@@ -217,14 +217,16 @@ fn main() -> ! {
                     if pt.x >= 180 && pt.y >= 160 {
                         if hold_timer == 0 {
                             hold_timer = CRYO_HOLD_TICKS;
-                            println!("[+] Tank Fill Hold ACTIVATED (30 minutes hold)");
+                            println!("[+] Access Mode ACTIVATED (Alarms paused 30 min)");
                         } else {
                             hold_timer = 0;
-                            println!("[-] Tank Fill Hold CANCELLED (Normal monitoring resumed)");
+                            println!("[-] Access Mode CANCELLED (Normal monitoring resumed)");
                         }
                         is_alarm = current_temp_c_x10 > -1350 && hold_timer == 0 && current_temp_c_x10 != -9999;
                         // Instantly re-render screen with updated button and banner color
                         screen.draw_cryo_screen("Dewar 1 (Embryos)", current_temp_c_x10, latest_batt, seq, is_alarm, hold_timer > 0);
+                        // Trigger immediate telemetry uplink so Bridge & PLC see hold state instantly
+                        report_counter = REPORT_INTERVAL_TICKS;
                     }
                 }
             }
@@ -260,7 +262,7 @@ fn main() -> ! {
             let pin_mv: u16 = adc1.read_blocking(&mut batt_pin);
             latest_batt = pin_mv * 2; // Scaled by 2:1 onboard divider
 
-            println!("TELEMETRY: Temp={}dC, Fault={}, Batt={}mV, FillHold={}, INT_low={}",
+            println!("TELEMETRY: Temp={}dC, Fault={}, Batt={}mV, AccessMode={}, INT_low={}",
                 current_temp_c_x10, sensor_fault_code, latest_batt, hold_timer > 0, touch.is_pin_low());
 
             // Build Telemetry Packet
@@ -268,6 +270,7 @@ fn main() -> ! {
                 temp_c_x10: current_temp_c_x10,
                 battery_mv: latest_batt,
                 sensor_fault: sensor_fault_code,
+                access_mode: hold_timer > 0,
             };
 
             let packet = UplinkPacket {

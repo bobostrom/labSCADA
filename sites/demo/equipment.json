@@ -14,6 +14,7 @@
       "wireless_node": "dewar_node_01",
       "batt_cnl": 106,
       "temp_cnl": 125,
+      "access_mode_cnl": 126,
       "alarm_cnl": 113,
       "warn_cnl": 117,
       "ln2_cnl": 199,

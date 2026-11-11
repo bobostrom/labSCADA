@@ -36,6 +36,8 @@ pub enum DeviceTelemetry {
         battery_mv: u16,
         /// Sensor health: 0 = OK, 1 = Probe Disconnected, 2 = Short, 3 = Hardware Fault
         sensor_fault: u8,
+        /// Access mode active (alarms paused 30 min for specimen access or LN2 fill)
+        access_mode: bool,
     },
     FridgeFreezer {
         /// Primary fridge temperature in Celsius * 10 (35 = +3.5 C)
@@ -114,6 +116,7 @@ pub enum DownlinkCommand {
     IdentifyLed = 2,
     SetReportIntervalSec = 3,
     ForceCalibrateOffset = 4,
+    SetAccessMode = 5,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
@@ -154,7 +157,7 @@ pub mod modbus_map {
     pub const REG_SEQ_LOW: usize = 4;        // Sequence counter low word
     pub const REG_SEQ_HIGH: usize = 5;       // Sequence counter high word
     pub const REG_AGE_SECONDS: usize = 6;    // Seconds since last received packet (watchdog)
-    pub const REG_STATUS_FLAGS: usize = 7;   // Bit 0 = Online, Bit 1 = Low Battery, Bit 2 = Comm Loss
+    pub const REG_STATUS_FLAGS: usize = 7;   // Bit 0 = Online, Bit 1 = Low Battery, Bit 2 = Comm Loss, Bit 3 = Access Mode
     pub const REG_SECONDARY_VAL: usize = 8;  // Secondary Temp * 10 (e.g. Freezer)
     pub const REG_TERTIARY_VAL: usize = 9;   // Tertiary Temp * 10 (e.g. Ambient Room)
 
@@ -176,6 +179,7 @@ mod tests {
                 temp_c_x10: -1954,
                 battery_mv: 3820,
                 sensor_fault: 0,
+                access_mode: true,
             },
         );
 
