@@ -94,10 +94,10 @@ impl<'d> Ili9341<'d> {
         self.write_cmd(0x11); // Sleep Out
         delay.delay_millis(120);
 
-        // Memory Access Control: Landscape (MY=1, MX=1, MV=1, BGR=1 -> 0xE8)
-        // Eliminates mirror imaging!
+        // Memory Access Control: 180-degree Landscape (MY=0, MX=0, MV=1, BGR=1 -> 0x28)
+        // Flips display 180 degrees for enclosure mounting while preserving unmirrored rendering
         self.write_cmd(0x36);
-        self.write_data(0xE8);
+        self.write_data(0x28);
 
         // CRITICAL FOR IPS PANELS: Display Inversion ON (INVON = 0x21)
         // Fixes inverted negative colors on IPS screens!
@@ -428,7 +428,10 @@ impl<'d> Ili9341<'d> {
         is_alarm: bool,
         hold_active: bool,
     ) {
-        let card_border = if is_alarm {
+        let is_sensor_fault = temp_c_x10 == -9999;
+        let card_border = if is_sensor_fault {
+            COLOR_STATUS_AMBER
+        } else if is_alarm {
             COLOR_STATUS_RED
         } else if hold_active {
             COLOR_STATUS_AMBER
@@ -475,8 +478,14 @@ impl<'d> Ili9341<'d> {
         self.fill_rect(4, 41, LCD_WIDTH - 8, 102, COLOR_BG_CARD_SUB);
         self.fill_rect(4, 41, LCD_WIDTH - 8, 1, COLOR_BORDER_SUBTLE);
 
-        // Hero Temperature digits in Kiosk .card-val Consolas Bold 48pt Monospace ("-140.0 ^C")
-        let hero_color = if is_alarm { COLOR_STATUS_RED } else { COLOR_CRYO_CYAN };
+        // Hero Temperature digits in Kiosk .card-val Consolas Bold 48pt Monospace ("-140.0 ^C" or "--.- ^C")
+        let hero_color = if is_sensor_fault {
+            COLOR_STATUS_AMBER
+        } else if is_alarm {
+            COLOR_STATUS_RED
+        } else {
+            COLOR_CRYO_CYAN
+        };
         let hero_bg = COLOR_BG_CARD_SUB;
         let mut hero_buf = [0u8; 16];
         let hero_str = format_temp(&mut hero_buf, temp_c_x10);
@@ -486,7 +495,9 @@ impl<'d> Ili9341<'d> {
         self.draw_kiosk_str(hero_x, hero_y, hero_str, &FONT_HERO_TEMP, hero_color, hero_bg);
 
         // 4. Clinical Status Ribbon
-        let ribbon_color = if is_alarm {
+        let ribbon_color = if is_sensor_fault {
+            COLOR_STATUS_AMBER
+        } else if is_alarm {
             COLOR_STATUS_RED
         } else if hold_active {
             COLOR_STATUS_AMBER
@@ -495,7 +506,9 @@ impl<'d> Ili9341<'d> {
         };
 
         self.fill_rect(4, 143, LCD_WIDTH - 8, 28, ribbon_color);
-        let ribbon_text = if is_alarm {
+        let ribbon_text = if is_sensor_fault {
+            "SENSOR DISCONNECTED / FAULT"
+        } else if is_alarm {
             "CRYO EXCURSION! LIMIT EXCEEDED"
         } else if hold_active {
             "LN2 FILL MODE (HOLD 30M ACTIVE)"
@@ -533,6 +546,13 @@ impl<'d> Ili9341<'d> {
 }
 
 fn format_temp<'a>(buf: &'a mut [u8], temp_c_x10: i16) -> &'a str {
+    if temp_c_x10 == -9999 {
+        let s = "--.- ^C";
+        let b = s.as_bytes();
+        let len = b.len().min(buf.len());
+        buf[..len].copy_from_slice(&b[..len]);
+        return core::str::from_utf8(&buf[..len]).unwrap_or("--.- ^C");
+    }
     let mut idx = 0;
     let is_neg = temp_c_x10 < 0;
     let val = if is_neg { (-temp_c_x10) as u32 } else { temp_c_x10 as u32 };

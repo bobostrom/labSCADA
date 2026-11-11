@@ -100,9 +100,21 @@ fn main() -> ! {
     );
     let mut adc1 = Adc::new(peripherals.ADC1, adc1_config);
 
-    // Assumed cryogenic temperature per user request (-140.0 C)
-    let assumed_temp_c_x10: i16 = -1400;
-    let is_alarm: bool = false; // -140.0 C is safely below the -135.0 C alarm threshold
+    // 6. Initialize MAX31855 Thermocouple Interface (IO2: SCK, IO14: MISO, IO21: CS)
+    let max_sck = esp_hal::gpio::Output::new(peripherals.GPIO2, esp_hal::gpio::Level::Low, esp_hal::gpio::OutputConfig::default());
+    let max_cs = esp_hal::gpio::Output::new(peripherals.GPIO21, esp_hal::gpio::Level::High, esp_hal::gpio::OutputConfig::default());
+    let max_miso = esp_hal::gpio::Input::new(peripherals.GPIO14, esp_hal::gpio::InputConfig::default());
+    let mut max31855 = max31855::Max31855::new(max_sck, max_cs, max_miso);
+
+    let initial_reading = max31855.read(&delay);
+    let mut current_temp_c_x10: i16 = if initial_reading.fault == max31855::FaultType::None {
+        initial_reading.temp_c_x10
+    } else {
+        -9999
+    };
+    let mut sensor_fault_code: u8 = initial_reading.fault as u8;
+    let mut is_alarm: bool = current_temp_c_x10 > -1350 && current_temp_c_x10 != -9999;
+    let mut prev_alarm: bool = is_alarm;
 
     // Boot splash screen
     screen.backlight_on();
@@ -116,11 +128,13 @@ fn main() -> ! {
     let mut hold_timer: u32 = 0;
     let mut latest_batt: u16 = 4100;
     let mut seq: u32 = 1;
-    screen.draw_cryo_screen("Dewar 1 (Embryos)", assumed_temp_c_x10, latest_batt, seq, is_alarm, hold_timer > 0);
-    println!("[DISPLAY] Active Dewar monitoring initialized");
+    screen.draw_cryo_screen("Dewar 1 (Embryos)", current_temp_c_x10, latest_batt, seq, is_alarm, hold_timer > 0);
+    println!("[DISPLAY] Active Dewar monitoring initialized (Initial Temp: {} dC, Fault: {})",
+        current_temp_c_x10, sensor_fault_code);
 
     let mut tx_buf = [0u8; 64];
     let mut report_counter: u32 = 0;
+    let mut sensor_read_counter: u32 = 0;
     let mut screen_timer: u32 = DISPLAY_TIMEOUT_TICKS; // Stays on for 15 seconds
     let mut debounce_ticks: u32 = 0;
 
@@ -129,7 +143,38 @@ fn main() -> ! {
             debounce_ticks -= 1;
         }
 
-        // A. Check Touch
+        // A. Periodic Temperature Measurement (every 500ms / 50 ticks)
+        sensor_read_counter += 1;
+        if sensor_read_counter >= 50 {
+            sensor_read_counter = 0;
+            let reading = max31855.read(&delay);
+            let (new_temp, new_fault) = if reading.fault == max31855::FaultType::None {
+                (reading.temp_c_x10, 0u8)
+            } else {
+                (-9999, reading.fault as u8)
+            };
+
+            let temp_changed = new_temp != current_temp_c_x10 || new_fault != sensor_fault_code;
+            current_temp_c_x10 = new_temp;
+            sensor_fault_code = new_fault;
+
+            is_alarm = current_temp_c_x10 > -1350 && hold_timer == 0 && current_temp_c_x10 != -9999;
+
+            // If entering alarm condition for the first time, wake screen immediately
+            if is_alarm && !prev_alarm {
+                println!("[ALARM] >>> CRYO EXCURSION DETECTED: {} dC <<<", current_temp_c_x10);
+                screen.backlight_on();
+                screen_timer = DISPLAY_TIMEOUT_TICKS;
+            }
+            prev_alarm = is_alarm;
+
+            // If screen is on and data changed, redraw screen
+            if screen.is_backlight_on() && temp_changed {
+                screen.draw_cryo_screen("Dewar 1 (Embryos)", current_temp_c_x10, latest_batt, seq, is_alarm, hold_timer > 0);
+            }
+        }
+
+        // B. Check Touch
         if touch.is_touch_active() {
             let pt = touch.read_touch(&delay);
 
@@ -138,7 +183,7 @@ fn main() -> ! {
                 println!("[DISPLAY] >>> WAKING BACKLIGHT ON <<<");
                 screen.backlight_on();
                 screen_timer = DISPLAY_TIMEOUT_TICKS;
-                screen.draw_cryo_screen("Dewar 1 (Embryos)", assumed_temp_c_x10, latest_batt, seq, is_alarm, hold_timer > 0);
+                screen.draw_cryo_screen("Dewar 1 (Embryos)", current_temp_c_x10, latest_batt, seq, is_alarm, hold_timer > 0);
                 debounce_ticks = 25; // 250ms debounce
             } else {
                 // Screen is already awake: reset sleep timer and check button
@@ -157,20 +202,21 @@ fn main() -> ! {
                             hold_timer = 0;
                             println!("[-] Tank Fill Hold CANCELLED (Normal monitoring resumed)");
                         }
+                        is_alarm = current_temp_c_x10 > -1350 && hold_timer == 0 && current_temp_c_x10 != -9999;
                         // Instantly re-render screen with updated button and banner color
-                        screen.draw_cryo_screen("Dewar 1 (Embryos)", assumed_temp_c_x10, latest_batt, seq, is_alarm, hold_timer > 0);
+                        screen.draw_cryo_screen("Dewar 1 (Embryos)", current_temp_c_x10, latest_batt, seq, is_alarm, hold_timer > 0);
                     }
                 }
             }
         }
 
-        // B. Decrement Hold Timer
+        // C. Decrement Hold Timer
         if hold_timer > 0 {
             hold_timer -= 1;
         }
 
-        // C. Decrement Screen Inactivity Timer
-        if screen_timer > 0 && !is_alarm {
+        // D. Decrement Screen Inactivity Timer (15s sleep timeout)
+        if screen_timer > 0 {
             screen_timer -= 1;
             if screen_timer == 0 {
                 println!("[DISPLAY] 15s timeout reached -> Backlight OFF");
@@ -178,7 +224,7 @@ fn main() -> ! {
             }
         }
 
-        // D. Periodic Measurement and ESP-NOW Transmission (every 20s)
+        // E. Periodic Measurement and ESP-NOW Transmission (every 20s)
         report_counter += 1;
         if report_counter >= REPORT_INTERVAL_TICKS {
             report_counter = 0;
@@ -187,14 +233,14 @@ fn main() -> ! {
             let pin_mv: u16 = adc1.read_blocking(&mut batt_pin);
             latest_batt = pin_mv * 2; // Scaled by 2:1 onboard divider
 
-            println!("TELEMETRY: Temp=-140.0 C (Assumed), Batt={}mV, FillHold={}, INT_low={}",
-                latest_batt, hold_timer > 0, touch.is_pin_low());
+            println!("TELEMETRY: Temp={}dC, Fault={}, Batt={}mV, FillHold={}, INT_low={}",
+                current_temp_c_x10, sensor_fault_code, latest_batt, hold_timer > 0, touch.is_pin_low());
 
             // Build Telemetry Packet
             let telemetry = DeviceTelemetry::Dewar {
-                temp_c_x10: assumed_temp_c_x10, // -1400 = -140.0 C
+                temp_c_x10: current_temp_c_x10,
                 battery_mv: latest_batt,
-                sensor_fault: 0, // Clean status
+                sensor_fault: sensor_fault_code,
             };
 
             let packet = UplinkPacket {
@@ -215,7 +261,7 @@ fn main() -> ! {
 
             // Refresh display if awake
             if screen.is_backlight_on() {
-                screen.draw_cryo_screen("Dewar 1 (Embryos)", assumed_temp_c_x10, latest_batt, seq, is_alarm, hold_timer > 0);
+                screen.draw_cryo_screen("Dewar 1 (Embryos)", current_temp_c_x10, latest_batt, seq, is_alarm, hold_timer > 0);
             }
         }
 

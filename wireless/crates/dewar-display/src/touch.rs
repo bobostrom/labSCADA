@@ -239,11 +239,11 @@ impl<'d> Ft6336<'d> {
             let raw_x = (((x_h as u16) & 0x0F) << 8) | (x_l as u16);
             let raw_y = (((y_h as u16) & 0x0F) << 8) | (y_l as u16);
 
-            // Map coordinate space to landscape (320 x 240)
-            // Display is rotated 0xE8 (Landscape).
-            // Sensor raw_y runs 320 (left) -> 0 (right), raw_x runs 0 (top) -> 240 (bottom).
-            let x = 320u16.saturating_sub(raw_y);
-            let y = raw_x.min(240);
+            // Map coordinate space to 180-degree landscape (320 x 240)
+            // Display is rotated 0x28 (Landscape 180°).
+            // Matches enclosure orientation so touch aligns with rendered buttons.
+            let x = raw_y.min(320);
+            let y = 240u16.saturating_sub(raw_x);
 
             TouchPoint {
                 x,
