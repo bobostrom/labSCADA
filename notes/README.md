@@ -3,6 +3,7 @@
 This directory contains internal engineering scratch notes, network setups, router configurations, and credentials for development and IT infrastructure:
 
 * **[user_manual/](../user_manual/README.md):** The official operational user manual for clinical staff, laboratory directors, and compliance inspectors.
+* **[afoa_onsite_cutover_checklist.md](afoa_onsite_cutover_checklist.md):** Living checklist of network, UPS, CODESYS Modbus TCP Client/Server, and I/O polarity changes required onsite at AFOA.
 * **[system_credentials_and_network_map.md](system_credentials_and_network_map.md):** Passwords, IP schemes, service accounts, and port allocations.
 * **[plc_migration_and_distributed_poe_architecture.md](plc_migration_and_distributed_poe_architecture.md):** Industrial controller evaluation and WAGO PFC200 wiring design.
 * **[distributed_hardware_inventory_and_pod_wiring.md](distributed_hardware_inventory_and_pod_wiring.md):** WAGO distributed I/O pod wiring, hardware lot inventory, and station pinout mappings.
