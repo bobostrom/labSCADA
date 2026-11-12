@@ -79,11 +79,14 @@ Verified live K-Bus modules on `afoa-node00`:
 > **`bDoorClosed = TRUE` (24V loop closed) when Door is CLOSED** · **`bDoorClosed = FALSE` (0V / open loop) when Door is OPEN or disconnected**.
 
 1. **Cabinet Door Switch (`fbCabinet01 : FB_IncubatorCabinet`):**
-   * Map `INC_CAB` (`afoa-node00`) DI bit directly to `Application.PLC_PRG.fbCabinet01.bDoorClosed`.
-   * **Onsite rewiring:** Verify/rewire the cabinet door contact to **NC** so the `INC_CAB` DI reads **`TRUE` when closed** and `FALSE` when open.
+   * `INC_CAB` DI bit is mapped directly to `Application.PLC_PRG.fbCabinet01.bDoorClosed`.
+   * **Current temporary override in `PLC_PRG`:** `bDoorClosed := TRUE` (`//TODO: switch wiring on door`) because the switch currently reads `FALSE` when closed.
+   * **Onsite rewiring:** Rewire the cabinet door switch to **NC** (`TRUE` when closed, `FALSE` when open), then **remove `bDoorClosed := TRUE`** from `fbCabinet01(...)` in `PLC_PRG` so the physical `INC_CAB` DI isn't overwritten.
 2. **Cleanroom Doors (`fbDoor01`, `fbDoor02 : FB_FacilityDoor` — CODESYS `DOOR_DI`):**
-   * Map `DOOR_DI` K-Bus DI channels directly to `Application.PLC_PRG.fbDoor01.bDoorClosed` and `Application.PLC_PRG.fbDoor02.bDoorClosed` (no intermediate `bDoor01`/`bDoor02` `PLC_PRG` booleans).
-   * **Onsite rewiring:** Verify/rewire Door 01 and Door 02 contacts to **NC** so each `DOOR_DI` channel reads **`TRUE` when closed** and `FALSE` when open.
+   * `DOOR_DI` K-Bus DI channels map directly to `Application.PLC_PRG.fbDoor01.bDoorClosed` and `Application.PLC_PRG.fbDoor02.bDoorClosed` (no intermediate `bDoor01`/`bDoor02` booleans).
+   * **Door 02 (`fbDoor02`):** Already reading `TRUE` (`1.000`) from hardware when closed — no rewiring needed (still verify open/close test onsite).
+   * **Door 01 (`fbDoor01`) — current temporary override in `PLC_PRG`:** `bDoorClosed := TRUE` (`//TODO: switch wiring on door`) because Door 01 currently reads `FALSE` when closed.
+   * **Onsite rewiring:** Rewire Door 01 contact to **NC** (`TRUE` when closed, `FALSE` when open), then **remove `bDoorClosed := TRUE`** from `fbDoor01(...)` in `PLC_PRG`.
 3. **G210 Incubator Alarm Contacts (`fbIncubator1`, `fbIncubator2 : FB_G210_Incubator`):**
    * `bAlarmContact` expects **`FALSE` = Normal, `TRUE` = Alarm**.
    * Verify physical terminal assignments (whether on `INC_CAB` DI or local `DOOR_DI` K-Bus) and test an alarm contact + verify `fbCabinet01.bIncubatorMute` suppresses it when the cabinet door opens.
@@ -112,7 +115,7 @@ Currently configured as non-wireless placeholders until clinic sensors/nodes are
   `postgresql`, `scadaserver6`, `scadacomm6`, `scadaweb6`, `scadaagent6`, `ivf-alert-engine`, `cloudflared`, `nut-server`, `ups-modbus-bridge`
 - [ ] `afoa-plc` (`192.168.88.253`) Modbus TCP Client shows green/healthy connections to both **`INC_CAB`** (`afoa-node00`, `192.168.88.251`) and **`UPS_SCADA`** (`192.168.88.252`)
 - [ ] SNTP time valid on `afoa-node00.labmon` (syncing to `192.168.88.1`)
-- [ ] All door switches verified/rewired NC (`bDoorClosed = TRUE` when closed, `FALSE` when open) on `fbCabinet01`, `fbDoor01`, and `fbDoor02`
+- [ ] Rewire `fbCabinet01` (`INC_CAB`) and `fbDoor01` (`DOOR_DI`) switches to **NC** (`bDoorClosed = TRUE` when closed, `FALSE` when open) and **remove the temporary `bDoorClosed := TRUE` overrides** from `PLC_PRG` (`fbDoor02` already reads `TRUE` when closed)
 - [ ] Kiosk UI loads locally (`http://192.168.88.252:8080` / kiosk browser) and externally (`https://komdivflab.larestelemetry.com/`)
 - [ ] Physical door open/close tests verified on Cleanroom Doors 01/02 and Cabinet 01 + UPS unplug test confirms `On Battery` telemetry and Pushover notification
 
