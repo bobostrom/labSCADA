@@ -299,9 +299,11 @@ PG_PORT = os.environ.get("SCADA_PG_PORT", os.environ.get("PGPORT", "5432"))
 PG_DB   = os.environ.get("SCADA_PG_DB",   os.environ.get("PGDATABASE", "rapid_scada"))
 PG_SSLMODE = os.environ.get("SCADA_PG_SSLMODE", os.environ.get("PGSSLMODE", "prefer"))
 
-PUSHOVER_TOKEN    = os.environ.get("PUSHOVER_TOKEN", "a2wmo7ofxhhpo2vc2ykdkhtnte8nb5")
-PUSHOVER_GROUP    = os.environ.get("PUSHOVER_GROUP", "gepqspoh98t69c7o223hwbg8ponwyq")
-PUSHOVER_PING_URL = os.environ.get("PUSHOVER_PING_URL", "")  # Handled by scripts/pushover_watchdog.py
+PUSHOVER_TOKEN      = os.environ.get("PUSHOVER_TOKEN", "a2wmo7ofxhhpo2vc2ykdkhtnte8nb5")
+PUSHOVER_GROUP      = os.environ.get("PUSHOVER_GROUP", "gepqspoh98t69c7o223hwbg8ponwyq")
+PUSHOVER_LAB_GROUP  = os.environ.get("PUSHOVER_LAB_GROUP", "").strip() or PUSHOVER_GROUP
+PUSHOVER_CRYO_GROUP = os.environ.get("PUSHOVER_CRYO_GROUP", "").strip() or PUSHOVER_GROUP
+PUSHOVER_PING_URL   = os.environ.get("PUSHOVER_PING_URL", "")  # Handled by scripts/pushover_watchdog.py
 
 ESCALATION_TIMEOUT_SECONDS = 1800  # 30 minutes
 
@@ -446,6 +448,36 @@ def build_channels_from_equipment(eq):
 
 CHANNELS = build_channels_from_equipment(EQUIPMENT_CONFIG)
 LN2_INSPECTION_CNLS = {int(d["ln2_cnl"]) for d in EQUIPMENT_CONFIG["dewars"] if d.get("ln2_cnl")}
+UPS_ALARM_CNLS = {
+    int(c)
+    for u in EQUIPMENT_CONFIG.get("ups", [])
+    for c in (u.get("power_alarm_cnl"), u.get("low_batt_alarm_cnl"))
+    if c
+}
+
+
+def get_target_pushover_group(cnl_num):
+    """Routes a channel alert to the matching Pushover delivery group (All, Lab, or Cryo)."""
+    if cnl_num is None:
+        return PUSHOVER_GROUP
+    try:
+        cnl = int(cnl_num)
+    except (TypeError, ValueError):
+        return PUSHOVER_GROUP
+    if cnl in LN2_INSPECTION_CNLS:
+        return PUSHOVER_CRYO_GROUP
+    if cnl in UPS_ALARM_CNLS:
+        return PUSHOVER_GROUP
+    cfg = CHANNELS.get(cnl, {})
+    ctype = cfg.get("type")
+    if ctype == "cryo":
+        return PUSHOVER_GROUP
+    linked = cfg.get("linked_analog")
+    if linked and CHANNELS.get(linked, {}).get("type") == "cryo":
+        return PUSHOVER_GROUP
+    if ctype in ("ambient", "fridge", "freezer", "discrete_alarm", "door_alarm", "door_contact", "incubator", "cabinet_alarm"):
+        return PUSHOVER_LAB_GROUP
+    return PUSHOVER_GROUP
 
 # In-memory tracking of active alarm state machine
 active_alarms = {}
@@ -735,7 +767,8 @@ def track_door_events(readings, current_mode):
                     title=f"⚠️ Off-Session Access: {door_name}",
                     message=f"{door_name} was opened during Off-Session Standby mode at {datetime.now().strftime('%H:%M:%S')}.",
                     priority=1,
-                    sound="intermission"
+                    sound="intermission",
+                    target_group=PUSHOVER_LAB_GROUP
                 )
 
         elif not is_now_open and st["is_open"]:
@@ -894,12 +927,13 @@ def cancel_cryo_hold(equipment_name, user="Lab Staff"):
 # ==============================================================================
 # PUSHOVER API CLIENT
 # ==============================================================================
-def send_pushover_alert(title, message, priority=0, sound="pushover", retry=60, expire=7200):
+def send_pushover_alert(title, message, priority=0, sound="pushover", retry=60, expire=7200, target_group=None):
     """Sends a Pushover notification. For priority=2, returns (True, receipt_id)."""
     url = "https://api.pushover.net/1/messages.json"
+    recipient = target_group or PUSHOVER_GROUP
     post_data = {
         "token": PUSHOVER_TOKEN,
-        "user": PUSHOVER_GROUP,
+        "user": recipient,
         "title": title,
         "message": message,
         "priority": priority,
@@ -965,31 +999,39 @@ def get_pushover_user_name(user_key, device=None):
     # Pushover group keys start with 'g', while individual user keys start with 'u'
     target_group = PUSHOVER_GROUP if PUSHOVER_GROUP.startswith("g") else "gepqspoh98t69c7o223hwbg8ponwyq"
 
-    # Refresh cache if empty or older than 1 hour
+    # Refresh cache from all configured Pushover delivery groups if empty or older than 1 hour
     if (len(pushover_user_cache) <= 1) or (now - last_user_cache_time > 3600):
-        try:
-            url = f"https://api.pushover.net/1/groups/{target_group}.json?token={PUSHOVER_TOKEN}"
-            req = urllib.request.Request(url, method="GET")
-            with urllib.request.urlopen(req, timeout=8) as res:
-                data = json.loads(res.read().decode("utf-8"))
-                if data.get("status") == 1:
-                    for u in data.get("users", []):
-                        k = u.get("user")
-                        memo = u.get("memo", "").strip()
-                        if k and memo:
-                            pushover_user_cache[k] = "Bob Ostrom" if memo.lower() == "bob" else memo
-                    last_user_cache_time = now
-                    print(f"[{datetime.now().strftime('%T')}] Synced {len(pushover_user_cache)} user memos from Pushover.net")
-        except Exception as e:
-            print(f"Error fetching Pushover group users: {e}")
+        group_keys = [
+            g for g in dict.fromkeys([target_group, PUSHOVER_LAB_GROUP, PUSHOVER_CRYO_GROUP])
+            if g and g.startswith("g")
+        ]
+        loaded_any = False
+        for gkey in group_keys:
+            try:
+                url = f"https://api.pushover.net/1/groups/{gkey}.json?token={PUSHOVER_TOKEN}"
+                req = urllib.request.Request(url, method="GET")
+                with urllib.request.urlopen(req, timeout=8) as res:
+                    data = json.loads(res.read().decode("utf-8"))
+                    if data.get("status") == 1:
+                        for u in data.get("users", []):
+                            k = u.get("user")
+                            memo = u.get("memo", "").strip()
+                            if k and memo:
+                                pushover_user_cache[k] = "Bob Ostrom" if memo.lower() == "bob" else memo
+                        loaded_any = True
+            except Exception as e:
+                print(f"Error fetching Pushover group users ({gkey}): {e}")
+        if loaded_any:
+            last_user_cache_time = now
+            print(f"[{datetime.now().strftime('%T')}] Synced {len(pushover_user_cache)} user memos from Pushover.net")
 
     # Friendly name resolution
     name = pushover_user_cache.get(user_key)
     if not name:
         if device and "bob" in device.lower():
             name = "Bob Ostrom"
-        elif user_key == PUSHOVER_GROUP:
-            name = "Bob Ostrom"
+        elif user_key in (PUSHOVER_GROUP, PUSHOVER_LAB_GROUP, PUSHOVER_CRYO_GROUP):
+            name = "Authorized Personnel"
         else:
             name = "Authorized Personnel"
 
@@ -1020,6 +1062,8 @@ def trigger_alarm(cnl_num, equipment_name, alarm_type, excursion_val, priority=N
     is_ups_power_alarm = any(cnl_num == u.get("power_alarm_cnl") for u in EQUIPMENT_CONFIG.get("ups", []))
     is_ups_low_batt = any(cnl_num == u.get("low_batt_alarm_cnl") for u in EQUIPMENT_CONFIG.get("ups", []))
 
+    target_group = get_target_pushover_group(cnl_num)
+
     if priority == 2:
         if is_ups_power_alarm:
             title = f"⚡ EMERGENCY: {equipment_name}"
@@ -1031,25 +1075,27 @@ def trigger_alarm(cnl_num, equipment_name, alarm_type, excursion_val, priority=N
             title = f"🔴 CRITICAL ALARM: {equipment_name}"
             message = f"{equipment_name} {alarm_type}! Reading: {val_str}. Immediate intervention required."
         sound = "siren"
-        print(f"[{datetime.now().strftime('%T')}] FIRING EMERGENCY SIREN (Priority 2): {title} ({val_str})")
+        print(f"[{datetime.now().strftime('%T')}] FIRING EMERGENCY SIREN (Priority 2 -> {target_group}): {title} ({val_str})")
         success, receipt = send_pushover_alert(
             title=title,
             message=message,
             priority=2,
             sound=sound,
             retry=60,
-            expire=7200
+            expire=7200,
+            target_group=target_group
         )
     else:  # Priority 1: High-priority warning (single alert, no repeating siren)
         title = f"⚠️ COMPLIANCE WARNING: {equipment_name}"
         message = f"{equipment_name}: {alarm_type}. Please attend to this during cleanroom operations."
         sound = "intermission"
-        print(f"[{datetime.now().strftime('%T')}] DISPATCHING WARNING (Priority 1): {title}")
+        print(f"[{datetime.now().strftime('%T')}] DISPATCHING WARNING (Priority 1 -> {target_group}): {title}")
         success, receipt = send_pushover_alert(
             title=title,
             message=message,
             priority=1,
-            sound=sound
+            sound=sound,
+            target_group=target_group
         )
 
     # Insert record into PostgreSQL alarm_events table
@@ -1078,6 +1124,7 @@ def trigger_alarm(cnl_num, equipment_name, alarm_type, excursion_val, priority=N
             "priority": priority,
             "triggered_at": time.time(),
             "pushover_receipt": receipt,
+            "target_group": target_group,
             "is_acknowledged": False,
             "acknowledged_by": None,
             "acknowledged_at": None,
@@ -1117,12 +1164,14 @@ def resolve_alarm(cnl_num, final_val=None):
     db_execute(sql)
 
     # Send Priority 0 "RECOVERED" notification with chime
+    target_group = alarm.get("target_group") or get_target_pushover_group(cnl_num)
     val_disp = f"({final_val:.1f} cm)" if (cnl_num in LN2_INSPECTION_CNLS and final_val is not None) else (f"({final_val:.1f}°C)" if final_val is not None else "")
     send_pushover_alert(
         title=f"🟢 RECOVERED: {equip} Normal",
         message=f"{equip} has returned to safe operational range {val_disp}. Duration: {duration_str}. Siren will continue repeating until acknowledged on phone or kiosk.",
         priority=0,
-        sound="magic"
+        sound="magic",
+        target_group=target_group
     )
 
 
@@ -1140,15 +1189,18 @@ def acknowledge_alarm(alarm_id, acknowledged_by="Lab Kiosk", user_token="local_k
 
     # If not in local active cache, check database
     if not target_alarm:
-        sql = f"SELECT id, pushover_receipt, equipment_name FROM mod_arc_postgre_sql.alarm_events WHERE id = {alarm_id} AND is_acknowledged = FALSE;"
+        sql = f"SELECT id, pushover_receipt, equipment_name, cnl_num FROM mod_arc_postgre_sql.alarm_events WHERE id = {alarm_id} AND is_acknowledged = FALSE;"
         rows = db_query(sql)
         if not rows:
             return False, "Alarm not found or already acknowledged."
         receipt = rows[0][1] if rows[0][1] and rows[0][1] != "NULL" else None
         equip = rows[0][2]
+        db_cnl = int(rows[0][3]) if len(rows[0]) >= 4 and rows[0][3] and rows[0][3] != "NULL" else None
+        target_group = get_target_pushover_group(db_cnl)
     else:
         receipt = target_alarm["pushover_receipt"]
         equip = target_alarm["equipment_name"]
+        target_group = target_alarm.get("target_group") or get_target_pushover_group(target_alarm.get("cnl_num"))
         with state_lock:
             target_alarm["is_acknowledged"] = True
             target_alarm["acknowledged_by"] = acknowledged_by
@@ -1173,13 +1225,14 @@ def acknowledge_alarm(alarm_id, acknowledged_by="Lab Kiosk", user_token="local_k
     """
     db_execute(sql)
 
-    # Send silent informational broadcast to all on-call staff
+    # Send silent informational broadcast to the group managing this alarm
     now_str = datetime.now().strftime("%H:%M:%S")
     send_pushover_alert(
         title=f"🔕 ALARM ACKNOWLEDGED: {equip}",
         message=f"{equip} alarm was acknowledged by {acknowledged_by} at {now_str}. Siren silenced. Staff attending.",
         priority=0,
-        sound="pushover"
+        sound="pushover",
+        target_group=target_group
     )
 
     print(f"[{datetime.now().strftime('%T')}] ACKNOWLEDGED: {equip} by {acknowledged_by} (token: {safe_token})")
@@ -1395,14 +1448,20 @@ def phone_sync_and_escalation_worker():
                 with state_lock:
                     p1_active = [a for a in active_alarms.values() if a.get("priority") == 1]
                 if p1_active:
-                    equip_names = ", ".join(sorted(list(set(a["equipment_name"] for a in p1_active))))
-                    print(f"[{datetime.now().strftime('%T')}] 🌅 DISPATCHING 8:00 AM MORNING SWEEP for: {equip_names}")
-                    send_pushover_alert(
-                        title="🌅 MORNING ROUNDS: Pending Compliance Items",
-                        message=f"Morning shift sweep detected pending item(s) for: {equip_names}. Please complete inspections at cleanroom kiosk.",
-                        priority=1,
-                        sound="intermission"
-                    )
+                    by_group = {}
+                    for a in p1_active:
+                        grp = a.get("target_group") or get_target_pushover_group(a.get("cnl_num"))
+                        by_group.setdefault(grp, []).append(a["equipment_name"])
+                    for grp, names in by_group.items():
+                        equip_names = ", ".join(sorted(set(names)))
+                        print(f"[{datetime.now().strftime('%T')}] 🌅 DISPATCHING 8:00 AM MORNING SWEEP (-> {grp}) for: {equip_names}")
+                        send_pushover_alert(
+                            title="🌅 MORNING ROUNDS: Pending Compliance Items",
+                            message=f"Morning shift sweep detected pending item(s) for: {equip_names}. Please complete inspections at cleanroom kiosk.",
+                            priority=1,
+                            sound="intermission",
+                            target_group=grp
+                        )
                 last_morning_sweep_date = today_str
 
         except Exception as e:
@@ -1640,7 +1699,8 @@ def record_ln2_log(tank_id, level_cm, was_filled, frost_condition, initials, not
         title=f"🧊 LN2 LOGGED: {safe_tank} ({level_cm:.1f} cm)",
         message=f"{safe_tank} inspected by {safe_init}. Level: {level_cm:.1f} cm. Filled: {filled_str}. Seal: {safe_frost}. Next check: {next_due_msg}.",
         priority=0,
-        sound="magic"
+        sound="magic",
+        target_group=PUSHOVER_CRYO_GROUP
     )
     print(f"[{datetime.now().strftime('%T')}] LN2 Log Recorded for {safe_tank}: {level_cm} cm by {safe_init} (Filled: {was_filled}). Next check: {next_due_msg}")
     return log_id
