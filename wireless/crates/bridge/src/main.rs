@@ -5,13 +5,128 @@ extern crate alloc;
 
 use alloc::vec::Vec;
 use esp_backtrace as _;
+use esp_hal::delay::Delay;
+use esp_hal::gpio::{Level, Output, OutputConfig};
+use esp_hal::time::{Duration, Instant};
 use esp_hal::timer::timg::TimerGroup;
+use esp_hal::uart::{Config as UartConfig, Uart};
+use esp_hal::Blocking;
 use esp_radio::esp_now::BROADCAST_ADDRESS;
-use wireless_protocol::{DeviceTelemetry, DownlinkPacket, UplinkPacket};
+use wireless_protocol::{DeviceTelemetry, UplinkPacket};
 
 pub mod gateway;
 
 esp_bootloader_esp_idf::esp_app_desc!();
+
+/// Modbus RTU T3.5 inter-frame silence delimiter at 115200 baud (spec minimum 1.75 ms).
+const RTU_FRAME_GAP: Duration = Duration::from_micros(2_000);
+
+/// Accumulates Modbus RTU bytes for a single serial interface and detects frame completion via T3.5 idle gap.
+struct RtuFrameBuffer {
+    buf: [u8; 256],
+    len: usize,
+    overflowed: bool,
+    last_rx: Instant,
+}
+
+impl RtuFrameBuffer {
+    fn new() -> Self {
+        Self {
+            buf: [0u8; 256],
+            len: 0,
+            overflowed: false,
+            last_rx: Instant::now(),
+        }
+    }
+
+    fn push_byte(&mut self, byte: u8, now: Instant) {
+        if self.len < self.buf.len() {
+            self.buf[self.len] = byte;
+            self.len += 1;
+        } else {
+            self.overflowed = true;
+        }
+        self.last_rx = now;
+    }
+
+    /// Invokes `on_frame` once a complete non-overflowed frame has been idle for `RTU_FRAME_GAP`.
+    fn poll_ready<F>(&mut self, mut on_frame: F)
+    where
+        F: FnMut(&[u8]),
+    {
+        if self.len > 0 && self.last_rx.elapsed() >= RTU_FRAME_GAP {
+            if !self.overflowed && self.len >= 4 {
+                on_frame(&self.buf[..self.len]);
+            }
+            self.len = 0;
+            self.overflowed = false;
+        }
+    }
+}
+
+/// Half-duplex RS-485 port using UART1 with explicit ST485 DE / /RE transceiver direction control.
+struct Rs485Port<'d> {
+    uart: Uart<'d, Blocking>,
+    de: Output<'d>,
+    re_n: Output<'d>,
+    delay: Delay,
+}
+
+impl<'d> Rs485Port<'d> {
+    fn new(uart: Uart<'d, Blocking>, de: Output<'d>, re_n: Output<'d>) -> Self {
+        Self {
+            uart,
+            de,
+            re_n,
+            delay: Delay::new(),
+        }
+    }
+
+    /// Drains any buffered UART RX bytes into `frame_buf`. Returns true if at least one byte arrived.
+    fn poll_rx(&mut self, frame_buf: &mut RtuFrameBuffer) -> bool {
+        let mut received = false;
+        let mut scratch = [0u8; 64];
+        while self.uart.read_ready() {
+            match self.uart.read_buffered(&mut scratch) {
+                Ok(0) => break,
+                Ok(n) => {
+                    let now = Instant::now();
+                    for &b in &scratch[..n] {
+                        frame_buf.push_byte(b, now);
+                    }
+                    received = true;
+                }
+                Err(_) => {
+                    // Discard corrupted partial frame after line noise/framing glitch.
+                    frame_buf.len = 0;
+                    frame_buf.overflowed = false;
+                    break;
+                }
+            }
+        }
+        received
+    }
+
+    /// Drives DE + /RE high, shifts out the full Modbus RTU response, waits for idle, then restores RX mode.
+    fn send_frame(&mut self, bytes: &[u8]) {
+        self.re_n.set_high();
+        self.de.set_high();
+        self.delay.delay_micros(10);
+
+        let mut offset = 0;
+        while offset < bytes.len() {
+            match self.uart.write(&bytes[offset..]) {
+                Ok(n) if n > 0 => offset += n,
+                _ => break,
+            }
+        }
+        let _ = self.uart.flush();
+        self.delay.delay_micros(10);
+
+        self.de.set_low();
+        self.re_n.set_low();
+    }
+}
 
 pub struct DirectUsbSerial {
     regs: &'static esp32s3::usb_device::RegisterBlock,
@@ -40,6 +155,27 @@ impl DirectUsbSerial {
     }
 }
 
+/// Processes a completed Modbus RTU request frame, writes any reply via `send_reply`, and returns true if slots may have pending downlinks.
+fn handle_rtu_frame<F>(
+    frame_buf: &mut RtuFrameBuffer,
+    gw: &mut gateway::WirelessGateway,
+    tx_buf: &mut Vec<u8>,
+    mut send_reply: F,
+) -> bool
+where
+    F: FnMut(&[u8]),
+{
+    let mut processed_reply = false;
+    frame_buf.poll_ready(|frame| {
+        tx_buf.clear();
+        if let Ok(true) = gw.process_modbus_rtu(frame, tx_buf) {
+            send_reply(tx_buf);
+            processed_reply = true;
+        }
+    });
+    processed_reply
+}
+
 #[esp_hal::main]
 fn main() -> ! {
     esp_alloc::heap_allocator!(size: 64 * 1024);
@@ -55,7 +191,17 @@ fn main() -> ! {
     let esp_now = controller.esp_now();
     let (_manager, mut sender, receiver) = esp_now.split();
 
+    // 3. Initialize both Modbus RTU interfaces: USB CDC and RS-485 (UART1 + ST485)
+    // XIAO ESP32-S3 carrier PCB pinout: RO=D7(GPIO44), DI=D6(GPIO43), /RE=D3(GPIO4), DE=D2(GPIO3)
     let usb = DirectUsbSerial::new();
+    let rs485_uart = Uart::new(peripherals.UART1, UartConfig::default().with_baudrate(115_200))
+        .unwrap()
+        .with_rx(peripherals.GPIO44)
+        .with_tx(peripherals.GPIO43);
+    let rs485_de = Output::new(peripherals.GPIO3, Level::Low, OutputConfig::default());
+    let rs485_re_n = Output::new(peripherals.GPIO4, Level::Low, OutputConfig::default());
+    let mut rs485 = Rs485Port::new(rs485_uart, rs485_de, rs485_re_n);
+
     let mut gw = gateway::WirelessGateway::new();
 
     // Auto-bind Slot 1 for Dewar 1 with 2.8" Touch Display Node MAC: B8:1F:3F:C3:A0:CC
@@ -81,16 +227,12 @@ fn main() -> ! {
     );
     let _ = gw.handle_uplink(&initial_pkt, -58, 1);
 
-    let mut rx_buf = [0u8; 256];
-    let mut rx_len: usize = 0;
+    let mut usb_rx_buf = RtuFrameBuffer::new();
+    let mut rs485_rx_buf = RtuFrameBuffer::new();
     let mut tx_buf: Vec<u8> = Vec::with_capacity(256);
-    let mut idle_count: u32 = 0;
     let mut downlink_buf = [0u8; 64];
 
-    // Modbus RTU 3.5 character silence delimiter (~1.5-2.5 ms)
-    const INTER_FRAME_IDLE_CYCLES: u32 = 30_000;
-
-    let mut tick_counter: u32 = 0;
+    let mut last_watchdog = Instant::now();
     let mut uptime_sec: u32 = 1;
 
     loop {
@@ -110,44 +252,45 @@ fn main() -> ! {
             }
         }
 
-        // B. Process Incoming Modbus RTU Serial Frames from PLC
-        if let Some(byte) = usb.read_byte() {
-            if rx_len < rx_buf.len() {
-                rx_buf[rx_len] = byte;
-                rx_len += 1;
-            }
-            idle_count = 0;
-        } else if rx_len > 0 {
-            idle_count += 1;
-            if idle_count > INTER_FRAME_IDLE_CYCLES {
-                if rx_len >= 4 {
-                    tx_buf.clear();
-                    if let Ok(true) = gw.process_modbus_rtu(&rx_buf[..rx_len], &mut tx_buf) {
-                        usb.write_bytes(&tx_buf);
+        // B. Drain Incoming Modbus RTU Bytes from USB CDC and RS-485
+        while let Some(byte) = usb.read_byte() {
+            usb_rx_buf.push_byte(byte, Instant::now());
+        }
+        rs485.poll_rx(&mut rs485_rx_buf);
 
-                        // If Modbus write queued a pending command in any slot, transmit immediately!
-                        for slot in &mut gw.slots {
-                            if let Some(downlink) = slot.pending_cmd.take() {
-                                if let Ok(payload) = downlink.serialize(&mut downlink_buf) {
-                                    if let Some(mac) = slot.bound_mac {
-                                        let _ = sender.send(&mac, payload);
-                                    }
-                                    let _ = sender.send(&BROADCAST_ADDRESS, payload);
-                                }
-                                let _ = slot.modbus_ctx.set_holding(wireless_protocol::modbus_map::REG_COMMAND_MAILBOX as u16, 0);
-                            }
+        // C. Process Completed Modbus RTU Frames on Either Interface
+        let mut dispatch_downlinks = false;
+        if handle_rtu_frame(&mut usb_rx_buf, &mut gw, &mut tx_buf, |reply| {
+            usb.write_bytes(reply);
+        }) {
+            dispatch_downlinks = true;
+        }
+        if handle_rtu_frame(&mut rs485_rx_buf, &mut gw, &mut tx_buf, |reply| {
+            rs485.send_frame(reply);
+        }) {
+            dispatch_downlinks = true;
+        }
+
+        // If a Modbus write queued a pending command in any slot, transmit over ESP-NOW immediately.
+        if dispatch_downlinks {
+            for slot in &mut gw.slots {
+                if let Some(downlink) = slot.pending_cmd.take() {
+                    if let Ok(payload) = downlink.serialize(&mut downlink_buf) {
+                        if let Some(mac) = slot.bound_mac {
+                            let _ = sender.send(&mac, payload);
                         }
+                        let _ = sender.send(&BROADCAST_ADDRESS, payload);
                     }
+                    let _ = slot
+                        .modbus_ctx
+                        .set_holding(wireless_protocol::modbus_map::REG_COMMAND_MAILBOX as u16, 0);
                 }
-                rx_len = 0;
-                idle_count = 0;
             }
         }
 
-        // C. Periodic Watchdog Ticks
-        tick_counter += 1;
-        if tick_counter >= 1_000_000 {
-            tick_counter = 0;
+        // D. Periodic Watchdog Ticks (1 Hz)
+        if last_watchdog.elapsed() >= Duration::from_secs(1) {
+            last_watchdog = Instant::now();
             uptime_sec = uptime_sec.saturating_add(1);
             gw.watchdog_tick(uptime_sec as u64, 60);
         }
