@@ -301,7 +301,7 @@ PG_SSLMODE = os.environ.get("SCADA_PG_SSLMODE", os.environ.get("PGSSLMODE", "pre
 
 PUSHOVER_TOKEN    = os.environ.get("PUSHOVER_TOKEN", "a2wmo7ofxhhpo2vc2ykdkhtnte8nb5")
 PUSHOVER_GROUP    = os.environ.get("PUSHOVER_GROUP", "gepqspoh98t69c7o223hwbg8ponwyq")
-PUSHOVER_PING_URL = os.environ.get("PUSHOVER_PING_URL", "https://api.pushover.net/1/monitors/mm5z3n2shg9hjn2785oyu649ri92cxh/ping.json")
+PUSHOVER_PING_URL = os.environ.get("PUSHOVER_PING_URL", "")  # Handled by scripts/pushover_watchdog.py
 
 ESCALATION_TIMEOUT_SECONDS = 1800  # 30 minutes
 

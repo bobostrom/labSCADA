@@ -64,4 +64,12 @@ else
     echo "ℹ️ ivf-alert-engine service is not currently active. Start with: sudo systemctl start ivf-alert-engine"
 fi
 
+echo "-> Restarting labscada-watchdog.service..."
+if systemctl is-active --quiet labscada-watchdog.service 2>/dev/null; then
+    sudo systemctl restart labscada-watchdog.service
+    echo "✅ labscada-watchdog restarted successfully!"
+else
+    echo "ℹ️ labscada-watchdog service is not currently active. Start with: sudo systemctl start labscada-watchdog"
+fi
+
 echo "=== Site Activation Complete: $SITE ==="

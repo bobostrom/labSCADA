@@ -419,95 +419,10 @@ public bool MonthStarted(int minMinute = 0)
   <Script>
     <ScriptID>102</ScriptID>
     <Name>Pushover Alerts</Name>
-    <Source>private DateTime lastPushoverPing = DateTime.MinValue;
-private System.Collections.Generic.Dictionary&lt;string, double&gt; incubatorStates = new System.Collections.Generic.Dictionary&lt;string, double&gt;();
-
-private const string PushoverToken = "a2wmo7ofxhhpo2vc2ykdkhtnte8nb5";
-private const string PushoverGroup = "gepqspoh98t69c7o223hwbg8ponwyq";
-private const string PushoverPingUrl = "https://api.pushover.net/1/monitors/mm5z3n2shg9hjn2785oyu649ri92cxh/ping.json";
-
-public double CheckIncubatorAlarm(double state, string name)
+    <Source>public double CheckIncubatorAlarm(double state, string name)
 {
-    DateTime now = DateTime.UtcNow;
-
-    // 1. Heartbeat to Pushover Inactivity Monitor every 60 seconds
-    if ((now - lastPushoverPing).TotalSeconds &gt;= 60)
-    {
-        lastPushoverPing = now;
-        System.Threading.Tasks.Task.Run(() =&gt;
-        {
-            try
-            {
-                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
-                {
-                    FileName = "curl",
-                    Arguments = "-s \"" + PushoverPingUrl + "\"",
-                    UseShellExecute = false,
-                    CreateNoWindow = true
-                });
-            }
-            catch { }
-        });
-    }
-
-    // 2. Track previous state for this specific incubator
-    double prevState = 0;
-    if (incubatorStates.ContainsKey(name))
-    {
-        prevState = incubatorStates[name];
-    }
-    else
-    {
-        incubatorStates[name] = 0;
-    }
-
-    // 3. Alarm Transition: Normal (0) -&gt; Alarm (1)
-    if (state &gt; 0 &amp;&amp; prevState == 0)
-    {
-        incubatorStates[name] = 1;
-        System.Threading.Tasks.Task.Run(() =&gt;
-        {
-            try
-            {
-                string safeName = name.Replace(" ", "+");
-                string args = string.Format("-s -d \"token={0}&amp;user={1}&amp;title=CRITICAL+ALARM:+{2}&amp;message={2}+alarm+contact+TRIPPED!+Check+chamber+immediately.&amp;priority=2&amp;sound=siren&amp;retry=60&amp;expire=7200\" https://api.pushover.net/1/messages.json",
-                    PushoverToken, PushoverGroup, safeName);
-                
-                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
-                {
-                    FileName = "curl",
-                    Arguments = args,
-                    UseShellExecute = false,
-                    CreateNoWindow = true
-                });
-            }
-            catch { }
-        });
-    }
-    // 4. Alarm Transition: Alarm (1) -&gt; Normal (0)
-    else if (state == 0 &amp;&amp; prevState &gt; 0)
-    {
-        incubatorStates[name] = 0;
-        System.Threading.Tasks.Task.Run(() =&gt;
-        {
-            try
-            {
-                string safeName = name.Replace(" ", "+");
-                string args = string.Format("-s -d \"token={0}&amp;user={1}&amp;title=RESOLVED:+{2}+Normal&amp;message={2}+alarm+contact+has+returned+to+Normal.&amp;priority=0&amp;sound=magic\" https://api.pushover.net/1/messages.json",
-                    PushoverToken, PushoverGroup, safeName);
-
-                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
-                {
-                    FileName = "curl",
-                    Arguments = args,
-                    UseShellExecute = false,
-                    CreateNoWindow = true
-                });
-            }
-            catch { }
-        });
-    }
-
+    // Watchdog heartbeat moved to scripts/pushover_watchdog.py;
+    // alarm notifications handled by ivf_alert_engine.py.
     return state;
 }</Source>
   </Script>
