@@ -467,7 +467,7 @@ def get_target_pushover_group(cnl_num):
     if cnl in LN2_INSPECTION_CNLS:
         return PUSHOVER_CRYO_GROUP
     if cnl in UPS_ALARM_CNLS:
-        return PUSHOVER_GROUP
+        return PUSHOVER_LAB_GROUP
     cfg = CHANNELS.get(cnl, {})
     ctype = cfg.get("type")
     if ctype == "cryo":
@@ -716,7 +716,8 @@ def set_lab_mode(new_mode, user="Lab Staff", notes=""):
         title=f"{icon} Lab Operating Mode: {safe_mode}",
         message=f"Lab operational status switched to {safe_mode} by {user}. Notes: {notes or 'None'}.",
         priority=0,
-        sound="magic"
+        sound="magic",
+        target_group=PUSHOVER_LAB_GROUP
     )
     return safe_mode
 
@@ -2265,7 +2266,8 @@ class ClinicalAlertHandler(http.server.BaseHTTPRequestHandler):
                 title="🔔 IVF LAB QA: Daily Alarm Pathway Test",
                 message=f"Daily alarm pathway test initiated from Lab Kiosk at {now_str}. All systems operational.",
                 priority=0,
-                sound="magic"
+                sound="magic",
+                target_group=PUSHOVER_LAB_GROUP
             )
             # Record QA test into PostgreSQL
             sql = f"""
