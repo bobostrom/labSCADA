@@ -20,7 +20,7 @@ All 4 SPI signals plug directly into the 4-pin expansion header on the back:
 | *I2C header* | `3.3V` | `VIN` / `3V3` | 3.3V power |
 | *I2C header* | `GND` | `GND` | Ground reference |
 
-*(Note: If testing temporarily with a 3-wire MAX31855 thermocouple before your MAX31865 arrives, wire `SCK` to `IO2`, `MISO` to `IO14`, `CS` to `IO21`, and leave `IO3` disconnected).*
+Configured for **PT100** with **430 Ω Rref** (`RtdType::Pt100Rref430`) in **3-Wire** mode (`WireMode::ThreeWire`).
 
 ### B. Display, Touch & Battery (Internal Onboard Connections)
 * **Backlight:** `GPIO 45` (driven LOW for 0 mA black screen, HIGH when touched or during alarm)

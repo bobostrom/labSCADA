@@ -1,5 +1,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
+pub mod max31865;
+
 use serde::{Deserialize, Serialize};
 
 /// Maximum wireless packet size for ESP-NOW framing

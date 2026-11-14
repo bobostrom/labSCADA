@@ -57,6 +57,8 @@ VAR
     fbFreezer           : FB_MedFreezer;    (* Hierarchical Medical Freezer Subsystem *)
     fbAmbientAlarmEval  : FB_AnalogAlarm;   (* Cleanroom Ambient Comfort Window Evaluator *)
     iAmbientTempX10     : INT;
+    tonOnlineSettle     : TON;              (* Hold CommLoss through initial Modbus settle on boot/reconnect *)
+    bLinkOnline         : BOOL := FALSE;    (* Bridge online bit set and watchdog healthy *)
 END_VAR
 // --- implementation ---
 // ==============================================================================
@@ -68,7 +70,14 @@ IF bIsWireless THEN
     iRSSI         := TO_INT(wRawRSSI);
     uiAgeSec      := uiRawAgeSec;
     uiFaultCode   := uiRawFaultCode;
-    bCommLoss     := (uiRawAgeSec >= (TIME_TO_UINT(tCommLossTimeout) / 1000)) OR (wRawStatusFlags.2);
+    (* Require bridge Online bit (Bit 0) + 2s settle before leaving CommLoss
+       so scan-1 unpopulated Modbus holding registers (all zeros = 0.0 C)
+       cannot falsely prime the thermal vial filter on boot/reload. *)
+    bLinkOnline   := wRawStatusFlags.0
+        AND (NOT wRawStatusFlags.2)
+        AND (uiRawAgeSec < (TIME_TO_UINT(tCommLossTimeout) / 1000));
+    tonOnlineSettle(IN := bLinkOnline, PT := T#2S);
+    bCommLoss     := NOT tonOnlineSettle.Q;
 ELSE
     rBatteryVolts := 0.0;
     bLowBattery   := FALSE;
@@ -76,6 +85,7 @@ ELSE
     bCommLoss     := FALSE;
     uiFaultCode   := 0;
     uiAgeSec      := 0;
+    tonOnlineSettle(IN := FALSE);
 END_IF;
 
 // ==============================================================================

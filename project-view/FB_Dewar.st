@@ -76,7 +76,7 @@ IF bIsWireless THEN
     bProbeFault   := (uiRawFaultCode <> 0) OR (iTempX10 <= -2730) OR (iTempX10 >= 9000);
 
     // Watchdog comms loss if bridge flagged or age exceeds timeout
-    bCommLoss     := (wRawStatusFlags.2) OR (uiRawAgeSec > (TIME_TO_UINT(tCommLossTimeout) / 1000));
+    bCommLoss     := (NOT wRawStatusFlags.0) OR (wRawStatusFlags.2) OR (uiRawAgeSec > (TIME_TO_UINT(tCommLossTimeout) / 1000));
 
     // Access Mode Active (Bit 3 of status flags: Alarms paused 30 min)
     bAccessMode   := wRawStatusFlags.3;

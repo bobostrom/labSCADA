@@ -3,7 +3,12 @@ name = "wireless-node"
 version = "0.1.0"
 edition = "2021"
 authors = ["LabSCADA Automation Team"]
-description = "Universal Low-Power Clinical Sensor Node (Dewar / Door / Ambient) for XIAO ESP32-S3"
+description = "Universal Low-Power Clinical Sensor Node (Dewar / Door / Ambient) for ESP32-S3"
+
+[features]
+default = []
+# Compile dewar_plain with Seeed Studio XIAO ESP32-S3 GPIO pinout instead of Adafruit QT Py ESP32-S3.
+xiao = []
 
 [lib]
 name = "wireless_node"
@@ -12,6 +17,10 @@ path = "src/lib.rs"
 [[bin]]
 name = "dewar_node"
 path = "src/bin/dewar_node.rs"
+
+[[bin]]
+name = "dewar_plain"
+path = "src/bin/dewar_plain.rs"
 
 [[bin]]
 name = "fridge_node"

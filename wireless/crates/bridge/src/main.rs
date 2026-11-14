@@ -211,6 +211,10 @@ fn main() -> ! {
     // Auto-bind Slot 2 for Fridge/Freezer with known Node MAC: 20:6E:F1:86:F2:C8
     let fridge_mac = [0x20, 0x6E, 0xF1, 0x86, 0xF2, 0xC8];
     gw.slots[1].bind(fridge_mac, wireless_protocol::DeviceType::FridgeFreezer);
+
+    // Auto-bind Slot 3 for Dewar 3 (`dewar_plain`, QT Py ESP32-S3) MAC: 90:DA:72:71:46:D4
+    let dewar3_mac = [0x90, 0xDA, 0x72, 0x71, 0x46, 0xD4];
+    gw.slots[2].bind(dewar3_mac, wireless_protocol::DeviceType::DewarCryo);
     gw.pairing_enabled = true;
 
     // Initial baseline: -195.6 C, 3.82V

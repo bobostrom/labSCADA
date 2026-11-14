@@ -14,6 +14,7 @@
       "wireless_node": "dewar_node_01",
       "batt_cnl": 109,
       "temp_cnl": 104,
+      "access_mode_cnl": 113,
       "alarm_cnl": 114,
       "warn_cnl": 118,
       "ln2_cnl": 198,
@@ -29,7 +30,9 @@
       "icon": "🥚",
       "color": "#818cf8",
       "plc_fb": "fbDewar3",
-      "is_wireless": false,
+      "is_wireless": true,
+      "wireless_node": "dewar3_node_01",
+      "batt_cnl": 135,
       "temp_cnl": 105,
       "alarm_cnl": 126,
       "warn_cnl": 129,
@@ -95,7 +98,7 @@
       "key": "freezer",
       "name": "Medical Freezer",
       "short_name": "Freezer",
-      "target_label": "Limit: < -10.0°C",
+      "target_label": "Limit: < 0.0°C",
       "plc_fb": "fbColdStorage",
       "is_wireless": true,
       "wireless_node": "cold_storage_node_01",
@@ -103,7 +106,7 @@
       "temp_cnl": 103,
       "alarm_cnl": 112,
       "warn_cnl": 116,
-      "high_limit": -10.0
+      "high_limit": -0.0
     }
   ],
   "cabinets": [

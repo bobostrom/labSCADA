@@ -19,4 +19,3 @@ esp-backtrace = { version = "0.20.0", features = ["esp32s3", "panic-handler", "p
 esp-println = { version = "0.18.0", features = ["esp32s3"] }
 esp-radio = { version = "1.0.0-beta.1", features = ["esp32s3", "esp-now", "unstable"] }
 esp-rtos = { version = "0.4.0", features = ["esp32s3", "esp-radio", "esp-alloc"] }
-libm = "0.2"

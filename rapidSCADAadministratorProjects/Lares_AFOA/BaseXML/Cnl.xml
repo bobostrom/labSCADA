@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <ArrayOfCnl xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
   <Cnl>
     <CnlNum>101</CnlNum>
@@ -278,7 +278,7 @@
   <Cnl>
     <CnlNum>113</CnlNum>
     <Active>true</Active>
-    <Name> SensorStatus_03</Name>
+    <Name>Dewar 2 Access Mode</Name>
     <Code />
     <DataTypeID xsi:nil="true" />
     <DataLen xsi:nil="true" />
@@ -780,6 +780,29 @@
     <LimID xsi:nil="true" />
     <ArchiveMask xsi:nil="true" />
     <EventMask>5</EventMask>
+  </Cnl>
+  <Cnl>
+    <CnlNum>135</CnlNum>
+    <Active>true</Active>
+    <Name>Dewar 3 Battery Voltage</Name>
+    <Code />
+    <DataTypeID xsi:nil="true" />
+    <DataLen xsi:nil="true" />
+    <CnlTypeID>2</CnlTypeID>
+    <ObjNum>1</ObjNum>
+    <DeviceNum>1</DeviceNum>
+    <TagNum xsi:nil="true" />
+    <TagCode>Dewar3_BattV</TagCode>
+    <FormulaEnabled>false</FormulaEnabled>
+    <InFormula />
+    <OutFormula />
+    <FormatID>3</FormatID>
+    <OutFormatID xsi:nil="true" />
+    <QuantityID>4</QuantityID>
+    <UnitID>41</UnitID>
+    <LimID xsi:nil="true" />
+    <ArchiveMask xsi:nil="true" />
+    <EventMask>81</EventMask>
   </Cnl>
   <Cnl>
     <CnlNum>141</CnlNum>

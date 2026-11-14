@@ -16,7 +16,7 @@ INSERT INTO mod_arc_postgre_sql.channel_config (cnl_num, name) VALUES
     (110, 'Temperature_10'),
     (111, 'Med Fridge Alarm'),
     (112, 'Med Freezer Alarm'),
-    (113, 'Dewar 1 Alarm'),
+    (113, 'Dewar 2 Access Mode'),
     (114, 'Dewar 2 Alarm'),
     (115, 'Med Fridge Warn'),
     (116, 'Med Freezer Warn'),

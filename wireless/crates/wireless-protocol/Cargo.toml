@@ -6,6 +6,8 @@ authors = ["LabSCADA Automation Team"]
 description = "Shared clinical wireless protocol, telemetry schemas, and Modbus mappings for IVF monitoring"
 
 [dependencies]
+embedded-hal = "1.0.0"
+libm = "0.2"
 serde = { version = "1.0", default-features = false, features = ["derive"] }
 postcard = { version = "1.0", default-features = false }
 

@@ -287,7 +287,6 @@ dependencies = [
  "esp-rtos",
  "esp32s3 0.36.0",
  "heapless 0.8.0",
- "libm",
  "postcard",
  "serde",
  "wireless-protocol",
@@ -1844,6 +1843,8 @@ dependencies = [
 name = "wireless-protocol"
 version = "0.1.0"
 dependencies = [
+ "embedded-hal 1.0.0",
+ "libm",
  "postcard",
  "serde",
 ]

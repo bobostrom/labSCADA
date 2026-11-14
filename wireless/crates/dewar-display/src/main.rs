@@ -5,8 +5,6 @@ extern crate alloc;
 
 mod display;
 mod kiosk_font;
-mod max31855;
-mod max31865;
 mod touch;
 
 use esp_backtrace as _;
@@ -16,6 +14,7 @@ use esp_hal::timer::timg::TimerGroup;
 use esp_hal::analog::adc::{Adc, AdcConfig, Attenuation, AdcCalCurve};
 use esp_hal::peripherals::ADC1;
 use esp_radio::esp_now::BROADCAST_ADDRESS;
+use wireless_protocol::max31865::{self, eval_rtd_reading};
 use wireless_protocol::{DeviceTelemetry, DownlinkCommand, DownlinkPacket, UplinkPacket, PROTOCOL_MAGIC, PROTOCOL_VERSION};
 
 esp_bootloader_esp_idf::esp_app_desc!();
@@ -28,17 +27,43 @@ const DISPLAY_TIMEOUT_TICKS: u32 = 1500;
 // Cryo Hold duration: 30 minutes (180,000 ticks)
 const CRYO_HOLD_TICKS: u32 = 180000;
 
+/// Emit concise MAX31865 diagnostics within the USB-Serial-JTAG 64-byte TX FIFO.
+fn log_rtd_reading(
+    label: &str,
+    rtd_cfg: Option<u8>,
+    reading: &max31865::Max31865Reading,
+    temp_c_x10: i16,
+    fault_code: u8,
+    delay: &esp_hal::delay::Delay,
+) {
+    delay.delay_millis(5);
+    if let Some(cfg) = rtd_cfg {
+        println!("[MAX31865] {} cfg=0x{:02X} raw=0x{:04X}", label, cfg, reading.raw_adc);
+    } else {
+        println!("[MAX31865] {} raw=0x{:04X}", label, reading.raw_adc);
+    }
+    delay.delay_millis(5);
+    println!(
+        "[MAX31865] R={}.{:02} ohm temp={} dC fault={} st=0x{:02X}",
+        reading.resistance_x100 / 100,
+        reading.resistance_x100 % 100,
+        temp_c_x10,
+        fault_code,
+        reading.fault_status,
+    );
+}
+
 #[esp_hal::main]
 fn main() -> ! {
     esp_alloc::heap_allocator!(size: 128 * 1024);
 
     let peripherals = esp_hal::init(esp_hal::Config::default());
-    let delay = esp_hal::delay::Delay::new();
+    let mut delay = esp_hal::delay::Delay::new();
 
     println!("==================================================");
     println!("  LabSCADA Smart Cryo Dewar Touch Node (ESP32-S3) ");
     println!("  Hardware: 2.8\" IPS Touch Display + MAX31865     ");
-    println!("  Mode: Bench Test (-140.0 C Simulated Baseline)  ");
+    println!("  Mode: Live MAX31865 RTD (PT100, 3-Wire)         ");
     println!("==================================================");
 
     // 1. Initialize RTOS timer required by esp-radio
@@ -48,7 +73,7 @@ fn main() -> ! {
     // 2. Initialize WiFi and ESP-NOW
     let controller = esp_radio::wifi::WifiController::new(peripherals.WIFI, Default::default()).unwrap();
     let esp_now = controller.esp_now();
-    let (_manager, mut sender, _receiver) = esp_now.split();
+    let (_manager, mut sender, receiver) = esp_now.split();
 
     // Read MAC address
     let mac = efuse::interface_mac_address(InterfaceMacAddress::Station);
@@ -100,19 +125,25 @@ fn main() -> ! {
     );
     let mut adc1 = Adc::new(peripherals.ADC1, adc1_config);
 
-    // 6. Initialize MAX31855 Thermocouple Interface (IO2: SCK, IO14: MISO, IO21: CS)
+    // 6. Initialize MAX31865 RTD Interface (IO2: SCK, IO3: MOSI/SDI, IO14: MISO/SDO, IO21: CS)
     let max_sck = esp_hal::gpio::Output::new(peripherals.GPIO2, esp_hal::gpio::Level::Low, esp_hal::gpio::OutputConfig::default());
-    let max_cs = esp_hal::gpio::Output::new(peripherals.GPIO21, esp_hal::gpio::Level::High, esp_hal::gpio::OutputConfig::default());
+    let max_mosi = esp_hal::gpio::Output::new(peripherals.GPIO3, esp_hal::gpio::Level::Low, esp_hal::gpio::OutputConfig::default());
     let max_miso = esp_hal::gpio::Input::new(peripherals.GPIO14, esp_hal::gpio::InputConfig::default());
-    let mut max31855 = max31855::Max31855::new(max_sck, max_cs, max_miso);
+    let max_cs = esp_hal::gpio::Output::new(peripherals.GPIO21, esp_hal::gpio::Level::High, esp_hal::gpio::OutputConfig::default());
+    let mut max31865 = max31865::Max31865::new(
+        max_sck,
+        max_mosi,
+        max_miso,
+        max_cs,
+        max31865::RtdType::Pt100Rref430,
+        max31865::WireMode::ThreeWire,
+    );
+    max31865.init(&mut delay);
 
-    let initial_reading = max31855.read(&delay);
-    let mut current_temp_c_x10: i16 = if initial_reading.fault == max31855::FaultType::None {
-        initial_reading.temp_c_x10
-    } else {
-        -9999
-    };
-    let mut sensor_fault_code: u8 = initial_reading.fault as u8;
+    let rtd_cfg = max31865.read_register(0x00, &mut delay);
+    let initial_reading = max31865.read_temperature(&mut delay);
+    let (mut current_temp_c_x10, mut sensor_fault_code) = eval_rtd_reading(&initial_reading);
+    log_rtd_reading("init", Some(rtd_cfg), &initial_reading, current_temp_c_x10, sensor_fault_code, &delay);
     let mut is_alarm: bool = current_temp_c_x10 > -1350 && current_temp_c_x10 != -9999;
     let mut prev_alarm: bool = is_alarm;
 
@@ -167,12 +198,11 @@ fn main() -> ! {
             // Unit is USB-powered if rail >= 4040mV (charge/float rail is ~4.07V-4.2V) or USB SOF active
             is_usb_connected = latest_batt >= 4040 || is_usb_data;
 
-            let reading = max31855.read(&delay);
-            let (new_temp, new_fault) = if reading.fault == max31855::FaultType::None {
-                (reading.temp_c_x10, 0u8)
-            } else {
-                (-9999, reading.fault as u8)
-            };
+            let reading = max31865.read_temperature(&mut delay);
+            let (new_temp, new_fault) = eval_rtd_reading(&reading);
+            if new_fault != sensor_fault_code {
+                log_rtd_reading("fault_change", None, &reading, new_temp, new_fault, &delay);
+            }
 
             let temp_changed = new_temp != current_temp_c_x10 || new_fault != sensor_fault_code;
             current_temp_c_x10 = new_temp;
@@ -232,9 +262,61 @@ fn main() -> ! {
             }
         }
 
+        // B2. Check ESP-NOW Downlink Mailbox (PLC / SCADA Supervisory Commands)
+        while let Some(rx_data) = receiver.receive() {
+            // DownlinkPacket is <= 8 bytes in postcard; ignore 20+ byte peer UplinkPackets on broadcast
+            if rx_data.data().len() <= 8 {
+                if let Ok(downlink) = DownlinkPacket::deserialize(rx_data.data()) {
+                    println!("[ESP-NOW RX] cmd={:?} param={}", downlink.command, downlink.parameter);
+                    match downlink.command {
+                    DownlinkCommand::SetAccessMode => {
+                        let was_holding = hold_timer > 0;
+                        let changed = if downlink.parameter > 0 {
+                            let target_ticks = (downlink.parameter as u32).saturating_mul(6000);
+                            let diff = hold_timer.abs_diff(target_ticks);
+                            hold_timer = target_ticks;
+                            !was_holding || diff > 3000
+                        } else {
+                            hold_timer = 0;
+                            was_holding
+                        };
+
+                        if changed {
+                            if hold_timer > 0 {
+                                println!("[ESP-NOW RX] Access Mode ACTIVATED via SCADA/PLC ({} min)", downlink.parameter);
+                            } else {
+                                println!("[-] Access Mode CANCELLED via SCADA/PLC (Normal monitoring resumed)");
+                            }
+                            is_alarm = current_temp_c_x10 > -1350 && hold_timer == 0 && current_temp_c_x10 != -9999;
+                            if !screen.is_backlight_on() {
+                                screen.backlight_on();
+                            }
+                            screen_timer = DISPLAY_TIMEOUT_TICKS;
+                            screen.draw_cryo_screen("Dewar 1 (Embryos)", current_temp_c_x10, latest_batt, seq, is_alarm, hold_timer > 0);
+                            // Trigger immediate telemetry uplink so Bridge & PLC confirm new Access Mode state
+                            report_counter = REPORT_INTERVAL_TICKS;
+                        }
+                    }
+                    DownlinkCommand::MuteBuzzer => {
+                        println!("[ESP-NOW RX] Received MuteBuzzer command");
+                    }
+                    _ => {}
+                }
+                }
+            }
+        }
+
         // C. Decrement Hold Timer
         if hold_timer > 0 {
             hold_timer -= 1;
+            if hold_timer == 0 {
+                println!("[-] Access Mode EXPIRED (resuming alarm monitoring)");
+                is_alarm = current_temp_c_x10 > -1350 && current_temp_c_x10 != -9999;
+                if screen.is_backlight_on() {
+                    screen.draw_cryo_screen("Dewar 1 (Embryos)", current_temp_c_x10, latest_batt, seq, is_alarm, false);
+                }
+                report_counter = REPORT_INTERVAL_TICKS;
+            }
         }
 
         // D. Screen Inactivity / USB Power Management
@@ -262,8 +344,10 @@ fn main() -> ! {
             let pin_mv: u16 = adc1.read_blocking(&mut batt_pin);
             latest_batt = pin_mv * 2; // Scaled by 2:1 onboard divider
 
-            println!("TELEMETRY: Temp={}dC, Fault={}, Batt={}mV, AccessMode={}, INT_low={}",
-                current_temp_c_x10, sensor_fault_code, latest_batt, hold_timer > 0, touch.is_pin_low());
+            println!("TELEMETRY: Temp={}dC, Fault={}, Batt={}mV",
+                current_temp_c_x10, sensor_fault_code, latest_batt);
+            delay.delay_millis(5);
+            println!("  AccessMode={}, INT_low={}", hold_timer > 0, touch.is_pin_low());
 
             // Build Telemetry Packet
             let telemetry = DeviceTelemetry::Dewar {

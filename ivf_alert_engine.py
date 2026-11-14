@@ -796,6 +796,8 @@ def track_door_events(readings, current_mode):
 
 # Cryo Maintenance / Retrieval Hold State
 active_cryo_holds = {}
+cryo_hold_cancel_grace = {}  # {tank_name: unix_ts_until} suppresses stale PLC TRUE right after cancel
+CRYO_PLC_SYNC_GRACE_SEC = 25.0
 
 def is_cryo_hold_active(equipment_name):
     """Returns True if alarms for equipment_name are currently suppressed."""
@@ -810,7 +812,7 @@ def is_cryo_hold_active(equipment_name):
     return False
 
 def sync_cryo_holds_with_plc(readings=None):
-    """Reconciles in-memory hold state with live PLC hardware status flags (e.g. Channel 126)."""
+    """Reconciles in-memory hold state with live PLC hardware status flags (e.g. Channel 113 / 126)."""
     if readings is None:
         readings = get_current_channel_values()
     now = time.time()
@@ -818,23 +820,43 @@ def sync_cryo_holds_with_plc(readings=None):
         cnl = d.get("access_mode_cnl")
         if not cnl:
             continue
+        cnl = int(cnl)
+        if cnl not in readings:
+            # Skip transient offline / unpolled readings so comms glitches do not clobber holds
+            continue
         is_plc_active = bool(readings.get(cnl, 0) > 0)
         tank_name = d.get("name", "Dewar 1")
         with state_lock:
             has_hold = tank_name in active_cryo_holds
-            if is_plc_active and not has_hold:
-                # Activated from physical node touchscreen
-                active_cryo_holds[tank_name] = {
-                    "expires_at": now + (30 * 60),
-                    "started_at": now,
-                    "user": "Touchscreen Node",
-                    "db_id": None
-                }
-            elif not is_plc_active and has_hold:
-                # Cancelled from physical node touchscreen or timer expired
-                hold = active_cryo_holds.pop(tank_name, None)
-                if hold and hold.get("db_id"):
-                    db_execute(f"UPDATE mod_arc_postgre_sql.cryo_maintenance_holds SET ended_at = NOW(), cancelled_early = TRUE WHERE id = {hold['db_id']};")
+            cancel_until = cryo_hold_cancel_grace.get(tank_name, 0)
+            if is_plc_active:
+                if has_hold:
+                    active_cryo_holds[tank_name].pop("pending_plc_until", None)
+                    cryo_hold_cancel_grace.pop(tank_name, None)
+                elif now < cancel_until:
+                    # Wait for PLC/bridge/node round-trip to propagate recent cancel command
+                    pass
+                else:
+                    cryo_hold_cancel_grace.pop(tank_name, None)
+                    # Activated from physical node touchscreen
+                    active_cryo_holds[tank_name] = {
+                        "expires_at": now + (30 * 60),
+                        "started_at": now,
+                        "user": "Touchscreen Node",
+                        "db_id": None
+                    }
+            elif has_hold:
+                pending_until = active_cryo_holds[tank_name].get("pending_plc_until", 0)
+                if now < pending_until:
+                    # Wait for PLC/bridge/node round-trip to confirm recent start command
+                    pass
+                else:
+                    # Cancelled from physical node touchscreen, timer expired, or command failed to latch
+                    hold = active_cryo_holds.pop(tank_name, None)
+                    if hold and hold.get("db_id"):
+                        db_execute(f"UPDATE mod_arc_postgre_sql.cryo_maintenance_holds SET ended_at = NOW(), cancelled_early = TRUE WHERE id = {hold['db_id']};")
+            elif now >= cancel_until:
+                cryo_hold_cancel_grace.pop(tank_name, None)
 
 def get_active_cryo_holds():
     """Returns dict of active holds with remaining seconds."""
@@ -879,19 +901,26 @@ def start_cryo_hold(equipment_name, duration_minutes=15, user="Lab Staff"):
         """
         rows = db_query(sql)
         db_id = int(rows[0][0]) if (rows and rows[0]) else None
+        matching_dewar = next((d for d in EQUIPMENT_CONFIG.get("dewars", []) if d.get("name") == target or d.get("label") == target or d.get("key") == target), None)
+        has_plc_access = bool(matching_dewar and matching_dewar.get("plc_fb") and matching_dewar.get("access_mode_cnl"))
         with state_lock:
-            active_cryo_holds[target] = {
+            cryo_hold_cancel_grace.pop(target, None)
+            hold_entry = {
                 "expires_at": exp,
                 "started_at": now,
                 "user": user,
                 "db_id": db_id
             }
+            if has_plc_access:
+                hold_entry["pending_plc_until"] = now + CRYO_PLC_SYNC_GRACE_SEC
+            active_cryo_holds[target] = hold_entry
 
         # Route supervisory command to CODESYS PLC via OPC UA
-        matching_dewar = next((d for d in EQUIPMENT_CONFIG.get("dewars", []) if d.get("name") == target or d.get("label") == target or d.get("key") == target), None)
         if matching_dewar and matching_dewar.get("plc_fb"):
             fb = matching_dewar["plc_fb"]
-            write_plc_bool(f"PLC_PRG.{fb}.bCmdSetAccessMode", True)
+            ok, msg = write_plc_bool(f"PLC_PRG.{fb}.bCmdSetAccessMode", True)
+            if not ok:
+                print(f"[{datetime.now().strftime('%T')}] WARNING: Failed to write bCmdSetAccessMode for {fb}: {msg}")
 
     # Resolve any currently active alarms on target units
     mute_cnls = []
@@ -912,16 +941,20 @@ def cancel_cryo_hold(equipment_name, user="Lab Staff"):
     all_dewar_names = [d["name"] for d in EQUIPMENT_CONFIG["dewars"]]
     targets = all_dewar_names if ("all" in equipment_name.lower()) else [equipment_name]
     for target in targets:
+        matching_dewar = next((d for d in EQUIPMENT_CONFIG.get("dewars", []) if d.get("name") == target or d.get("label") == target or d.get("key") == target), None)
         with state_lock:
             hold = active_cryo_holds.pop(target, None)
+            if matching_dewar and matching_dewar.get("access_mode_cnl"):
+                cryo_hold_cancel_grace[target] = time.time() + CRYO_PLC_SYNC_GRACE_SEC
         if hold and hold.get("db_id"):
             db_execute(f"UPDATE mod_arc_postgre_sql.cryo_maintenance_holds SET ended_at = NOW(), cancelled_early = TRUE WHERE id = {hold['db_id']};")
 
         # Route cancel supervisory command to CODESYS PLC via OPC UA
-        matching_dewar = next((d for d in EQUIPMENT_CONFIG.get("dewars", []) if d.get("name") == target or d.get("label") == target or d.get("key") == target), None)
         if matching_dewar and matching_dewar.get("plc_fb"):
             fb = matching_dewar["plc_fb"]
-            write_plc_bool(f"PLC_PRG.{fb}.bCmdCancelAccessMode", True)
+            ok, msg = write_plc_bool(f"PLC_PRG.{fb}.bCmdCancelAccessMode", True)
+            if not ok:
+                print(f"[{datetime.now().strftime('%T')}] WARNING: Failed to write bCmdCancelAccessMode for {fb}: {msg}")
     return True
 
 
@@ -1252,6 +1285,7 @@ def telemetry_scan_worker():
 
             # Track door open/close transitions and duration in database
             track_door_events(readings, current_mode)
+            sync_cryo_holds_with_plc(readings)
 
             # 1. Fridges (Discrete alarm or analog limit fallback)
             for f in EQUIPMENT_CONFIG["fridges"]:
