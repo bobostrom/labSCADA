@@ -259,5 +259,36 @@
       "beeper_muted_cnl": null,
       "mute_cmd_cnl": null
     }
+  ],
+  "wireless_nodes": [
+    {
+      "slot": 2,
+      "key": "cold_storage_node_01",
+      "name": "Medical Cold Storage & Ambient Monitor",
+      "hardware": "Seeed Studio XIAO ESP32-S3",
+      "mac": "20:6E:F1:86:F2:C8",
+      "equipment_keys": [
+        "fridge",
+        "freezer",
+        "ambient"
+      ],
+      "report_interval_secs": 20,
+      "channels": {
+        "ambient": 101,
+        "fridge": 102,
+        "freezer": 103,
+        "battery": 108
+      },
+      "probe_roms": [
+        "28:0A:33:BA:00:00:00:91",
+        "28:31:4C:B3:00:00:00:15",
+        "28:9E:9B:78:00:00:00:CF"
+      ],
+      "calibration": {
+        "battery_scale_num": 4072,
+        "battery_scale_den": 2014,
+        "notes": "XIAO ESP32-S3 GPIO 1 divider; pinned 3 DS18B20 ROMs captured live on 2026-11-14"
+      }
+    }
   ]
 }

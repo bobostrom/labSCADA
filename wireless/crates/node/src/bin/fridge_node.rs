@@ -21,10 +21,187 @@ include!(concat!(env!("OUT_DIR"), "/node_config.rs"));
 
 const MAX_SENSORS: usize = 3;
 const TEMP_SENTINEL_DISCONNECTED: i16 = -9999; // -999.9 °C
+const DS18B20_FAMILY_CODE: u8 = 0x28;
+const DS18B20_POR_RAW_BITS: i32 = 0x0550; // +85.0 °C power-on-reset sentinel
 const REPORT_INTERVAL_SECS: u64 = FRIDGE_REPORT_INTERVAL_SECS;
+const CACHED_ROMS_MAGIC: u32 = 0x4652_4933; // "FRI3"
+const BUS_SETTLE_MS: u32 = 5;
+const CONV_WAIT_MS: u32 = 850;
+const SLOT_LABELS: [&str; MAX_SENSORS] = ["Fridge", "Freezer", "Ambient"];
 
 #[esp_hal::ram(unstable(rtc_fast, persistent))]
 static mut BOOT_SEQ: u32 = 1;
+
+// Preserve validated 3-probe ROM slot assignments across deep-sleep wakeups so
+// a single probe failing to respond never shifts Ambient into Freezer.
+#[esp_hal::ram(unstable(rtc_fast, persistent))]
+static mut CACHED_ROMS: [[u8; 8]; MAX_SENSORS] = [[0; 8]; MAX_SENSORS];
+
+#[esp_hal::ram(unstable(rtc_fast, persistent))]
+static mut CACHED_ROMS_STATE: u32 = 0;
+
+fn log_slot_rom(slot_idx: usize, label: &str, pinned: bool, bytes: &[u8; 8]) {
+    let tag = if pinned { "Slot" } else { "Unpinned" };
+    println!(
+        "  -> {} {} ({}) ROM: {:02X}:{:02X}:{:02X}:{:02X}:{:02X}:{:02X}:{:02X}:{:02X}",
+        tag, slot_idx + 1, label,
+        bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], bytes[5], bytes[6], bytes[7]
+    );
+}
+
+fn settle_bus_high(ow_pin: &mut esp_hal::gpio::Flex<'_>, delay: &mut esp_hal::delay::Delay) -> bool {
+    ow_pin.set_high();
+    delay.delay_millis(BUS_SETTLE_MS);
+    ow_pin.is_high()
+}
+
+fn scan_roms_with_retries(
+    ow_pin: &mut esp_hal::gpio::Flex<'_>,
+    delay: &mut esp_hal::delay::Delay,
+) -> heapless::Vec<RomCode, MAX_SENSORS> {
+    let mut best: heapless::Vec<RomCode, MAX_SENSORS> = heapless::Vec::new();
+
+    for attempt in 1..=3 {
+        if !settle_bus_high(ow_pin, delay) {
+            println!("1-Wire: Bus held LOW before scan attempt {}", attempt);
+            continue;
+        }
+        let mut wire = OneWire::new(ow_pin);
+        if !wire.initialize_bus(delay).unwrap_or(false) {
+            println!("1-Wire: No presence pulse on scan attempt {}", attempt);
+            delay.delay_millis(15);
+            continue;
+        }
+
+        let mut found: heapless::Vec<RomCode, MAX_SENSORS> = heapless::Vec::new();
+        for rom in OneWireRomIter::from_wire(&mut wire, delay) {
+            if rom.family_code() == DS18B20_FAMILY_CODE
+                && rom.validate_crc()
+                && !found.iter().any(|r| r.bytes == rom.bytes)
+            {
+                if found.push(rom).is_err() {
+                    break;
+                }
+            }
+        }
+        if found.len() >= best.len() {
+            best = found;
+        }
+        if best.len() == MAX_SENSORS {
+            break;
+        }
+        println!(
+            "1-Wire: Scan attempt {} found {}/{} valid DS18B20 ROM(s); retrying...",
+            attempt, best.len(), MAX_SENSORS
+        );
+        delay.delay_millis(20);
+    }
+
+    best.sort_by(|a, b| a.bytes.cmp(&b.bytes));
+    best
+}
+
+fn resolve_slot_sensors(
+    ow_pin: &mut esp_hal::gpio::Flex<'_>,
+    delay: &mut esp_hal::delay::Delay,
+) -> [Option<DS18B20>; MAX_SENSORS] {
+    let mut slots: [Option<DS18B20>; MAX_SENSORS] = [None, None, None];
+
+    if let Some(pinned) = FRIDGE_PROBE_ROMS {
+        println!("1-Wire: Using manifest-pinned ROM slots (3 probes)");
+        for idx in 0..MAX_SENSORS {
+            let rom = RomCode { bytes: pinned[idx] };
+            slots[idx] = DS18B20::try_from(rom).ok();
+        }
+        return slots;
+    }
+
+    let (cached_state, cached_roms) = unsafe { (CACHED_ROMS_STATE, CACHED_ROMS) };
+    let cached_valid = cached_state == CACHED_ROMS_MAGIC
+        && cached_roms.iter().all(|b| {
+            let r = RomCode { bytes: *b };
+            r.family_code() == DS18B20_FAMILY_CODE && r.validate_crc()
+        });
+
+    if cached_valid {
+        for (idx, bytes) in cached_roms.iter().enumerate() {
+            slots[idx] = DS18B20::try_from(RomCode { bytes: *bytes }).ok();
+        }
+        return slots;
+    }
+
+    let roms = scan_roms_with_retries(ow_pin, delay);
+    if roms.len() == MAX_SENSORS {
+        for (idx, rom) in roms.iter().enumerate() {
+            log_slot_rom(idx, SLOT_LABELS[idx], true, &rom.bytes);
+            unsafe {
+                CACHED_ROMS[idx] = rom.bytes;
+            }
+            slots[idx] = DS18B20::try_from(*rom).ok();
+        }
+        unsafe {
+            CACHED_ROMS_STATE = CACHED_ROMS_MAGIC;
+        }
+        println!("1-Wire: Pinned all 3 DS18B20 ROMs in RTC cache");
+    } else {
+        println!(
+            "1-Wire: Only {}/{} probes responded cleanly; leaving RTC cache unlocked",
+            roms.len(), MAX_SENSORS
+        );
+        for (idx, rom) in roms.iter().enumerate() {
+            log_slot_rom(idx, SLOT_LABELS[idx], false, &rom.bytes);
+            slots[idx] = DS18B20::try_from(*rom).ok();
+        }
+    }
+
+    slots
+}
+
+fn start_conversion(ow_pin: &mut esp_hal::gpio::Flex<'_>, delay: &mut esp_hal::delay::Delay) -> bool {
+    for attempt in 1..=2 {
+        if !settle_bus_high(ow_pin, delay) {
+            continue;
+        }
+        let mut wire = OneWire::new(ow_pin);
+        if wire.skip_rom(delay).is_ok() && wire.write_byte(0x44, delay).is_ok() {
+            return true;
+        }
+        println!("1-Wire: Convert-T attempt {} failed", attempt);
+        delay.delay_millis(5);
+    }
+    false
+}
+
+fn read_probe_with_retries(
+    ds: &DS18B20,
+    ow_pin: &mut esp_hal::gpio::Flex<'_>,
+    delay: &mut esp_hal::delay::Delay,
+) -> Option<i16> {
+    for attempt in 1..=3 {
+        if !settle_bus_high(ow_pin, delay) {
+            println!("    Read attempt {}: bus held LOW", attempt);
+            continue;
+        }
+        let mut wire = OneWire::new(ow_pin);
+        match ds.target_read_scratchpad(&mut wire, delay) {
+            Ok(scratchpad) => {
+                let raw_bits = scratchpad.temp.to_bits() as i32;
+                let temp_c_x10 = ((raw_bits * 10) / 16) as i16;
+                if raw_bits == DS18B20_POR_RAW_BITS || temp_c_x10 <= -550 || temp_c_x10 >= 850 {
+                    println!("    Read attempt {}: rejected suspicious raw_bits=0x{:04X} ({}/10 C)",
+                        attempt, raw_bits, temp_c_x10);
+                    return None;
+                }
+                return Some(temp_c_x10);
+            }
+            Err(e) => {
+                println!("    Read attempt {} failed: {:?}", attempt, e);
+                delay.delay_millis(5);
+            }
+        }
+    }
+    None
+}
 
 #[esp_hal::main]
 fn main() -> ! {
@@ -93,108 +270,35 @@ fn main() -> ! {
     );
     let mut adc1 = Adc::new(peripherals.ADC1, adc1_config);
 
-    let mut sensors: heapless::Vec<DS18B20, MAX_SENSORS> = heapless::Vec::new();
-
     loop {
-        // Ensure pin is released high and verify line is not pulled to ground
-        ow_pin.set_high();
-        delay.delay_micros(10);
-        let bus_high = ow_pin.is_high();
-
-        // 1. Bus Discovery if no sensors currently enumerated
-        if !bus_high {
-            println!("1-Wire: Line D5 (GPIO 6) is held LOW (shorted or floating). Waiting for pullup/sensor...");
-            sensors.clear();
-        } else if sensors.is_empty() {
-            let mut wire = OneWire::new(&mut ow_pin);
-            match wire.initialize_bus(&mut delay) {
-                Ok(true) => {
-                    println!("1-Wire: Presence pulse detected on Pin D5 (GPIO 6). Scanning ROMs...");
-                    let mut roms: heapless::Vec<RomCode, MAX_SENSORS> = heapless::Vec::new();
-                    for rom in OneWireRomIter::from_wire(&mut wire, &mut delay) {
-                        if roms.push(rom).is_err() {
-                            break;
-                        }
-                    }
-                    // Deterministic ordering: sort strictly ascending by 64-bit ROM code
-                    roms.sort_by(|a, b| a.bytes.cmp(&b.bytes));
-
-                    for (idx, rom) in roms.iter().enumerate() {
-                        let label = match idx {
-                            0 => "Probe 1 (Fridge)",
-                            1 => "Probe 2 (Freezer)",
-                            2 => "Probe 3 (Ambient)",
-                            _ => "Aux Probe",
-                        };
-                        println!("  -> Assigned {}: ROM {:02X?}", label, rom.bytes);
-                        if let Ok(ds) = DS18B20::try_from(*rom) {
-                            let _ = sensors.push(ds);
-                        }
-                    }
-                    println!("1-Wire: Enumerated {} DS18B20 sensor(s) in deterministic order", sensors.len());
-                }
-                Ok(false) => {
-                    println!("1-Wire: No presence pulse on Pin D5 (GPIO 6) - no sensor responded");
-                }
-                Err(_) => {
-                    println!("1-Wire: Bus error during initialization");
-                }
-            }
-        }
-
-        let mut fridge_temp = TEMP_SENTINEL_DISCONNECTED;
-        let mut freezer_temp = TEMP_SENTINEL_DISCONNECTED;
-        let mut ambient_temp = TEMP_SENTINEL_DISCONNECTED;
+        let mut temps = [TEMP_SENTINEL_DISCONNECTED; MAX_SENSORS];
         let mut fault_code: u8 = 0;
+        let slots = resolve_slot_sensors(&mut ow_pin, &mut delay);
 
-        if !sensors.is_empty() {
-            let mut wire = OneWire::new(&mut ow_pin);
-
-            // A. Broadcast Simultaneous Temperature Conversion (SKIP ROM 0xCC + CONVERT T 0x44)
-            if wire.initialize_bus(&mut delay).unwrap_or(false) {
-                let _ = wire.skip_rom(&mut delay);
-                let _ = wire.write_byte(0x44, &mut delay);
-
-                // Wait 750ms for 12-bit conversion to finish
-                delay.delay_millis(750);
-
-                // B. Read scratchpad for each sensor on the bus
-                for (idx, sensor) in sensors.iter().enumerate() {
-                    match sensor.target_read_scratchpad(&mut wire, &mut delay) {
-                        Ok(scratchpad) => {
-                            let raw_bits = scratchpad.temp.to_bits() as i32;
-                            let temp_c_x10 = ((raw_bits * 10) / 16) as i16;
-
-                            match idx {
-                                0 => {
-                                    fridge_temp = temp_c_x10;
-                                    println!("  [Probe 1 - Fridge]: {}/10 C", temp_c_x10);
-                                }
-                                1 => {
-                                    freezer_temp = temp_c_x10;
-                                    println!("  [Probe 2 - Freezer]: {}/10 C", temp_c_x10);
-                                }
-                                2 => {
-                                    ambient_temp = temp_c_x10;
-                                    println!("  [Probe 3 - Ambient]: {}/10 C", temp_c_x10);
-                                }
-                                _ => {}
-                            }
-                        }
-                        Err(e) => {
-                            println!("  [Probe {}]: Read error: {:?}", idx + 1, e);
+        if slots.iter().any(|s| s.is_some()) {
+            if start_conversion(&mut ow_pin, &mut delay) {
+                delay.delay_millis(CONV_WAIT_MS);
+                for (idx, maybe_ds) in slots.iter().enumerate() {
+                    if let Some(ds) = maybe_ds {
+                        if let Some(temp_c_x10) = read_probe_with_retries(ds, &mut ow_pin, &mut delay) {
+                            temps[idx] = temp_c_x10;
+                            println!("  [Probe {} - {}]: {}/10 C", idx + 1, SLOT_LABELS[idx], temp_c_x10);
+                        } else {
                             fault_code |= 1 << idx;
                         }
+                    } else {
+                        fault_code |= 1 << idx;
                     }
                 }
             } else {
                 println!("1-Wire: Lost presence during conversion cycle");
                 fault_code = 0xFF;
-                sensors.clear(); // Re-trigger discovery next loop
             }
         } else {
             fault_code = 0xFF; // All sensors disconnected
         }
+
+        let (fridge_temp, freezer_temp, ambient_temp) = (temps[0], temps[1], temps[2]);
 
         // 2. Read Battery Voltage via ADC1 on GPIO 1 (A0)
         let pin_mv: u16 = adc1.read_blocking(&mut batt_pin);

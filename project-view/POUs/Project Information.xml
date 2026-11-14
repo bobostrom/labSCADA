@@ -57,7 +57,7 @@
             </Key>
             <Value>
               <Single Type="{78562ae7-5a2e-4542-9033-c5c093009235}" Method="IArchivable">
-                <Single Name="Version" Type="string">1.0.0.29</Single>
+                <Single Name="Version" Type="string">1.0.0.30</Single>
               </Single>
             </Value>
           </Entry>

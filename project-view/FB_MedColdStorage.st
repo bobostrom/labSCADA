@@ -57,6 +57,9 @@ VAR
     fbFreezer           : FB_MedFreezer;    (* Hierarchical Medical Freezer Subsystem *)
     fbAmbientAlarmEval  : FB_AnalogAlarm;   (* Cleanroom Ambient Comfort Window Evaluator *)
     iAmbientTempX10     : INT;
+    iFreezerTempX10     : INT;
+    bFreezerSwapSuspect : BOOL := FALSE;
+    uiFreezerFaultIn    : UINT := 0;
     tonOnlineSettle     : TON;              (* Hold CommLoss through initial Modbus settle on boot/reconnect *)
     bLinkOnline         : BOOL := FALSE;    (* Bridge online bit set and watchdog healthy *)
 END_VAR
@@ -100,18 +103,24 @@ fbFridge(
 // ==============================================================================
 // 3. MEDICAL FREEZER (Hierarchical FB_MedFreezer Instance)
 // ==============================================================================
+(* Pre-evaluate Ambient fault & check for legacy dynamic-ROM slot shift
+   (if Freezer probe drops out, pre-pinned node firmware shifts room Ambient
+   >12 C into the Freezer slot while Ambient goes -999 / bit 2). *)
+iAmbientTempX10     := TO_INT(wRawAmbientTempX10);
+bAmbientProbeFault  := ((uiRawFaultCode AND 16#0004) <> 0) OR (iAmbientTempX10 <= -9000) OR (iAmbientTempX10 >= 9000);
+iFreezerTempX10     := TO_INT(wRawFreezerTempX10);
+bFreezerSwapSuspect := bAmbientProbeFault AND (iFreezerTempX10 > 120) AND (iFreezerTempX10 < 9000) AND (fbFreezer.rProcessTemp < 5.0);
+uiFreezerFaultIn    := BOOL_TO_UINT(((uiRawFaultCode AND 16#0002) <> 0) OR bFreezerSwapSuspect);
+
 fbFreezer(
     wRawTempX10         := wRawFreezerTempX10,
-    uiRawFaultCode      := BOOL_TO_UINT((uiRawFaultCode AND 16#0002) <> 0),
+    uiRawFaultCode      := uiFreezerFaultIn,
     bCommLoss           := bCommLoss
 );
 
 // ==============================================================================
 // 4. CLEANROOM AMBIENT ROOM TEMPERATURE (20.0°C to 27.0°C Comfort Window)
 // ==============================================================================
-iAmbientTempX10 := TO_INT(wRawAmbientTempX10);
-bAmbientProbeFault := ((uiRawFaultCode AND 16#0004) <> 0) OR (iAmbientTempX10 <= -9000) OR (iAmbientTempX10 >= 9000);
-
 IF bAmbientProbeFault OR bCommLoss THEN
     rAmbientTemp := -999.0;
 ELSE

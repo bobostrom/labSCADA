@@ -32,6 +32,7 @@ END_VAR
 VAR
     iTempX10            : INT;
     bHealthy            : BOOL;
+    bProcessValid       : BOOL;
     fbThermalVial       : FB_ThermalVial;
     fbAlarmEval         : FB_AnalogAlarm;
     fbWarnEval          : FB_AnalogAlarm;
@@ -62,27 +63,29 @@ fbThermalVial(
     tThermalTau := tThermalTau
 );
 rProcessTemp := fbThermalVial.rVialTemp;
+bProcessValid := (rProcessTemp > -273.0) AND (rProcessTemp < 900.0);
 
 // ==============================================================================
 // 3. CLINICAL ALARM & PRE-ALARM MARGIN EVALUATION (Dual-Limit Window)
 // ==============================================================================
 fbAlarmEval(
     rVal          := rProcessTemp,
-    bEnableHigh   := bHealthy,
+    bEnableHigh   := bProcessValid,
     rHighPickup   := rHighTrip,
     rHighDropout  := rHighTrip - rHysteresis,
-    bEnableLow    := bHealthy,
+    bEnableLow    := bProcessValid,
     rLowPickup    := rLowTrip,
     rLowDropout   := rLowTrip + rHysteresis,
+    rHysteresis   := rHysteresis,
     tPickupDelay  := tPickupDelay,
     tDropoutDelay := tDropoutDelay
 );
 
 fbWarnEval(
     rVal        := rProcessTemp,
-    bEnableHigh := bHealthy AND (rHighWarnMargin > cZero),
+    bEnableHigh := bProcessValid AND (rHighWarnMargin > cZero),
     rHighPickup := rHighTrip - rHighWarnMargin,
-    bEnableLow  := bHealthy AND (rLowWarnMargin > cZero),
+    bEnableLow  := bProcessValid AND (rLowWarnMargin > cZero),
     rLowPickup  := rLowTrip + rLowWarnMargin,
     rHysteresis := rHysteresis
 );

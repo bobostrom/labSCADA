@@ -18,6 +18,25 @@ struct WirelessNodeConfig {
     report_interval_secs: u64,
     #[serde(default)]
     calibration: Option<CalibrationConfig>,
+    #[serde(default)]
+    probe_roms: Option<[String; 3]>,
+}
+
+fn parse_rom_hex(raw: &str) -> [u8; 8] {
+    let hex: String = raw
+        .chars()
+        .filter(|c| !matches!(c, ':' | '-' | '_' | ' '))
+        .collect();
+    assert!(
+        hex.len() == 16,
+        "Invalid 1-Wire ROM '{raw}': expected 16 hex chars (8 bytes)"
+    );
+    let mut out = [0u8; 8];
+    for (i, byte) in out.iter_mut().enumerate() {
+        *byte = u8::from_str_radix(&hex[i * 2..i * 2 + 2], 16)
+            .unwrap_or_else(|e| panic!("Invalid hex in 1-Wire ROM '{raw}': {e}"));
+    }
+    out
 }
 
 fn default_report_interval() -> u64 {
@@ -58,10 +77,21 @@ const SLOTS: &[SlotDefaults] = &[
     },
 ];
 
-fn resolve_slot_values(manifest: &EquipmentManifest, spec: &SlotDefaults) -> (u64, u32, u32) {
+fn format_rom_array(rom: &[u8; 8]) -> String {
+    format!(
+        "[0x{:02X}, 0x{:02X}, 0x{:02X}, 0x{:02X}, 0x{:02X}, 0x{:02X}, 0x{:02X}, 0x{:02X}]",
+        rom[0], rom[1], rom[2], rom[3], rom[4], rom[5], rom[6], rom[7]
+    )
+}
+
+fn resolve_slot_values(
+    manifest: &EquipmentManifest,
+    spec: &SlotDefaults,
+) -> (u64, u32, u32, Option<[[u8; 8]; 3]>) {
     let mut interval = default_report_interval();
     let mut cal_num = 4072u32;
     let mut cal_den = 2014u32;
+    let mut probe_roms = None;
 
     if let Some(node) = manifest
         .wireless_nodes
@@ -73,9 +103,16 @@ fn resolve_slot_values(manifest: &EquipmentManifest, spec: &SlotDefaults) -> (u6
             cal_num = cal.battery_scale_num;
             cal_den = cal.battery_scale_den;
         }
+        if let Some(roms) = &node.probe_roms {
+            probe_roms = Some([
+                parse_rom_hex(&roms[0]),
+                parse_rom_hex(&roms[1]),
+                parse_rom_hex(&roms[2]),
+            ]);
+        }
     }
 
-    (interval, cal_num, cal_den)
+    (interval, cal_num, cal_den, probe_roms)
 }
 
 fn main() {
@@ -102,10 +139,19 @@ fn main() {
     );
 
     for spec in SLOTS {
-        let (interval, num, den) = resolve_slot_values(&manifest, spec);
+        let (interval, num, den, probe_roms) = resolve_slot_values(&manifest, spec);
+        let rom_expr = match probe_roms {
+            Some(roms) => format!(
+                "Some([{}, {}, {}])",
+                format_rom_array(&roms[0]),
+                format_rom_array(&roms[1]),
+                format_rom_array(&roms[2]),
+            ),
+            None => "None".to_string(),
+        };
         let _ = write!(
             code,
-            "\n// {comment}\npub const {p}_SLOT: u8 = {slot};\npub const {p}_REPORT_INTERVAL_SECS: u64 = {interval};\npub const {p}_BATT_CAL_NUM: u32 = {num};\npub const {p}_BATT_CAL_DEN: u32 = {den};\n",
+            "\n// {comment}\npub const {p}_SLOT: u8 = {slot};\npub const {p}_REPORT_INTERVAL_SECS: u64 = {interval};\npub const {p}_BATT_CAL_NUM: u32 = {num};\npub const {p}_BATT_CAL_DEN: u32 = {den};\npub const {p}_PROBE_ROMS: Option<[[u8; 8]; 3]> = {rom_expr};\n",
             comment = spec.comment,
             p = spec.prefix,
             slot = spec.slot,

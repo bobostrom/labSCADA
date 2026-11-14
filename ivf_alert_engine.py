@@ -20,6 +20,7 @@ import os
 import subprocess
 import threading
 import time
+import urllib.error
 import urllib.parse
 import urllib.request
 from datetime import datetime, timedelta
@@ -1014,6 +1015,11 @@ def check_pushover_receipt(receipt):
         with urllib.request.urlopen(req, timeout=8) as res:
             res_body = res.read().decode("utf-8")
             return json.loads(res_body)
+    except urllib.error.HTTPError as e:
+        if e.code == 404:
+            return {"_not_found": True}
+        print(f"Pushover check receipt HTTP error: {e.code} {e.reason}")
+        return None
     except Exception as e:
         print(f"Pushover check receipt error: {e}")
         return None
@@ -1299,13 +1305,16 @@ def telemetry_scan_worker():
                 if a_cnl and a_cnl in readings:
                     if readings[a_cnl] > 0:
                         trigger_alarm(a_cnl, equip, "Temperature Excursion", analog_val)
+                    elif analog_val is not None and (analog_val <= -273.0 or analog_val >= 900.0):
+                        # Sensor is in hardware fault / disconnected state (-999.0 C). Do NOT resolve as normal!
+                        pass
                     elif analog_val is not None and (analog_val > high_lim or analog_val < low_lim):
                         # Temperature is still in excursion (e.g. PLC restart pickup delay). Do NOT resolve as normal!
                         pass
                     else:
                         resolve_alarm(a_cnl, analog_val)
                 elif t_cnl and t_cnl in readings:
-                    if analog_val > high_lim or analog_val < low_lim:
+                    if (analog_val > high_lim or analog_val < low_lim) and (-273.0 < analog_val < 900.0):
                         trigger_alarm(t_cnl, equip, "Temperature Excursion", analog_val)
                     elif (low_lim + 0.5) <= analog_val <= (high_lim - 1.0):
                         resolve_alarm(t_cnl, analog_val)
@@ -1321,15 +1330,18 @@ def telemetry_scan_worker():
                 if a_cnl and a_cnl in readings:
                     if readings[a_cnl] > 0:
                         trigger_alarm(a_cnl, equip, "Temperature Excursion", analog_val)
+                    elif analog_val is not None and (analog_val <= -273.0 or analog_val >= 900.0):
+                        # Sensor is in hardware fault / disconnected state (-999.0 C). Do NOT resolve as normal!
+                        pass
                     elif analog_val is not None and analog_val > high_lim:
                         # Temperature is still in excursion (e.g. PLC restart pickup delay). Do NOT resolve as normal!
                         pass
                     else:
                         resolve_alarm(a_cnl, analog_val)
                 elif t_cnl and t_cnl in readings:
-                    if analog_val > high_lim:
+                    if high_lim < analog_val < 900.0:
                         trigger_alarm(t_cnl, equip, "Temperature Excursion", analog_val)
-                    elif analog_val <= (high_lim - 0.5):
+                    elif -273.0 < analog_val <= (high_lim - 0.5):
                         resolve_alarm(t_cnl, analog_val)
 
             # 3. Dewars (Discrete alarm or analog limit fallback, respecting Cryo Hold)
@@ -1430,7 +1442,8 @@ def phone_sync_and_escalation_worker():
             SELECT id, pushover_receipt, equipment_name 
             FROM mod_arc_postgre_sql.alarm_events 
             WHERE is_acknowledged = FALSE 
-              AND pushover_receipt IS NOT NULL;
+              AND pushover_receipt IS NOT NULL
+              AND triggered_at > NOW() - INTERVAL '7 days';
             """
             unacked_rows = db_query(sql)
             for r in unacked_rows:
@@ -1438,7 +1451,10 @@ def phone_sync_and_escalation_worker():
                 receipt = r[1]
                 equip = r[2]
                 res = check_pushover_receipt(receipt)
-                if res and res.get("acknowledged") == 1:
+                if res and res.get("_not_found"):
+                    # Receipt expired or invalid on Pushover API (HTTP 404); stop polling this row.
+                    db_execute(f"UPDATE mod_arc_postgre_sql.alarm_events SET pushover_receipt = NULL WHERE id = {db_id};")
+                elif res and res.get("acknowledged") == 1:
                     raw_user = res.get("acknowledged_by")
                     dev = res.get("acknowledged_by_device")
                     acked_by = get_pushover_user_name(raw_user, dev)
