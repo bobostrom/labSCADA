@@ -21,7 +21,7 @@ The physical setup in the embryology lab separates the **climate-controlled furn
 > [!IMPORTANT]
 > ### WAGO 750-8212 Controller: Single Point of Truth
 > All fieldbus polling, timers, and alarm gating **MUST** route strictly through the **WAGO PFC200 (750-8212)** PLC (`afoa-plc.labmon`):
-> 1. Remote Coupler (`afoa-node00.labmon`, WAGO 750-341) operates purely as a remote I/O slice, polled over Modbus TCP by the 750-8212.
+> 1. Remote Coupler (`afoa-node00.labmon`, WAGO 750-352) operates purely as a remote I/O slice, polled over Modbus TCP by the 750-8212.
 > 2. The 750-8212 executes `FB_IncubatorCabinet` deterministically in `PLC_PRG.st`.
 > 3. Nuisance alarms are suppressed directly inside the PLC logic: `bRawContact := (bIncubator01_RawContact AND NOT fbCabinet01.bIncubatorMute)`.
 > 4. ScadaComm subscribes to the 750-8212 OPC UA Server (`:4840`) and writes directly into PostgreSQL (`mod_arc_postgre_sql.curcopy_current`).

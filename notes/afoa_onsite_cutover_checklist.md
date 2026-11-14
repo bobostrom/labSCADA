@@ -64,10 +64,11 @@ Living checklist of every configuration change, IP update, and hardware verifica
 * **CODESYS Device Tree Name:** `INC_CAB`
 
 Verified live K-Bus modules on `afoa-node00`:
-* `750-341` Coupler (`0x0155`)
-* 8-ch Digital Input module (`0x8801` → `8` DI bits)
+* `750-352` 2-Port Switched Coupler (`0x0160`, MAC `00:30:DE:07:30:6B`, FW `01.03.09 (04)`) *(replaced `750-341` `0x0155`)*
+* 8-ch Digital Input module (`0x8801` → `8` DI bits; `DI 8` = Cabinet 01 Door Switch)
 * 8-ch Digital Output module (`0x8802` → `8` DO bits)
-* `0` Analog Inputs / `0` Analog Outputs
+* `750-461` 2-ch Pt100 RTD Input module (`0x01CD` → `32` AI bits / `2` words; Ch 1 = Cabinet 01 Temp `Cnl 110`)
+* `0` Analog Outputs
 
 **Modbus TCP Server Configuration in `AFOA.project` (`192.168.88.251`, Port `502`):**
 * **Read Channel:** `FC 02` Read Discrete Inputs, Offset `16#0000` (`0`), Length **`8`** bits (`Bit 0–7` = physical `DI 1–8`)
@@ -100,9 +101,9 @@ Currently configured as non-wireless placeholders until clinic sensors/nodes are
 * **Cold Storage & Dewars 2–5 (`PLC_PRG` + `sites/afoa/equipment.json`):**
   * `fbColdStorage` and `fbDewar2`..`fbDewar5` currently run with `bIsWireless := FALSE` / `"is_wireless": false` and standby nominal temperatures (`3.5°C`, `-20.0°C`, `25.0°C`, `-150.0°C`). *(Dewar 1 is discontinued and removed.)*
   * **When wireless nodes are installed onsite:** Update Modbus/register mappings, set `bIsWireless := TRUE` in `PLC_PRG` and `"is_wireless": true` in `sites/afoa/equipment.json`, then run `./deploy_site.sh afoa`.
-* **Incubator Cabinet Temperature & Exhaust Fan (`INC_CAB` / `afoa-node00`):**
-  * No analog temperature slice or fan relay is currently installed (`temp_cnl: null`, `fan_command_cnl: null` in `sites/afoa/equipment.json` keeps them hidden in the Kiosk UI while PLC/backend logic stays intact).
-  * **When RTD + fan relay are added:** Add RTD slice to `afoa-node00`, map `rCabinetTemp` and `DO 1` (`fbCabinet01.bFanCommand`), add OPC UA tags to `DrvOpcUa_001.xml`, and populate `temp_cnl` / `fan_command_cnl` in `sites/afoa/equipment.json`.
+* **Incubator Cabinet Exhaust Fan (`INC_CAB` / `afoa-node00`):**
+  * Cabinet RTD temperature (`750-461` Ch 1 → `fbCabinet01.rProcessTemp` / `Cnl 110`) and door contact (`DI 8` → `Cnl 132`) are live; the exhaust fan relay output remains deferred (`fan_command_cnl: null` in `sites/afoa/equipment.json` keeps it hidden in the Kiosk UI while PLC/backend logic stays intact).
+  * **When fan relay is added:** Wire to `750-530` DO 1 (`fbCabinet01.bFanCommand`), add the OPC UA tag to `DrvOpcUa_001.xml`, and populate `fan_command_cnl` in `sites/afoa/equipment.json`.
 * **Incubator Cabinet Ethernet UPS (Future):**
   * Add a second `FB_APC_SmartUPS` (or SNMP/Modbus TCP UPS) instance and Modbus TCP server entry alongside `UPS_SCADA` when ready to monitor the cabinet UPS.
 
@@ -113,8 +114,7 @@ Currently configured as non-wireless placeholders until clinic sensors/nodes are
 - [ ] `afoa-scada` plugged into `X1` at `192.168.88.252`, `X2` unplugged, internet & DNS working
 - [ ] All systemd units `active` on `afoa-scada`:
   `postgresql`, `scadaserver6`, `scadacomm6`, `scadaweb6`, `scadaagent6`, `ivf-alert-engine`, `cloudflared`, `nut-server`, `ups-modbus-bridge`
-- [ ] `afoa-plc` (`192.168.88.253`) Modbus TCP Client shows green/healthy connections to both **`INC_CAB`** (`afoa-node00`, `192.168.88.251`) and **`UPS_SCADA`** (`192.168.88.252`)
-- [ ] SNTP time valid on `afoa-node00.labmon` (syncing to `192.168.88.1`)
+- [x] `afoa-plc` (`192.168.88.253`) Modbus TCP Client polling **`INC_CAB`** (`afoa-node00` `750-352`, `192.168.88.251`) verified live (`Cnl 110` temp & `Cnl 132` door); verify **`UPS_SCADA`** (`192.168.88.252`) onsite
 - [ ] Rewire `fbCabinet01` (`INC_CAB`) and `fbDoor01` (`DOOR_DI`) switches to **NC** (`bDoorClosed = TRUE` when closed, `FALSE` when open) and **remove the temporary `bDoorClosed := TRUE` overrides** from `PLC_PRG` (`fbDoor02` already reads `TRUE` when closed)
 - [ ] Kiosk UI loads locally (`http://192.168.88.252:8080` / kiosk browser) and externally (`https://komdivflab.larestelemetry.com/`)
 - [ ] Physical door open/close tests verified on Cleanroom Doors 01/02 and Cabinet 01 + UPS unplug test confirms `On Battery` telemetry and Pushover notification

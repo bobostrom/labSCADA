@@ -12,7 +12,7 @@
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | **`afoa-plc`** (`plc0000`) | **WAGO PFC200 (750-8212)** | `00:30:DE:7C:EF:9A` | `192.168.10.139` | `afoa-plc.labmon` (`192.168.88.253`) | Primary PLC, K-Bus I/O, CODESYS V3.5, OPC UA Server (:4840), WBM (:443) |
 | **`afoa-scada`** (`scadapi02`)| **Raspberry Pi 4 (8GB)** | `88:A2:9E:12:0E:1D` (Wi-Fi)<br>`88:A2:9E:12:0E:1C` (Eth)<br>`2C:CF:67:ED:38:CF` (AFOA) | `192.168.10.133` | `afoa-scada.labmon` (`192.168.88.252`) | Rapid SCADA 6.x, PostgreSQL 17, Grafana, IVF Alert Engine (:8080), LN2 Kiosk |
-| **`afoa-node00`** (Pod 3B) | **WAGO Coupler (750-341)** | `00:30:DE:02:7B:71` | `192.168.10.130` | `afoa-node00.labmon` (`192.168.88.251`) | Modbus TCP Fieldbus Coupler for Dewar 02 Pt100 RTD Slice (:502, :80) |
+| **`afoa-node00`** (`INC_CAB`) | **WAGO Coupler (750-352)** | `00:30:DE:07:30:6B` | — | `afoa-node00.labmon` (`192.168.88.251`) | 2-Port Switched Modbus TCP Coupler for Incubator Cabinet (`750-431` DI, `750-530` DO, `750-461` RTD) (:502, :80) |
 | **`bobslaptop`** | **Technician Laptop** | *Per Adapter* | `192.168.10.x` | `bobslaptop.labmon` (`192.168.88.254`) | Engineering Workstation, CODESYS V3.5 IDE, WAGO Ethernet Settings |
 | **`codesyspi02`** | **Raspberry Pi 4 (4GB)** | `DC:A6:32:6F:3F:B4` (Wi-Fi)<br>`DC:A6:32:6F:3F:B3` (Eth) | `192.168.10.135` | `codesyspi02.labmon` | Secondary / Development CODESYS SoftPLC, OPC UA Server (:4840) |
 | **`router`** | **MikroTik RouterOS** | *Per WAN/LAN* | `192.168.10.1` | Gateway Router (`192.168.88.1`) | Static DNS Server (`.labmon`), DHCP Server (`bootp-support=static`), Firewall |
@@ -43,20 +43,21 @@
 
 ---
 
-### B. WAGO 750-341 Ethernet Fieldbus Coupler (`afoa-node00` / Pod 3B)
+### B. WAGO 750-352 Ethernet Fieldbus Coupler (`afoa-node00` / `INC_CAB`)
 * **Host / Device:** `afoa-node00.labmon` (IP: `192.168.88.251`)
-* **Device Role:** Modbus TCP Fieldbus Coupler for Dewar 02 RTD Slice (`750-461`)
-* **MAC Address:** `00:30:DE:02:7B:71`
-* **Network Assignment:** Static IP assigned in flash (`192.168.88.251`, Mask `255.255.255.0`, Gateway `192.168.88.1`)
-* **MikroTik Router Configuration:** DHCP Server `bootp-support=static` with pre-assigned static lease.
-* **User Accounts & Authentication Constraints:**
-  * **`admin`**: Factory default `wago` (Kept as default to avoid firmware lockouts)
+* **Device Role:** 2-Port Switched Modbus TCP Fieldbus Coupler for Incubator Cabinet `INC_CAB` (`750-431` 8-ch DI, `750-530` 8-ch DO, `750-461` 2-ch Pt100 RTD)
+* **MAC Address:** `00:30:DE:07:30:6B` *(replaced retired `750-341` MAC `00:30:DE:02:7B:71`)*
+* **Firmware Revision:** `01.03.09 (04)`
+* **Network Assignment:** Static IP assigned in EEPROM (`192.168.88.251`, Mask `255.255.255.0`, Gateway `192.168.88.1`, `PCFGIP=EEPROMIP`), **all 8 DIP switches `OFF` (`0`)**
+* **Protocol Settings (`Port.ssi`):** `Modbus TCP (502)`, `Modbus UDP (502)`, `HTTP (80)`, `FTP (21)`, and `WAGO Services (6626)` enabled; `Ethernet IP` (`44818/2222`), `SNMP`, `BootP`, and `DHCP` disabled
+* **User Accounts:**
+  * **`admin`**: Factory default `wago` (kept as default)
   * **`user`**: Factory default `user`
-  * > [!IMPORTANT]
-  * > **Firmware Limitations:** The 750-341 has an 8-character limit and does NOT support special characters (such as `@`, `!`, `#`). Using symbols corrupts HTTP Basic Authentication and permanently locks the web interface. Always use alphanumeric passwords under 8 characters or maintain the industrial default `wago`.
 * **Active Network Ports:**
   * `80/TCP`: WAGO Web-Based Management (`http://192.168.88.251/`)
-  * `502/TCP`: Modbus TCP Server (K-Bus register access)
+  * `502/TCP` & `502/UDP`: Modbus Server (K-Bus register access)
+  * `6626/TCP`: WAGO Services (`WAGO Ethernet Settings`)
+* **Config Backup:** [sites/afoa/nodes/afoa-node00_0030DE07306B.md](file:///c:/Projects/labSCADA/sites/afoa/nodes/afoa-node00_0030DE07306B.md) (legacy `750-341` `.wes` archived in [legacy/](file:///c:/Projects/labSCADA/sites/afoa/nodes/legacy/afoa-node00_0030DE027B71.wes))
 
 ---
 
@@ -123,7 +124,7 @@ Unlike generic soft-PLCs, the embedded CODESYS runtime on the WAGO 750-8212 publ
 Configured in [sites/afoa/scada_config/DrvOpcUa_001.xml](file:///c:/Projects/labSCADA/sites/afoa/scada_config/DrvOpcUa_001.xml) and `/opt/scada/ScadaComm/Config/DrvOpcUa_001.xml`.
 
 > **Core Architectural Rule (Single Source of Truth):**
-> All fieldbus polling, timers, and alarm gating **MUST** go strictly through the **WAGO PFC200 (750-8212)** controller (`afoa-plc.labmon`). Remote fieldbus couplers (such as `afoa-node00.labmon` 750-341) are polled exclusively by the `-8212` PLC over Modbus TCP. Neither Rapid SCADA nor `ivf_alert_engine.py` should ever bypass the `-8212` to poll remote couplers directly. All telemetry flows:
+> All fieldbus polling, timers, and alarm gating **MUST** go strictly through the **WAGO PFC200 (750-8212)** controller (`afoa-plc.labmon`). Remote fieldbus couplers (such as `afoa-node00.labmon` 750-352) are polled exclusively by the `-8212` PLC over Modbus TCP. Neither Rapid SCADA nor `ivf_alert_engine.py` should ever bypass the `-8212` to poll remote couplers directly. All telemetry flows:
 > `Remote Coupler` $\rightarrow$ `750-8212 PLC (CODESYS)` $\rightarrow$ `OPC UA (:4840)` $\rightarrow$ `ScadaComm` $\rightarrow$ `PostgreSQL (curcopy_current)` $\rightarrow$ `Alert Engine & Kiosk`.
 
 ---
