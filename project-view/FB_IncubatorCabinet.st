@@ -14,7 +14,7 @@ VAR_INPUT
     bDoorClosed         : BOOL := FALSE;    (* Hardware DI: 24V/TRUE = Closed, 0V/FALSE = Open / Disconnected *)
     tDoorAlarmDelay     : TIME := T#3M;     (* Alarm if cabinet door left open longer than this *)
     tPostCloseGrace     : TIME := T#3M;     (* Time to keep incubator alarms muted after door closes *)
-    rCabinetTemp        : REAL := 24.5;     (* Interior ambient temp (°C) *)
+    wRawTempX10         : WORD := 16#D8F0;  (* Raw Modbus 750-461 register x10 (244 = 24.4°C, -9999 = 16#D8F0) *)
     rFanOnSetpoint      : REAL := 28.0;     (* Exhaust fan ON setpoint in °C *)
     rFanHysteresis      : REAL := 1.5;      (* Deadband in °C (turns off at 26.5°C) *)
 END_VAR
@@ -23,11 +23,14 @@ VAR_OUTPUT
     bIncubatorMute      : BOOL := FALSE;    (* TRUE while door is open OR during post-closure grace *)
     tGraceRemaining     : TIME := T#0S;     (* Time remaining in post-close recovery grace *)
     bFanCommand         : BOOL := FALSE;    (* Command to future DO fan relay *)
-    bCabinetOvertemp    : BOOL := FALSE;    (* Alarm: Cabinet internal temp > 32°C *)
+    bCabinetOvertemp    : BOOL := FALSE;    (* Alarm: Cabinet internal temp >= 32°C *)
+    rProcessTemp        : REAL := -999.0;   (* Published cabinet temperature (°C) to SCADA & DB *)
+    bProbeFault         : BOOL := TRUE;     (* Physical RTD probe open/short/out-of-range fault *)
 END_VAR
 VAR
     tonDoorOpen         : TON;              (* Timer for door held open alert *)
     tofGrace            : TOF;              (* Off-delay timer keeping mute active post-closure *)
+    iTempX10            : INT;
 END_VAR
 // --- implementation ---
 // ==============================================================================
@@ -59,16 +62,30 @@ ELSE
 END_IF;
 
 // ==============================================================================
+// 3. CABINET TEMPERATURE SCALING & PROBE FAULT SUPERVISION
+// ==============================================================================
+iTempX10    := TO_INT(wRawTempX10);
+bProbeFault := (iTempX10 <= -2000) OR (iTempX10 >= 8500);
+
+IF bProbeFault THEN
+    rProcessTemp := -999.0;
+ELSE
+    rProcessTemp := TO_REAL(iTempX10) / 10.0;
+END_IF;
+
+// ==============================================================================
 // 4. THERMOSTATIC EXHAUST FAN CONTROL (HYSTERESIS)
 // ==============================================================================
-IF rCabinetTemp >= rFanOnSetpoint THEN
+IF bProbeFault THEN
+    bFanCommand := FALSE;
+ELSIF rProcessTemp >= rFanOnSetpoint THEN
     bFanCommand := TRUE;
-ELSIF rCabinetTemp <= (rFanOnSetpoint - rFanHysteresis) THEN
+ELSIF rProcessTemp <= (rFanOnSetpoint - rFanHysteresis) THEN
     bFanCommand := FALSE;
 END_IF;
 
 // ==============================================================================
 // 5. CABINET OVERTEMPERATURE SUPERVISION
 // ==============================================================================
-bCabinetOvertemp := (rCabinetTemp >= 32.0);
+bCabinetOvertemp := (NOT bProbeFault) AND (rProcessTemp >= 32.0);
 END_FUNCTION

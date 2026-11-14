@@ -994,20 +994,20 @@
       <!-- Dewars (0 to N) -->
       {% for d in equipment.dewars %}
       <div class="card" id="card-cryo{{ d.id }}" style="border-top:3px solid {{ d.color | default('#00e5ff') }};">
-        <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-          <div>
-            <div style="display:flex; align-items:center; gap:6px;">
-              <div class="card-title" style="margin-bottom:0;">{{ d.label | default(d.name) }}</div>
-              {% if d.is_wireless and d.batt_cnl %}
-              <div id="dewar-batt-wrap-{{ d.id }}" style="display:inline-flex; align-items:center; gap:3px; font-size:10px; font-family:monospace; font-weight:700; color:#10b981; background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.3); padding:1px 6px; border-radius:10px;" title="Wireless Node Battery Voltage">
-                <span>🔋</span>
-                <span id="val-dewar-batt-{{ d.id }}">--</span><span style="font-size:8px; color:#8899a6;">V</span>
-              </div>
-              {% endif %}
-            </div>
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
+          <div style="min-width:0;">
+            <div class="card-title">{{ d.label | default(d.name) }}</div>
             <div class="card-val"><span id="val-cryo{{ d.id }}">--</span><span class="card-unit">°C</span></div>
           </div>
-          <span id="badge-cryo{{ d.id }}" class="status-badge status-normal">NORMAL</span>
+          <div style="display:flex; align-items:center; gap:6px; flex-shrink:0;">
+            {% if d.is_wireless and d.batt_cnl %}
+            <div id="dewar-batt-wrap-{{ d.id }}" style="display:inline-flex; align-items:center; gap:3px; font-size:10px; font-family:monospace; font-weight:700; color:#10b981; background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.3); padding:2px 6px; border-radius:10px; white-space:nowrap;" title="Wireless Node Battery Voltage">
+              <span>🔋</span>
+              <span id="val-dewar-batt-{{ d.id }}">--</span><span style="font-size:8px; color:#8899a6;">V</span>
+            </div>
+            {% endif %}
+            <span id="badge-cryo{{ d.id }}" class="status-badge status-normal">NORMAL</span>
+          </div>
         </div>
         <div class="card-sub">
           <span>Vapor Limit: &lt; {{ d.high_limit | default(-135.0) }}°C</span>

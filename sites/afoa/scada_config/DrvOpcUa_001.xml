@@ -9,6 +9,9 @@
       <Item active="true" nodeID="ns=4;s=|var|WAGO 750-8212 PFC200 G2 2ETH RS.Application.PLC_PRG.fbDewar3.rProcessTemp" displayName="Dewar 3" tagCode="Temperature_05" dataType="System.Double" isArray="false" />
       <Item active="true" nodeID="ns=4;s=|var|WAGO 750-8212 PFC200 G2 2ETH RS.Application.PLC_PRG.fbDewar4.rProcessTemp" displayName="Dewar 4" tagCode="Temperature_06" dataType="System.Double" isArray="false" />
       <Item active="true" nodeID="ns=4;s=|var|WAGO 750-8212 PFC200 G2 2ETH RS.Application.PLC_PRG.fbDewar5.rProcessTemp" displayName="Dewar 5" tagCode="Temperature_07" dataType="System.Double" isArray="false" />
+      <Item active="true" nodeID="ns=4;s=|var|WAGO 750-8212 PFC200 G2 2ETH RS.Application.PLC_PRG.fbColdStorage.rBatteryVolts" displayName="Cold Storage Battery Voltage" tagCode="Temperature_08" dataType="System.Double" isArray="false" />
+      <Item active="true" nodeID="ns=4;s=|var|WAGO 750-8212 PFC200 G2 2ETH RS.Application.PLC_PRG.fbDewar2.rBatteryVolts" displayName="Dewar 2 Battery Voltage" tagCode="Temperature_09" dataType="System.Double" isArray="false" />
+      <Item active="true" nodeID="ns=4;s=|var|WAGO 750-8212 PFC200 G2 2ETH RS.Application.PLC_PRG.fbCabinet01.rProcessTemp" displayName="Cabinet 01 Temp" tagCode="Temperature_10" dataType="System.Double" isArray="false" />
       <Item active="true" nodeID="ns=4;s=|var|WAGO 750-8212 PFC200 G2 2ETH RS.Application.PLC_PRG.fbDewar3.bAlarm" displayName="Dewar 3 Alarm" tagCode="Dewar3_Alarm" dataType="System.Boolean" isArray="false" />
       <Item active="true" nodeID="ns=4;s=|var|WAGO 750-8212 PFC200 G2 2ETH RS.Application.PLC_PRG.fbDewar4.bAlarm" displayName="Dewar 4 Alarm" tagCode="Dewar4_Alarm" dataType="System.Boolean" isArray="false" />
       <Item active="true" nodeID="ns=4;s=|var|WAGO 750-8212 PFC200 G2 2ETH RS.Application.PLC_PRG.fbDewar5.bAlarm" displayName="Dewar 5 Alarm" tagCode="Dewar5_Alarm" dataType="System.Boolean" isArray="false" />

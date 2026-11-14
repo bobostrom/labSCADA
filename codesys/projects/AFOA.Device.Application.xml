@@ -27,11 +27,11 @@
       <UserDefElement iecname="Q" type="T_BOOL" byteoffset="8" vartype="VAR_OUTPUT" access="ReadWrite" />
       <UserDefElement iecname="ET" type="T_TIME" byteoffset="12" vartype="VAR_OUTPUT" access="ReadWrite" />
     </TypeUserDef>
-    <TypeUserDef name="T_FB_IncubatorCabinet" size="68" nativesize="96" typeclass="Userdef" pouclass="FUNCTION_BLOCK" iecname="FB_IncubatorCabinet">
+    <TypeUserDef name="T_FB_IncubatorCabinet" size="78" nativesize="108" typeclass="Userdef" pouclass="FUNCTION_BLOCK" iecname="FB_IncubatorCabinet">
       <UserDefElement iecname="bDoorClosed" type="T_BOOL" byteoffset="0" vartype="VAR_INPUT" access="ReadWrite" />
       <UserDefElement iecname="tDoorAlarmDelay" type="T_TIME" byteoffset="4" vartype="VAR_INPUT" access="ReadWrite" />
       <UserDefElement iecname="tPostCloseGrace" type="T_TIME" byteoffset="8" vartype="VAR_INPUT" access="ReadWrite" />
-      <UserDefElement iecname="rCabinetTemp" type="T_REAL" byteoffset="12" vartype="VAR_INPUT" access="ReadWrite" />
+      <UserDefElement iecname="wRawTempX10" type="T_WORD" byteoffset="12" vartype="VAR_INPUT" access="ReadWrite" />
       <UserDefElement iecname="rFanOnSetpoint" type="T_REAL" byteoffset="16" vartype="VAR_INPUT" access="ReadWrite" />
       <UserDefElement iecname="rFanHysteresis" type="T_REAL" byteoffset="20" vartype="VAR_INPUT" access="ReadWrite" />
       <UserDefElement iecname="bDoorAlarm" type="T_BOOL" byteoffset="24" vartype="VAR_OUTPUT" access="ReadWrite" />
@@ -39,8 +39,11 @@
       <UserDefElement iecname="tGraceRemaining" type="T_TIME" byteoffset="28" vartype="VAR_OUTPUT" access="ReadWrite" />
       <UserDefElement iecname="bFanCommand" type="T_BOOL" byteoffset="32" vartype="VAR_OUTPUT" access="ReadWrite" />
       <UserDefElement iecname="bCabinetOvertemp" type="T_BOOL" byteoffset="33" vartype="VAR_OUTPUT" access="ReadWrite" />
-      <UserDefElement iecname="tonDoorOpen" type="T_TON" byteoffset="36" vartype="VAR" access="ReadWrite" />
-      <UserDefElement iecname="tofGrace" type="T_TOF" byteoffset="52" vartype="VAR" access="ReadWrite" />
+      <UserDefElement iecname="rProcessTemp" type="T_REAL" byteoffset="36" vartype="VAR_OUTPUT" access="ReadWrite" />
+      <UserDefElement iecname="bProbeFault" type="T_BOOL" byteoffset="40" vartype="VAR_OUTPUT" access="ReadWrite" />
+      <UserDefElement iecname="tonDoorOpen" type="T_TON" byteoffset="44" vartype="VAR" access="ReadWrite" />
+      <UserDefElement iecname="tofGrace" type="T_TOF" byteoffset="60" vartype="VAR" access="ReadWrite" />
+      <UserDefElement iecname="iTempX10" type="T_INT" byteoffset="76" vartype="VAR" access="ReadWrite" />
     </TypeUserDef>
     <TypeUserDef name="T_FB_PickupDropout" size="56" nativesize="84" typeclass="Userdef" pouclass="FUNCTION_BLOCK" iecname="FB_PickupDropout">
       <UserDefElement iecname="IN" type="T_BOOL" byteoffset="0" vartype="VAR_INPUT" access="ReadWrite" />
