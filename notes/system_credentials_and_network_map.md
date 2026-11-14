@@ -13,6 +13,7 @@
 | **`afoa-plc`** (`plc0000`) | **WAGO PFC200 (750-8212)** | `00:30:DE:7C:EF:9A` | `192.168.10.139` | `afoa-plc.labmon` (`192.168.88.253`) | Primary PLC, K-Bus I/O, CODESYS V3.5, OPC UA Server (:4840), WBM (:443) |
 | **`afoa-scada`** (`scadapi02`)| **Raspberry Pi 4 (8GB)** | `88:A2:9E:12:0E:1D` (Wi-Fi)<br>`88:A2:9E:12:0E:1C` (Eth)<br>`2C:CF:67:ED:38:CF` (AFOA) | `192.168.10.133` | `afoa-scada.labmon` (`192.168.88.252`) | Rapid SCADA 6.x, PostgreSQL 17, Grafana, IVF Alert Engine (:8080), LN2 Kiosk |
 | **`afoa-node00`** (`INC_CAB`) | **WAGO Coupler (750-352)** | `00:30:DE:07:30:6B` | — | `afoa-node00.labmon` (`192.168.88.251`) | 2-Port Switched Modbus TCP Coupler for Incubator Cabinet (`750-431` DI, `750-530` DO, `750-461` RTD) (:502, :80) |
+| **`afoa-incu-ups`** (`UPS_INC_CAB`) | **APC Smart-UPS 1500 + AP9640 NMC3** | `28:29:86:64:07:FE` | — | `afoa-incu-ups.labmon` (`192.168.88.250`) | Incubator Cabinet Backup UPS; native Modbus TCP (`502/TCP`), SSH (:22), HTTPS (:443) |
 | **`bobslaptop`** | **Technician Laptop** | *Per Adapter* | `192.168.10.x` | `bobslaptop.labmon` (`192.168.88.254`) | Engineering Workstation, CODESYS V3.5 IDE, WAGO Ethernet Settings |
 | **`codesyspi02`** | **Raspberry Pi 4 (4GB)** | `DC:A6:32:6F:3F:B4` (Wi-Fi)<br>`DC:A6:32:6F:3F:B3` (Eth) | `192.168.10.135` | `codesyspi02.labmon` | Secondary / Development CODESYS SoftPLC, OPC UA Server (:4840) |
 | **`router`** | **MikroTik RouterOS** | *Per WAN/LAN* | `192.168.10.1` | Gateway Router (`192.168.88.1`) | Static DNS Server (`.labmon`), DHCP Server (`bootp-support=static`), Firewall |
@@ -58,6 +59,20 @@
   * `502/TCP` & `502/UDP`: Modbus Server (K-Bus register access)
   * `6626/TCP`: WAGO Services (`WAGO Ethernet Settings`)
 * **Config Backup:** [sites/afoa/nodes/afoa-node00_0030DE07306B.md](file:///c:/Projects/labSCADA/sites/afoa/nodes/afoa-node00_0030DE07306B.md) (legacy `750-341` `.wes` archived in [legacy/](file:///c:/Projects/labSCADA/sites/afoa/nodes/legacy/afoa-node00_0030DE027B71.wes))
+
+---
+
+### B2. Incubator Cabinet Backup UPS (`afoa-incu-ups` / APC Smart-UPS 1500)
+* **Host / Device:** `afoa-incu-ups.labmon` (IP: `192.168.88.250`)
+* **UPS Hardware:** APC Smart-UPS 1500 (`AS1030142941`, Firmware `653.18.D`, Manufacture `07/22/10`)
+* **Network Management Card:** APC AP9640 NMC3 (`ZA2211002838`, HW Rev `5`, AOS/APP `v1.5.1.1`, MAC `28:29:86:64:07:FE`)
+* **Network Assignment:** Static IPv4 (`192.168.88.250`, Mask `255.255.255.0`, Gateway `192.168.88.1`, Boot Mode `Manual`)
+* **User Account:** `apc` / `LABMON`
+* **Active Network Ports:**
+  * `502/TCP`: Native Modbus TCP Slave (`Unit ID 1`, polled read-only by `afoa-plc` `fbUPS02`, `FC 03 offset 0 len 20`)
+  * `22/TCP`: SSH CLI
+  * `443/TCP`: HTTPS NMC Web UI (`https://192.168.88.250/`)
+* **Dashboard & Control Notes:** Read-only telemetry (`Cnl 181–187`) nested inside `Incubator Cabinet 01`; remote beeper mute disabled.
 
 ---
 

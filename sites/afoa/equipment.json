@@ -237,6 +237,27 @@
       "low_batt_alarm_cnl": 177,
       "beeper_muted_cnl": 178,
       "mute_cmd_cnl": 179
+    },
+    {
+      "id": 2,
+      "key": "ups_inc_cab",
+      "parent_cabinet": "cab_incubator_01",
+      "name": "Incubator Cabinet UPS",
+      "short_name": "Cabinet UPS",
+      "model": "APC Smart-UPS 1500",
+      "location": "Incubator Cabinet",
+      "host": "afoa-incu-ups.labmon",
+      "ip": "192.168.88.250",
+      "plc_fb": "fbUPS02",
+      "online_cnl": 181,
+      "battery_cnl": 182,
+      "runtime_cnl": 183,
+      "voltage_cnl": 184,
+      "load_cnl": 185,
+      "power_alarm_cnl": 186,
+      "low_batt_alarm_cnl": 187,
+      "beeper_muted_cnl": null,
+      "mute_cmd_cnl": null
     }
   ]
 }

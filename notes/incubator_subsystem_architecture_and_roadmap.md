@@ -11,8 +11,9 @@ The physical setup in the embryology lab separates the **climate-controlled furn
   │     ├── Tray 1: K-Systems G210 #1 (Chamber Alarm Dry Contact DI 1 -> Ch 123)
   │     ├── Tray 2: K-Systems G210 #2 (Chamber Alarm Dry Contact DI 2 -> Ch 124)
   │     └── Tray 3: [ Empty / Unpopulated Expansion Bay ]
-  ├── Cabinet Interior Temperature Sensor (RTD) - Measures trapped waste heat (Future)
-  └── Cabinet Exhaust Fan Relay (DO) - Autonomous thermostatic cooling by WAGO 750-8212 (Future)
+  ├── Cabinet Interior Temperature Sensor (RTD) - Measures trapped waste heat (`750-461` Ch 1 -> `Cnl 110`)
+  ├── Cabinet Exhaust Fan Relay (DO) - Autonomous thermostatic cooling by WAGO 750-8212 (Future)
+  └── Cabinet Backup UPS (`afoa-incu-ups` / APC Smart-UPS 1500 + AP9640 NMC3, `192.168.88.250:502` -> `fbUPS02` / `Cnl 181-187`)
 
 [ Standalone Box Incubators ]
   └── Astec SCA-165DRS #1 (Chamber Alarm Dry Contact + External RTD Probe)

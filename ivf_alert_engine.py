@@ -2565,27 +2565,40 @@ class ClinicalAlertHandler(http.server.BaseHTTPRequestHandler):
         elif parsed.path == "/api/ups/mute":
             # Operator Mute command dispatched to CODESYS PLC (-8212)
             ups_key = params.get("key", ["ups1"])[0]
-            target_ups = None
-            for u in EQUIPMENT_CONFIG.get("ups", []):
-                if u.get("key") == ups_key:
-                    target_ups = u
-                    break
-            if not target_ups and EQUIPMENT_CONFIG.get("ups"):
-                target_ups = EQUIPMENT_CONFIG["ups"][0]
+            target_ups = next(
+                (u for u in EQUIPMENT_CONFIG.get("ups", []) if u.get("key") == ups_key),
+                None,
+            )
+            if not target_ups:
+                self.send_response(404)
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Access-Control-Allow-Origin", "*")
+                self.end_headers()
+                self.wfile.write(json.dumps({"success": False, "message": f"Unknown UPS key: {ups_key}", "ups": ups_key}).encode("utf-8"))
+                return
 
-            plc_fb = target_ups.get("plc_fb", "fbUPS01") if target_ups else "fbUPS01"
+            mute_cnl = target_ups.get("mute_cmd_cnl")
+            if not mute_cnl:
+                self.send_response(400)
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Access-Control-Allow-Origin", "*")
+                self.end_headers()
+                self.wfile.write(json.dumps({"success": False, "message": "Remote beeper mute is disabled for this UPS", "ups": ups_key}).encode("utf-8"))
+                return
+
+            plc_fb = target_ups.get("plc_fb", "fbUPS01")
             # Route command strictly through the PLC
             ok, msg = write_plc_bool(f"PLC_PRG.{plc_fb}.bCmdMuteBeeper", True)
 
             # Audit record in PostgreSQL
             safe_msg = str(msg).replace("'", "''")
-            ups_name = target_ups.get("name", "Facility Primary UPS") if target_ups else "Facility Primary UPS"
+            ups_name = target_ups.get("name", "Facility Primary UPS")
             safe_name = ups_name.replace("'", "''")
             db_execute(f"""
             INSERT INTO mod_arc_postgre_sql.alarm_events 
             (cnl_num, equipment_name, alarm_type, excursion_val, triggered_at, is_acknowledged, acknowledged_by, is_resolved, corrective_action_notes, priority)
             VALUES 
-            (179, '{safe_name}', 'Beeper Mute Operator Command', NULL, NOW(), TRUE, 'Lab Kiosk', TRUE, '{safe_msg}', 0);
+            ({int(mute_cnl)}, '{safe_name}', 'Beeper Mute Operator Command', NULL, NOW(), TRUE, 'Lab Kiosk', TRUE, '{safe_msg}', 0);
             """)
 
             self.send_response(200 if ok else 500)

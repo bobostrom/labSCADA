@@ -104,8 +104,16 @@ Currently configured as non-wireless placeholders until clinic sensors/nodes are
 * **Incubator Cabinet Exhaust Fan (`INC_CAB` / `afoa-node00`):**
   * Cabinet RTD temperature (`750-461` Ch 1 → `fbCabinet01.rProcessTemp` / `Cnl 110`) and door contact (`DI 8` → `Cnl 132`) are live; the exhaust fan relay output remains deferred (`fan_command_cnl: null` in `sites/afoa/equipment.json` keeps it hidden in the Kiosk UI while PLC/backend logic stays intact).
   * **When fan relay is added:** Wire to `750-530` DO 1 (`fbCabinet01.bFanCommand`), add the OPC UA tag to `DrvOpcUa_001.xml`, and populate `fan_command_cnl` in `sites/afoa/equipment.json`.
-* **Incubator Cabinet Ethernet UPS (Future):**
-  * Add a second `FB_APC_SmartUPS` (or SNMP/Modbus TCP UPS) instance and Modbus TCP server entry alongside `UPS_SCADA` when ready to monitor the cabinet UPS.
+* **Incubator Cabinet Ethernet UPS (`afoa-incu-ups.labmon` — `192.168.88.250:502`):**
+  * **Hardware:** APC Smart-UPS 1500 (`AS1030142941`, FW `653.18.D`) with AP9640 NMC3 (`ZA2211002838`, AOS/APP `v1.5.1.1`, MAC `28:29:86:64:07:FE`, read-only monitoring — no remote beeper mute).
+  * **PLC Function Block:** `fbUPS02 : FB_APC_SmartUPS` (`bNmcMode := TRUE`, OPC UA / Rapid SCADA channels `181–187` `UPS2_*`, embedded inside `#card-incubators` via `"parent_cabinet": "cab_incubator_01"`).
+  * **CODESYS Modbus TCP Slave Channel:** `FC 03` Read Holding Registers, Unit ID `1`, Offset `16#0000` (`0`), Length **`20`** (`HR[0..19]` — **do not span past index 23**; `HR[24..25]` return `0x02` Illegal Data Address):
+    * `HR[3]` (`40004`) → `Application.PLC_PRG.fbUPS02.wStatusWord` (`0x0008`=On Line, `0x0010`=On Battery, `0x0040`=Low Battery)
+    * `HR[5]` (`40006`) → `Application.PLC_PRG.fbUPS02.wBatteryPct` (`%`)
+    * `HR[6]` (`40007`) → `Application.PLC_PRG.fbUPS02.wRuntimeMin` (`minutes`)
+    * `HR[14]` (`40015`) → `Application.PLC_PRG.fbUPS02.wLineVoltageX10` (whole `VAC` RMS; scaled in `bNmcMode`)
+    * `HR[19]` (`40020`) → `Application.PLC_PRG.fbUPS02.wLoadPct` (`%`)
+  * **Router Static DNS (`192.168.88.1`):** `/ip/dns/static/add name=afoa-incu-ups.labmon address=192.168.88.250 comment="APC Smart-UPS 1500 Incubator Cabinet"`.
 
 ---
 

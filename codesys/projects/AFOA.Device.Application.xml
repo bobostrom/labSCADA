@@ -277,6 +277,7 @@
         <Node name="fbIncubator1" type="T_FB_G210_Incubator" access="ReadWrite" />
         <Node name="fbIncubator2" type="T_FB_G210_Incubator" access="ReadWrite" />
         <Node name="fbUPS01" type="T_FB_APC_SmartUPS" access="ReadWrite" />
+        <Node name="fbUPS02" type="T_FB_APC_SmartUPS" access="ReadWrite" />
         <Node name="rLabAmbientTemp" type="T_REAL" access="ReadWrite" />
         <Node name="tonBlink" type="T_TON" access="ReadWrite" />
       </Node>

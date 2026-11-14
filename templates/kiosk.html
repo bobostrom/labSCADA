@@ -24,6 +24,15 @@
       animation: pulse-amber 2.5s infinite ease-in-out !important;
       background: linear-gradient(180deg, rgba(245, 158, 11, 0.08) 0%, rgba(15, 23, 42, 0.8) 100%) !important;
     }
+    .cab-ups-subpanel {
+      background: rgba(9, 13, 22, 0.45);
+      border: 1px solid rgba(16, 185, 129, 0.28);
+      border-left: 3px solid #10b981;
+      border-radius: 8px;
+      padding: 10px 12px;
+      margin-top: 10px;
+      transition: all 0.3s ease;
+    }
     :root {
       --bg-app: #03141f;
       /* Deep Alaskan Navy */
@@ -1221,11 +1230,53 @@
               </div>
             </div>
           </div>
+
+          <!-- Cabinet-Associated Backup UPS Strip (rendered inside Cabinet card when u.parent_cabinet matches) -->
+          {% for u in equipment.ups if cab_cfg and u.parent_cabinet == cab_cfg.key %}
+          <div class="cab-ups-subpanel" id="card-ups-{{ u.key }}">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
+              <div>
+                <div style="font-size:11px; font-weight:700; color:#e2e8f0; display:flex; align-items:center; gap:5px;">
+                  <span>⚡</span><span>{{ u.name }}</span>
+                </div>
+                <div style="font-size:10px; color:#8899a6; margin-top:1px;">
+                  {{ u.model | default('Facility UPS') }} • {{ u.location | default('Cabinet Power') }}
+                </div>
+              </div>
+              <span id="badge-ups-{{ u.key }}" class="status-badge status-normal" style="font-size:10px; padding:2px 8px;">GRID NORMAL</span>
+            </div>
+
+            <div style="display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:10px; margin-top:8px;">
+              <div>
+                <div style="font-size:9.5px; font-weight:700; color:#8899a6; text-transform:uppercase;" id="lbl-ups-primary-{{ u.key }}">BATTERY CHARGE</div>
+                <div style="font-family:monospace; font-weight:800; font-size:1.3rem; line-height:1.1; margin-top:1px;">
+                  <span id="val-ups-primary-{{ u.key }}" style="color:#10b981;">--</span><span class="card-unit" id="unit-ups-primary-{{ u.key }}" style="font-size:11px;">%</span>
+                </div>
+              </div>
+              <div style="display:flex; gap:12px; flex-wrap:wrap; font-size:11px; color:#cbd5e1; align-items:center;">
+                <span id="sub-ups-volt-{{ u.key }}">-- VAC Line</span>
+                <span id="sub-ups-rt-{{ u.key }}" style="color:#38bdf8;">Est. Runtime: -- min</span>
+                <span id="sub-ups-load-{{ u.key }}" style="color:#8899a6;">Load: --%</span>
+              </div>
+            </div>
+            {% if u.mute_cmd_cnl %}
+            <div id="actions-ups-{{ u.key }}" style="display:none; margin-top:8px; padding-top:8px; border-top:1px solid rgba(245,158,11,0.25); justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+              <button type="button" class="btn-mini" id="btn-ups-mute-{{ u.key }}" style="background:#d97706; color:#fff; font-weight:700; border:none; padding:5px 10px; border-radius:6px; cursor:pointer;" onclick="muteUpsBeeper('{{ u.key }}')">
+                🔇 Mute UPS Beeper
+              </button>
+              <span id="muted-badge-ups-{{ u.key }}" style="display:none; font-size:11px; font-weight:700; color:#34d399; background:rgba(16,185,129,0.15); padding:3px 8px; border-radius:4px; border:1px solid rgba(16,185,129,0.3);">
+                🔇 BEEPER MUTED
+              </span>
+            </div>
+            {% endif %}
+          </div>
+          {% endfor %}
         </div>
         {% endif %}
 
-        <!-- Facility UPS Power Systems (0 to N, data-driven from EQUIPMENT.ups) -->
-        {% for u in equipment.ups %}
+        <!-- Standalone Facility UPS Power Systems (excluding UPS units nested inside a cabinet card) -->
+        {% set primary_cab_key = equipment.cabinets[0].key if (equipment.cabinets and equipment.cabinets | length > 0) else '' %}
+        {% for u in equipment.ups if not u.parent_cabinet or u.parent_cabinet != primary_cab_key %}
         <div class="card" id="card-ups-{{ u.key }}" style="border-top:3px solid #10b981; transition:all 0.3s ease;">
           <div style="display:flex; justify-content:space-between; align-items:flex-start;">
             <div>
@@ -1248,6 +1299,7 @@
             <span id="sub-ups-load-{{ u.key }}" style="font-size:11px; color:#8899a6;">Load: --%</span>
           </div>
 
+          {% if u.mute_cmd_cnl %}
           <!-- Outage Actions & Mute Button (Shown when On Battery) -->
           <div id="actions-ups-{{ u.key }}" style="display:none; margin-top:12px; padding-top:10px; border-top:1px solid rgba(245,158,11,0.25); justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
             <button type="button" class="btn-mini" id="btn-ups-mute-{{ u.key }}" style="background:#d97706; color:#fff; font-weight:700; border:none; padding:6px 12px; border-radius:6px; cursor:pointer;" onclick="muteUpsBeeper('{{ u.key }}')">
@@ -1257,6 +1309,7 @@
               🔇 BEEPER MUTED
             </span>
           </div>
+          {% endif %}
         </div>
         {% endfor %}
       </div>
@@ -2332,7 +2385,9 @@
                   cabTemp.innerText = (t !== undefined && t !== null) ? `${Number(t).toFixed(1)}°C` : '--.-°C';
                 }
 
-                // 6. Facility UPS Systems (0 to N, populated from PLC via curcopy_current)
+                // 6. Facility UPS Systems (0 to N, standalone cards + cabinet-nested subpanels)
+                let anyCabUpsOutage = false;
+                let anyCabUpsCrit = false;
                 (EQUIPMENT.ups || []).forEach(u => {
                   const isOnline = u.online_cnl ? (r[u.online_cnl] !== undefined ? r[u.online_cnl] > 0 : true) : true;
                   const isPowerLost = u.power_alarm_cnl ? (r[u.power_alarm_cnl] > 0) : !isOnline;
@@ -2342,6 +2397,11 @@
                   const lineVolt = u.voltage_cnl && r[u.voltage_cnl] !== undefined ? Number(r[u.voltage_cnl]).toFixed(1) : '--';
                   const loadPct = u.load_cnl && r[u.load_cnl] !== undefined ? Number(r[u.load_cnl]).toFixed(0) : '--';
                   const isMuted = u.beeper_muted_cnl ? (r[u.beeper_muted_cnl] > 0) : false;
+
+                  if (cabCfg && u.parent_cabinet === cabCfg.key) {
+                    if (isPowerLost || !isOnline) anyCabUpsOutage = true;
+                    if (isLowBatt) anyCabUpsCrit = true;
+                  }
 
                   const card = document.getElementById(`card-ups-${u.key}`);
                   const badge = document.getElementById(`badge-ups-${u.key}`);
@@ -2353,12 +2413,17 @@
                   const subLoad = document.getElementById(`sub-ups-load-${u.key}`);
                   const outAction = document.getElementById(`actions-ups-${u.key}`);
                   const mutedBadge = document.getElementById(`muted-badge-ups-${u.key}`);
+                  const isNested = Boolean(cabCfg && u.parent_cabinet === cabCfg.key);
 
                   if (card) {
                     if (isPowerLost || !isOnline) {
                       // Outage mode: shift card mode and color
                       card.classList.add('ups-outage-active');
-                      card.style.borderTopColor = isLowBatt ? '#ff1744' : '#f59e0b';
+                      if (isNested) {
+                        card.style.borderLeftColor = isLowBatt ? '#ff1744' : '#f59e0b';
+                      } else {
+                        card.style.borderTopColor = isLowBatt ? '#ff1744' : '#f59e0b';
+                      }
 
                       if (badge) {
                         badge.innerText = isLowBatt ? 'CRITICAL LOW BATT' : '⚡ ON BATTERY';
@@ -2372,15 +2437,24 @@
                       }
                       if (primaryUnit) primaryUnit.innerText = 'min';
 
-                      if (subVolt) subVolt.innerText = '0.0 VAC (GRID LOST)';
+                      if (subVolt) {
+                        const voltNum = Number(lineVolt);
+                        subVolt.innerText = (lineVolt !== '--' && !Number.isNaN(voltNum) && voltNum > 10)
+                          ? `${lineVolt} VAC (ON BATT)`
+                          : '0.0 VAC (GRID LOST)';
+                      }
                       if (subRt) subRt.innerText = `${battPct}% Battery Reserve`;
                       if (subLoad) subLoad.innerText = `Load: ${loadPct}%`;
-                      if (outAction) outAction.style.display = 'flex';
+                      if (outAction && u.mute_cmd_cnl) outAction.style.display = 'flex';
                       if (mutedBadge) mutedBadge.style.display = isMuted ? 'inline-block' : 'none';
                     } else {
                       // Normal mode: Green grid powered
                       card.classList.remove('ups-outage-active');
-                      card.style.borderTopColor = '#10b981';
+                      if (isNested) {
+                        card.style.borderLeftColor = '#10b981';
+                      } else {
+                        card.style.borderTopColor = '#10b981';
+                      }
 
                       if (badge) {
                         badge.innerText = 'GRID NORMAL';
@@ -2402,6 +2476,10 @@
                     }
                   }
                 });
+
+                if (cardInc && !anyIncAlarm && (anyCabUpsOutage || anyCabUpsCrit)) {
+                  cardInc.style.borderTopColor = anyCabUpsCrit ? '#ff1744' : '#f59e0b';
+                }
 
                 // Real-time update for modal inspector if currently open
                 if (currentModalIncKey) {

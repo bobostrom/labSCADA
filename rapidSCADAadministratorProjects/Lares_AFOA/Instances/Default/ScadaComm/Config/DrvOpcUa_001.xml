@@ -62,6 +62,13 @@
       <Item active="true" nodeID="ns=4;s=|var|WAGO 750-8212 PFC200 G2 2ETH RS.Application.PLC_PRG.fbUPS01.bAlarmPowerLost" displayName="Primary UPS Power Lost Alarm" tagCode="UPS1_AlarmPowerLost" dataType="System.Boolean" isArray="false" />
       <Item active="true" nodeID="ns=4;s=|var|WAGO 750-8212 PFC200 G2 2ETH RS.Application.PLC_PRG.fbUPS01.bAlarmLowBattery" displayName="Primary UPS Low Battery Alarm" tagCode="UPS1_AlarmLowBatt" dataType="System.Boolean" isArray="false" />
       <Item active="true" nodeID="ns=4;s=|var|WAGO 750-8212 PFC200 G2 2ETH RS.Application.PLC_PRG.fbUPS01.bBeeperMuted" displayName="Primary UPS Beeper Muted" tagCode="UPS1_BeeperMuted" dataType="System.Boolean" isArray="false" />
+      <Item active="true" nodeID="ns=4;s=|var|WAGO 750-8212 PFC200 G2 2ETH RS.Application.PLC_PRG.fbUPS02.bOnline" displayName="Cabinet UPS Grid Online" tagCode="UPS2_Online" dataType="System.Boolean" isArray="false" />
+      <Item active="true" nodeID="ns=4;s=|var|WAGO 750-8212 PFC200 G2 2ETH RS.Application.PLC_PRG.fbUPS02.rBatteryPct" displayName="Cabinet UPS Battery %" tagCode="UPS2_BatteryPct" dataType="System.Double" isArray="false" />
+      <Item active="true" nodeID="ns=4;s=|var|WAGO 750-8212 PFC200 G2 2ETH RS.Application.PLC_PRG.fbUPS02.rRuntimeMinutes" displayName="Cabinet UPS Runtime Minutes" tagCode="UPS2_RuntimeMin" dataType="System.Double" isArray="false" />
+      <Item active="true" nodeID="ns=4;s=|var|WAGO 750-8212 PFC200 G2 2ETH RS.Application.PLC_PRG.fbUPS02.rLineVoltage" displayName="Cabinet UPS Line Voltage" tagCode="UPS2_Voltage" dataType="System.Double" isArray="false" />
+      <Item active="true" nodeID="ns=4;s=|var|WAGO 750-8212 PFC200 G2 2ETH RS.Application.PLC_PRG.fbUPS02.rLoadPct" displayName="Cabinet UPS Load %" tagCode="UPS2_LoadPct" dataType="System.Double" isArray="false" />
+      <Item active="true" nodeID="ns=4;s=|var|WAGO 750-8212 PFC200 G2 2ETH RS.Application.PLC_PRG.fbUPS02.bAlarmPowerLost" displayName="Cabinet UPS Power Lost Alarm" tagCode="UPS2_AlarmPowerLost" dataType="System.Boolean" isArray="false" />
+      <Item active="true" nodeID="ns=4;s=|var|WAGO 750-8212 PFC200 G2 2ETH RS.Application.PLC_PRG.fbUPS02.bAlarmLowBattery" displayName="Cabinet UPS Low Battery Alarm" tagCode="UPS2_AlarmLowBatt" dataType="System.Boolean" isArray="false" />
     </Subscription>
   </Subscriptions>
   <Commands>
