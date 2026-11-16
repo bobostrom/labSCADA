@@ -78,6 +78,9 @@ PLC_OPC_USER    = os.environ.get("PLC_OPC_USER", "scada")
 PLC_OPC_PASS    = os.environ.get("PLC_OPC_PASS", "labMon@2026")
 SIMULATION_MODE = os.environ.get("SIMULATION_MODE", "false").lower() in ("true", "1", "yes")
 POST_CLOSE_GRACE_SEC = 180  # 3 minutes
+INCUBATOR_MUTE_DEFAULT_MIN = 15
+INCUBATOR_MUTE_MAX_MIN = 240
+INCUBATOR_MUTE_WARN_SEC = 180
 
 # Real-time state machine for Incubator Cabinet supervision (via WAGO 750-8212 PLC)
 cabinet_door_state = {
@@ -86,52 +89,369 @@ cabinet_door_state = {
     "mute_active": False,
     "grace_remaining_sec": 0,
     "door_alarm": False,
+    "door_switch_disabled": False,
+    "raw_is_open": False,
     "last_poll_ts": 0
 }
 
+incubator_mute_state = {
+    "active": False,
+    "started_at": 0.0,
+    "expires_at": 0.0,
+    "duration_minutes": 0,
+    "warn_threshold_sec": INCUBATOR_MUTE_WARN_SEC,
+    "warn_sent": False,
+    "user": "Lab Staff",
+    "db_id": None,
+}
+incubator_opc_muted_cache = {}  # {inc_key: {"muted": bool, "ts": float}}
+
+
+def _is_cabinet_door_disabled():
+    """Returns True when any cabinet disables hardware door-switch mute/alarms."""
+    return any(bool(c.get("door_switch_disabled")) for c in EQUIPMENT_CONFIG.get("cabinets", []))
+
+
+def _get_incubator_mute_target_name():
+    """Returns canonical cabinet name for timed incubator mute records."""
+    cabs = EQUIPMENT_CONFIG.get("cabinets", [])
+    return cabs[0].get("name", "Incubator Cabinet 01") if cabs else "Incubator Cabinet 01"
+
+
+def _compute_warn_threshold_sec(total_seconds):
+    """Returns expiring-soon warning window (up to 3 min, scaled down for very short mutes)."""
+    return min(INCUBATOR_MUTE_WARN_SEC, max(30, int(total_seconds) // 3))
+
+
+def _serialize_incubator_mute_locked(now=None):
+    """Serializes timed incubator mute state (caller must hold state_lock)."""
+    now = now if now is not None else time.time()
+    exp = float(incubator_mute_state.get("expires_at") or 0.0)
+    active = bool(incubator_mute_state.get("active")) and exp > now
+    rem = max(0, int(exp - now)) if active else 0
+    warn_thresh = int(incubator_mute_state.get("warn_threshold_sec") or INCUBATOR_MUTE_WARN_SEC)
+    return {
+        "active": active,
+        "started_at": float(incubator_mute_state.get("started_at") or 0.0) if active else 0.0,
+        "expires_at": exp if active else 0.0,
+        "duration_minutes": int(incubator_mute_state.get("duration_minutes") or 0) if active else 0,
+        "remaining_seconds": rem,
+        "warn_threshold_sec": warn_thresh,
+        "warning_active": bool(active and 0 < rem <= warn_thresh),
+        "warn_sent": bool(incubator_mute_state.get("warn_sent")) if active else False,
+        "user": incubator_mute_state.get("user", "Lab Staff") if active else "",
+        "target": _get_incubator_mute_target_name(),
+    }
+
+
+def get_incubator_mute_status():
+    """Returns thread-safe snapshot of manual timed incubator mute state."""
+    with state_lock:
+        return _serialize_incubator_mute_locked()
+
+
+def get_incubator_effective_trips(readings):
+    """Combines Rapid SCADA alarm_cnl with OPC UA bMuted so door-open PLC mute cannot blind chambers."""
+    readings = readings or {}
+    now = time.time()
+    trips = {}
+    with state_lock:
+        opc_snapshot = dict(incubator_opc_muted_cache)
+    for inc in EQUIPMENT_CONFIG.get("incubators", []):
+        key = inc.get("key") or inc.get("name")
+        a_cnl = int(inc["alarm_cnl"]) if inc.get("alarm_cnl") else None
+        raw_alarm = bool(readings.get(a_cnl, 0) > 0) if (a_cnl and a_cnl in readings) else False
+        opc_entry = opc_snapshot.get(inc.get("key") or "", {})
+        opc_fresh = bool(opc_entry) and ((now - opc_entry.get("ts", 0.0)) < 15.0)
+        opc_tripped = bool(opc_entry.get("muted", False)) if opc_fresh else False
+        trips[key] = raw_alarm or opc_tripped
+    return trips
+
+
+def _reset_incubator_mute_locked():
+    incubator_mute_state.update({
+        "active": False,
+        "started_at": 0.0,
+        "expires_at": 0.0,
+        "duration_minutes": 0,
+        "warn_threshold_sec": INCUBATOR_MUTE_WARN_SEC,
+        "warn_sent": False,
+        "user": "Lab Staff",
+        "db_id": None,
+    })
+
+
+def sync_incubator_mute_lifecycle(readings=None, current_mode=None, opc_trips=None):
+    """Handles timed incubator mute expiration and Pushover Priority-0 expiring-soon warning."""
+    now = time.time()
+    if current_mode is None:
+        current_mode = get_current_lab_mode()
+    just_expired = None
+    warn_info = None
+    target_name = _get_incubator_mute_target_name()
+
+    with state_lock:
+        if incubator_mute_state.get("active"):
+            exp = float(incubator_mute_state.get("expires_at") or 0.0)
+            rem = exp - now
+            if rem <= 0:
+                just_expired = dict(incubator_mute_state)
+                _reset_incubator_mute_locked()
+            else:
+                warn_thresh = int(incubator_mute_state.get("warn_threshold_sec") or INCUBATOR_MUTE_WARN_SEC)
+                if rem <= warn_thresh and not incubator_mute_state.get("warn_sent") and current_mode != "OFF_SESSION":
+                    incubator_mute_state["warn_sent"] = True
+                    warn_info = {
+                        "remaining_sec": max(1, int(rem)),
+                        "expires_at": exp,
+                        "duration_minutes": int(incubator_mute_state.get("duration_minutes") or 0),
+                        "user": incubator_mute_state.get("user", "Lab Staff"),
+                    }
+
+    if just_expired:
+        db_id = just_expired.get("db_id")
+        if db_id:
+            db_execute(f"UPDATE mod_arc_postgre_sql.cryo_maintenance_holds SET ended_at = NOW(), cancelled_early = FALSE WHERE id = {int(db_id)};")
+        if current_mode != "OFF_SESSION":
+            dur = int(just_expired.get("duration_minutes") or 0)
+            target_group = PUSHOVER_LAB_GROUP or PUSHOVER_GROUP
+            print(f"[{datetime.now().strftime('%T')}] Incubator timed mute ({dur}m) expired; chamber alarms re-armed.")
+            send_pushover_alert(
+                title="🔔 Incubator Monitoring Resumed",
+                message=f"{target_name} timed mute ({dur} min) has expired. Live chamber alarm monitoring is active again.",
+                priority=0,
+                sound="pushover",
+                target_group=target_group,
+            )
+
+    if warn_info:
+        rem_sec = warn_info["remaining_sec"]
+        mins = rem_sec // 60
+        secs = rem_sec % 60
+        rem_str = f"{mins}m {secs:02d}s" if mins > 0 else f"{secs}s"
+        exp_str = datetime.fromtimestamp(warn_info["expires_at"]).strftime("%H:%M:%S")
+        trips = opc_trips if opc_trips is not None else get_incubator_effective_trips(readings)
+        alarming_names = [
+            inc.get("name") or inc.get("key")
+            for inc in EQUIPMENT_CONFIG.get("incubators", [])
+            if trips.get(inc.get("key") or inc.get("name"), False)
+        ]
+        if alarming_names:
+            unit_list = ", ".join(alarming_names)
+            verb = "is" if len(alarming_names) == 1 else "are"
+            noun = "incubator" if len(alarming_names) == 1 else "incubators"
+            trip_note = f" ⚠️ Note: {unit_list} {verb} currently alarming — check the {noun} or extend mute before expiration."
+        else:
+            trip_note = ""
+        target_group = PUSHOVER_LAB_GROUP or PUSHOVER_GROUP
+        print(f"[{datetime.now().strftime('%T')}] Incubator mute expiring in {rem_str} (re-arms {exp_str}); dispatching P0 info warning.")
+        send_pushover_alert(
+            title="⏰ Incubator Mute Expiring Soon",
+            message=f"{target_name} timed mute expires in {rem_str} (re-arms at {exp_str}). Extend on the dashboard if more time is needed.{trip_note}",
+            priority=0,
+            sound="intermission",
+            target_group=target_group,
+        )
+
+
+def start_incubator_mute(duration_minutes=INCUBATOR_MUTE_DEFAULT_MIN, user="Lab Staff", extend=False):
+    """Starts or extends a manual timed mute covering all configured cabinet incubators."""
+    now = time.time()
+    dur_min = max(1, min(INCUBATOR_MUTE_MAX_MIN, int(duration_minutes)))
+    target_name = _get_incubator_mute_target_name()
+    safe_equip = target_name.replace("'", "''")
+    safe_user = str(user or "Lab Staff").replace("'", "''")
+
+    prev_db_id = None
+    extended_active = False
+    update_db_id = None
+    new_total_min = dur_min
+
+    with state_lock:
+        if extend and incubator_mute_state.get("active") and float(incubator_mute_state.get("expires_at") or 0.0) > now:
+            max_exp = now + (INCUBATOR_MUTE_MAX_MIN * 60)
+            new_exp = min(max_exp, float(incubator_mute_state["expires_at"]) + (dur_min * 60))
+            started_at = float(incubator_mute_state.get("started_at") or now)
+            new_total_min = max(1, min(INCUBATOR_MUTE_MAX_MIN, round((new_exp - started_at) / 60.0)))
+            warn_thresh = _compute_warn_threshold_sec(new_exp - started_at)
+            incubator_mute_state["expires_at"] = new_exp
+            incubator_mute_state["duration_minutes"] = new_total_min
+            incubator_mute_state["warn_threshold_sec"] = warn_thresh
+            incubator_mute_state["user"] = str(user or incubator_mute_state.get("user") or "Lab Staff")
+            if (new_exp - now) > warn_thresh:
+                incubator_mute_state["warn_sent"] = False
+            update_db_id = incubator_mute_state.get("db_id")
+            extended_active = True
+        else:
+            prev_db_id = incubator_mute_state.get("db_id")
+
+    if extended_active:
+        if update_db_id:
+            rem_total_sec = max(60, int(new_total_min * 60))
+            db_execute(
+                f"UPDATE mod_arc_postgre_sql.cryo_maintenance_holds "
+                f"SET expires_at = started_at + interval '{rem_total_sec} seconds', duration_minutes = {int(new_total_min)} "
+                f"WHERE id = {int(update_db_id)};"
+            )
+    else:
+        if prev_db_id:
+            db_execute(f"UPDATE mod_arc_postgre_sql.cryo_maintenance_holds SET ended_at = NOW(), cancelled_early = TRUE WHERE id = {int(prev_db_id)};")
+        sql = f"""
+        INSERT INTO mod_arc_postgre_sql.cryo_maintenance_holds
+        (equipment_name, started_at, expires_at, initiated_by, duration_minutes)
+        VALUES ('{safe_equip}', NOW(), NOW() + interval '{dur_min} minutes', '{safe_user}', {dur_min})
+        RETURNING id;
+        """
+        rows = db_query(sql)
+        db_id = int(rows[0][0]) if (rows and rows[0]) else None
+        total_sec = dur_min * 60
+        warn_thresh = _compute_warn_threshold_sec(total_sec)
+        with state_lock:
+            incubator_mute_state.update({
+                "active": True,
+                "started_at": now,
+                "expires_at": now + total_sec,
+                "duration_minutes": dur_min,
+                "warn_threshold_sec": warn_thresh,
+                "warn_sent": False,
+                "user": str(user or "Lab Staff"),
+                "db_id": db_id,
+            })
+
+    for inc in EQUIPMENT_CONFIG.get("incubators", []):
+        if inc.get("alarm_cnl"):
+            resolve_alarm(int(inc["alarm_cnl"]), None)
+    return get_incubator_mute_status()
+
+
+def cancel_incubator_mute(user="Lab Staff"):
+    """Cancels any active timed incubator mute and re-arms chamber alarms."""
+    with state_lock:
+        was_active = bool(incubator_mute_state.get("active"))
+        db_id = incubator_mute_state.get("db_id")
+        _reset_incubator_mute_locked()
+    if was_active and db_id:
+        db_execute(f"UPDATE mod_arc_postgre_sql.cryo_maintenance_holds SET ended_at = NOW(), cancelled_early = TRUE WHERE id = {int(db_id)};")
+    return get_incubator_mute_status()
+
+
+def _restore_incubator_mute_from_db():
+    """Restores an unexpired timed incubator mute across service restarts."""
+    target_name = _get_incubator_mute_target_name()
+    safe_equip = target_name.replace("'", "''")
+    rows = db_query(f"""
+        SELECT id, EXTRACT(EPOCH FROM started_at), EXTRACT(EPOCH FROM expires_at), initiated_by, duration_minutes
+        FROM mod_arc_postgre_sql.cryo_maintenance_holds
+        WHERE equipment_name = '{safe_equip}' AND ended_at IS NULL AND expires_at > NOW()
+        ORDER BY id DESC LIMIT 1;
+    """)
+    if rows and rows[0]:
+        try:
+            db_id = int(rows[0][0])
+            started_at = float(rows[0][1])
+            expires_at = float(rows[0][2])
+            user = rows[0][3] or "Lab Staff"
+            dur_min = int(rows[0][4] or INCUBATOR_MUTE_DEFAULT_MIN)
+            total_sec = max(60.0, expires_at - started_at)
+            warn_thresh = _compute_warn_threshold_sec(total_sec)
+            now = time.time()
+            with state_lock:
+                incubator_mute_state.update({
+                    "active": True,
+                    "started_at": started_at,
+                    "expires_at": expires_at,
+                    "duration_minutes": dur_min,
+                    "warn_threshold_sec": warn_thresh,
+                    "warn_sent": (expires_at - now) <= warn_thresh,
+                    "user": user,
+                    "db_id": db_id,
+                })
+            print(f"[{datetime.now().strftime('%T')}] Restored active timed incubator mute ({int(max(0, expires_at - now))}s remaining).")
+        except Exception as e:
+            print(f"Warning: could not restore incubator mute from DB: {e}")
+
+
+def _clear_bypassed_cabinet_door_alarms():
+    """Marks lingering unresolved cabinet door-open DB rows resolved when door switch is bypassed."""
+    for cab in EQUIPMENT_CONFIG.get("cabinets", []):
+        if cab.get("door_switch_disabled") and cab.get("door_alarm_cnl"):
+            cnl = int(cab["door_alarm_cnl"])
+            resolve_alarm(cnl, None)
+            db_execute(
+                f"UPDATE mod_arc_postgre_sql.alarm_events "
+                f"SET is_resolved = TRUE, resolved_at = COALESCE(resolved_at, NOW()), "
+                f"duration_seconds = COALESCE(duration_seconds, GREATEST(0, EXTRACT(EPOCH FROM (NOW() - triggered_at))::int)) "
+                f"WHERE cnl_num = {cnl} AND is_resolved = FALSE;"
+            )
+
+
 def update_cabinet_state(readings=None):
-    """Derives cabinet supervision state directly from WAGO 750-8212 PLC telemetry."""
+    """Derives cabinet supervision state from WAGO PLC telemetry and timed dashboard mute."""
     global cabinet_door_state
     now = time.time()
+    manual_mute = get_incubator_mute_status()
     cabs = EQUIPMENT_CONFIG.get("cabinets", [])
     if not cabs:
-        return dict(cabinet_door_state)
+        state = dict(cabinet_door_state)
+        state["manual_mute"] = manual_mute
+        if manual_mute["active"]:
+            state["mute_active"] = True
+            state["grace_remaining_sec"] = manual_mute["remaining_seconds"]
+        return state
     cab = cabs[0]
     door_cnl = cab.get("door_switch_cnl")
     mute_cnl = cab.get("mute_active_cnl")
     alarm_cnl = cab.get("door_alarm_cnl")
     post_grace = cab.get("post_close_grace_sec", POST_CLOSE_GRACE_SEC)
+    door_disabled = bool(cab.get("door_switch_disabled", False))
 
     if readings is None:
         readings = get_current_channel_values()
 
     # PLC Channels: 132 (Door Closed DI), 133 (Incubator Mute), 134 (Door Alarm)
     # Fail-safe NC contact: 1/TRUE = Closed, 0/FALSE/unwired = Open
-    is_open = bool(readings.get(door_cnl, 0) <= 0) if door_cnl and door_cnl in readings else True
-    mute_active = bool(readings.get(mute_cnl, 0) > 0) if mute_cnl and mute_cnl in readings else is_open
-    is_alarm = bool(readings.get(alarm_cnl, 0) > 0) if alarm_cnl and alarm_cnl in readings else False
+    raw_is_open = bool(readings.get(door_cnl, 0) <= 0) if door_cnl and door_cnl in readings else True
+    plc_mute_active = bool(readings.get(mute_cnl, 0) > 0) if mute_cnl and mute_cnl in readings else raw_is_open
+    raw_is_alarm = bool(readings.get(alarm_cnl, 0) > 0) if alarm_cnl and alarm_cnl in readings else False
 
-    was_open = cabinet_door_state.get("is_open", False)
-    if was_open and not is_open:
-        cabinet_door_state["last_closed_at"] = now
+    cabinet_door_state["door_switch_disabled"] = door_disabled
+    cabinet_door_state["raw_is_open"] = raw_is_open
+    cabinet_door_state["manual_mute"] = manual_mute
 
-    cabinet_door_state["is_open"] = is_open
-    cabinet_door_state["door_alarm"] = is_alarm
-
-    if is_open:
-        cabinet_door_state["mute_active"] = True
-        cabinet_door_state["grace_remaining_sec"] = post_grace
-    elif mute_active:
-        # PLC holds mute active during post-close grace period
-        elapsed = now - cabinet_door_state.get("last_closed_at", 0)
-        if cabinet_door_state.get("last_closed_at", 0) > 0 and elapsed < post_grace:
-            cabinet_door_state["grace_remaining_sec"] = max(0, int(post_grace - elapsed))
-        else:
-            cabinet_door_state["grace_remaining_sec"] = 0
-        cabinet_door_state["mute_active"] = True
+    if door_disabled:
+        cabinet_door_state["is_open"] = False
+        cabinet_door_state["door_alarm"] = False
+        cabinet_door_state["mute_active"] = bool(manual_mute["active"])
+        cabinet_door_state["grace_remaining_sec"] = int(manual_mute["remaining_seconds"]) if manual_mute["active"] else 0
     else:
-        cabinet_door_state["mute_active"] = False
-        cabinet_door_state["grace_remaining_sec"] = 0
+        was_open = cabinet_door_state.get("is_open", False)
+        if was_open and not raw_is_open:
+            cabinet_door_state["last_closed_at"] = now
+
+        cabinet_door_state["is_open"] = raw_is_open
+        cabinet_door_state["door_alarm"] = raw_is_alarm
+
+        if raw_is_open:
+            cabinet_door_state["mute_active"] = True
+            cabinet_door_state["grace_remaining_sec"] = post_grace
+        elif plc_mute_active:
+            # PLC holds mute active during post-close grace period
+            elapsed = now - cabinet_door_state.get("last_closed_at", 0)
+            if cabinet_door_state.get("last_closed_at", 0) > 0 and elapsed < post_grace:
+                cabinet_door_state["grace_remaining_sec"] = max(0, int(post_grace - elapsed))
+            else:
+                cabinet_door_state["grace_remaining_sec"] = 0
+            cabinet_door_state["mute_active"] = True
+        else:
+            cabinet_door_state["mute_active"] = False
+            cabinet_door_state["grace_remaining_sec"] = 0
+
+        if manual_mute["active"]:
+            cabinet_door_state["mute_active"] = True
+            cabinet_door_state["grace_remaining_sec"] = max(
+                int(cabinet_door_state["grace_remaining_sec"]),
+                int(manual_mute["remaining_seconds"]),
+            )
 
     cabinet_door_state["last_poll_ts"] = now
     return dict(cabinet_door_state)
@@ -195,38 +515,44 @@ for _dr in EQUIPMENT_CONFIG["doors"]:
 sim_fault_states = {k: False for k in SIM_TARGETS}
 
 
+OPC_DEVICE_PREFIXES = (
+    "WAGO 750-8212 PFC200 G2 2ETH RS.Application",
+    "CODESYS Control for Raspberry Pi 64 SL.Application",
+)
+
+
+async def _create_asyncua_client():
+    """Constructs a configured asyncua Client matching production OPC UA security/auth."""
+    from asyncua import Client
+    from asyncua.crypto.security_policies import SecurityPolicyBasic256Sha256
+
+    client = Client(PLC_OPC_URL, timeout=4)
+    if os.path.exists(OPC_CLIENT_CERT) and os.path.exists(OPC_CLIENT_KEY):
+        client.application_uri = OPC_APP_URI
+        await client.set_security(
+            SecurityPolicyBasic256Sha256,
+            certificate=OPC_CLIENT_CERT,
+            private_key=OPC_CLIENT_KEY,
+            mode=3  # SignAndEncrypt
+        )
+    if PLC_OPC_USER:
+        client.set_user(PLC_OPC_USER)
+        if PLC_OPC_PASS:
+            client.set_password(PLC_OPC_PASS)
+    return client
+
+
 def write_plc_bool(var_suffix, bool_val):
     """Writes a boolean variable to the CODESYS PLC via OPC UA (supporting SignAndEncrypt & credentials)."""
-    device_prefixes = [
-        "WAGO 750-8212 PFC200 G2 2ETH RS.Application",
-        "CODESYS Control for Raspberry Pi 64 SL.Application",
-    ]
-
     # Method 1: Try asyncua (supports modern SignAndEncrypt with Basic256Sha256 and credentials)
     try:
         import asyncio
-        from asyncua import Client, ua
-        from asyncua.crypto.security_policies import SecurityPolicyBasic256Sha256
+        from asyncua import ua
 
         async def _async_write():
-            client = Client(PLC_OPC_URL, timeout=4)
-            if os.path.exists(OPC_CLIENT_CERT) and os.path.exists(OPC_CLIENT_KEY):
-                client.application_uri = OPC_APP_URI
-                await client.set_security(
-                    SecurityPolicyBasic256Sha256,
-                    certificate=OPC_CLIENT_CERT,
-                    private_key=OPC_CLIENT_KEY,
-                    mode=3  # SignAndEncrypt
-                )
-                client.set_user(PLC_OPC_USER)
-                client.set_password(PLC_OPC_PASS)
-            elif PLC_OPC_USER:
-                client.set_user(PLC_OPC_USER)
-                if PLC_OPC_PASS:
-                    client.set_password(PLC_OPC_PASS)
-
+            client = await _create_asyncua_client()
             async with client:
-                for prefix in device_prefixes:
+                for prefix in OPC_DEVICE_PREFIXES:
                     node_id = f"ns=4;s=|var|{prefix}.{var_suffix}"
                     try:
                         node = client.get_node(node_id)
@@ -254,7 +580,7 @@ def write_plc_bool(var_suffix, bool_val):
                 client.set_password(PLC_OPC_PASS)
         client.connect()
         try:
-            for prefix in device_prefixes:
+            for prefix in OPC_DEVICE_PREFIXES:
                 node_id = f"ns=4;s=|var|{prefix}.{var_suffix}"
                 try:
                     node = client.get_node(node_id)
@@ -277,6 +603,51 @@ def write_plc_sim_bool(var_suffix, bool_val):
     if not SIMULATION_MODE:
         return False, "Simulation mode is disabled on this production site."
     return write_plc_bool(var_suffix, bool_val)
+
+
+def incubator_opc_mute_reader_worker():
+    """Polls PLC_PRG.<inc>.bMuted over OPC UA so open cabinet doors never blind chamber trips."""
+    try:
+        import asyncio
+    except ImportError:
+        return
+
+    async def _poll_loop():
+        while True:
+            if not _is_cabinet_door_disabled():
+                await asyncio.sleep(5.0)
+                continue
+            try:
+                client = await _create_asyncua_client()
+                async with client:
+                    while _is_cabinet_door_disabled():
+                        now = time.time()
+                        updates = {}
+                        for inc in EQUIPMENT_CONFIG.get("incubators", []):
+                            key = inc.get("key")
+                            fb = inc.get("plc_fb")
+                            if not key or not fb:
+                                continue
+                            for prefix in OPC_DEVICE_PREFIXES:
+                                try:
+                                    node = client.get_node(f"ns=4;s=|var|{prefix}.PLC_PRG.{fb}.bMuted")
+                                    val = await node.read_value()
+                                    updates[key] = {"muted": bool(val), "ts": now}
+                                    break
+                                except Exception:
+                                    continue
+                        if updates:
+                            with state_lock:
+                                incubator_opc_muted_cache.update(updates)
+                        await asyncio.sleep(2.0)
+            except Exception as e:
+                print(f"[{datetime.now().strftime('%T')}] OPC incubator bMuted poller reconnecting: {e}")
+                await asyncio.sleep(3.0)
+
+    try:
+        asyncio.run(_poll_loop())
+    except Exception:
+        pass
 
 def render_template(template_name, **context):
     """Renders a Jinja2 template with site-specific branding and equipment topology context."""
@@ -676,9 +1047,161 @@ def get_calibration_summary():
     return {
         "logs": logs,
         "equipment_status": latest_by_equip,
+        "active_offsets": _get_active_cal_offsets(),
         "last_nist_cert": last_nist_cert,
         "last_nist_exp": last_nist_exp,
     }
+
+
+CAL_OFFSET_LIMIT = 5.0
+CALIBRATABLE_CATEGORIES = ("dewars", "fridges", "freezers", "ambient", "cabinets")
+cal_config_lock = threading.Lock()
+
+
+def _find_cal_item(eq_key):
+    """Finds (category, index, item) in EQUIPMENT_CONFIG for a calibratable equipment key."""
+    for cat in CALIBRATABLE_CATEGORIES:
+        for idx, item in enumerate(EQUIPMENT_CONFIG.get(cat, [])):
+            if item.get("key") == eq_key:
+                return cat, idx, item
+    return None, None, None
+
+
+def _get_active_cal_offsets():
+    """Returns currently configured calibration offsets (°C) keyed by equipment key."""
+    offsets = {}
+    with cal_config_lock:
+        for cat in CALIBRATABLE_CATEGORIES:
+            for item in EQUIPMENT_CONFIG.get(cat, []):
+                k = item.get("key")
+                if k:
+                    try:
+                        offsets[k] = round(float(item.get("cal_offset") or 0.0), 2)
+                    except (TypeError, ValueError):
+                        offsets[k] = 0.0
+    return offsets
+
+
+def _write_json_preserving_perms(path, data):
+    """Writes JSON atomically when directory is writable, or updates in place."""
+    text = json.dumps(data, indent=2, ensure_ascii=False) + "\n"
+    parent = os.path.dirname(path) or "."
+    if os.access(parent, os.W_OK):
+        tmp = f"{path}.tmp"
+        with open(tmp, "w", encoding="utf-8") as f:
+            f.write(text)
+        os.replace(tmp, path)
+    else:
+        with open(path, "w", encoding="utf-8") as f:
+            f.write(text)
+
+
+def _apply_and_persist_cal_offset(eq_key, offset_val):
+    """Applies a calibration offset to the live PLC over OPC UA and persists it to equipment.json."""
+    try:
+        offset_c = round(float(offset_val), 2)
+    except (TypeError, ValueError):
+        return False, "Invalid calibration offset value.", 0.0, None
+
+    if abs(offset_c) > CAL_OFFSET_LIMIT:
+        return False, f"Calibration offset must be within ±{CAL_OFFSET_LIMIT:.1f}°C.", 0.0, None
+
+    with cal_config_lock:
+        cat, idx, item = _find_cal_item(eq_key)
+        if not item:
+            return False, f"Unknown calibratable equipment '{eq_key}'.", 0.0, None
+
+        prev_offset = round(float(item.get("cal_offset") or 0.0), 2)
+        temp_cnl = item.get("temp_cnl")
+        before_temp_c = None
+        if temp_cnl is not None:
+            try:
+                before_temp_c = get_current_channel_values().get(int(temp_cnl))
+            except Exception:
+                before_temp_c = None
+
+        # 1. Push and verify offset write on CODESYS PLC first
+        try:
+            from scripts.sync_plc_config import sync_single_cal_offset
+        except ImportError:
+            import sys
+            sys.path.insert(0, REPO_DIR)
+            from scripts.sync_plc_config import sync_single_cal_offset
+
+        res = sync_single_cal_offset(
+            EQUIPMENT_CONFIG,
+            eq_key,
+            offset_c,
+            plc_url=PLC_OPC_URL,
+            user=PLC_OPC_USER,
+            password=PLC_OPC_PASS,
+        )
+        if not res.get("success"):
+            return False, res.get("error", "OPC UA write failed"), prev_offset, None
+
+        # 2. Update in-memory EQUIPMENT_CONFIG and persist on existing manifest files
+        EQUIPMENT_CONFIG[cat][idx]["cal_offset"] = offset_c
+        site_folder = "demo" if CLINIC_SLUG == "demo" else ("afoa" if CLINIC_SLUG == "komdivflab" else CLINIC_SLUG)
+        manifest_paths = list(dict.fromkeys([
+            "/etc/labscada/equipment.json",
+            os.path.join(REPO_DIR, "equipment.json"),
+            os.path.join(REPO_DIR, "sites", site_folder, "equipment.json"),
+            os.path.join(REPO_DIR, "sites", CLINIC_SLUG, "equipment.json"),
+        ]))
+        persisted_any = False
+        for mpath in manifest_paths:
+            if os.path.exists(mpath):
+                try:
+                    with open(mpath, "r", encoding="utf-8") as f:
+                        raw = json.load(f)
+                    updated_raw = False
+                    for entry in raw.get(cat, []):
+                        if entry.get("key") == eq_key:
+                            entry["cal_offset"] = offset_c
+                            updated_raw = True
+                    if updated_raw:
+                        _write_json_preserving_perms(mpath, raw)
+                        persisted_any = True
+                except Exception as e:
+                    print(f"[!] Warning: failed persisting cal_offset to {mpath}: {e}")
+
+    # Poll briefly for Rapid SCADA OPC UA -> curcopy_current refresh when offset changed
+    live_temp_c = None
+    delta = offset_c - prev_offset
+    if temp_cnl is not None:
+        if abs(delta) >= 0.02 and before_temp_c is not None and -273.0 < before_temp_c < 900.0:
+            deadline = time.monotonic() + 6.0
+            min_shift = min(abs(delta) * 0.4, 0.04)
+            time.sleep(0.8)
+            moved = False
+            while True:
+                try:
+                    cand = get_current_channel_values().get(int(temp_cnl))
+                except Exception:
+                    cand = None
+                if (
+                    cand is not None
+                    and abs(cand - before_temp_c) >= min_shift
+                    and (cand - before_temp_c) * delta > 0
+                ):
+                    live_temp_c = cand
+                    moved = True
+                    break
+                if time.monotonic() >= deadline:
+                    break
+                time.sleep(0.4)
+            if not moved:
+                # Let callers fall back to computed trimmed temp instead of returning stale pre-trim value
+                live_temp_c = None
+        else:
+            if abs(delta) >= 0.005:
+                time.sleep(2.0)
+            try:
+                live_temp_c = get_current_channel_values().get(int(temp_cnl))
+            except Exception:
+                live_temp_c = None
+
+    return True, ("Applied & saved" if persisted_any else "Applied to PLC"), prev_offset, live_temp_c
 
 
 # ==============================================================================
@@ -883,6 +1406,24 @@ def get_active_cryo_holds():
             active_cryo_holds.pop(eq, None)
     return holds_info
 
+def _find_dewar_config(target):
+    """Matches a dewar config entry by name, label, key, or legacy 'Cryo Tank N' alias."""
+    t_norm = str(target or "").strip().lower()
+    for d in EQUIPMENT_CONFIG.get("dewars", []):
+        aliases = {
+            str(d.get("name") or "").strip().lower(),
+            str(d.get("label") or "").strip().lower(),
+            str(d.get("key") or "").strip().lower(),
+            f"cryo tank {d.get('id')}".lower(),
+        }
+        if t_norm and t_norm in aliases:
+            return d
+    return None
+
+def _has_plc_access_mode(dewar_cfg):
+    """Returns True only for dewars wired for bidirectional PLC Access Mode sync."""
+    return bool(dewar_cfg and dewar_cfg.get("plc_fb") and dewar_cfg.get("access_mode_cnl"))
+
 def start_cryo_hold(equipment_name, duration_minutes=15, user="Lab Staff"):
     """Starts a timed maintenance hold for specimen retrieval / dipstick check."""
     now = time.time()
@@ -890,6 +1431,7 @@ def start_cryo_hold(equipment_name, duration_minutes=15, user="Lab Staff"):
     exp = now + (dur_min * 60)
     all_dewar_names = [d["name"] for d in EQUIPMENT_CONFIG["dewars"]]
     targets = all_dewar_names if ("all" in equipment_name.lower()) else [equipment_name]
+    mute_cnls = []
 
     for target in targets:
         safe_equip = target.replace("'", "''")
@@ -902,8 +1444,8 @@ def start_cryo_hold(equipment_name, duration_minutes=15, user="Lab Staff"):
         """
         rows = db_query(sql)
         db_id = int(rows[0][0]) if (rows and rows[0]) else None
-        matching_dewar = next((d for d in EQUIPMENT_CONFIG.get("dewars", []) if d.get("name") == target or d.get("label") == target or d.get("key") == target), None)
-        has_plc_access = bool(matching_dewar and matching_dewar.get("plc_fb") and matching_dewar.get("access_mode_cnl"))
+        matching_dewar = _find_dewar_config(target)
+        has_plc_access = _has_plc_access_mode(matching_dewar)
         with state_lock:
             cryo_hold_cancel_grace.pop(target, None)
             hold_entry = {
@@ -916,23 +1458,17 @@ def start_cryo_hold(equipment_name, duration_minutes=15, user="Lab Staff"):
                 hold_entry["pending_plc_until"] = now + CRYO_PLC_SYNC_GRACE_SEC
             active_cryo_holds[target] = hold_entry
 
-        # Route supervisory command to CODESYS PLC via OPC UA
-        if matching_dewar and matching_dewar.get("plc_fb"):
+        # Route supervisory command to CODESYS PLC only for dewars with hardware Access Mode feedback
+        if has_plc_access:
             fb = matching_dewar["plc_fb"]
             ok, msg = write_plc_bool(f"PLC_PRG.{fb}.bCmdSetAccessMode", True)
             if not ok:
                 print(f"[{datetime.now().strftime('%T')}] WARNING: Failed to write bCmdSetAccessMode for {fb}: {msg}")
 
+        if matching_dewar:
+            mute_cnls.extend(int(c) for c in (matching_dewar.get("alarm_cnl"), matching_dewar.get("temp_cnl")) if c)
+
     # Resolve any currently active alarms on target units
-    mute_cnls = []
-    dewar_mute_map = {
-        d["name"]: [int(c) for c in (d.get("alarm_cnl"), d.get("temp_cnl")) if c]
-        for d in EQUIPMENT_CONFIG["dewars"]
-    }
-    for target in targets:
-        for d_key, cnls in dewar_mute_map.items():
-            if d_key in target or str(d_key[-1]) in target:
-                mute_cnls.extend(cnls)
     for c in set(mute_cnls):
         resolve_alarm(c)
     return True
@@ -942,16 +1478,17 @@ def cancel_cryo_hold(equipment_name, user="Lab Staff"):
     all_dewar_names = [d["name"] for d in EQUIPMENT_CONFIG["dewars"]]
     targets = all_dewar_names if ("all" in equipment_name.lower()) else [equipment_name]
     for target in targets:
-        matching_dewar = next((d for d in EQUIPMENT_CONFIG.get("dewars", []) if d.get("name") == target or d.get("label") == target or d.get("key") == target), None)
+        matching_dewar = _find_dewar_config(target)
+        has_plc_access = _has_plc_access_mode(matching_dewar)
         with state_lock:
             hold = active_cryo_holds.pop(target, None)
-            if matching_dewar and matching_dewar.get("access_mode_cnl"):
+            if has_plc_access:
                 cryo_hold_cancel_grace[target] = time.time() + CRYO_PLC_SYNC_GRACE_SEC
         if hold and hold.get("db_id"):
             db_execute(f"UPDATE mod_arc_postgre_sql.cryo_maintenance_holds SET ended_at = NOW(), cancelled_early = TRUE WHERE id = {hold['db_id']};")
 
-        # Route cancel supervisory command to CODESYS PLC via OPC UA
-        if matching_dewar and matching_dewar.get("plc_fb"):
+        # Route cancel supervisory command to CODESYS PLC only for dewars with hardware Access Mode feedback
+        if has_plc_access:
             fb = matching_dewar["plc_fb"]
             ok, msg = write_plc_bool(f"PLC_PRG.{fb}.bCmdCancelAccessMode", True)
             if not ok:
@@ -1055,7 +1592,7 @@ def get_pushover_user_name(user_key, device=None):
                     if data.get("status") == 1:
                         for u in data.get("users", []):
                             k = u.get("user")
-                            memo = u.get("memo", "").strip()
+                            memo = (u.get("memo") or "").strip()
                             if k and memo:
                                 pushover_user_cache[k] = "Bob Ostrom" if memo.lower() == "bob" else memo
                         loaded_any = True
@@ -1384,25 +1921,32 @@ def telemetry_scan_worker():
                     else:
                         resolve_alarm(a_cnl, None)
 
-            # 4b. Cabinets (Door held open alarm)
+            # 4b. Cabinets (Door held open alarm - suppressed when door_switch_disabled is active)
             for cab in EQUIPMENT_CONFIG.get("cabinets", []):
                 cab_alarm_cnl = int(cab["door_alarm_cnl"]) if cab.get("door_alarm_cnl") else None
-                if cab_alarm_cnl and cab_alarm_cnl in readings:
-                    if readings[cab_alarm_cnl] > 0:
-                        trigger_alarm(cab_alarm_cnl, cab["name"], "Cabinet Door Left Open > 3m", None)
-                    else:
+                if cab_alarm_cnl:
+                    if cab.get("door_switch_disabled"):
                         resolve_alarm(cab_alarm_cnl, None)
+                    elif cab_alarm_cnl in readings:
+                        if readings[cab_alarm_cnl] > 0:
+                            trigger_alarm(cab_alarm_cnl, cab["name"], "Cabinet Door Left Open > 3m", None)
+                        else:
+                            resolve_alarm(cab_alarm_cnl, None)
 
-            # 5. Incubators (Discrete alarm, suppressed when OFF_SESSION or Cabinet Muted)
+            # 5. Incubators (Discrete alarm, suppressed when OFF_SESSION or timed mute / cabinet mute)
+            inc_trips = get_incubator_effective_trips(readings)
+            sync_incubator_mute_lifecycle(readings=readings, current_mode=current_mode, opc_trips=inc_trips)
             cab_st = update_cabinet_state(readings)
             for inc in EQUIPMENT_CONFIG["incubators"]:
                 equip = inc["name"]
+                inc_key = inc.get("key") or equip
                 a_cnl = int(inc["alarm_cnl"]) if inc.get("alarm_cnl") else None
-                if a_cnl and a_cnl in readings:
+                is_tripped = inc_trips.get(inc_key, False)
+                if a_cnl and (a_cnl in readings or is_tripped):
                     if current_mode == "OFF_SESSION" or cab_st.get("mute_active", False):
                         resolve_alarm(a_cnl, None)
-                    elif readings[a_cnl] > 0:
-                        trigger_alarm(a_cnl, equip, "Chamber Alarm Contact", None)
+                    elif is_tripped:
+                        trigger_alarm(a_cnl, equip, "Chamber Alarm", None)
                     else:
                         resolve_alarm(a_cnl, None)
 
@@ -1957,6 +2501,25 @@ def render_mobile_log_html(host, tank_param, readings):
 # HTTP REST API & WEB CONTROLLER
 # ==============================================================================
 class ClinicalAlertHandler(http.server.BaseHTTPRequestHandler):
+    def _send_json(self, status_code, obj):
+        self.send_response(status_code)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.end_headers()
+        self.wfile.write(json.dumps(obj).encode("utf-8"))
+
+    def _read_post_payload(self):
+        content_length = int(self.headers.get("Content-Length", 0))
+        body_str = self.rfile.read(content_length).decode("utf-8") if content_length > 0 else ""
+        if not body_str:
+            return {}
+        try:
+            parsed = json.loads(body_str)
+            return parsed if isinstance(parsed, dict) else {}
+        except Exception:
+            raw_qs = urllib.parse.parse_qs(body_str)
+            return {k: v[0] for k, v in raw_qs.items()}
+
     def do_OPTIONS(self):
         self.send_response(200)
         self.send_header("Access-Control-Allow-Origin", "*")
@@ -1991,6 +2554,8 @@ class ClinicalAlertHandler(http.server.BaseHTTPRequestHandler):
                 "lab_mode": get_current_lab_mode(),
                 "cryo_holds": get_active_cryo_holds(),
                 "cabinet": cab_st,
+                "incubator_mute": cab_st.get("manual_mute") or get_incubator_mute_status(),
+                "incubator_trips": get_incubator_effective_trips(readings),
                 "equipment": EQUIPMENT_CONFIG,
             }
             self.send_response(200)
@@ -2074,6 +2639,9 @@ class ClinicalAlertHandler(http.server.BaseHTTPRequestHandler):
             self.send_header("Access-Control-Allow-Origin", "*")
             self.end_headers()
             self.wfile.write(json.dumps(get_active_cryo_holds()).encode("utf-8"))
+
+        elif parsed.path in ["/api/incubator_mute", "/api/incubator-mute"]:
+            self._send_json(200, get_incubator_mute_status())
 
         elif parsed.path in ["/api/door_events", "/api/door-events"]:
             rows = db_query("""
@@ -2483,6 +3051,59 @@ class ClinicalAlertHandler(http.server.BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(json.dumps({"success": True, "tank": tank, "cancelled": True}).encode("utf-8"))
 
+        elif parsed.path in ["/api/incubator_mute", "/api/incubator-mute"]:
+            payload = self._read_post_payload()
+            raw_dur = payload.get("duration_minutes") or payload.get("duration") or INCUBATOR_MUTE_DEFAULT_MIN
+            try:
+                dur = int(raw_dur)
+            except (TypeError, ValueError):
+                self._send_json(400, {"success": False, "error": "Invalid duration_minutes"})
+                return
+            user = payload.get("user") or payload.get("initials") or "Lab Staff"
+            extend = bool(payload.get("extend", False))
+            status = start_incubator_mute(duration_minutes=dur, user=user, extend=extend)
+            self._send_json(200, {"success": True, "incubator_mute": status})
+
+        elif parsed.path in ["/api/incubator_mute/cancel", "/api/incubator-mute/cancel"]:
+            payload = self._read_post_payload()
+            user = payload.get("user") or "Lab Staff"
+            status = cancel_incubator_mute(user=user)
+            self._send_json(200, {"success": True, "cancelled": True, "incubator_mute": status})
+
+        elif parsed.path in ["/api/calibrations/apply-offset", "/api/calibration/apply-offset"]:
+            try:
+                content_length = int(self.headers.get("Content-Length", 0))
+                body_str = self.rfile.read(content_length).decode("utf-8") if content_length > 0 else "{}"
+                payload = json.loads(body_str) if body_str else {}
+
+                eq_key = str(payload.get("equipment_key", "")).strip()
+                offset_val = payload.get("offset_c")
+                if not eq_key or offset_val is None:
+                    self.send_response(400)
+                    self.send_header("Content-Type", "application/json")
+                    self.end_headers()
+                    self.wfile.write(json.dumps({"success": False, "error": "equipment_key and offset_c are required."}).encode("utf-8"))
+                    return
+
+                ok, msg, prev_offset, live_temp_c = _apply_and_persist_cal_offset(eq_key, offset_val)
+                self.send_response(200 if ok else 502)
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Access-Control-Allow-Origin", "*")
+                self.end_headers()
+                self.wfile.write(json.dumps({
+                    "success": ok,
+                    "equipment_key": eq_key,
+                    "prev_offset_c": prev_offset,
+                    "offset_applied_c": round(float(offset_val), 2) if ok else prev_offset,
+                    "live_temp_c": round(float(live_temp_c), 2) if live_temp_c is not None else None,
+                    "message" if ok else "error": msg,
+                }).encode("utf-8"))
+            except Exception as e:
+                self.send_response(400)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(json.dumps({"success": False, "error": str(e)}).encode("utf-8"))
+
         elif parsed.path in ["/api/calibrations", "/api/calibration"]:
             try:
                 content_length = int(self.headers.get("Content-Length", 0))
@@ -2496,19 +3117,38 @@ class ClinicalAlertHandler(http.server.BaseHTTPRequestHandler):
                 nist_exp = str(payload.get("nist_exp_date", "")).strip().replace("'", "''")
                 ref_c = float(payload.get("ref_temp_c", 0.0))
                 scada_c = float(payload.get("scada_temp_c", 0.0))
-                offset_c = float(payload.get("offset_applied_c", 0.0))
+                offset_c = round(float(payload.get("offset_applied_c", 0.0)), 2)
+                apply_offset = bool(payload.get("apply_offset", False))
                 tol_c = float(payload.get("tolerance_c", 0.5))
                 ver_by = str(payload.get("verified_by", "")).strip().upper().replace("'", "''")
-                notes = str(payload.get("notes", "")).strip().replace("'", "''")
+                raw_notes = str(payload.get("notes", "")).strip()
 
                 if not eq_key or not eq_name or not nist_cert or not nist_exp or not ver_by:
                     self.send_response(400)
                     self.send_header("Content-Type", "application/json")
                     self.end_headers()
-                    self.wfile.write(json.dumps({"success": False, "error": "Equipment, NIST Cert #, NIST Expiration Date, and Staff Initials are required."}).encode("utf-8"))
+                    self.wfile.write(json.dumps({"success": False, "error": "Equipment, NIST Reference Cert #, NIST Reference Expiration Date, and Staff Initials are required."}).encode("utf-8"))
                     return
 
-                passed = abs(scada_c - ref_c) <= tol_c
+                recorded_scada_c = scada_c
+                if apply_offset:
+                    ok_plc, msg_plc, prev_offset, live_temp_c = _apply_and_persist_cal_offset(payload.get("equipment_key", "").strip(), offset_c)
+                    if not ok_plc:
+                        self.send_response(502)
+                        self.send_header("Content-Type", "application/json")
+                        self.end_headers()
+                        self.wfile.write(json.dumps({"success": False, "error": f"PLC offset apply failed: {msg_plc}"}).encode("utf-8"))
+                        return
+                    if abs(offset_c - prev_offset) >= 0.005:
+                        if live_temp_c is not None and -273.0 < live_temp_c < 900.0:
+                            recorded_scada_c = round(float(live_temp_c), 2)
+                        else:
+                            recorded_scada_c = round(scada_c + (offset_c - prev_offset), 2)
+                        audit_note = f"As-Found before trim: {scada_c:.2f}°C (Cal Offset {prev_offset:+.2f}°C -> {offset_c:+.2f}°C)"
+                        raw_notes = f"{raw_notes} | {audit_note}" if raw_notes else audit_note
+
+                notes = raw_notes.replace("'", "''")
+                passed = abs(recorded_scada_c - ref_c) <= tol_c
                 pass_sql = "TRUE" if passed else "FALSE"
 
                 sql = f"""
@@ -2518,7 +3158,7 @@ class ClinicalAlertHandler(http.server.BaseHTTPRequestHandler):
                  verified_by, notes, verified_at, next_due_date)
                 VALUES
                 ('{eq_key}', '{eq_name}', '{probe_lbl}', '{nist_cert}', '{nist_exp}'::date,
-                 {ref_c}, {scada_c}, {offset_c}, {tol_c}, {pass_sql},
+                 {ref_c}, {recorded_scada_c}, {offset_c}, {tol_c}, {pass_sql},
                  '{ver_by}', '{notes}', NOW(), (CURRENT_DATE + INTERVAL '1 year')::date);
                 """
                 ok = db_execute(sql)
@@ -2529,7 +3169,9 @@ class ClinicalAlertHandler(http.server.BaseHTTPRequestHandler):
                 self.wfile.write(json.dumps({
                     "success": ok,
                     "pass_status": passed,
-                    "deviation_c": round(scada_c - ref_c, 2),
+                    "scada_temp_c": recorded_scada_c,
+                    "offset_applied_c": offset_c,
+                    "deviation_c": round(recorded_scada_c - ref_c, 2),
                 }).encode("utf-8"))
             except Exception as e:
                 self.send_response(400)
@@ -2634,10 +3276,15 @@ class ClinicalAlertHandler(http.server.BaseHTTPRequestHandler):
 def main():
     print(f"Starting IVF Clinical Alert & Escalation Engine on port {PORT}...")
     ensure_calibration_table()
+    _clear_bypassed_cabinet_door_alarms()
+    _restore_incubator_mute_from_db()
 
     # Spawn background scan & phone sync threads
     t_scan = threading.Thread(target=telemetry_scan_worker, daemon=True)
     t_scan.start()
+
+    t_inc_opc = threading.Thread(target=incubator_opc_mute_reader_worker, daemon=True)
+    t_inc_opc.start()
 
     t_phone = threading.Thread(target=phone_sync_and_escalation_worker, daemon=True)
     t_phone.start()

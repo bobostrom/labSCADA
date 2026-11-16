@@ -17,6 +17,7 @@ VAR_INPUT
     wRawTempX10         : WORD := 16#D8F0;  (* Raw Modbus 750-461 register x10 (244 = 24.4°C, -9999 = 16#D8F0) *)
     rFanOnSetpoint      : REAL := 28.0;     (* Exhaust fan ON setpoint in °C *)
     rFanHysteresis      : REAL := 1.5;      (* Deadband in °C (turns off at 26.5°C) *)
+    rCalOffset          : REAL := 0.0;      (* NIST calibration trim offset in °C (clamped +/-10.0) *)
 END_VAR
 VAR_OUTPUT
     bDoorAlarm          : BOOL := FALSE;    (* Alarm: Cabinet door held open past delay *)
@@ -31,6 +32,10 @@ VAR
     tonDoorOpen         : TON;              (* Timer for door held open alert *)
     tofGrace            : TOF;              (* Off-delay timer keeping mute active post-closure *)
     iTempX10            : INT;
+    rCalOffsetEff       : REAL := 0.0;
+END_VAR
+VAR CONSTANT
+    cMaxCalOffset       : REAL := 10.0;
 END_VAR
 // --- implementation ---
 // ==============================================================================
@@ -64,13 +69,21 @@ END_IF;
 // ==============================================================================
 // 3. CABINET TEMPERATURE SCALING & PROBE FAULT SUPERVISION
 // ==============================================================================
+IF rCalOffset > cMaxCalOffset THEN
+    rCalOffsetEff := cMaxCalOffset;
+ELSIF rCalOffset < -cMaxCalOffset THEN
+    rCalOffsetEff := -cMaxCalOffset;
+ELSE
+    rCalOffsetEff := rCalOffset;
+END_IF;
+
 iTempX10    := TO_INT(wRawTempX10);
 bProbeFault := (iTempX10 <= -2000) OR (iTempX10 >= 8500);
 
 IF bProbeFault THEN
     rProcessTemp := -999.0;
 ELSE
-    rProcessTemp := TO_REAL(iTempX10) / 10.0;
+    rProcessTemp := (TO_REAL(iTempX10) / 10.0) + rCalOffsetEff;
 END_IF;
 
 // ==============================================================================

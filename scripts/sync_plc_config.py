@@ -23,7 +23,7 @@ import sys
 import json
 import argparse
 import asyncio
-from typing import Dict, Any, List, Tuple
+from typing import Dict, Any, List, Optional, Tuple
 
 # Configuration & Security defaults
 REPO_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -64,8 +64,41 @@ def find_equipment_config(custom_path: str = None) -> Tuple[str, Dict[str, Any]]
     raise FileNotFoundError("Could not find equipment.json in any expected location.")
 
 
+def _cal_offset_setpoint(category: str, item: Dict[str, Any], override_val: Optional[float] = None) -> Optional[Dict[str, Any]]:
+    """Maps a calibratable equipment manifest item to its PLC rCalOffset OPC UA node."""
+    fb = item.get("plc_fb")
+    if category == "fridges":
+        fb = fb or "fbColdStorage"
+        var_base = f"PLC_PRG.{fb}.fbFridge" if fb == "fbColdStorage" else f"PLC_PRG.{fb}"
+        suffix = f"{var_base}.rCalOffset"
+    elif category == "freezers":
+        fb = fb or "fbColdStorage"
+        var_base = f"PLC_PRG.{fb}.fbFreezer" if fb == "fbColdStorage" else f"PLC_PRG.{fb}"
+        suffix = f"{var_base}.rCalOffset"
+    elif category == "dewars":
+        if not fb:
+            return None
+        suffix = f"PLC_PRG.{fb}.rCalOffset"
+    elif category == "ambient":
+        suffix = "PLC_PRG.fbColdStorage.rAmbientCalOffset"
+    elif category == "cabinets":
+        fb = fb or "fbCabinet01"
+        suffix = f"PLC_PRG.{fb}.rCalOffset"
+    else:
+        return None
+
+    raw_val = item.get("cal_offset") if override_val is None else override_val
+    target = round(max(-10.0, min(10.0, float(raw_val or 0.0))), 2)
+    return {
+        "name": f"{item.get('name', category)} Cal Offset",
+        "suffix": suffix,
+        "target": target,
+        "unit": "°C",
+    }
+
+
 def extract_plc_setpoints(cfg: Dict[str, Any]) -> List[Dict[str, Any]]:
-    """Extracts target limits from equipment.json and maps them to PLC OPC UA variable suffixes."""
+    """Extracts target limits and calibration offsets from equipment.json to PLC OPC UA suffixes."""
     setpoints = []
 
     # 1. Medical Refrigerators
@@ -87,6 +120,9 @@ def extract_plc_setpoints(cfg: Dict[str, Any]) -> List[Dict[str, Any]]:
                 "target": float(f["high_limit"]),
                 "unit": "°C",
             })
+        cal_sp = _cal_offset_setpoint("fridges", f)
+        if cal_sp:
+            setpoints.append(cal_sp)
 
     # 2. Medical Freezers
     for fz in cfg.get("freezers", []):
@@ -99,6 +135,9 @@ def extract_plc_setpoints(cfg: Dict[str, Any]) -> List[Dict[str, Any]]:
                 "target": float(fz["high_limit"]),
                 "unit": "°C",
             })
+        cal_sp = _cal_offset_setpoint("freezers", fz)
+        if cal_sp:
+            setpoints.append(cal_sp)
 
     # 3. Cryogenic LN2 Dewars
     for d in cfg.get("dewars", []):
@@ -110,6 +149,9 @@ def extract_plc_setpoints(cfg: Dict[str, Any]) -> List[Dict[str, Any]]:
                 "target": float(d["high_limit"]),
                 "unit": "°C",
             })
+        cal_sp = _cal_offset_setpoint("dewars", d)
+        if cal_sp:
+            setpoints.append(cal_sp)
 
     # 4. Cleanroom Ambient Room Comfort
     for a in cfg.get("ambient", []):
@@ -127,6 +169,9 @@ def extract_plc_setpoints(cfg: Dict[str, Any]) -> List[Dict[str, Any]]:
                 "target": float(a["high_limit"]),
                 "unit": "°C",
             })
+        cal_sp = _cal_offset_setpoint("ambient", a)
+        if cal_sp:
+            setpoints.append(cal_sp)
 
     # 5. Incubator Cabinet (Thermostatic fan setpoint)
     for c in cfg.get("cabinets", []):
@@ -138,6 +183,9 @@ def extract_plc_setpoints(cfg: Dict[str, Any]) -> List[Dict[str, Any]]:
                 "target": float(c["fan_setpoint"]),
                 "unit": "°C",
             })
+        cal_sp = _cal_offset_setpoint("cabinets", c)
+        if cal_sp:
+            setpoints.append(cal_sp)
 
     return setpoints
 
@@ -232,8 +280,8 @@ async def run_opc_sync(setpoints: List[Dict[str, Any]], plc_url: str, user: str,
                     else:
                         status = "WRITE FAILED"
 
-                current_str = f"{current_float:+.1f} {unit}"
-                target_str = f"{target_float:+.1f} {unit}"
+                current_str = f"{current_float:+.2f} {unit}"
+                target_str = f"{target_float:+.2f} {unit}"
                 results.append({
                     "name": name,
                     "node_id": node_id,
@@ -283,6 +331,25 @@ def sync_equipment_to_plc(config_path: str = None, plc_url: str = DEFAULT_PLC_UR
         if not quiet:
             print(f"[!] sync_equipment_to_plc failed: {e}")
         return {"success": False, "error": str(e), "updated_count": 0, "match_count": 0, "results": []}
+
+
+def sync_single_cal_offset(cfg: Dict[str, Any], eq_key: str, offset_val: float, plc_url: str = DEFAULT_PLC_URL, user: str = None, password: str = None) -> Dict[str, Any]:
+    """Writes and verifies a single equipment calibration offset directly to the PLC over OPC UA."""
+    for cat in ("fridges", "freezers", "dewars", "ambient", "cabinets"):
+        for item in cfg.get(cat, []):
+            if item.get("key") == eq_key:
+                sp = _cal_offset_setpoint(cat, item, override_val=offset_val)
+                if not sp:
+                    return {"success": False, "error": f"No PLC block mapped for '{eq_key}'"}
+                res = asyncio.run(run_opc_sync([sp], plc_url, user or DEFAULT_USER, password or DEFAULT_PASS, mode="write", quiet=True))
+                if not res.get("success"):
+                    return res
+                row = (res.get("results") or [{}])[0]
+                status = row.get("status", "")
+                if status not in ("UPDATED & VERIFIED", "MATCH (In Sync)"):
+                    return {"success": False, "error": status or "OPC UA write verification failed", "results": res.get("results", [])}
+                return {"success": True, "offset": sp["target"], "status": status, "suffix": sp["suffix"]}
+    return {"success": False, "error": f"Equipment key '{eq_key}' not found in calibratable manifest"}
 
 
 def main():

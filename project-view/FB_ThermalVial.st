@@ -15,6 +15,7 @@ VAR_INPUT
     tThermalTau         : TIME := T#5M;     (* First-order thermal time constant tau; T#0S bypasses filter *)
     tSampleTick         : TIME := T#5S;     (* Fixed EWMA update interval dt *)
     tHoldoverGrace      : TIME := T#5M;     (* Max holdover across brief dropouts; T#0S disables holdover *)
+    rCalOffset          : REAL := 0.0;      (* Upstream calibration trim; step changes shift primed filter state *)
 END_VAR
 VAR_OUTPUT
     rVialTemp           : REAL := -999.0;   (* Buffered virtual-vial temperature (°C), or -999.0 if invalid *)
@@ -29,6 +30,9 @@ VAR
     diDtMs              : DINT;
     diTauMs             : DINT;
     rAlpha              : REAL;
+    rPrevCalOffset      : REAL := 0.0;
+    bCalTrackInit       : BOOL := FALSE;
+    rOffsetDelta        : REAL := 0.0;
 END_VAR
 VAR CONSTANT
     cTempInvalid        : REAL := -999.0;
@@ -38,6 +42,17 @@ VAR CONSTANT
     cDefaultSampleTick  : TIME := T#5S;
 END_VAR
 // --- implementation ---
+IF NOT bCalTrackInit THEN
+    rPrevCalOffset := rCalOffset;
+    bCalTrackInit  := TRUE;
+    rOffsetDelta   := 0.0;
+ELSIF rCalOffset <> rPrevCalOffset THEN
+    rOffsetDelta   := rCalOffset - rPrevCalOffset;
+    rPrevCalOffset := rCalOffset;
+ELSE
+    rOffsetDelta   := 0.0;
+END_IF;
+
 bInputOk := bValid AND (rRawTemp > cTempMinValid) AND (rRawTemp < cTempMaxValid);
 IF tSampleTick > cTimeZero THEN
     tEffTick := tSampleTick;
@@ -53,6 +68,8 @@ IF NOT bInputOk THEN
             tonHoldover(IN := FALSE, PT := tHoldoverGrace);
             bPrimed       := FALSE;
             rFilteredTemp := cTempInvalid;
+        ELSIF rOffsetDelta <> 0.0 THEN
+            rFilteredTemp := rFilteredTemp + rOffsetDelta;
         END_IF;
     ELSE
         tonHoldover(IN := FALSE, PT := tHoldoverGrace);
@@ -65,6 +82,9 @@ ELSIF (tThermalTau <= cTimeZero) OR (NOT bPrimed) THEN
     rFilteredTemp := rRawTemp;
     tonTick(IN := FALSE, PT := tEffTick);
 ELSE
+    IF rOffsetDelta <> 0.0 THEN
+        rFilteredTemp := rFilteredTemp + rOffsetDelta;
+    END_IF;
     tonHoldover(IN := FALSE, PT := tHoldoverGrace);
     tonTick(IN := TRUE, PT := tEffTick);
     IF tonTick.Q THEN

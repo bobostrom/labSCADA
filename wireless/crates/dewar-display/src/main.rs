@@ -264,8 +264,8 @@ fn main() -> ! {
 
         // B2. Check ESP-NOW Downlink Mailbox (PLC / SCADA Supervisory Commands)
         while let Some(rx_data) = receiver.receive() {
-            // DownlinkPacket is <= 8 bytes in postcard; ignore 20+ byte peer UplinkPackets on broadcast
-            if rx_data.data().len() <= 8 {
+            // DownlinkPacket is <= 8 bytes in postcard; accept only unicast packets addressed to this node
+            if rx_data.info.dst_address == mac_arr && rx_data.data().len() <= 8 {
                 if let Ok(downlink) = DownlinkPacket::deserialize(rx_data.data()) {
                     println!("[ESP-NOW RX] cmd={:?} param={}", downlink.command, downlink.parameter);
                     match downlink.command {

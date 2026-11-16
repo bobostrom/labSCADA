@@ -19,6 +19,7 @@ VAR_INPUT
     rHighWarnMargin     : REAL := 2.0;      (* Pre-alarm warn margin below rHighTrip (-12.0°C when High=-10.0°C) *)
     uiRawFaultCode      : UINT := 0;        (* Probe fault code: 0=OK, 0xFF=Unpopulated *)
     bCommLoss           : BOOL := FALSE;    (* Watchdog comms loss flag *)
+    rCalOffset          : REAL := 0.0;      (* NIST calibration trim offset in °C (clamped +/-10.0) *)
 END_VAR
 VAR_OUTPUT
     rProcessTemp        : REAL := -999.0;   (* Virtual-vial temperature to SCADA & DB (°C) *)
@@ -31,14 +32,26 @@ VAR
     iTempX10            : INT;
     bHealthy            : BOOL;
     bProcessValid       : BOOL;
+    rCalOffsetEff       : REAL := 0.0;
     fbThermalVial       : FB_ThermalVial;
     fbAlarmEval         : FB_AnalogAlarm;
     fbWarnEval          : FB_AnalogAlarm;
+END_VAR
+VAR CONSTANT
+    cMaxCalOffset       : REAL := 10.0;
 END_VAR
 // --- implementation ---
 // ==============================================================================
 // 1. HARDWARE HEALTH & RAW AIR TEMPERATURE SCALING
 // ==============================================================================
+IF rCalOffset > cMaxCalOffset THEN
+    rCalOffsetEff := cMaxCalOffset;
+ELSIF rCalOffset < -cMaxCalOffset THEN
+    rCalOffsetEff := -cMaxCalOffset;
+ELSE
+    rCalOffsetEff := rCalOffset;
+END_IF;
+
 iTempX10    := TO_INT(wRawTempX10);
 bProbeFault := (uiRawFaultCode <> 0) OR (iTempX10 <= -9000) OR (iTempX10 >= 9000);
 bHealthy    := NOT (bProbeFault OR bCommLoss);
@@ -46,7 +59,7 @@ bHealthy    := NOT (bProbeFault OR bCommLoss);
 IF NOT bHealthy THEN
     rRawTemp := -999.0;
 ELSE
-    rRawTemp := TO_REAL(iTempX10) / 10.0;
+    rRawTemp := (TO_REAL(iTempX10) / 10.0) + rCalOffsetEff;
 END_IF;
 
 // ==============================================================================
@@ -55,7 +68,8 @@ END_IF;
 fbThermalVial(
     rRawTemp    := rRawTemp,
     bValid      := bHealthy,
-    tThermalTau := tThermalTau
+    tThermalTau := tThermalTau,
+    rCalOffset  := rCalOffsetEff
 );
 rProcessTemp := fbThermalVial.rVialTemp;
 bProcessValid := (rProcessTemp > -273.0) AND (rProcessTemp < 900.0);

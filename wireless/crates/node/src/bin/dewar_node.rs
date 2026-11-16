@@ -125,8 +125,10 @@ fn main() -> ! {
         // Check for downlink response from bridge for 20ms
         for _ in 0..20 {
             if let Some(rx_data) = receiver.receive() {
-                if let Ok(downlink) = DownlinkPacket::deserialize(rx_data.data()) {
-                    println!("  <- Received Downlink Command from Bridge: {:?}", downlink.command);
+                if rx_data.info.dst_address == mac_arr {
+                    if let Ok(downlink) = DownlinkPacket::deserialize(rx_data.data()) {
+                        println!("  <- Received Downlink Command from Bridge: {:?}", downlink.command);
+                    }
                 }
             }
             delay.delay_millis(1);

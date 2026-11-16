@@ -75,6 +75,18 @@ const SLOTS: &[SlotDefaults] = &[
         slot: 3,
         key: "dewar3_node_01",
     },
+    SlotDefaults {
+        prefix: "DEWAR4",
+        comment: "Slot 4: Dewar #4 Plain RTD Node",
+        slot: 4,
+        key: "dewar4_node_01",
+    },
+    SlotDefaults {
+        prefix: "DEWAR5",
+        comment: "Slot 5: Dewar #5 Plain RTD Node",
+        slot: 5,
+        key: "dewar5_node_01",
+    },
 ];
 
 fn format_rom_array(rom: &[u8; 8]) -> String {

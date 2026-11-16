@@ -37,7 +37,35 @@ esp_bootloader_esp_idf::esp_app_desc!();
 // Node configuration auto-generated from equipment manifest by build.rs
 include!(concat!(env!("OUT_DIR"), "/node_config.rs"));
 
-const REPORT_INTERVAL_SECS: u64 = DEWAR3_REPORT_INTERVAL_SECS;
+#[cfg(all(feature = "slot4", feature = "slot5"))]
+compile_error!("Enable at most one of `slot4` or `slot5`.");
+
+#[cfg(feature = "slot5")]
+const NODE_CFG: (u8, u64, u32, u32) = (
+    DEWAR5_SLOT,
+    DEWAR5_REPORT_INTERVAL_SECS,
+    DEWAR5_BATT_CAL_NUM,
+    DEWAR5_BATT_CAL_DEN,
+);
+#[cfg(feature = "slot4")]
+const NODE_CFG: (u8, u64, u32, u32) = (
+    DEWAR4_SLOT,
+    DEWAR4_REPORT_INTERVAL_SECS,
+    DEWAR4_BATT_CAL_NUM,
+    DEWAR4_BATT_CAL_DEN,
+);
+#[cfg(not(any(feature = "slot4", feature = "slot5")))]
+const NODE_CFG: (u8, u64, u32, u32) = (
+    DEWAR3_SLOT,
+    DEWAR3_REPORT_INTERVAL_SECS,
+    DEWAR3_BATT_CAL_NUM,
+    DEWAR3_BATT_CAL_DEN,
+);
+
+const NODE_SLOT: u8 = NODE_CFG.0;
+const REPORT_INTERVAL_SECS: u64 = NODE_CFG.1;
+const BATT_CAL_NUM: u32 = NODE_CFG.2;
+const BATT_CAL_DEN: u32 = NODE_CFG.3;
 
 #[esp_hal::ram(unstable(rtc_fast, persistent))]
 static mut BOOT_SEQ: u32 = 1;
@@ -110,7 +138,7 @@ fn main() -> ! {
 
     println!("========================================");
     println!("  LabSCADA Wireless Node (ESP32-S3)     ");
-    println!("  Profile: Dewar #{} Plain (MAX31865)   ", DEWAR3_SLOT);
+    println!("  Profile: Dewar #{} Plain (MAX31865)   ", NODE_SLOT);
     println!("  Board: {}", BOARD_NAME);
     println!("  Site: {} | Cycle #{}", SITE_NAME, seq);
     println!("========================================");
@@ -144,7 +172,7 @@ fn main() -> ! {
         (pin_mv, cfg, reading, Some(led), None::<Output<'static>>)
     };
 
-    let battery_mv = ((pin_mv as u32 * DEWAR3_BATT_CAL_NUM) / DEWAR3_BATT_CAL_DEN) as u16;
+    let battery_mv = ((pin_mv as u32 * BATT_CAL_NUM) / BATT_CAL_DEN) as u16;
     let (temp_c_x10, fault_code) = eval_rtd_reading(&reading);
 
     delay.delay_millis(4);
@@ -188,9 +216,9 @@ fn main() -> ! {
         access_mode: false,
     };
 
-    let uplink = UplinkPacket::new(DEWAR3_SLOT, mac_arr, seq, telemetry);
+    let uplink = UplinkPacket::new(NODE_SLOT, mac_arr, seq, telemetry);
     if let Ok(payload) = uplink.serialize(&mut tx_buf) {
-        println!("Transmitting ESP-NOW slot {} packet #{}...", DEWAR3_SLOT, seq);
+        println!("Transmitting ESP-NOW slot {} packet #{}...", NODE_SLOT, seq);
         match sender.send(&BROADCAST_ADDRESS, payload) {
             Ok(waiter) => {
                 let _ = waiter.wait();
@@ -205,8 +233,10 @@ fn main() -> ! {
     // Listen briefly for downlink commands from bridge before deep sleep
     for _ in 0..20 {
         if let Some(rx_data) = receiver.receive() {
-            if let Ok(downlink) = DownlinkPacket::deserialize(rx_data.data()) {
-                println!("  <- Downlink Command: {:?}", downlink.command);
+            if rx_data.info.dst_address == mac_arr {
+                if let Ok(downlink) = DownlinkPacket::deserialize(rx_data.data()) {
+                    println!("  <- Downlink Command: {:?}", downlink.command);
+                }
             }
         }
         delay.delay_millis(1);

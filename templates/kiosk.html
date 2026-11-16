@@ -430,6 +430,76 @@
       }
     }
 
+    @keyframes pulse-warn-amber {
+      0%, 100% {
+        box-shadow: 0 0 0 rgba(249, 115, 22, 0.0);
+        border-color: rgba(249, 115, 22, 0.55);
+      }
+      50% {
+        box-shadow: 0 0 12px rgba(249, 115, 22, 0.45);
+        border-color: rgba(251, 146, 60, 0.95);
+      }
+    }
+
+    .inc-mute-bar {
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 8px;
+      margin-top: 10px;
+      padding: 9px 10px;
+      border-radius: 8px;
+      background: rgba(9, 13, 22, 0.65);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .inc-mute-bar.is-muted {
+      background: rgba(255, 171, 0, 0.12);
+      border-color: rgba(255, 171, 0, 0.45);
+    }
+
+    .inc-mute-bar.is-expiring {
+      background: rgba(249, 115, 22, 0.18);
+      border: 1px solid rgba(249, 115, 22, 0.75);
+      animation: pulse-warn-amber 1.4s infinite;
+    }
+
+    .inc-mute-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      border-radius: 7px;
+      padding: 6px 8px;
+    }
+
+    .inc-mute-btn-grid {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 5px;
+      width: 100%;
+    }
+
+    .btn-inc-mute {
+      background: rgba(255, 255, 255, 0.07);
+      color: #e2e8f0;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      padding: 5px 4px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      text-align: center;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+
+    .btn-inc-mute:hover {
+      background: rgba(0, 176, 255, 0.22);
+      border-color: rgba(0, 176, 255, 0.5);
+      color: #ffffff;
+    }
+
     /* Integrated Dipstick Sub-Panel in Cryo Cards */
     .dipstick-subpanel {
       background: var(--bg-card-sub);
@@ -1000,6 +1070,153 @@
 
     <!-- 2. Middle Section: Live Real-Time Telemetry Grid (Declarative 0..N Equipment) -->
     <div class="grid-telemetry">
+      <!-- Incubator Cabinet & Slide-out Bays Card -->
+      {% if equipment.incubators | length > 0 or equipment.cabinets | length > 0 %}
+      <div class="card" id="card-incubators" style="border-top:3px solid #00b0ff;">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+          <div>
+            <div class="card-title" style="margin-bottom:0;">
+              {% if equipment.cabinets and equipment.cabinets | length > 0 %}
+              {{ equipment.cabinets[0].name }}
+              {% else %}
+              Incubator Cabinet 01
+              {% endif %}
+            </div>
+            <div style="font-size:11px; color:#8899a6; margin-top:2px;">
+              3-Bay Slide-Out Enclosure • Tap any unit to inspect 10-zone heat bed
+            </div>
+          </div>
+          <!-- Cabinet Environmental Microclimate Badges -->
+          {% set cab_cfg = equipment.cabinets[0] if (equipment.cabinets and equipment.cabinets | length > 0) else {} %}
+          <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+            <span class="status-badge status-normal" id="cab-door-badge" style="font-size:10px; padding:3px 8px;">🚪
+              DOOR CLOSED</span>
+            {% if cab_cfg.temp_cnl %}
+            <span
+              style="font-size:11px; font-family:monospace; color:#38bdf8; font-weight:700; background:rgba(56,189,248,0.12); padding:3px 7px; border-radius:4px; border:1px solid rgba(56,189,248,0.25);"
+              id="cab-temp-val" title="Cabinet Interior Temperature">--.-°C</span>
+            {% endif %}
+            {% if cab_cfg.fan_command_cnl %}
+            <span
+              style="font-size:10px; color:#94a3b8; background:rgba(255,255,255,0.06); padding:3px 7px; border-radius:4px; border:1px solid rgba(255,255,255,0.08);"
+              id="cab-fan-val" title="Thermostatic Exhaust Fan">🌀 FAN OFF</span>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Timed Incubator Alarm Mute Control Bar -->
+        <div class="inc-mute-bar" id="inc-mute-bar">
+          <div style="display:flex; align-items:center; gap:7px; min-width:0;">
+            <span id="inc-mute-dot" style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#10b981; flex-shrink:0;"></span>
+            <span id="inc-mute-status-text" style="font-size:11.5px; font-weight:700; color:#cbd5e1;">🛡️ Chamber Alarms Armed</span>
+          </div>
+          <div id="inc-mute-presets" class="inc-mute-group">
+            <div style="font-size:10px; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:0.4px;">🔇 Mute:</div>
+            <div class="inc-mute-btn-grid">
+              <button type="button" class="btn-inc-mute" onclick="startIncubatorMute(15)">15m</button>
+              <button type="button" class="btn-inc-mute" onclick="startIncubatorMute(30)">30m</button>
+              <button type="button" class="btn-inc-mute" onclick="startIncubatorMute(60)">60m</button>
+              <button type="button" class="btn-inc-mute" onclick="startIncubatorMute(120)">2h</button>
+              <button type="button" class="btn-inc-mute" onclick="startIncubatorMute(180)">3h</button>
+            </div>
+          </div>
+          <div id="inc-mute-active-btns" style="display:none; align-items:center; gap:6px; width:100%;">
+            <button type="button" class="btn-inc-mute" style="flex:1; background:rgba(245,158,11,0.22); border-color:rgba(245,158,11,0.55); color:#fde68a;" onclick="startIncubatorMute(15, true)">+15m</button>
+            <button type="button" class="btn-inc-mute" style="flex:1; background:rgba(16,185,129,0.2); border-color:rgba(16,185,129,0.55); color:#a7f3d0;" onclick="cancelIncubatorMute()">🔔 Unmute</button>
+          </div>
+        </div>
+
+        <div
+          style="display:grid; grid-template-columns:repeat(auto-fit, minmax(130px, 1fr)); gap:10px; margin-top:12px;">
+          {% for inc in equipment.incubators %}
+          <div class="incubator-bay-card" id="bay-card-{{ inc.key }}" onclick="openIncubatorModal('{{ inc.key }}')"
+            title="Click to inspect 10 chamber zones">
+            <div
+              style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:4px; margin-bottom:4px;">
+              <span style="font-size:10.5px; font-weight:800; color:#38bdf8; text-transform:uppercase;">
+                {% if inc.bay_number %}BAY {{ inc.bay_number }}: {% endif %}{{ inc.name }}
+              </span>
+              <span id="badge-{{ inc.key }}" class="status-badge status-normal">CLEAR</span>
+            </div>
+            <div style="font-size:1.45rem; font-weight:800; font-family:monospace; color:#f0f4f8; margin-top:2px;"
+              id="val-{{ inc.key }}">
+              NORMAL
+            </div>
+            <div
+              style="font-size:11px; color:#8899a6; margin-top:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"
+              id="sub-{{ inc.key }}">{{ inc.subtitle | default('G210 InviCell • In-Range') }}</div>
+
+            <!-- Inspect Hint Footer -->
+            <div
+              style="margin-top:8px; padding-top:6px; border-top:1px solid rgba(255,255,255,0.06); display:flex; justify-content:space-between; align-items:center; font-size:10px; color:#00e5ff;">
+              <span>🔍 10 Zones</span>
+              <span style="color:#64748b; font-size:9.5px; font-family:monospace;">{{ inc.model | default('G210')
+                }}</span>
+            </div>
+          </div>
+          {% endfor %}
+
+          <!-- Bay 3 (Empty / Expansion Bay) -->
+          <div
+            style="background:rgba(9,13,22,0.3); border:1px dashed rgba(255,255,255,0.14); border-radius:8px; padding:10px; min-width:0; display:flex; flex-direction:column; justify-content:space-between; min-height:92px; opacity:0.65;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-size:10.5px; font-weight:700; color:#64748b; text-transform:uppercase;">BAY 3:
+                EXPANSION</span>
+              <span class="status-badge"
+                style="background:rgba(100,116,139,0.15); color:#64748b; font-size:9px; border:1px solid rgba(100,116,139,0.25);">EMPTY</span>
+            </div>
+            <div style="font-size:1.15rem; font-weight:700; font-family:monospace; color:#64748b; margin-top:4px;">
+              AVAILABLE
+            </div>
+            <div style="font-size:10px; color:#475569; margin-top:4px;">
+              Slide-Out Tray Ready
+            </div>
+          </div>
+        </div>
+
+        <!-- Cabinet-Associated Backup UPS Strip (rendered inside Cabinet card when u.parent_cabinet matches) -->
+        {% for u in equipment.ups if cab_cfg and u.parent_cabinet == cab_cfg.key %}
+        <div class="cab-ups-subpanel" id="card-ups-{{ u.key }}">
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
+            <div>
+              <div style="font-size:11px; font-weight:700; color:#e2e8f0; display:flex; align-items:center; gap:5px;">
+                <span>⚡</span><span>{{ u.name }}</span>
+              </div>
+              <div style="font-size:10px; color:#8899a6; margin-top:1px;">
+                {{ u.model | default('Facility UPS') }} • {{ u.location | default('Cabinet Power') }}
+              </div>
+            </div>
+            <span id="badge-ups-{{ u.key }}" class="status-badge status-normal" style="font-size:10px; padding:2px 8px;">GRID NORMAL</span>
+          </div>
+
+          <div style="display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:10px; margin-top:8px;">
+            <div>
+              <div style="font-size:9.5px; font-weight:700; color:#8899a6; text-transform:uppercase;" id="lbl-ups-primary-{{ u.key }}">BATTERY CHARGE</div>
+              <div style="font-family:monospace; font-weight:800; font-size:1.3rem; line-height:1.1; margin-top:1px;">
+                <span id="val-ups-primary-{{ u.key }}" style="color:#10b981;">--</span><span class="card-unit" id="unit-ups-primary-{{ u.key }}" style="font-size:11px;">%</span>
+              </div>
+            </div>
+            <div style="display:flex; gap:12px; flex-wrap:wrap; font-size:11px; color:#cbd5e1; align-items:center;">
+              <span id="sub-ups-volt-{{ u.key }}">-- VAC Line</span>
+              <span id="sub-ups-rt-{{ u.key }}" style="color:#38bdf8;">Est. Runtime: -- min</span>
+              <span id="sub-ups-load-{{ u.key }}" style="color:#8899a6;">Load: --%</span>
+            </div>
+          </div>
+          {% if u.mute_cmd_cnl %}
+          <div id="actions-ups-{{ u.key }}" style="display:none; margin-top:8px; padding-top:8px; border-top:1px solid rgba(245,158,11,0.25); justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+            <button type="button" class="btn-mini" id="btn-ups-mute-{{ u.key }}" style="background:#d97706; color:#fff; font-weight:700; border:none; padding:5px 10px; border-radius:6px; cursor:pointer;" onclick="muteUpsBeeper('{{ u.key }}')">
+              🔇 Mute UPS Beeper
+            </button>
+            <span id="muted-badge-ups-{{ u.key }}" style="display:none; font-size:11px; font-weight:700; color:#34d399; background:rgba(16,185,129,0.15); padding:3px 8px; border-radius:4px; border:1px solid rgba(16,185,129,0.3);">
+              🔇 BEEPER MUTED
+            </span>
+          </div>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
       <!-- Dewars (0 to N) -->
       {% for d in equipment.dewars %}
       <div class="card" id="card-cryo{{ d.id }}" style="border-top:3px solid {{ d.color | default('#00e5ff') }};">
@@ -1146,131 +1363,6 @@
             </div>
             {% endfor %}
           </div>
-        </div>
-        {% endif %}
-
-        <!-- Incubator Cabinet & Slide-out Bays Card -->
-        {% if equipment.incubators | length > 0 or equipment.cabinets | length > 0 %}
-        <div class="card" id="card-incubators" style="border-top:3px solid #00b0ff;">
-          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
-            <div>
-              <div class="card-title" style="margin-bottom:0;">
-                {% if equipment.cabinets and equipment.cabinets | length > 0 %}
-                {{ equipment.cabinets[0].name }}
-                {% else %}
-                Incubator Cabinet 01
-                {% endif %}
-              </div>
-              <div style="font-size:11px; color:#8899a6; margin-top:2px;">
-                3-Bay Slide-Out Enclosure • Tap any unit to inspect 10-zone heat bed
-              </div>
-            </div>
-            <!-- Cabinet Environmental Microclimate Badges -->
-            {% set cab_cfg = equipment.cabinets[0] if (equipment.cabinets and equipment.cabinets | length > 0) else {} %}
-            <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
-              <span class="status-badge status-normal" id="cab-door-badge" style="font-size:10px; padding:3px 8px;">🚪
-                DOOR CLOSED</span>
-              {% if cab_cfg.temp_cnl %}
-              <span
-                style="font-size:11px; font-family:monospace; color:#38bdf8; font-weight:700; background:rgba(56,189,248,0.12); padding:3px 7px; border-radius:4px; border:1px solid rgba(56,189,248,0.25);"
-                id="cab-temp-val" title="Cabinet Interior Temperature">--.-°C</span>
-              {% endif %}
-              {% if cab_cfg.fan_command_cnl %}
-              <span
-                style="font-size:10px; color:#94a3b8; background:rgba(255,255,255,0.06); padding:3px 7px; border-radius:4px; border:1px solid rgba(255,255,255,0.08);"
-                id="cab-fan-val" title="Thermostatic Exhaust Fan">🌀 FAN OFF</span>
-              {% endif %}
-            </div>
-          </div>
-
-          <div
-            style="display:grid; grid-template-columns:repeat(auto-fit, minmax(130px, 1fr)); gap:10px; margin-top:12px;">
-            {% for inc in equipment.incubators %}
-            <div class="incubator-bay-card" id="bay-card-{{ inc.key }}" onclick="openIncubatorModal('{{ inc.key }}')"
-              title="Click to inspect 10 chamber zones">
-              <div
-                style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:4px; margin-bottom:4px;">
-                <span style="font-size:10.5px; font-weight:800; color:#38bdf8; text-transform:uppercase;">
-                  {% if inc.bay_number %}BAY {{ inc.bay_number }}: {% endif %}{{ inc.name }}
-                </span>
-                <span id="badge-{{ inc.key }}" class="status-badge status-normal">CLEAR</span>
-              </div>
-              <div style="font-size:1.45rem; font-weight:800; font-family:monospace; color:#f0f4f8; margin-top:2px;"
-                id="val-{{ inc.key }}">
-                NORMAL
-              </div>
-              <div
-                style="font-size:11px; color:#8899a6; margin-top:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"
-                id="sub-{{ inc.key }}">{{ inc.subtitle | default('G210 InviCell • In-Range') }}</div>
-
-              <!-- Inspect Hint Footer -->
-              <div
-                style="margin-top:8px; padding-top:6px; border-top:1px solid rgba(255,255,255,0.06); display:flex; justify-content:space-between; align-items:center; font-size:10px; color:#00e5ff;">
-                <span>🔍 10 Zones</span>
-                <span style="color:#64748b; font-size:9.5px; font-family:monospace;">{{ inc.model | default('G210')
-                  }}</span>
-              </div>
-            </div>
-            {% endfor %}
-
-            <!-- Bay 3 (Empty / Expansion Bay) -->
-            <div
-              style="background:rgba(9,13,22,0.3); border:1px dashed rgba(255,255,255,0.14); border-radius:8px; padding:10px; min-width:0; display:flex; flex-direction:column; justify-content:space-between; min-height:92px; opacity:0.65;">
-              <div style="display:flex; justify-content:space-between; align-items:center;">
-                <span style="font-size:10.5px; font-weight:700; color:#64748b; text-transform:uppercase;">BAY 3:
-                  EXPANSION</span>
-                <span class="status-badge"
-                  style="background:rgba(100,116,139,0.15); color:#64748b; font-size:9px; border:1px solid rgba(100,116,139,0.25);">EMPTY</span>
-              </div>
-              <div style="font-size:1.15rem; font-weight:700; font-family:monospace; color:#64748b; margin-top:4px;">
-                AVAILABLE
-              </div>
-              <div style="font-size:10px; color:#475569; margin-top:4px;">
-                Slide-Out Tray Ready
-              </div>
-            </div>
-          </div>
-
-          <!-- Cabinet-Associated Backup UPS Strip (rendered inside Cabinet card when u.parent_cabinet matches) -->
-          {% for u in equipment.ups if cab_cfg and u.parent_cabinet == cab_cfg.key %}
-          <div class="cab-ups-subpanel" id="card-ups-{{ u.key }}">
-            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
-              <div>
-                <div style="font-size:11px; font-weight:700; color:#e2e8f0; display:flex; align-items:center; gap:5px;">
-                  <span>⚡</span><span>{{ u.name }}</span>
-                </div>
-                <div style="font-size:10px; color:#8899a6; margin-top:1px;">
-                  {{ u.model | default('Facility UPS') }} • {{ u.location | default('Cabinet Power') }}
-                </div>
-              </div>
-              <span id="badge-ups-{{ u.key }}" class="status-badge status-normal" style="font-size:10px; padding:2px 8px;">GRID NORMAL</span>
-            </div>
-
-            <div style="display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:10px; margin-top:8px;">
-              <div>
-                <div style="font-size:9.5px; font-weight:700; color:#8899a6; text-transform:uppercase;" id="lbl-ups-primary-{{ u.key }}">BATTERY CHARGE</div>
-                <div style="font-family:monospace; font-weight:800; font-size:1.3rem; line-height:1.1; margin-top:1px;">
-                  <span id="val-ups-primary-{{ u.key }}" style="color:#10b981;">--</span><span class="card-unit" id="unit-ups-primary-{{ u.key }}" style="font-size:11px;">%</span>
-                </div>
-              </div>
-              <div style="display:flex; gap:12px; flex-wrap:wrap; font-size:11px; color:#cbd5e1; align-items:center;">
-                <span id="sub-ups-volt-{{ u.key }}">-- VAC Line</span>
-                <span id="sub-ups-rt-{{ u.key }}" style="color:#38bdf8;">Est. Runtime: -- min</span>
-                <span id="sub-ups-load-{{ u.key }}" style="color:#8899a6;">Load: --%</span>
-              </div>
-            </div>
-            {% if u.mute_cmd_cnl %}
-            <div id="actions-ups-{{ u.key }}" style="display:none; margin-top:8px; padding-top:8px; border-top:1px solid rgba(245,158,11,0.25); justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
-              <button type="button" class="btn-mini" id="btn-ups-mute-{{ u.key }}" style="background:#d97706; color:#fff; font-weight:700; border:none; padding:5px 10px; border-radius:6px; cursor:pointer;" onclick="muteUpsBeeper('{{ u.key }}')">
-                🔇 Mute UPS Beeper
-              </button>
-              <span id="muted-badge-ups-{{ u.key }}" style="display:none; font-size:11px; font-weight:700; color:#34d399; background:rgba(16,185,129,0.15); padding:3px 8px; border-radius:4px; border:1px solid rgba(16,185,129,0.3);">
-                🔇 BEEPER MUTED
-              </span>
-            </div>
-            {% endif %}
-          </div>
-          {% endfor %}
         </div>
         {% endif %}
 
@@ -1628,7 +1720,7 @@
         <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:14px;">
           <div>
             <div style="display:flex; align-items:center; gap:8px;">
-              <h2 style="margin:0; font-size:1.35rem; color:#00b0ff;" id="incModalTitle">Incubator 01</h2>
+              <h2 style="margin:0; font-size:1.35rem; color:#00b0ff;" id="incModalTitle">Incubator</h2>
               <span class="status-badge status-normal" id="incModalBadge" style="font-size:11px;">CLEAR</span>
             </div>
             <div style="color:#8899a6; font-size:12px; margin-top:3px;" id="incModalSubtitle">K-Systems G210 InviCell •
@@ -1643,13 +1735,13 @@
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px;">
           <div
             style="background:rgba(9,13,22,0.85); border:1px solid rgba(255,255,255,0.08); border-radius:8px; padding:10px;">
-            <div style="font-size:10px; font-weight:700; color:#8899a6; text-transform:uppercase;">Discrete Alarm Relay
+            <div style="font-size:10px; font-weight:700; color:#8899a6; text-transform:uppercase;">Incubator Alarm Status
             </div>
             <div style="display:flex; align-items:center; gap:6px; margin-top:4px;">
               <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#10b981;"
                 id="incModalHwDot"></span>
               <span style="font-family:monospace; font-size:12.5px; font-weight:800; color:#f0f4f8;"
-                id="incModalHwStatus">NORMAL (Closed Loop)</span>
+                id="incModalHwStatus">NORMAL</span>
             </div>
             <div style="font-size:10px; color:#38bdf8; margin-top:3px;" id="incModalHwChannel">● LIVE HARDWARE (Node00
               DI 1)</div>
@@ -1665,7 +1757,7 @@
               <span style="font-family:monospace; font-size:12.5px; font-weight:800; color:#f0f4f8;"
                 id="incModalCabStatus">DOOR CLOSED (Loop Active)</span>
             </div>
-            <div style="font-size:10px; color:#a78bfa; margin-top:3px;">🛡️ 3-Min Post-Close Grace Armed</div>
+            <div style="font-size:10px; color:#a78bfa; margin-top:3px;" id="incModalCabSub">🛡️ 3-Min Post-Close Grace Armed</div>
           </div>
         </div>
 
@@ -1705,7 +1797,7 @@
     <!-- ============================================================== -->
     <div id="calibrationModal" class="modal-overlay" style="display:none;"
       onclick="if(event.target===this) closeCalibrationModal()">
-      <div class="modal-box" style="max-width:600px; border-color:rgba(16, 185, 129, 0.45); padding:22px;">
+      <div class="modal-box" style="max-width:650px; border-color:rgba(16, 185, 129, 0.45); padding:22px;">
         <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:14px;">
           <div>
             <h2 style="margin:0; font-size:1.35rem; color:#10b981;">🌡️ Log Annual Probe Calibration</h2>
@@ -1736,41 +1828,81 @@
             Master NIST-Traceable Reference Thermometer</div>
           <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
             <div>
-              <label class="form-label" style="font-size:11px;">NIST Certificate / Serial #</label>
+              <label class="form-label" style="font-size:11px;">NIST Reference Cert / Serial #</label>
               <input type="text" id="calNistCert" class="text-input" placeholder="e.g. Fisher 14-648-233 / Cert #88412">
             </div>
             <div>
-              <label class="form-label" style="font-size:11px;">Master Cert Expiration Date</label>
-              <input type="date" id="calNistExp" class="text-input" style="color-scheme:dark;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                <label class="form-label" style="font-size:11px; margin:0;">NIST Reference Expiration Date</label>
+                <span id="calNistExpWarn" style="font-size:10.5px; font-weight:700;"></span>
+              </div>
+              <input type="date" id="calNistExp" class="text-input" style="color-scheme:dark;"
+                oninput="updateCalNistExpWarn()">
             </div>
           </div>
         </div>
 
-        <div style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:10px; margin-bottom:12px;">
+        <div style="display:grid; grid-template-columns:1fr 1.15fr 1.15fr 1fr; gap:10px; margin-bottom:8px;">
           <div>
             <label class="form-label" style="font-size:11px;">NIST Ref Temp (°C)</label>
             <input type="number" step="0.01" id="calRefTemp" class="text-input" placeholder="-196.0"
               oninput="updateCalPreview()">
+            <div style="font-size:10.5px; color:#8899a6; margin-top:3px;">Certified thermometer</div>
           </div>
           <div>
-            <label class="form-label" style="font-size:11px;">SCADA Probe (°C)</label>
+            <label class="form-label" id="calScadaTempLabel" style="font-size:11px;">Device Reading (°C)</label>
             <input type="number" step="0.01" id="calScadaTemp" class="text-input" placeholder="-195.8"
               oninput="updateCalPreview()">
+            <div id="calScadaHint" style="font-size:10.5px; color:#8899a6; margin-top:3px;">Live channel reading</div>
           </div>
           <div>
-            <label class="form-label" style="font-size:11px;">PLC Offset (°C)</label>
-            <input type="number" step="0.01" id="calOffset" class="text-input" value="0.0" oninput="updateCalPreview()">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+              <label class="form-label" style="font-size:11px; margin:0;">Calibration Offset (°C)</label>
+              <button type="button" onclick="autoCalcCalOffset()"
+                style="background:rgba(56,189,248,0.15); border:1px solid rgba(56,189,248,0.4); color:#38bdf8; border-radius:4px; font-size:10px; padding:1px 6px; cursor:pointer; font-weight:700;"
+                title="Compute new Calibration Offset needed to match NIST Ref Temp">Auto-Calc</button>
+            </div>
+            <input type="number" step="0.01" min="-5.0" max="5.0" id="calOffset" class="text-input" value="0.00"
+              oninput="onCalOffsetInput()">
+            <div style="font-size:10.5px; color:#8899a6; margin-top:3px;">Active: <span id="calActiveOffsetVal"
+                style="color:#f0f4f8; font-family:monospace;">+0.00°C</span></div>
           </div>
           <div>
-            <label class="form-label" style="font-size:11px;">Tolerance (±°C)</label>
-            <input type="number" step="0.1" id="calTolerance" class="text-input" value="0.5"
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+              <label class="form-label" style="font-size:11px; margin:0;">Tolerance (±°C)</label>
+              <button type="button" id="calTolToggleBtn" onclick="toggleCalToleranceLock()"
+                style="background:transparent; border:1px solid rgba(148,163,184,0.35); color:#94a3b8; border-radius:4px; font-size:10px; padding:1px 6px; cursor:pointer;">Change</button>
+            </div>
+            <input type="number" step="0.1" min="0.1" id="calTolerance" class="text-input" value="0.5" readonly
+              style="background:rgba(15,23,42,0.55); color:#94a3b8; border-color:rgba(148,163,184,0.2);"
               oninput="updateCalPreview()">
+            <div id="calTolHint" style="font-size:10.5px; color:#8899a6; margin-top:3px;">SOP Pass Limit</div>
+          </div>
+        </div>
+
+        <div
+          style="background:rgba(15,23,42,0.55); border:1px solid rgba(148,163,184,0.18); border-radius:8px; padding:9px 12px; margin-bottom:10px; font-size:11.5px; color:#cbd5e1; line-height:1.45;">
+          <div style="margin-bottom:6px;">
+            <strong style="color:#f0f4f8;">Tolerance (±°C):</strong> Maximum allowed difference between Device Reading
+            and NIST Reference to PASS without adjustment (SOP defaults: Fridge / Ambient / Cabinet <code>±0.5°C</code>,
+            Freezer <code>±1.0°C</code>, LN2 Dewar <code>±2.0°C</code>). Click <em>Change</em> only for protocol
+            exceptions.
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; border-top:1px solid rgba(148,163,184,0.15); padding-top:7px;">
+            <label style="display:flex; align-items:center; gap:7px; cursor:pointer; color:#e2e8f0; font-size:12px;">
+              <input type="checkbox" id="calApplyOffset" onchange="updateCalPreview()"
+                style="width:15px; height:15px; accent-color:#10b981; cursor:pointer;">
+              <span>Apply Calibration Offset to live PLC / SCADA measurements on save (limit ±5.0°C)</span>
+            </label>
+            <button type="button" id="btnApplyOffsetNow" class="btn" onclick="applyCalOffsetNow()"
+              style="background:rgba(56,189,248,0.15); border:1px solid rgba(56,189,248,0.45); color:#38bdf8; font-size:11.5px; padding:5px 10px; font-weight:700;">⚡
+              Apply Offset Now</button>
           </div>
         </div>
 
         <div id="calPreviewBanner"
-          style="background:rgba(15,23,42,0.8); border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:10px 12px; margin-bottom:12px; font-size:12.5px; display:flex; justify-content:space-between; align-items:center;">
-          <span style="color:#94a3b8;">Enter Reference &amp; SCADA temperatures to calculate deviation.</span>
+          style="background:rgba(15,23,42,0.8); border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:10px 12px; margin-bottom:12px; font-size:12.5px; display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap;">
+          <span style="color:#94a3b8;">Enter NIST Reference &amp; Device readings to calculate deviation.</span>
           <span id="calPreviewBadge" class="status-badge status-normal">--</span>
         </div>
 
@@ -1808,7 +1940,36 @@
     // Incubator Modal & Telemetry State
     let lastReadings = {};
     let lastCabinetState = {};
+    let lastIncubatorMute = {};
+    let lastIncubatorTrips = {};
     let currentModalIncKey = null;
+
+    function formatIncCountdown(totalSec) {
+      const s = Math.max(0, Math.floor(totalSec || 0));
+      const h = Math.floor(s / 3600);
+      const m = Math.floor((s % 3600) / 60);
+      const rem = s % 60;
+      if (h > 0) {
+        return `${h}:${String(m).padStart(2, '0')}:${String(rem).padStart(2, '0')}`;
+      }
+      return `${m}:${String(rem).padStart(2, '0')}`;
+    }
+
+    function startIncubatorMute(durationMinutes, extend = false) {
+      fetch('/api/incubator-mute', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ duration_minutes: durationMinutes, extend: !!extend, user: 'Kiosk Staff' })
+      }).then(() => updateTelemetry());
+    }
+
+    function cancelIncubatorMute() {
+      fetch('/api/incubator-mute/cancel', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user: 'Kiosk Staff' })
+      }).then(() => updateTelemetry());
+    }
 
     function openIncubatorModal(incKey) {
       const inc = (EQUIPMENT.incubators || []).find(i => i.key === incKey);
@@ -1901,22 +2062,26 @@
       const hwStatus = document.getElementById('incModalHwStatus');
       const badge = document.getElementById('incModalBadge');
 
-      const incAlarm = inc.alarm_cnl && lastReadings ? (lastReadings[inc.alarm_cnl] > 0) : false;
+      const tripMap = lastIncubatorTrips || {};
+      const incAlarm = (inc.key in tripMap)
+        ? Boolean(tripMap[inc.key])
+        : (inc.alarm_cnl && lastReadings ? (lastReadings[inc.alarm_cnl] > 0) : false);
+      const isManualMute = Boolean(lastIncubatorMute && lastIncubatorMute.active);
 
       if (incAlarm) {
-        if (dot) dot.style.background = '#ff1744';
+        if (dot) dot.style.background = isManualMute ? '#ffab00' : '#ff1744';
         if (hwStatus) {
-          hwStatus.innerText = 'TRIPPED (Open Circuit)';
-          hwStatus.style.color = '#ff1744';
+          hwStatus.innerText = isManualMute ? 'ALARMING (Muted by Timer)' : 'ALARMING';
+          hwStatus.style.color = isManualMute ? '#ffab00' : '#ff1744';
         }
         if (badge) {
-          badge.innerText = 'TRIPPED';
-          badge.className = 'status-badge status-alert';
+          badge.innerText = isManualMute ? 'MUTED' : 'ALARMING';
+          badge.className = isManualMute ? 'status-badge status-warn' : 'status-badge status-alert';
         }
       } else {
         if (dot) dot.style.background = '#10b981';
         if (hwStatus) {
-          hwStatus.innerText = 'NORMAL (Closed Loop)';
+          hwStatus.innerText = 'NORMAL';
           hwStatus.style.color = '#f0f4f8';
         }
         if (badge) {
@@ -1928,21 +2093,37 @@
       // Cabinet Supervision in Modal
       const cabDot = document.getElementById('incModalCabDot');
       const cabStatus = document.getElementById('incModalCabStatus');
+      const cabSub = document.getElementById('incModalCabSub');
       if (cabStatus) {
-        if (lastCabinetState && lastCabinetState.is_open) {
+        if (isManualMute) {
+          const remStr = formatIncCountdown(lastIncubatorMute.remaining_seconds);
+          const isWarn = Boolean(lastIncubatorMute.warning_active);
+          if (cabDot) cabDot.style.background = isWarn ? '#f97316' : '#ffab00';
+          cabStatus.innerText = isWarn ? `MUTE EXPIRING (${remStr})` : `TIMED MUTE (${remStr})`;
+          cabStatus.style.color = isWarn ? '#fb923c' : '#ffab00';
+          if (cabSub) cabSub.innerText = isWarn ? '⚠️ Alarms re-arm soon — extend if needed' : '🔇 Timed Dashboard Mute Active';
+        } else if (lastCabinetState && lastCabinetState.door_switch_disabled) {
+          if (cabDot) cabDot.style.background = '#10b981';
+          cabStatus.innerText = 'ARMED (Door Switch Bypassed)';
+          cabStatus.style.color = '#10b981';
+          if (cabSub) cabSub.innerText = '🛡️ Dashboard Timed Mute Available';
+        } else if (lastCabinetState && lastCabinetState.is_open) {
           if (cabDot) cabDot.style.background = '#ffab00';
           cabStatus.innerText = 'DOOR OPEN (Alarms Muted)';
           cabStatus.style.color = '#ffab00';
+          if (cabSub) cabSub.innerText = '🛡️ 3-Min Post-Close Grace Armed';
         } else if (lastCabinetState && lastCabinetState.mute_active && lastCabinetState.grace_remaining_sec > 0) {
           if (cabDot) cabDot.style.background = '#38bdf8';
           const m = Math.floor(lastCabinetState.grace_remaining_sec / 60);
           const s = String(lastCabinetState.grace_remaining_sec % 60).padStart(2, '0');
           cabStatus.innerText = `RECOVERY GRACE (${m}:${s})`;
           cabStatus.style.color = '#38bdf8';
+          if (cabSub) cabSub.innerText = '🛡️ 3-Min Post-Close Grace Armed';
         } else {
           if (cabDot) cabDot.style.background = '#10b981';
           cabStatus.innerText = 'DOOR CLOSED (Protection Armed)';
           cabStatus.style.color = '#f0f4f8';
+          if (cabSub) cabSub.innerText = '🛡️ 3-Min Post-Close Grace Armed';
         }
       }
     }
@@ -1986,6 +2167,9 @@
               .then(data => {
                 const r = data.readings || {};
                 lastReadings = r;
+                lastCabinetState = data.cabinet || {};
+                lastIncubatorMute = data.incubator_mute || lastCabinetState.manual_mute || {};
+                lastIncubatorTrips = data.incubator_trips || {};
 
                 // If incubator modal is currently open, live-refresh its chamber temperatures & hardware alarm state
                 if (currentModalIncKey) {
@@ -2270,11 +2454,55 @@
                 // 5. Chamber Incubators (0 to N)
                 const cardInc = document.getElementById('card-incubators');
                 const cab = data.cabinet || {};
-                lastCabinetState = cab;
+                const incMute = data.incubator_mute || cab.manual_mute || {};
+                const incTrips = data.incubator_trips || {};
+                const isManualMute = Boolean(incMute.active);
+                const isMuteWarn = Boolean(isManualMute && incMute.warning_active);
+                const muteRemStr = formatIncCountdown(incMute.remaining_seconds || 0);
                 let anyIncAlarm = false;
+
+                // Update timed mute bar
+                const muteBar = document.getElementById('inc-mute-bar');
+                const muteDot = document.getElementById('inc-mute-dot');
+                const muteText = document.getElementById('inc-mute-status-text');
+                const mutePresets = document.getElementById('inc-mute-presets');
+                const muteActiveBtns = document.getElementById('inc-mute-active-btns');
+                if (muteBar && muteDot && muteText) {
+                  if (isManualMute) {
+                    const expClock = incMute.expires_at
+                      ? new Date(incMute.expires_at * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                      : '';
+                    const expNote = expClock ? ` (until ${expClock})` : '';
+                    muteBar.className = isMuteWarn ? 'inc-mute-bar is-expiring' : 'inc-mute-bar is-muted';
+                    muteDot.style.background = isMuteWarn ? '#f97316' : '#ffab00';
+                    muteText.style.color = isMuteWarn ? '#fdba74' : '#fde68a';
+                    muteText.innerText = isMuteWarn
+                      ? `⚠️ MUTE EXPIRING SOON — ${muteRemStr}${expNote}`
+                      : `🔇 Alarms Muted — ${muteRemStr} left${expNote}`;
+                    if (mutePresets) mutePresets.style.display = 'none';
+                    if (muteActiveBtns) muteActiveBtns.style.display = 'flex';
+                  } else if (currentMode === 'OFF_SESSION') {
+                    muteBar.className = 'inc-mute-bar';
+                    muteDot.style.background = '#94a3b8';
+                    muteText.style.color = '#94a3b8';
+                    muteText.innerText = '⏸️ Off-Session (Alarms Paused)';
+                    if (mutePresets) mutePresets.style.display = 'flex';
+                    if (muteActiveBtns) muteActiveBtns.style.display = 'none';
+                  } else {
+                    muteBar.className = 'inc-mute-bar';
+                    muteDot.style.background = '#10b981';
+                    muteText.style.color = '#cbd5e1';
+                    muteText.innerText = '🛡️ Chamber Alarms Armed';
+                    if (mutePresets) mutePresets.style.display = 'flex';
+                    if (muteActiveBtns) muteActiveBtns.style.display = 'none';
+                  }
+                }
+
                 (EQUIPMENT.incubators || []).forEach(inc => {
-                  const incAlarm = inc.alarm_cnl ? (r[inc.alarm_cnl] > 0) : false;
-                  if (incAlarm) anyIncAlarm = true;
+                  const incAlarm = (inc.key in incTrips)
+                    ? Boolean(incTrips[inc.key])
+                    : (inc.alarm_cnl ? (r[inc.alarm_cnl] > 0) : false);
+                  if (incAlarm && !cab.mute_active) anyIncAlarm = true;
                   const valInc = document.getElementById(`val-${inc.key}`);
                   const badgeInc = document.getElementById(`badge-${inc.key}`);
                   const subInc = document.getElementById(`sub-${inc.key}`);
@@ -2285,13 +2513,30 @@
                       valInc.style.color = '#94a3b8';
                     }
                     if (badgeInc) {
-                      badgeInc.innerText = 'OFF-SESSION';
+                      badgeInc.innerText = isManualMute ? `MUTED ${muteRemStr}` : 'OFF-SESSION';
                       badgeInc.className = 'status-badge';
                       badgeInc.style.background = 'rgba(148, 163, 184, 0.15)';
                       badgeInc.style.color = '#94a3b8';
                       badgeInc.style.border = '1px solid rgba(148, 163, 184, 0.3)';
                     }
                     if (subInc) subInc.innerText = 'Alarms Suppressed';
+                  } else if (isManualMute) {
+                    if (valInc) {
+                      valInc.innerText = incAlarm ? 'ALARMING' : 'MUTED';
+                      valInc.style.color = isMuteWarn ? '#fb923c' : '#ffab00';
+                    }
+                    if (badgeInc) {
+                      badgeInc.innerText = isMuteWarn ? `EXPIRING ${muteRemStr}` : `MUTED ${muteRemStr}`;
+                      badgeInc.className = 'status-badge status-warn';
+                      badgeInc.style.background = isMuteWarn ? 'rgba(249, 115, 22, 0.25)' : 'rgba(255, 171, 0, 0.2)';
+                      badgeInc.style.color = isMuteWarn ? '#fb923c' : '#ffab00';
+                      badgeInc.style.border = isMuteWarn ? '1px solid rgba(249, 115, 22, 0.6)' : '1px solid rgba(255, 171, 0, 0.4)';
+                    }
+                    if (subInc) {
+                      subInc.innerText = incAlarm
+                        ? `⚠️ Alarming (Muted ${muteRemStr})`
+                        : (isMuteWarn ? `⚠️ Re-arms in ${muteRemStr}` : `🔇 Timed Mute (${muteRemStr})`);
+                    }
                   } else if (cab.is_open) {
                     if (valInc) {
                       valInc.innerText = 'MUTED';
@@ -2322,33 +2567,48 @@
                     if (subInc) subInc.innerText = `🛡️ Recovery Grace (${cab.grace_remaining_sec}s)`;
                   } else {
                     if (valInc) {
-                      valInc.innerText = incAlarm ? 'ALARM' : 'NORMAL';
+                      valInc.innerText = incAlarm ? 'ALARMING' : 'NORMAL';
                       valInc.style.color = incAlarm ? '#ff1744' : '#f0f4f8';
                     }
                     if (badgeInc) {
-                      badgeInc.innerText = incAlarm ? 'TRIPPED' : 'CLEAR';
+                      badgeInc.innerText = incAlarm ? 'ALARM' : 'CLEAR';
                       badgeInc.className = incAlarm ? 'status-badge status-alert' : 'status-badge status-normal';
                       badgeInc.style.background = '';
                       badgeInc.style.color = '';
                       badgeInc.style.border = '';
                     }
-                    if (subInc) subInc.innerText = incAlarm ? 'Chamber Trip Active' : (inc.subtitle || 'Chamber • In-Range');
+                    if (subInc) subInc.innerText = incAlarm ? 'Incubator Alarm Active' : (inc.subtitle || 'G210 InviCell • In-Range');
                   }
                 });
                 if (cardInc) {
                   if (currentMode === 'OFF_SESSION') {
                     cardInc.style.opacity = '0.75';
                     cardInc.style.borderTopColor = '#64748b';
+                  } else if (anyIncAlarm) {
+                    cardInc.style.opacity = '1.0';
+                    cardInc.style.borderTopColor = '#ff1744';
+                  } else if (isMuteWarn) {
+                    cardInc.style.opacity = '1.0';
+                    cardInc.style.borderTopColor = '#f97316';
+                  } else if (isManualMute) {
+                    cardInc.style.opacity = '1.0';
+                    cardInc.style.borderTopColor = '#ffab00';
                   } else {
                     cardInc.style.opacity = '1.0';
-                    cardInc.style.borderTopColor = anyIncAlarm ? '#ff1744' : '#00b0ff';
+                    cardInc.style.borderTopColor = '#00b0ff';
                   }
                 }
 
                 // Cabinet Environmental & Door Status Updates
                 const cabDoorBadge = document.getElementById('cab-door-badge');
                 if (cabDoorBadge) {
-                  if (cab.door_alarm) {
+                  if (cab.door_switch_disabled) {
+                    cabDoorBadge.innerText = '🚪 DOOR BYPASSED';
+                    cabDoorBadge.className = 'status-badge';
+                    cabDoorBadge.style.background = 'rgba(148, 163, 184, 0.14)';
+                    cabDoorBadge.style.color = '#94a3b8';
+                    cabDoorBadge.style.border = '1px solid rgba(148, 163, 184, 0.3)';
+                  } else if (cab.door_alarm) {
                     cabDoorBadge.innerText = '🚨 DOOR ALARM (> 3m)';
                     cabDoorBadge.className = 'status-badge status-alert';
                     cabDoorBadge.style.background = 'rgba(255, 23, 68, 0.25)';
@@ -3002,6 +3262,9 @@
             (EQUIPMENT.ambient || []).forEach(a => {
               if (a.temp_cnl) list.push({ key: a.key, name: a.name, temp_cnl: a.temp_cnl, default_tol: 0.5 });
             });
+            (EQUIPMENT.cabinets || []).forEach(c => {
+              if (c.temp_cnl) list.push({ key: c.key, name: c.name, temp_cnl: c.temp_cnl, default_tol: 0.5 });
+            });
             return list;
           }
 
@@ -3054,7 +3317,10 @@
 
                 const equipList = getCalibratableEquipment();
                 const eqStatus = data.equipment_status || {};
+                const activeOffsets = data.active_offsets || {};
                 const logs = data.logs || [];
+
+                const escCal = s => String(s || '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
 
                 let h = '<div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:12px; padding:10px 12px; background:rgba(9,13,22,0.75); border:1px solid rgba(16,185,129,0.25); border-radius:8px;">' +
                   '<div style="font-size:12.5px; color:#cbd5e1;">' +
@@ -3067,8 +3333,10 @@
                 h += '<div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(195px, 1fr)); gap:8px; margin-bottom:14px;">';
                 equipList.forEach(eq => {
                   const st = eqStatus[eq.key];
+                  const actOff = Number(activeOffsets[eq.key] || 0);
+                  const offPill = Math.abs(actOff) >= 0.005 ? ` · Offset ${actOff >= 0 ? '+' : ''}${actOff.toFixed(2)}°C` : '';
                   let badgeHtml = '<span style="color:#94a3b8; font-size:10.5px; font-weight:700;">UNVERIFIED</span>';
-                  let subText = 'No record on file';
+                  let subText = Math.abs(actOff) >= 0.005 ? `No NIST log · Offset ${actOff >= 0 ? '+' : ''}${actOff.toFixed(2)}°C` : 'No record on file';
                   let borderCol = 'rgba(255,255,255,0.08)';
                   if (st) {
                     if (st.status === 'VALID') {
@@ -3081,11 +3349,11 @@
                       badgeHtml = '<span style="color:#ef4444; font-size:10.5px; font-weight:800;">🚨 EXPIRED / FAIL</span>';
                       borderCol = 'rgba(239,68,68,0.45)';
                     }
-                    subText = `Due: ${st.next_due_date} (Δ ${st.deviation_c >= 0 ? '+' : ''}${st.deviation_c}°C)`;
+                    subText = `Due: ${st.next_due_date} (Δ ${st.deviation_c >= 0 ? '+' : ''}${st.deviation_c}°C)${offPill}`;
                   }
                   h += `<div style="background:rgba(15,23,42,0.75); border:1px solid ${borderCol}; border-radius:8px; padding:8px 10px; cursor:pointer;" onclick="openCalibrationModal('${eq.key}')">` +
                     `<div style="display:flex; justify-content:space-between; align-items:center;">` +
-                    `<span style="font-weight:700; font-size:12px; color:#f0f4f8;">${eq.name}</span>` +
+                    `<span style="font-weight:700; font-size:12px; color:#f0f4f8;">${escCal(eq.name)}</span>` +
                     badgeHtml +
                     `</div>` +
                     `<div style="font-size:11px; color:#8899a6; margin-top:3px; font-family:monospace;">${subText}</div>` +
@@ -3103,11 +3371,11 @@
                   '<th>Verified Date</th>' +
                   '<th>Equipment</th>' +
                   '<th>Probe ID</th>' +
-                  '<th>Master NIST Cert # (Exp)</th>' +
+                  '<th>NIST Reference Cert (Exp)</th>' +
                   '<th>NIST Ref</th>' +
-                  '<th>SCADA Read</th>' +
+                  '<th>Device Read</th>' +
                   '<th>Deviation</th>' +
-                  '<th>PLC Offset</th>' +
+                  '<th>Cal Offset</th>' +
                   '<th>Status / Next Due</th>' +
                   '<th>Staff</th>' +
                   '</tr></thead><tbody>';
@@ -3124,23 +3392,75 @@
                   } else if (row.status === 'EXPIRING_SOON') {
                     stBadge = '<span class="status-badge status-warn">DUE SOON</span>';
                   }
+                  const noteHtml = row.notes ? `<div style="font-size:11px; color:#8899a6; margin-top:2px;">${escCal(row.notes)}</div>` : '';
                   h += `<tr>` +
                     `<td style="font-family:monospace;">${verDate}</td>` +
-                    `<td><strong>${row.equipment_name}</strong></td>` +
-                    `<td style="color:#94a3b8; font-size:12px;">${row.probe_label || '-'}</td>` +
-                    `<td style="font-family:monospace; font-size:12px;">${row.nist_cert_number} <span style="color:#8899a6;">(Exp: ${row.nist_exp_date})</span></td>` +
+                    `<td><strong>${escCal(row.equipment_name)}</strong>${noteHtml}</td>` +
+                    `<td style="color:#94a3b8; font-size:12px;">${escCal(row.probe_label) || '-'}</td>` +
+                    `<td style="font-family:monospace; font-size:12px;">${escCal(row.nist_cert_number)} <span style="color:#8899a6;">(Exp: ${row.nist_exp_date})</span></td>` +
                     `<td style="font-family:monospace; font-weight:700;">${row.ref_temp_c.toFixed(2)}°C</td>` +
                     `<td style="font-family:monospace; font-weight:700; color:#38bdf8;">${row.scada_temp_c.toFixed(2)}°C</td>` +
                     `<td style="font-family:monospace; font-weight:700;">${devSign}${row.deviation_c.toFixed(2)}°C <span style="color:#64748b; font-size:11px;">(±${row.tolerance_c}°C)</span></td>` +
                     `<td style="font-family:monospace;">${offSign}${row.offset_applied_c.toFixed(2)}°C</td>` +
                     `<td>${stBadge} <span style="font-size:11px; color:#8899a6; margin-left:4px;">Due ${row.next_due_date}</span></td>` +
-                    `<td><b>${row.verified_by}</b></td>` +
+                    `<td><b>${escCal(row.verified_by)}</b></td>` +
                     `</tr>`;
                 });
                 h += '</tbody></table>';
                 container.innerHTML = h;
               })
               .catch(e => console.error('Calibrations fetch error:', e));
+          }
+
+          function getActiveCalOffset(eqKey) {
+            if (cachedCalSummary && cachedCalSummary.active_offsets && cachedCalSummary.active_offsets[eqKey] !== undefined) {
+              return Number(cachedCalSummary.active_offsets[eqKey]) || 0.0;
+            }
+            return 0.0;
+          }
+
+          function updateCalNistExpWarn() {
+            const expInput = document.getElementById('calNistExp');
+            const warnEl = document.getElementById('calNistExpWarn');
+            if (!expInput || !warnEl) return;
+            const val = expInput.value;
+            if (!val) {
+              warnEl.innerText = '';
+              return;
+            }
+            const todayLocal = new Date();
+            const yyyy = todayLocal.getFullYear();
+            const mm = String(todayLocal.getMonth() + 1).padStart(2, '0');
+            const dd = String(todayLocal.getDate()).padStart(2, '0');
+            if (val < `${yyyy}-${mm}-${dd}`) {
+              warnEl.style.color = '#ef4444';
+              warnEl.innerText = '⚠ Past expiration';
+            } else {
+              warnEl.innerText = '';
+            }
+          }
+
+          function toggleCalToleranceLock(forceLock) {
+            const tolInput = document.getElementById('calTolerance');
+            const btn = document.getElementById('calTolToggleBtn');
+            const hint = document.getElementById('calTolHint');
+            if (!tolInput || !btn) return;
+            const lock = (forceLock !== undefined) ? !!forceLock : !tolInput.readOnly;
+            tolInput.readOnly = lock;
+            if (lock) {
+              tolInput.style.background = 'rgba(15,23,42,0.55)';
+              tolInput.style.color = '#94a3b8';
+              tolInput.style.borderColor = 'rgba(148,163,184,0.2)';
+              btn.innerText = 'Change';
+              if (hint) hint.innerText = 'SOP Pass Limit';
+            } else {
+              tolInput.style.background = '';
+              tolInput.style.color = '';
+              tolInput.style.borderColor = 'rgba(245,158,11,0.55)';
+              btn.innerText = 'Lock SOP';
+              if (hint) hint.innerText = 'Custom limit active';
+              tolInput.focus();
+            }
           }
 
           function openCalibrationModal(preselectKey) {
@@ -3167,6 +3487,7 @@
             }
 
             document.getElementById('calSubmitMsg').innerText = '';
+            updateCalNistExpWarn();
             onCalEquipChange();
             document.getElementById('calibrationModal').style.display = 'flex';
           }
@@ -3179,38 +3500,174 @@
             const key = document.getElementById('calEquipSelect').value;
             const equipList = getCalibratableEquipment();
             const eq = equipList.find(item => item.key === key);
+            const activeOff = getActiveCalOffset(key);
             if (eq) {
               document.getElementById('calTolerance').value = eq.default_tol.toFixed(1);
+              toggleCalToleranceLock(true);
+              document.getElementById('calScadaTempLabel').innerText = `${eq.name} Reading (°C)`;
+              document.getElementById('calScadaHint').innerText = `Live Ch ${eq.temp_cnl} reading`;
+
               const liveVal = lastReadings[String(eq.temp_cnl)] !== undefined ? lastReadings[String(eq.temp_cnl)] : lastReadings[eq.temp_cnl];
               if (liveVal !== undefined && liveVal !== null) {
                 document.getElementById('calScadaTemp').value = Number(liveVal).toFixed(2);
+              } else {
+                document.getElementById('calScadaTemp').value = '';
               }
-              if (cachedCalSummary && cachedCalSummary.equipment_status && cachedCalSummary.equipment_status[key]) {
-                const prev = cachedCalSummary.equipment_status[key];
-                if (prev.probe_label) document.getElementById('calProbeLabel').value = prev.probe_label;
-                if (prev.offset_applied_c !== undefined) document.getElementById('calOffset').value = Number(prev.offset_applied_c).toFixed(2);
+
+              const actEl = document.getElementById('calActiveOffsetVal');
+              if (actEl) {
+                actEl.innerText = `${activeOff >= 0 ? '+' : ''}${activeOff.toFixed(2)}°C`;
+                actEl.style.color = Math.abs(activeOff) >= 0.005 ? '#f59e0b' : '#f0f4f8';
               }
+              document.getElementById('calOffset').value = activeOff.toFixed(2);
+              document.getElementById('calApplyOffset').checked = false;
+
+              const prev = (cachedCalSummary && cachedCalSummary.equipment_status) ? cachedCalSummary.equipment_status[key] : null;
+              document.getElementById('calProbeLabel').value = (prev && prev.probe_label) ? prev.probe_label : '';
+            }
+            document.getElementById('calSubmitMsg').innerText = '';
+            updateCalPreview();
+          }
+
+          function autoCalcCalOffset() {
+            const key = document.getElementById('calEquipSelect').value;
+            const refVal = parseFloat(document.getElementById('calRefTemp').value);
+            const scadaVal = parseFloat(document.getElementById('calScadaTemp').value);
+            const msgEl = document.getElementById('calSubmitMsg');
+            if (isNaN(refVal) || isNaN(scadaVal)) {
+              msgEl.style.color = '#ef4444';
+              msgEl.innerText = 'Enter NIST Ref Temp and Device Reading first to Auto-Calc Calibration Offset.';
+              return;
+            }
+            const activeOff = getActiveCalOffset(key);
+            const needed = Number((activeOff + (refVal - scadaVal)).toFixed(2));
+            if (Math.abs(needed) > 5.0) {
+              msgEl.style.color = '#ef4444';
+              msgEl.innerText = `Calculated offset (${needed >= 0 ? '+' : ''}${needed.toFixed(2)}°C) exceeds ±5.0°C safety limit — inspect probe or wiring.`;
+              return;
+            }
+            msgEl.innerText = '';
+            document.getElementById('calOffset').value = needed.toFixed(2);
+            document.getElementById('calApplyOffset').checked = Math.abs(needed - activeOff) >= 0.005;
+            updateCalPreview();
+          }
+
+          function onCalOffsetInput() {
+            const key = document.getElementById('calEquipSelect').value;
+            const activeOff = getActiveCalOffset(key);
+            const offVal = parseFloat(document.getElementById('calOffset').value);
+            if (!isNaN(offVal) && Math.abs(offVal - activeOff) >= 0.005) {
+              document.getElementById('calApplyOffset').checked = true;
             }
             updateCalPreview();
           }
 
           function updateCalPreview() {
+            const key = document.getElementById('calEquipSelect').value;
             const refVal = parseFloat(document.getElementById('calRefTemp').value);
             const scadaVal = parseFloat(document.getElementById('calScadaTemp').value);
+            const offVal = parseFloat(document.getElementById('calOffset').value);
             const tolVal = parseFloat(document.getElementById('calTolerance').value) || 0.5;
+            const applyNow = document.getElementById('calApplyOffset').checked;
+            const activeOff = getActiveCalOffset(key);
             const banner = document.getElementById('calPreviewBanner');
             if (isNaN(refVal) || isNaN(scadaVal)) {
-              banner.innerHTML = '<span style="color:#94a3b8;">Enter Reference &amp; SCADA temperatures to calculate deviation.</span><span class="status-badge status-normal">--</span>';
+              banner.innerHTML = '<span style="color:#94a3b8;">Enter NIST Reference &amp; Device readings to calculate deviation.</span><span class="status-badge status-normal">--</span>';
               return;
             }
             const dev = scadaVal - refVal;
-            const absDev = Math.abs(dev);
             const sign = dev >= 0 ? '+' : '';
-            const pass = absDev <= tolVal;
-            const badge = pass
-              ? '<span class="status-badge status-normal">PASS (Within Tolerance)</span>'
-              : '<span class="status-badge status-alert">FAIL (Adjust PLC Offset)</span>';
-            banner.innerHTML = `<span>Deviation (SCADA − NIST): <strong style="font-family:monospace; color:#f0f4f8;">${sign}${dev.toFixed(2)}°C</strong> (Allowed: ±${tolVal.toFixed(1)}°C)</span>${badge}`;
+            const willTrim = applyNow && !isNaN(offVal) && Math.abs(offVal - activeOff) >= 0.005;
+            if (willTrim) {
+              const projTemp = scadaVal + (offVal - activeOff);
+              const projDev = projTemp - refVal;
+              const projSign = projDev >= 0 ? '+' : '';
+              const passAfter = Math.abs(projDev) <= tolVal;
+              const badge = passAfter
+                ? '<span class="status-badge status-normal">PASS AFTER OFFSET</span>'
+                : '<span class="status-badge status-alert">OUT OF TOLERANCE</span>';
+              banner.innerHTML = `<span>As-Found Dev: <strong style="font-family:monospace;">${sign}${dev.toFixed(2)}°C</strong> → Projected: <strong style="font-family:monospace; color:#38bdf8;">${projTemp.toFixed(2)}°C</strong> (<strong style="font-family:monospace; color:#f0f4f8;">${projSign}${projDev.toFixed(2)}°C</strong> vs ±${tolVal.toFixed(1)}°C)</span>${badge}`;
+            } else {
+              const pass = Math.abs(dev) <= tolVal;
+              const badge = pass
+                ? '<span class="status-badge status-normal">PASS (Within Tolerance)</span>'
+                : '<span class="status-badge status-alert">OUT OF TOL (Trim or Adjust)</span>';
+              banner.innerHTML = `<span>Deviation (Device − NIST): <strong style="font-family:monospace; color:#f0f4f8;">${sign}${dev.toFixed(2)}°C</strong> (Allowed: ±${tolVal.toFixed(1)}°C)</span>${badge}`;
+            }
+          }
+
+          function applyCalOffsetNow() {
+            const key = document.getElementById('calEquipSelect').value;
+            const offVal = parseFloat(document.getElementById('calOffset').value);
+            const msgEl = document.getElementById('calSubmitMsg');
+            const btn = document.getElementById('btnApplyOffsetNow');
+            const prevScada = parseFloat(document.getElementById('calScadaTemp').value);
+            const prevOff = getActiveCalOffset(key);
+
+            if (isNaN(offVal) || Math.abs(offVal) > 5.0) {
+              msgEl.style.color = '#ef4444';
+              msgEl.innerText = 'Calibration Offset must be between -5.00 and +5.00°C.';
+              return;
+            }
+
+            btn.disabled = true;
+            btn.innerText = 'Applying...';
+            msgEl.style.color = '#38bdf8';
+            msgEl.innerText = 'Writing Calibration Offset to PLC & refreshing live SCADA reading...';
+
+            fetch('/api/calibrations/apply-offset', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ equipment_key: key, offset_c: offVal })
+            })
+              .then(r => r.json().then(d => ({ ok: r.ok, data: d })))
+              .then(({ ok, data }) => {
+                btn.disabled = false;
+                btn.innerText = '⚡ Apply Offset Now';
+                if (!ok || !data.success) {
+                  msgEl.style.color = '#ef4444';
+                  msgEl.innerText = 'PLC Offset Error: ' + (data.error || 'Failed to apply offset');
+                  return;
+                }
+                const applied = Number(data.offset_applied_c);
+                if (!cachedCalSummary) cachedCalSummary = {};
+                if (!cachedCalSummary.active_offsets) cachedCalSummary.active_offsets = {};
+                cachedCalSummary.active_offsets[key] = applied;
+
+                const actEl = document.getElementById('calActiveOffsetVal');
+                if (actEl) {
+                  actEl.innerText = `${applied >= 0 ? '+' : ''}${applied.toFixed(2)}°C`;
+                  actEl.style.color = Math.abs(applied) >= 0.005 ? '#f59e0b' : '#f0f4f8';
+                }
+                document.getElementById('calOffset').value = applied.toFixed(2);
+                document.getElementById('calApplyOffset').checked = false;
+
+                if (data.live_temp_c !== null && data.live_temp_c !== undefined) {
+                  document.getElementById('calScadaTemp').value = Number(data.live_temp_c).toFixed(2);
+                } else if (!isNaN(prevScada)) {
+                  document.getElementById('calScadaTemp').value = (prevScada + (applied - prevOff)).toFixed(2);
+                }
+
+                if (Math.abs(applied - prevOff) >= 0.005 && !isNaN(prevScada)) {
+                  const notesEl = document.getElementById('calNotes');
+                  const noteTxt = `As-Found before trim: ${prevScada.toFixed(2)}°C (Cal Offset ${prevOff >= 0 ? '+' : ''}${prevOff.toFixed(2)}°C -> ${applied >= 0 ? '+' : ''}${applied.toFixed(2)}°C)`;
+                  if (notesEl && !notesEl.value.includes('As-Found')) {
+                    notesEl.value = notesEl.value.trim() ? `${notesEl.value.trim()} | ${noteTxt}` : noteTxt;
+                  }
+                }
+
+                msgEl.style.color = '#10b981';
+                msgEl.innerText = `✅ Applied ${applied >= 0 ? '+' : ''}${applied.toFixed(2)}°C to PLC & saved.`;
+                updateCalPreview();
+                updateTelemetry();
+                loadCalibrations();
+              })
+              .catch(e => {
+                btn.disabled = false;
+                btn.innerText = '⚡ Apply Offset Now';
+                msgEl.style.color = '#ef4444';
+                msgEl.innerText = 'Network error applying offset: ' + e;
+              });
           }
 
           function submitCalibrationLog() {
@@ -3225,6 +3682,7 @@
             const refTemp = parseFloat(document.getElementById('calRefTemp').value);
             const scadaTemp = parseFloat(document.getElementById('calScadaTemp').value);
             const offsetVal = parseFloat(document.getElementById('calOffset').value) || 0.0;
+            const applyOffset = document.getElementById('calApplyOffset').checked;
             const tolVal = parseFloat(document.getElementById('calTolerance').value) || 0.5;
             const verBy = document.getElementById('calVerifiedBy').value.trim().toUpperCase();
             const notes = document.getElementById('calNotes').value.trim();
@@ -3232,13 +3690,18 @@
 
             if (!nistCert || !nistExp || isNaN(refTemp) || isNaN(scadaTemp) || !verBy) {
               msgEl.style.color = '#ef4444';
-              msgEl.innerText = 'Please complete NIST Cert #, Expiration Date, Reference Temp, SCADA Temp, and Staff Initials.';
+              msgEl.innerText = 'Please complete NIST Reference Cert #, NIST Reference Expiration Date, NIST Ref Temp, Device Reading, and Staff Initials.';
+              return;
+            }
+            if (applyOffset && Math.abs(offsetVal) > 5.0) {
+              msgEl.style.color = '#ef4444';
+              msgEl.innerText = 'Calibration Offset must be within ±5.00°C.';
               return;
             }
 
             const btn = document.getElementById('btnSubmitCal');
             btn.disabled = true;
-            btn.innerText = 'Saving...';
+            btn.innerText = applyOffset ? 'Applying & Saving...' : 'Saving...';
 
             fetch('/api/calibrations', {
               method: 'POST',
@@ -3252,18 +3715,20 @@
                 ref_temp_c: refTemp,
                 scada_temp_c: scadaTemp,
                 offset_applied_c: offsetVal,
+                apply_offset: applyOffset,
                 tolerance_c: tolVal,
                 verified_by: verBy,
                 notes: notes
               })
             })
-              .then(r => r.json())
-              .then(res => {
+              .then(r => r.json().then(d => ({ ok: r.ok, data: d })))
+              .then(({ ok, data: res }) => {
                 btn.disabled = false;
                 btn.innerText = '✅ Record NIST Verification';
-                if (res.success) {
+                if (ok && res.success) {
                   closeCalibrationModal();
                   loadCalibrations();
+                  updateTelemetry();
                 } else {
                   msgEl.style.color = '#ef4444';
                   msgEl.innerText = 'Error: ' + (res.error || 'Failed to save record');

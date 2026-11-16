@@ -31,6 +31,7 @@ VAR_INPUT
     (* --- Interactive Operator Commands (from Kiosk UI or OPC UA) --- *)
     bCmdSetAccessMode   : BOOL := FALSE;    (* TRUE pulse: Activate Access Mode (Alarms paused 30 min) *)
     bCmdCancelAccessMode: BOOL := FALSE;    (* TRUE pulse: Cancel Access Mode immediately *)
+    rCalOffset          : REAL := 0.0;      (* NIST calibration trim offset in °C (clamped +/-10.0) *)
 END_VAR
 VAR_OUTPUT
     rProcessTemp        : REAL := -999.0;   (* Published process temperature to SCADA (°C) *)
@@ -57,6 +58,10 @@ VAR
     bPrevSetAccess      : BOOL := FALSE;
     bPrevCancelAccess   : BOOL := FALSE;
     tonCmdPulse         : TON;
+    rCalOffsetEff       : REAL := 0.0;
+END_VAR
+VAR CONSTANT
+    cMaxCalOffset       : REAL := 10.0;
 END_VAR
 // --- implementation ---
 // ==============================================================================
@@ -94,11 +99,19 @@ END_IF;
 // ==============================================================================
 // 2. TEMPERATURE SENTINEL MAPPING
 // ==============================================================================
+IF rCalOffset > cMaxCalOffset THEN
+    rCalOffsetEff := cMaxCalOffset;
+ELSIF rCalOffset < -cMaxCalOffset THEN
+    rCalOffsetEff := -cMaxCalOffset;
+ELSE
+    rCalOffsetEff := rCalOffset;
+END_IF;
+
 // If probe is faulted or comms lost, output standard invalid sentinel (-999.0 °C)
 IF bProbeFault OR bCommLoss THEN
     rProcessTemp := -999.0;
 ELSE
-    rProcessTemp := TO_REAL(iTempX10) / 10.0;
+    rProcessTemp := (TO_REAL(iTempX10) / 10.0) + rCalOffsetEff;
 END_IF;
 
 // ==============================================================================

@@ -28,6 +28,7 @@ pub struct DeviceSlot {
     pub rssi: i8,
     pub modbus_ctx: SlotModbusContext,
     pub pending_cmd: Option<DownlinkPacket>,
+    pub pending_cmd_immediate: bool,
 }
 
 impl DeviceSlot {
@@ -49,6 +50,7 @@ impl DeviceSlot {
             rssi: 0,
             modbus_ctx: ctx,
             pending_cmd: None,
+            pending_cmd_immediate: false,
         }
     }
 
@@ -64,6 +66,7 @@ impl DeviceSlot {
         self.sequence_number = 0;
         self.rssi = 0;
         self.pending_cmd = None;
+        self.pending_cmd_immediate = false;
         let mut ctx = ModbusContext::new();
         let _ = ctx.set_holding(REG_PRIMARY_VAL as u16, (-9999i16) as u16);
         let _ = ctx.set_holding(REG_SECONDARY_VAL as u16, (-9999i16) as u16);
@@ -181,6 +184,7 @@ impl WirelessGateway {
         // 4. Check for Pending Mailbox Downlink Command from PLC
         let downlink = slot.pending_cmd.take();
         if downlink.is_some() {
+            slot.pending_cmd_immediate = false;
             // Reset mailbox register in Modbus to signal PLC that command was delivered
             let _ = ctx.set_holding(REG_COMMAND_MAILBOX as u16, 0);
         }
@@ -247,7 +251,11 @@ impl WirelessGateway {
                                 _ => DownlinkCommand::None,
                             };
                             if cmd != DownlinkCommand::None {
-                                slot.pending_cmd = Some(DownlinkPacket::new(cmd, param as i16));
+                                let pkt = DownlinkPacket::new(cmd, param as i16);
+                                if slot.pending_cmd.as_ref() != Some(&pkt) {
+                                    slot.pending_cmd = Some(pkt);
+                                    slot.pending_cmd_immediate = true;
+                                }
                             }
                         }
                     }
@@ -379,5 +387,73 @@ mod tests {
         // Bit 0 = 0x0001 (Online), Bit 3 = 0x0008 (Access Mode Active) -> 0x0009
         assert_eq!(flags & 0x0008, 0x0008, "Bit 3 (Access Mode) must be set in status flags");
         assert_eq!(flags & 0x0001, 0x0001, "Bit 0 (Online) must be set");
+    }
+
+    fn modbus_crc16(bytes: &[u8]) -> [u8; 2] {
+        let mut crc: u16 = 0xFFFF;
+        for &b in bytes {
+            crc ^= b as u16;
+            for _ in 0..8 {
+                crc = if (crc & 1) != 0 { (crc >> 1) ^ 0xA001 } else { crc >> 1 };
+            }
+        }
+        crc.to_le_bytes()
+    }
+
+    fn build_fc06_frame(unit_id: u8, reg: u16, val: u16) -> [u8; 8] {
+        let body = [
+            unit_id,
+            0x06,
+            (reg >> 8) as u8,
+            (reg & 0xFF) as u8,
+            (val >> 8) as u8,
+            (val & 0xFF) as u8,
+        ];
+        let crc = modbus_crc16(&body);
+        [body[0], body[1], body[2], body[3], body[4], body[5], crc[0], crc[1]]
+    }
+
+    #[test]
+    fn test_mailbox_write_targets_only_addressed_slot() {
+        let mut gw = WirelessGateway::new();
+        let mac1 = [0xB8, 0x1F, 0x3F, 0xC3, 0xA0, 0xCC];
+        let mac3 = [0x90, 0xDA, 0x72, 0x71, 0x46, 0xD4];
+        gw.slots[0].bind(mac1, DeviceType::DewarCryo);
+        gw.slots[2].bind(mac3, DeviceType::DewarCryo);
+
+        // Write Access Mode (cmd 5, param 30) to Slot 3 only
+        let mut resp = Vec::new();
+        let set_param = build_fc06_frame(3, REG_COMMAND_PARAM as u16, 30);
+        assert!(gw.process_modbus_rtu(&set_param, &mut resp).unwrap());
+        resp.clear();
+        let set_cmd = build_fc06_frame(3, REG_COMMAND_MAILBOX as u16, 5);
+        assert!(gw.process_modbus_rtu(&set_cmd, &mut resp).unwrap());
+
+        assert_eq!(gw.slots[2].pending_cmd, Some(DownlinkPacket::new(DownlinkCommand::SetAccessMode, 30)));
+        assert!(gw.slots[2].pending_cmd_immediate);
+        assert!(gw.slots[0].pending_cmd.is_none(), "Slot 1 (Dewar 2) must not receive Slot 3 mailbox command");
+        assert!(!gw.slots[0].pending_cmd_immediate);
+
+        // Repeating the same FC06 while queued should not re-trigger immediate TX
+        gw.slots[2].pending_cmd_immediate = false;
+        resp.clear();
+        assert!(gw.process_modbus_rtu(&set_cmd, &mut resp).unwrap());
+        assert!(!gw.slots[2].pending_cmd_immediate);
+
+        // When Slot 3 node wakes and uplinks, mailbox delivers only to Slot 3
+        let pkt = UplinkPacket::new(
+            3,
+            mac3,
+            1,
+            DeviceTelemetry::Dewar {
+                temp_c_x10: -1800,
+                battery_mv: 3900,
+                sensor_fault: 0,
+                access_mode: false,
+            },
+        );
+        let cmd = gw.handle_uplink(&pkt, -60, 100).unwrap();
+        assert_eq!(cmd, Some(DownlinkPacket::new(DownlinkCommand::SetAccessMode, 30)));
+        assert!(gw.slots[2].pending_cmd.is_none());
     }
 }

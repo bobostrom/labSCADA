@@ -36,6 +36,7 @@ VAR_INPUT
 
     bIsWireless         : BOOL := TRUE;     (* TRUE = Enable wireless diagnostics *)
     tCommLossTimeout    : TIME := T#60S;    (* Watchdog comms loss alarm threshold *)
+    rAmbientCalOffset   : REAL := 0.0;      (* NIST calibration trim offset for Ambient °C (clamped +/-10.0) *)
 END_VAR
 VAR_OUTPUT
     (* --- Published Ambient Room Telemetry to SCADA & UI --- *)
@@ -60,8 +61,12 @@ VAR
     iFreezerTempX10     : INT;
     bFreezerSwapSuspect : BOOL := FALSE;
     uiFreezerFaultIn    : UINT := 0;
+    rAmbCalOffsetEff    : REAL := 0.0;
     tonOnlineSettle     : TON;              (* Hold CommLoss through initial Modbus settle on boot/reconnect *)
     bLinkOnline         : BOOL := FALSE;    (* Bridge online bit set and watchdog healthy *)
+END_VAR
+VAR CONSTANT
+    cMaxCalOffset       : REAL := 10.0;
 END_VAR
 // --- implementation ---
 // ==============================================================================
@@ -121,10 +126,18 @@ fbFreezer(
 // ==============================================================================
 // 4. CLEANROOM AMBIENT ROOM TEMPERATURE (20.0°C to 27.0°C Comfort Window)
 // ==============================================================================
+IF rAmbientCalOffset > cMaxCalOffset THEN
+    rAmbCalOffsetEff := cMaxCalOffset;
+ELSIF rAmbientCalOffset < -cMaxCalOffset THEN
+    rAmbCalOffsetEff := -cMaxCalOffset;
+ELSE
+    rAmbCalOffsetEff := rAmbientCalOffset;
+END_IF;
+
 IF bAmbientProbeFault OR bCommLoss THEN
     rAmbientTemp := -999.0;
 ELSE
-    rAmbientTemp := TO_REAL(iAmbientTempX10) / 10.0;
+    rAmbientTemp := (TO_REAL(iAmbientTempX10) / 10.0) + rAmbCalOffsetEff;
 END_IF;
 
 fbAmbientAlarmEval(

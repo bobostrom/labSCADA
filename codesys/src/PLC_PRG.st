@@ -66,12 +66,10 @@ fbDewar3(
     bIsWireless := TRUE
 );
 fbDewar4(
-    wRawTempX10 := TO_WORD(-1500),
-    bIsWireless := FALSE
+    bIsWireless := TRUE
 );
 fbDewar5(
-    wRawTempX10 := TO_WORD(-1500),
-    bIsWireless := FALSE
+    bIsWireless := TRUE
 );
 // ==============================================================================
 // 4. INCUBATOR CABINET 01 & G210 INCUBATORS (Muted when door open + 3m grace)

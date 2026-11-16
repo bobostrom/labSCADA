@@ -805,6 +805,52 @@
     <EventMask>81</EventMask>
   </Cnl>
   <Cnl>
+    <CnlNum>136</CnlNum>
+    <Active>true</Active>
+    <Name>Dewar 4 Battery Voltage</Name>
+    <Code />
+    <DataTypeID xsi:nil="true" />
+    <DataLen xsi:nil="true" />
+    <CnlTypeID>2</CnlTypeID>
+    <ObjNum>1</ObjNum>
+    <DeviceNum>1</DeviceNum>
+    <TagNum xsi:nil="true" />
+    <TagCode>Dewar4_BattV</TagCode>
+    <FormulaEnabled>false</FormulaEnabled>
+    <InFormula />
+    <OutFormula />
+    <FormatID>3</FormatID>
+    <OutFormatID xsi:nil="true" />
+    <QuantityID>4</QuantityID>
+    <UnitID>41</UnitID>
+    <LimID xsi:nil="true" />
+    <ArchiveMask xsi:nil="true" />
+    <EventMask>81</EventMask>
+  </Cnl>
+  <Cnl>
+    <CnlNum>137</CnlNum>
+    <Active>true</Active>
+    <Name>Dewar 5 Battery Voltage</Name>
+    <Code />
+    <DataTypeID xsi:nil="true" />
+    <DataLen xsi:nil="true" />
+    <CnlTypeID>2</CnlTypeID>
+    <ObjNum>1</ObjNum>
+    <DeviceNum>1</DeviceNum>
+    <TagNum xsi:nil="true" />
+    <TagCode>Dewar5_BattV</TagCode>
+    <FormulaEnabled>false</FormulaEnabled>
+    <InFormula />
+    <OutFormula />
+    <FormatID>3</FormatID>
+    <OutFormatID xsi:nil="true" />
+    <QuantityID>4</QuantityID>
+    <UnitID>41</UnitID>
+    <LimID xsi:nil="true" />
+    <ArchiveMask xsi:nil="true" />
+    <EventMask>81</EventMask>
+  </Cnl>
+  <Cnl>
     <CnlNum>141</CnlNum>
     <Active>true</Active>
     <Name>Incubator 01 Zone 01</Name>

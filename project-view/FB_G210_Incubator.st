@@ -9,7 +9,7 @@
    ============================================================================== *)
 FUNCTION_BLOCK FB_G210_Incubator
 VAR_INPUT
-    bAlarmContact       : BOOL := FALSE;    (* Physical dry alarm contact from incubator (FALSE = Normal, TRUE = Alarm) *)
+    bAlarmContact       : BOOL := FALSE;    (* Physical dry alarm contact from incubator (Fail-Safe NC: TRUE = Normal/Closed, FALSE = Alarm/Open) *)
     bMute               : BOOL := FALSE;    (* TRUE = Suppress alarm (Cabinet door open or recovery grace) *)
     tPickupDelay        : TIME := T#15S;    (* Contact bounce filter *)
     tDropoutDelay       : TIME := T#5S;     (* Recovery confirmation filter *)
@@ -23,9 +23,9 @@ VAR
     fbFilter            : FB_PickupDropout;
 END_VAR
 // --- implementation ---
-// 1. TIMED DEBOUNCE FILTER DIRECTLY ON ALARM CONTACT
+// 1. TIMED DEBOUNCE FILTER ON FAIL-SAFE NC ALARM CONTACT (TRUE = Closed/Normal, FALSE = Open/Alarm)
 fbFilter(
-    IN            := bAlarmContact,
+    IN            := NOT bAlarmContact,
     tPickupDelay  := tPickupDelay,
     tDropoutDelay := tDropoutDelay
 );

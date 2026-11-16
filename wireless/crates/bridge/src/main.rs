@@ -11,7 +11,7 @@ use esp_hal::time::{Duration, Instant};
 use esp_hal::timer::timg::TimerGroup;
 use esp_hal::uart::{Config as UartConfig, Uart};
 use esp_hal::Blocking;
-use esp_radio::esp_now::BROADCAST_ADDRESS;
+use esp_radio::esp_now::{EspNowManager, EspNowSender, EspNowWifiInterface, PeerInfo};
 use wireless_protocol::{DeviceTelemetry, UplinkPacket};
 
 pub mod gateway;
@@ -155,6 +155,33 @@ impl DirectUsbSerial {
     }
 }
 
+/// Ensures `mac` is registered in the ESP-NOW peer table so unicast downlinks can transmit.
+fn ensure_espnow_peer(manager: &EspNowManager, mac: &[u8; 6]) {
+    if !manager.peer_exists(mac) {
+        let _ = manager.add_peer(PeerInfo {
+            interface: EspNowWifiInterface::Station,
+            peer_address: *mac,
+            lmk: None,
+            channel: None,
+            encrypt: false,
+        });
+    }
+}
+
+/// Sends a downlink strictly unicast to `mac` (never broadcast) so sibling nodes cannot hijack commands.
+fn send_unicast_downlink(
+    manager: &EspNowManager,
+    sender: &mut EspNowSender,
+    mac: &[u8; 6],
+    payload: &[u8],
+) -> bool {
+    ensure_espnow_peer(manager, mac);
+    match sender.send(mac, payload) {
+        Ok(waiter) => waiter.wait().is_ok(),
+        Err(_) => false,
+    }
+}
+
 /// Processes a completed Modbus RTU request frame, writes any reply via `send_reply`, and returns true if slots may have pending downlinks.
 fn handle_rtu_frame<F>(
     frame_buf: &mut RtuFrameBuffer,
@@ -189,7 +216,7 @@ fn main() -> ! {
     // 2. Initialize WiFi and ESP-NOW
     let controller = esp_radio::wifi::WifiController::new(peripherals.WIFI, Default::default()).unwrap();
     let esp_now = controller.esp_now();
-    let (_manager, mut sender, receiver) = esp_now.split();
+    let (manager, mut sender, receiver) = esp_now.split();
 
     // 3. Initialize both Modbus RTU interfaces: USB CDC and RS-485 (UART1 + ST485)
     // XIAO ESP32-S3 carrier PCB pinout: RO=D7(GPIO44), DI=D6(GPIO43), /RE=D3(GPIO4), DE=D2(GPIO3)
@@ -215,6 +242,17 @@ fn main() -> ! {
     // Auto-bind Slot 3 for Dewar 3 (`dewar_plain`, QT Py ESP32-S3) MAC: 90:DA:72:71:46:D4
     let dewar3_mac = [0x90, 0xDA, 0x72, 0x71, 0x46, 0xD4];
     gw.slots[2].bind(dewar3_mac, wireless_protocol::DeviceType::DewarCryo);
+    // Auto-bind Slot 4 for Dewar 4 (`dewar_plain --features slot4`, QT Py ESP32-S3) MAC: 90:DA:72:71:50:B4
+    let dewar4_mac = [0x90, 0xDA, 0x72, 0x71, 0x50, 0xB4];
+    gw.slots[3].bind(dewar4_mac, wireless_protocol::DeviceType::DewarCryo);
+    // Auto-bind Slot 5 for Dewar 5 (`dewar_plain --features slot5`, QT Py ESP32-S3) MAC: 90:DA:72:71:50:BC
+    let dewar5_mac = [0x90, 0xDA, 0x72, 0x71, 0x50, 0xBC];
+    gw.slots[4].bind(dewar5_mac, wireless_protocol::DeviceType::DewarCryo);
+    for slot in &gw.slots {
+        if let Some(mac) = slot.bound_mac {
+            ensure_espnow_peer(&manager, &mac);
+        }
+    }
     gw.pairing_enabled = true;
 
     // Initial baseline: -195.6 C, 3.82V
@@ -248,8 +286,7 @@ fn main() -> ! {
                 if let Ok(downlink_opt) = gw.handle_uplink(&pkt, rssi, uptime_sec as u64) {
                     if let Some(downlink) = downlink_opt {
                         if let Ok(payload) = downlink.serialize(&mut downlink_buf) {
-                            let _ = sender.send(&pkt.mac_address, payload);
-                            let _ = sender.send(&BROADCAST_ADDRESS, payload);
+                            let _ = send_unicast_downlink(&manager, &mut sender, &pkt.mac_address, payload);
                         }
                     }
                 }
@@ -275,19 +312,30 @@ fn main() -> ! {
             dispatch_downlinks = true;
         }
 
-        // If a Modbus write queued a pending command in any slot, transmit over ESP-NOW immediately.
+        // If a Modbus write queued a new command, try immediate unicast (keeps queued for uplink wake if sleeping).
         if dispatch_downlinks {
             for slot in &mut gw.slots {
+                if !slot.pending_cmd_immediate {
+                    continue;
+                }
+                slot.pending_cmd_immediate = false;
                 if let Some(downlink) = slot.pending_cmd.take() {
-                    if let Ok(payload) = downlink.serialize(&mut downlink_buf) {
-                        if let Some(mac) = slot.bound_mac {
-                            let _ = sender.send(&mac, payload);
+                    let delivered = if let Some(mac) = slot.bound_mac {
+                        if let Ok(payload) = downlink.serialize(&mut downlink_buf) {
+                            send_unicast_downlink(&manager, &mut sender, &mac, payload)
+                        } else {
+                            true
                         }
-                        let _ = sender.send(&BROADCAST_ADDRESS, payload);
+                    } else {
+                        false
+                    };
+                    if delivered {
+                        let _ = slot
+                            .modbus_ctx
+                            .set_holding(wireless_protocol::modbus_map::REG_COMMAND_MAILBOX as u16, 0);
+                    } else {
+                        slot.pending_cmd = Some(downlink);
                     }
-                    let _ = slot
-                        .modbus_ctx
-                        .set_holding(wireless_protocol::modbus_map::REG_COMMAND_MAILBOX as u16, 0);
                 }
             }
         }

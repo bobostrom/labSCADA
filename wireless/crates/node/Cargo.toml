@@ -9,6 +9,10 @@ description = "Universal Low-Power Clinical Sensor Node (Dewar / Door / Ambient)
 default = []
 # Compile dewar_plain with Seeed Studio XIAO ESP32-S3 GPIO pinout instead of Adafruit QT Py ESP32-S3.
 xiao = []
+# Compile dewar_plain for Slot 4 (Dewar #4) instead of default Slot 3 (Dewar #3).
+slot4 = []
+# Compile dewar_plain for Slot 5 (Dewar #5) instead of default Slot 3 (Dewar #3).
+slot5 = []
 
 [lib]
 name = "wireless_node"
