@@ -5,7 +5,7 @@
 | **Document ID / Record Type** | `QA-EXCURSION-2026-11-15` • Equipment Excursion Review & QA Monitoring Sign-Off |
 | **Facility** | Advanced Fertility of Alaska (AFOA) |
 | **Report Date** | November 15, 2026 |
-| **Monitored Equipment** | Cold Storage Combo Unit — Medical Freezer & Medical Fridge<sup>*</sup> |
+| **Monitored Equipment** | Cold Storage Combo Unit — Medical Freezer & Medical Fridge<sup>&#42;</sup> |
 | **Freezer Scope / Intended Use** | **Medical Supplies & Cold Packs Only** *(Non-biological storage; no specimens, gametes, embryos, or certified biological samples are stored in this freezer)* |
 | **Referenced Alarm IDs** | Medical Freezer `#419` (Nov 14, `18:15:45 – 18:34:31`) & `#432` (Nov 15, `21:32:27 – 21:49:33`); Medical Fridge (no excursion) |
 | **Interim Disposition** | Pending 3–5 Day Baseline Data Collection (No Setting Change Yet • Target Re-Review: Nov 18–20, 2026) |
@@ -22,7 +22,7 @@
 
 ## 2. Observed Readings & Event Summary
 
-### Sensor & Communication Health Check<sup>**</sup>
+### Sensor & Communication Health Check<sup>&#42;&#42;</sup>
 During tonight's excursion (`Nov 15 21:32 – 21:49`), monitoring diagnostics showed normal operation across all sensors:
 
 - **Probe health:** All 3 probes (Fridge, Freezer, Room Ambient) reported valid readings — no probe faults and no sensor-slot mix-ups
@@ -50,7 +50,7 @@ Both curves rose smoothly over ~24 minutes from `-15°C / -21.6°C` to above `+6
 
 An exposed temperature probe responds quickly to fast-moving air currents (such as an evaporator defrost cycle or brief door opening), whereas medical supplies, cold packs, and buffered containers change temperature much more slowly due to their **thermal mass**.
 
-To mimic placing the sensor inside a physical buffer bottle (such as glycol, mineral oil, or glass beads), the monitoring controller applies a **first-order thermal lag filter** (an Exponentially Weighted Moving Average, or EWMA) to the incoming air temperature readings.<sup>***</sup>
+To mimic placing the sensor inside a physical buffer bottle (such as glycol, mineral oil, or glass beads), the monitoring controller applies a **first-order thermal lag filter** (an Exponentially Weighted Moving Average, or EWMA) to the incoming air temperature readings.<sup>&#42;&#42;&#42;</sup>
 
 ### Continuous Physical Model
 Heat transfer between the surrounding freezer air and a buffered vial follows Newton's law of heating and cooling:
@@ -124,7 +124,7 @@ With sensor-slot tracking just stabilized on Nov 14, we currently have **only 2 
 3. **Verify intended-use & alarm threshold alignment:**
 
     - Because normal compressor off-cycles already reach **`-4.2°C to -4.6°C`** every ~2 hours and defrost air reaches **`+7°C to +8°C+`**, confirm that compartment use remains strictly limited to non-biological medical supplies and cold packs tolerant of brief defrost cycling (with biological samples/specimens excluded from this unit).
-    - *(Secondary observation for review: on Nov 14, failed calibration verification checks on the Medical Fridge recorded `4.6°C` on the reference thermometer vs. `6.29–6.40°C` on the monitor, with no calibration offset currently applied.<sup>****</sup>)*
+    - *(Secondary observation for review: on Nov 14, failed calibration verification checks on the Medical Fridge recorded `4.6°C` on the reference thermometer vs. `6.29–6.40°C` on the monitor, with no calibration offset currently applied.<sup>&#42;&#42;&#42;&#42;</sup>)*
 
 ### Suggested Action After 3–5 Days of Data
 Once we have 5–7 days of continuous logs, we can review the multi-day defrost curves together and decide cleanly between:
@@ -173,7 +173,7 @@ Once we have 5–7 days of continuous logs, we can review the multi-day defrost 
 ---
 
 ### Engineering & System Reference Notes *(For Technical Audit Lookup)*
-- **<sup>*</sup> Monitored hardware & SCADA channels:** Cold storage wireless node `cold_storage_node_01` mapped to PLC function block `fbColdStorage`; Medical Freezer temperature `cnl 103` / alarm `cnl 112`; Medical Fridge temperature `cnl 102` / alarm `cnl 111`.
-- **<sup>**</sup> Diagnostic flags verified during Nov 15 event:** `uiRawFaultCode = 0`, `bProbeFault = False` (Fridge, Freezer, Ambient), `bFreezerSwapSuspect = False`, `bCommLoss = False`, telemetry age `15–21 s`, signal `iRSSI = -52 dBm`, battery `3.91 V`; raw air peak `fbFreezer.rRawTemp = +8.1°C` observed via OPC UA.
-- **<sup>***</sup> PLC filter implementation:** Function block `FB_ThermalVial` inside `FB_MedFreezer` (`tSampleTick = T#5S`, `tThermalTau = T#8M` for Freezer, `T#5M` inside `FB_MedFridge`, `rHighTrip = 0.0°C` synced from `equipment.json`, `rHysteresis = 0.5°C`), converting raw `rRawTemp` to modeled `rProcessTemp`.
-- **<sup>****</sup> Calibration reference:** Active PLC offsets (`fbFridge.rCalOffset` and `fbFreezer.rCalOffset`) are `0.0°C`; Nov 14 calibration log entries `#1–4` failed tolerance against a `4.6°C` NIST reference.
+- <sup>&#42;</sup> **Monitored hardware & SCADA channels:** Cold storage wireless node `cold_storage_node_01` mapped to PLC function block `fbColdStorage`; Medical Freezer temperature `cnl 103` / alarm `cnl 112`; Medical Fridge temperature `cnl 102` / alarm `cnl 111`.
+- <sup>&#42;&#42;</sup> **Diagnostic flags verified during Nov 15 event:** `uiRawFaultCode = 0`, `bProbeFault = False` (Fridge, Freezer, Ambient), `bFreezerSwapSuspect = False`, `bCommLoss = False`, telemetry age `15–21 s`, signal `iRSSI = -52 dBm`, battery `3.91 V`; raw air peak `fbFreezer.rRawTemp = +8.1°C` observed via OPC UA.
+- <sup>&#42;&#42;&#42;</sup> **PLC filter implementation:** Function block `FB_ThermalVial` inside `FB_MedFreezer` (`tSampleTick = T#5S`, `tThermalTau = T#8M` for Freezer, `T#5M` inside `FB_MedFridge`, `rHighTrip = 0.0°C` synced from `equipment.json`, `rHysteresis = 0.5°C`), converting raw `rRawTemp` to modeled `rProcessTemp`.
+- <sup>&#42;&#42;&#42;&#42;</sup> **Calibration reference:** Active PLC offsets (`fbFridge.rCalOffset` and `fbFreezer.rCalOffset`) are `0.0°C`; Nov 14 calibration log entries `#1–4` failed tolerance against a `4.6°C` NIST reference.

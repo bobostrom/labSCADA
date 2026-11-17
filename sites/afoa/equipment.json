@@ -75,7 +75,7 @@
       "alarm_cnl": 128,
       "warn_cnl": 131,
       "ln2_cnl": 195,
-      "high_limit": -135.0
+      "high_limit": -100.0
     }
   ],
   "fridges": [

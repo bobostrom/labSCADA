@@ -1,0 +1,95 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 440" width="100%" style="background:#ffffff; font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Arial,sans-serif;">
+<rect x="0" y="0" width="960" height="48" fill="#f8fafc"/>
+<line x1="0" y1="48" x2="960" y2="48" stroke="#cbd5e1" stroke-width="1"/>
+<text x="18" y="21" font-size="14" font-weight="800" fill="#0f172a">Dewar 5: 30-Day Static Hold &amp; Top-of-Neck Vapor Characterization Curve</text>
+<text x="18" y="39" font-size="10.8" fill="#475569">Emulated 30-Day Profile (Oct 17 – Nov 14 Modeled) Anchored to Observed Nov 15–16 Telemetry &amp; 21.0 cm Dipstick Check</text>
+<rect x="706" y="10" width="240" height="28" rx="6" fill="#fef3c7" stroke="#f59e0b" stroke-width="1.2"/>
+<text x="826" y="28" text-anchor="middle" font-size="10.2" font-weight="800" fill="#92400e">MOCK STUDY EXAMPLE</text>
+<rect x="74" y="66" width="750.1" height="312" fill="#f8fafc"/>
+<rect x="824.1" y="66" width="47.9" height="312" fill="#ecfeff"/>
+<line x1="824.1" y1="66" x2="824.1" y2="378" stroke="#0891b2" stroke-width="1.2" stroke-dasharray="4,3"/>
+<text x="446.4" y="81" text-anchor="middle" font-size="10" font-weight="700" fill="#64748b">MODELED / EMULATED BASELINE (DAYS 0–28 • NO REFILLS)</text>
+<text x="848.1" y="81" text-anchor="middle" font-size="9" font-weight="800" fill="#0e7490">LIVE</text>
+<text x="848.1" y="92" text-anchor="middle" font-size="8.5" font-weight="700" fill="#0e7490">DATA</text>
+<line x1="74" y1="378.0" x2="872" y2="378.0" stroke="#e2e8f0" stroke-width="1"/>
+<text x="66" y="382.0" text-anchor="end" font-size="10.5" font-weight="700" fill="#0284c7">15 cm</text>
+<line x1="74" y1="310.2" x2="872" y2="310.2" stroke="#e2e8f0" stroke-width="1"/>
+<text x="66" y="314.2" text-anchor="end" font-size="10.5" font-weight="700" fill="#0284c7">20 cm</text>
+<line x1="74" y1="242.3" x2="872" y2="242.3" stroke="#e2e8f0" stroke-width="1"/>
+<text x="66" y="246.3" text-anchor="end" font-size="10.5" font-weight="700" fill="#0284c7">25 cm</text>
+<line x1="74" y1="174.5" x2="872" y2="174.5" stroke="#e2e8f0" stroke-width="1"/>
+<text x="66" y="178.5" text-anchor="end" font-size="10.5" font-weight="700" fill="#0284c7">30 cm</text>
+<line x1="74" y1="106.7" x2="872" y2="106.7" stroke="#e2e8f0" stroke-width="1"/>
+<text x="66" y="110.7" text-anchor="end" font-size="10.5" font-weight="700" fill="#0284c7">35 cm</text>
+<rect x="74" y="201.7" width="798" height="13.6" fill="#fef3c7" opacity="0.45"/>
+<line x1="74" y1="215.2" x2="872" y2="215.2" stroke="#d97706" stroke-width="1" stroke-dasharray="5,4"/>
+<text x="80" y="211.2" font-size="9.2" font-weight="700" fill="#b45309">Standard Clinical Refill Buffer / Floor (27–28 cm)</text>
+<text x="880" y="382.0" text-anchor="start" font-size="10" font-weight="700" fill="#be123c">-200°C</text>
+<text x="880" y="343.0" text-anchor="start" font-size="10" font-weight="700" fill="#be123c">-180°C</text>
+<text x="880" y="304.0" text-anchor="start" font-size="10" font-weight="700" fill="#be123c">-160°C</text>
+<text x="880" y="265.0" text-anchor="start" font-size="10" font-weight="700" fill="#be123c">-140°C</text>
+<text x="880" y="226.0" text-anchor="start" font-size="10" font-weight="700" fill="#be123c">-120°C</text>
+<text x="880" y="187.0" text-anchor="start" font-size="10" font-weight="700" fill="#be123c">-100°C</text>
+<text x="880" y="148.0" text-anchor="start" font-size="10" font-weight="700" fill="#be123c">-80°C</text>
+<text x="880" y="109.0" text-anchor="start" font-size="10" font-weight="700" fill="#be123c">-60°C</text>
+<text x="880" y="70.0" text-anchor="start" font-size="10" font-weight="700" fill="#be123c">-40°C</text>
+<line x1="74" y1="251.2" x2="872" y2="251.2" stroke="#e11d48" stroke-width="1.2" stroke-dasharray="6,4"/>
+<text x="866" y="246.2" text-anchor="end" font-size="9.2" font-weight="700" fill="#be123c">Standard -135°C Cryo Alarm Threshold</text>
+<line x1="74" y1="370.2" x2="872" y2="370.2" stroke="#94a3b8" stroke-width="1" stroke-dasharray="2,3"/>
+<text x="866" y="366.2" text-anchor="end" font-size="8.8" fill="#64748b">Deep Liquid Boiling Point (-196°C)</text>
+<line x1="74.0" y1="66" x2="74.0" y2="378" stroke="#e2e8f0" stroke-width="0.9"/>
+<text x="74.0" y="394" text-anchor="middle" font-size="10" font-weight="700" fill="#334155">Day 0</text>
+<text x="74.0" y="407" text-anchor="middle" font-size="9" fill="#64748b">Oct 17</text>
+<line x1="207.0" y1="66" x2="207.0" y2="378" stroke="#e2e8f0" stroke-width="0.9"/>
+<text x="207.0" y="394" text-anchor="middle" font-size="10" font-weight="700" fill="#334155">Day 5</text>
+<text x="207.0" y="407" text-anchor="middle" font-size="9" fill="#64748b">Oct 22</text>
+<line x1="340.0" y1="66" x2="340.0" y2="378" stroke="#e2e8f0" stroke-width="0.9"/>
+<text x="340.0" y="394" text-anchor="middle" font-size="10" font-weight="700" fill="#334155">Day 10</text>
+<text x="340.0" y="407" text-anchor="middle" font-size="9" fill="#64748b">Oct 27</text>
+<line x1="473.0" y1="66" x2="473.0" y2="378" stroke="#e2e8f0" stroke-width="0.9"/>
+<text x="473.0" y="394" text-anchor="middle" font-size="10" font-weight="700" fill="#334155">Day 15</text>
+<text x="473.0" y="407" text-anchor="middle" font-size="9" fill="#64748b">Nov 01</text>
+<line x1="606.0" y1="66" x2="606.0" y2="378" stroke="#e2e8f0" stroke-width="0.9"/>
+<text x="606.0" y="394" text-anchor="middle" font-size="10" font-weight="700" fill="#334155">Day 20</text>
+<text x="606.0" y="407" text-anchor="middle" font-size="9" fill="#64748b">Nov 06</text>
+<line x1="739.0" y1="66" x2="739.0" y2="378" stroke="#e2e8f0" stroke-width="0.9"/>
+<text x="739.0" y="394" text-anchor="middle" font-size="10" font-weight="700" fill="#334155">Day 25</text>
+<text x="739.0" y="407" text-anchor="middle" font-size="9" fill="#64748b">Nov 11</text>
+<line x1="872.0" y1="66" x2="872.0" y2="378" stroke="#e2e8f0" stroke-width="0.9"/>
+<text x="872.0" y="394" text-anchor="middle" font-size="10" font-weight="700" fill="#334155">Day 30</text>
+<text x="872.0" y="407" text-anchor="middle" font-size="9" fill="#64748b">Nov 16</text>
+<rect x="74" y="66" width="798" height="312" fill="none" stroke="#94a3b8" stroke-width="1.3"/>
+<text x="18" y="222.0" transform="rotate(-90 18 222.0)" text-anchor="middle" font-size="11.5" font-weight="800" fill="#0284c7">LN2 Dipstick Level (cm)</text>
+<text x="946" y="222.0" transform="rotate(90 946 222.0)" text-anchor="middle" font-size="11.5" font-weight="800" fill="#be123c">Top-of-Neck Vapor Temp (°C)</text>
+<polyline points="74.0,106.7 100.6,113.0 127.2,119.4 153.8,125.7 180.4,132.0 207.0,138.3 233.6,144.7 260.2,151.0 286.8,157.3 313.4,163.7 340.0,170.0 366.6,176.3 393.2,182.7 419.8,189.0 446.4,195.3 473.0,201.7 499.6,208.0 526.2,214.3 552.8,220.6 579.4,227.0 606.0,233.3 632.6,239.6 659.2,246.0 685.8,252.3 712.4,258.6 739.0,265.0 765.6,271.3 792.2,277.6 818.8,283.9 845.4,290.3 872.0,296.6" fill="none" stroke="#0284c7" stroke-width="2.6" stroke-dasharray="6,4"/>
+<polygon points="74.0,101.7 79.0,106.7 74.0,111.7 69.0,106.7" fill="#ffffff" stroke="#0284c7" stroke-width="2"/>
+<polygon points="153.8,120.7 158.8,125.7 153.8,130.7 148.8,125.7" fill="#ffffff" stroke="#0284c7" stroke-width="2"/>
+<polygon points="233.6,139.7 238.6,144.7 233.6,149.7 228.6,144.7" fill="#ffffff" stroke="#0284c7" stroke-width="2"/>
+<polygon points="340.0,165.0 345.0,170.0 340.0,175.0 335.0,170.0" fill="#ffffff" stroke="#0284c7" stroke-width="2"/>
+<polygon points="419.8,184.0 424.8,189.0 419.8,194.0 414.8,189.0" fill="#ffffff" stroke="#0284c7" stroke-width="2"/>
+<polygon points="526.2,209.3 531.2,214.3 526.2,219.3 521.2,214.3" fill="#ffffff" stroke="#0284c7" stroke-width="2"/>
+<polygon points="606.0,228.3 611.0,233.3 606.0,238.3 601.0,233.3" fill="#ffffff" stroke="#0284c7" stroke-width="2"/>
+<polygon points="712.4,253.6 717.4,258.6 712.4,263.6 707.4,258.6" fill="#ffffff" stroke="#0284c7" stroke-width="2"/>
+<polygon points="792.2,272.6 797.2,277.6 792.2,282.6 787.2,277.6" fill="#ffffff" stroke="#0284c7" stroke-width="2"/>
+<circle cx="872.0" cy="296.6" r="6" fill="#0284c7" stroke="#0f172a" stroke-width="1.8"/>
+<text x="862.0" y="315.6" text-anchor="end" font-size="9.5" font-weight="800" fill="#0369a1">Measured: 21.0 cm (Nov 16)</text>
+<text x="82.0" y="99.7" font-size="9.5" font-weight="800" fill="#0369a1">Start: 35.0 cm (Full, Oct 17 est.)</text>
+<polyline points="74.0,342.9 87.3,341.9 100.6,341.0 113.9,340.0 127.2,338.9 140.5,337.9 153.8,336.8 167.1,335.8 180.4,334.7 193.7,333.6 207.0,332.5 220.3,331.3 233.6,330.2 246.9,329.0 260.2,327.9 273.5,326.7 286.8,325.5 300.1,324.4 313.4,323.2 326.7,321.9 340.0,320.7 353.3,319.5 366.6,318.3 379.9,317.0 393.2,315.8 406.5,314.5 419.8,313.2 433.1,312.0 446.4,310.7 459.7,309.4 473.0,308.1 486.3,306.8 499.6,305.5 512.9,304.1 526.2,302.8 539.5,301.5 552.8,300.1 566.1,298.8 579.4,297.4 592.7,296.0 606.0,294.7 619.3,293.3 632.6,291.9 645.9,290.5 659.2,289.1 672.5,287.7 685.8,286.3 699.1,284.8 712.4,283.4 725.7,282.0 739.0,280.5 752.3,279.1 765.6,277.6 778.9,276.2 792.2,274.7 805.5,273.2 818.8,271.8 832.1,270.3 845.4,268.8" fill="none" stroke="#be123c" stroke-width="2.5" stroke-dasharray="5,4"/>
+<polyline points="845.4,268.8 866.1,268.4 867.2,97.2 872.0,219.5" fill="none" stroke="#9f1239" stroke-width="2.6"/>
+<circle cx="845.4" cy="268.8" r="4.2" fill="#be123c" stroke="#ffffff" stroke-width="1.4"/>
+<circle cx="866.1" cy="268.4" r="4.2" fill="#be123c" stroke="#ffffff" stroke-width="1.4"/>
+<circle cx="867.2" cy="97.2" r="4.2" fill="#be123c" stroke="#ffffff" stroke-width="1.4"/>
+<circle cx="872.0" cy="219.5" r="4.2" fill="#be123c" stroke="#ffffff" stroke-width="1.4"/>
+<text x="778.9" y="292.8" text-anchor="end" font-size="9" font-weight="800" fill="#9f1239">Nov 15–16 Overnight: -144°C &#8594;</text>
+<text x="816.1" y="102.2" text-anchor="end" font-size="9" font-weight="800" fill="#9f1239">Dip Check Spike (-56.0°C) &#8594;</text>
+<text x="866.7" y="209.5" text-anchor="end" font-size="9" font-weight="800" fill="#9f1239">Post-Check: -118.7°C</text>
+<text x="82.0" y="356.9" font-size="9.2" font-weight="800" fill="#be123c">Est. Start Under Plug: ~-182°C</text>
+<line x1="80" y1="421" x2="108" y2="421" stroke="#0284c7" stroke-width="2.5" stroke-dasharray="5,3"/>
+<text x="114" y="425" font-size="9.5" fill="#1e293b">Emulated LN2 Level (0.47 cm/day)</text>
+<circle cx="310" cy="421" r="4.5" fill="#0284c7" stroke="#0f172a" stroke-width="1.3"/>
+<text x="320" y="425" font-size="9.5" fill="#1e293b">Actual Level Check (21.0 cm)</text>
+<line x1="490" y1="421" x2="518" y2="421" stroke="#be123c" stroke-width="2.5" stroke-dasharray="5,3"/>
+<text x="524" y="425" font-size="9.5" fill="#1e293b">Emulated Top-of-Vapor Temp</text>
+<line x1="696" y1="421" x2="724" y2="421" stroke="#9f1239" stroke-width="2.6"/>
+<text x="730" y="425" font-size="9.5" fill="#1e293b">Observed Telemetry (Nov 15–16)</text>
+</svg>
