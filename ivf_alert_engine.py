@@ -2793,9 +2793,9 @@ class ClinicalAlertHandler(http.server.BaseHTTPRequestHandler):
                 self.end_headers()
                 self.wfile.write(b"Chart not found.")
         elif parsed.path in ["/print/qr", "/qr"]:
-            host = self.headers.get("Host", "192.168.10.133")
-            if host.startswith("localhost") or host.startswith("127.0.0.1"):
-                host = f"{CLINIC_SLUG}-scada.labmon:{PORT}"
+            host = self.headers.get("Host", CLINIC_DOMAIN or "192.168.10.133")
+            if host.startswith("localhost") or host.startswith("127.0.0.1") or ".labmon" in host or host.startswith("192.168."):
+                host = CLINIC_DOMAIN or f"{CLINIC_SLUG}-scada.labmon:{PORT}"
             scheme = "https" if ("larestelemetry.com" in host or "trycloudflare.com" in host or self.headers.get("X-Forwarded-Proto") == "https" or "https" in self.headers.get("CF-Visitor", "")) else "http"
             html = render_print_placards_html(host, scheme=scheme)
             self.send_response(200)

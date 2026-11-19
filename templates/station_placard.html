@@ -11,7 +11,7 @@
   <style>
     @page {
       size: letter portrait;
-      margin: 0.35in;
+      margin: 0.28in;
     }
 
     * {
@@ -144,24 +144,26 @@
       margin: 0;
     }
 
-    /* Dual Tank Identification Badges */
+    /* Vessel Identification Badges (balanced 2-column grid for 2-4+ dewars) */
     .tanks-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-bottom: 22px;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .tanks-row.single-tank {
+      grid-template-columns: 1fr;
     }
 
     .tank-badge-card {
       border: 2px solid #0284c7;
       background: #f8fafc;
       border-radius: 12px;
-      padding: 12px 16px;
+      padding: 11px 15px;
       display: flex;
       align-items: center;
-      gap: 14px;
-      flex: 1;
-      min-width: 150px;
+      gap: 12px;
     }
 
     .tank-icon {
@@ -182,7 +184,7 @@
     }
 
     .tank-badge-name {
-      font-size: 17px;
+      font-size: 15px;
       font-weight: 900;
       color: #0f172a;
       margin: 2px 0 1px;
@@ -203,11 +205,11 @@
     }
 
     .qr-card {
-      flex: 0 0 250px;
+      flex: 0 0 258px;
       background: #f8fafc;
       border: 2px solid #e2e8f0;
       border-radius: 14px;
-      padding: 18px 14px;
+      padding: 16px 14px;
       text-align: center;
       display: flex;
       flex-direction: column;
@@ -228,9 +230,12 @@
       justify-content: center;
     }
 
-    .qr-frame svg {
+    .qr-frame svg,
+    .qr-frame .qr-img {
       width: 100%;
       height: 100%;
+      object-fit: contain;
+      image-rendering: pixelated;
     }
 
     .qr-action-title {
@@ -251,14 +256,16 @@
 
     .direct-url {
       font-family: monospace;
-      font-size: 11px;
+      font-size: 9.8px;
       font-weight: 700;
+      letter-spacing: -0.2px;
       color: #0369a1;
       background: #e0f2fe;
-      padding: 4px 8px;
+      padding: 5px 7px;
       border-radius: 6px;
       border: 1px dashed #7dd3fc;
-      word-break: break-all;
+      overflow-wrap: anywhere;
+      max-width: 100%;
     }
 
     .sop-card {
@@ -357,6 +364,7 @@
     .reg-warning {
       color: #dc2626;
       font-weight: 800;
+      white-space: nowrap;
     }
 
     @media print {
@@ -377,9 +385,28 @@
       .station-placard {
         border-width: 4px !important;
         box-shadow: none !important;
-        padding: 22px 24px !important;
+        padding: 16px 22px !important;
         border-radius: 12px !important;
         page-break-inside: avoid;
+      }
+
+      .station-header {
+        padding-bottom: 12px;
+        margin-bottom: 14px;
+      }
+
+      .tanks-row {
+        gap: 10px;
+        margin-bottom: 14px;
+      }
+
+      .tank-badge-name {
+        font-size: 14px;
+      }
+
+      .main-grid {
+        gap: 16px;
+        margin-bottom: 14px;
       }
 
       .qr-frame {
@@ -413,7 +440,7 @@
       </div>
 
       <!-- Configured Dewars Identification -->
-      <div class="tanks-row">
+      <div class="tanks-row{% if equipment.dewars | length == 1 %} single-tank{% endif %}">
         {% for d in equipment.dewars %}
         <div class="tank-badge-card" style="border-color:{{ d.color | default('#0284c7') }};">
           <div class="tank-icon">{{ d.icon | default('🧊') }}</div>
@@ -431,10 +458,10 @@
         <!-- Single Unified QR Code -->
         <div class="qr-card">
           <div class="qr-frame">
-            {{ qr_svg | safe }}
+            <img src="/assets/dewar_station_qr.png" alt="Scan to Log Levels ({{ station_url }})" class="qr-img">
           </div>
           <div class="qr-action-title">📱 Scan to Log Levels</div>
-          <div class="qr-action-desc">Point phone camera here • No app or login needed</div>
+          <div class="qr-action-desc">Point phone camera here • Opens web logger (no app needed)</div>
           <div class="direct-url">{{ station_url }}</div>
         </div>
 
@@ -468,14 +495,14 @@
         </div>
         <div class="reg-item">
           <span>⚠️</span>
-          <span class="reg-warning">Critical Minimum: 10.0 cm</span>
-          <span style="color:#64748b;">(Refill required if level drops below 12.0 cm)</span>
+          <span class="reg-warning">Critical Minimum: 27.0 cm</span>
+          <span style="color:#64748b;">(Refill required if level drops below 28.0 cm)</span>
         </div>
       </div>
 
       <!-- Placard Bottom Footer -->
       <div
-        style="text-align: center; margin-top: 18px; font-size: 11px; color: #64748b; border-top: 1px solid #e2e8f0; padding-top: 10px;">
+        style="text-align: center; margin-top: 12px; font-size: 11px; color: #64748b; border-top: 1px solid #e2e8f0; padding-top: 8px;">
         {{ clinic_name }} &bull; Powered by <strong style="color: #0284c7;">Lares Telemetry</strong>
       </div>
     </div>
